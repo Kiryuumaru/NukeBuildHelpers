@@ -31,7 +31,6 @@ class Build : BaseNukeBuild
         .Before(Restore)
         .Executes(() =>
         {
-            Log.Information(GitVersion.BranchName);
         });
 
     Target Restore => _ => _
