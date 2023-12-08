@@ -12,6 +12,7 @@ using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using NukeBuildHelpers;
 using Serilog;
+using NukeBuildHelpers.Models;
 
 class Build : BaseNukeBuild
 {
@@ -30,7 +31,7 @@ class Build : BaseNukeBuild
         .Before(Restore)
         .Executes(() =>
         {
-
+            Log.Information(GitVersion.BranchName);
         });
 
     Target Restore => _ => _
