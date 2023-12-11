@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.Models;
 
-public class CIConfig
+public class AppConfig
 {
     public JsonNode Json { get; set; }
 
     public AbsolutePath AbsolutePath { get; set; }
 }
 
-public class CIConfig<TConfig> : CIConfig
+public class AppConfig<TConfig> : AppConfig
 {
     public TConfig Config { get; set; }
 }

@@ -8,7 +8,7 @@ using NukeBuildHelpers.Enums;
 
 namespace NukeBuildHelpers.Models;
 
-public class AppTestEntry
+public class AppTestConfig
 {
     public bool Enable { get; set; }
 

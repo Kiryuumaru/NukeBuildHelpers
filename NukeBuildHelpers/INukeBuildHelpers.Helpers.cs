@@ -7,11 +7,11 @@ using NukeBuildHelpers.Models;
 
 namespace NukeBuildHelpers;
 
-partial class BaseNukeBuild : NukeBuild
+partial interface INukeBuildHelpers : INukeBuild
 {
-    protected static List<(JsonNode Json, AbsolutePath AbsolutePath)> GetConfigs(string name)
+    public List<AppConfig> GetConfigs(string name)
     {
-        List<(JsonNode Json, AbsolutePath AbsolutePath)> configs = new();
+        List<AppConfig> configs = new();
         foreach (var configPath in RootDirectory.GetFiles(name, 10))
         {
             var configJson = File.ReadAllText(configPath);
@@ -28,20 +28,25 @@ partial class BaseNukeBuild : NukeBuild
             {
                 newConfigs.Add(node);
             }
-            configs.AddRange(newConfigs.Select(c => (c, configPath)));
+            configs.AddRange(newConfigs.Select(c => new AppConfig()
+            {
+                Json = c,
+                AbsolutePath = configPath
+            }));
         }
         return configs;
     }
 
-    protected static List<CIConfig<AppEntry>> GetAppEntries()
+    public List<AppConfig<TAppEntryConfig>> GetAppEntries<TAppEntryConfig>()
+        where TAppEntryConfig : AppEntryConfig
     {
         var configs = GetConfigs("appentry.json");
-        List<CIConfig<AppEntry>> newConfigs = new();
+        List<AppConfig<TAppEntryConfig>> newConfigs = new();
         foreach (var config in configs)
         {
             newConfigs.Add(new()
             {
-                Config = JsonSerializer.Deserialize<AppEntry>(config.Json, jsonSerializerOptions),
+                Config = JsonSerializer.Deserialize<TAppEntryConfig>(config.Json, jsonSerializerOptions),
                 Json = config.Json,
                 AbsolutePath = config.AbsolutePath
             });
@@ -49,15 +54,16 @@ partial class BaseNukeBuild : NukeBuild
         return newConfigs;
     }
 
-    protected static List<CIConfig<AppTestEntry>> GetAppTestEntries()
+    public List<AppConfig<TAppTestConfig>> GetAppTests<TAppTestConfig>()
+        where TAppTestConfig : AppTestConfig
     {
-        var configs = GetConfigs("apptestentry.json");
-        List<CIConfig<AppTestEntry>> newConfigs = new();
+        var configs = GetConfigs("apptest.json");
+        List<AppConfig<TAppTestConfig>> newConfigs = new();
         foreach (var config in configs)
         {
             newConfigs.Add(new()
             {
-                Config = JsonSerializer.Deserialize<AppTestEntry>(config.Json, jsonSerializerOptions),
+                Config = JsonSerializer.Deserialize<TAppTestConfig>(config.Json, jsonSerializerOptions),
                 Json = config.Json,
                 AbsolutePath = config.AbsolutePath
             });

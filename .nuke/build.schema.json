@@ -6,14 +6,6 @@
     "build": {
       "type": "object",
       "properties": {
-        "Configuration": {
-          "type": "string",
-          "description": "Configuration to build - Default is 'Debug' (local) or 'Release' (server)",
-          "enum": [
-            "Debug",
-            "Release"
-          ]
-        },
         "Continue": {
           "type": "boolean",
           "description": "Indicates to continue a previously failed build attempt"
@@ -72,11 +64,17 @@
           "items": {
             "type": "string",
             "enum": [
-              "Clean",
+              "Bump",
               "Compile",
-              "Restore"
+              "Pack",
+              "Prepare",
+              "Publish"
             ]
           }
+        },
+        "Solution": {
+          "type": "string",
+          "description": "Path to a solution file that is automatically loaded"
         },
         "Target": {
           "type": "array",
@@ -84,9 +82,11 @@
           "items": {
             "type": "string",
             "enum": [
-              "Clean",
+              "Bump",
               "Compile",
-              "Restore"
+              "Pack",
+              "Prepare",
+              "Publish"
             ]
           }
         },
