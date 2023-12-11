@@ -7,7 +7,7 @@ using NukeBuildHelpers.Models;
 
 namespace NukeBuildHelpers;
 
-partial interface INukeBuildHelpers : INukeBuild
+partial class BaseNukeBuildHelpers
 {
     public List<AppConfig> GetConfigs(string name)
     {
@@ -69,5 +69,27 @@ partial interface INukeBuildHelpers : INukeBuild
             });
         }
         return newConfigs;
+    }
+
+    public Dictionary<string, string> GetTargetParams()
+    {
+        Dictionary<string, string> targetParams = new();
+        foreach (var targetParam in (this as INukeBuildHelpers).TargetParams.Split(';'))
+        {
+            if (string.IsNullOrEmpty(targetParam))
+            {
+                continue;
+            }
+            var split = targetParam.Split('=');
+            targetParams.Add(split[0], split[1]);
+        }
+        return targetParams;
+    }
+
+    public string GetTargetParam(string key)
+    {
+        var val = GetTargetParams().GetValueOrDefault(key);
+        ArgumentNullException.ThrowIfNull(val);
+        return val;
     }
 }

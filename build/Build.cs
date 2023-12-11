@@ -15,7 +15,7 @@ using Serilog;
 using NukeBuildHelpers.Models;
 using Nuke.Common.Tools.DotNet;
 
-class Build : BaseNukeBuildHelpers, INukeBuildHelpers
+class Build : BaseNukeBuildHelpers
 {
     public static int Main () => Execute<Build>(x => x.Pack);
 
