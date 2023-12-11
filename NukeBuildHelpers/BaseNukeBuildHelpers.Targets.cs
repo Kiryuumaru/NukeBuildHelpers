@@ -19,6 +19,12 @@ partial class BaseNukeBuildHelpers
         {
             var bumpVal = TargetParams["bump"];
 
+            if (string.IsNullOrEmpty(bumpVal))
+            {
+                Assert.Fail("bump value is empty");
+                return;
+            }
+
             Dictionary<string, List<SemVersion>> allVersions = new();
             foreach (var tag in Git.Invoke("tag -l", logOutput: false, logInvocation: false))
             {
