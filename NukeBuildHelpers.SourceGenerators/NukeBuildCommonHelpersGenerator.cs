@@ -32,8 +32,9 @@ namespace NukeBuildHelpers.SourceGenerators
             static NukeBuildCommonHelpersInfo GetInfo(INamedTypeSymbol typeSymbol, AttributeData attributeData)
             {
                 string typeName = typeSymbol.Name;
+                bool hasImplementedINukeBuild = typeSymbol.AllInterfaces.Any(i => i.HasFullyQualifiedName("global::Nuke.Common.INukeBuild"));
 
-                return new(typeName);
+                return new(typeName, hasImplementedINukeBuild);
             }
 
             return
@@ -64,7 +65,7 @@ namespace NukeBuildHelpers.SourceGenerators
         {
             ImmutableArray<MemberDeclarationSyntax>.Builder builder = ImmutableArray.CreateBuilder<MemberDeclarationSyntax>();
 
-            MemberDeclarationSyntax? FixupFilteredMemberDeclaration(MemberDeclarationSyntax member)
+            static MemberDeclarationSyntax? FixupFilteredMemberDeclaration(MemberDeclarationSyntax member)
             {
                 return member;
             }
@@ -84,7 +85,14 @@ namespace NukeBuildHelpers.SourceGenerators
 
         protected override CompilationUnitSyntax GetCompilationUnit(SourceProductionContext sourceProductionContext, NukeBuildCommonHelpersInfo info, HierarchyInfo hierarchyInfo, bool isSealed, ImmutableArray<MemberDeclarationSyntax> memberDeclarations)
         {
-            return hierarchyInfo.GetCompilationUnit(memberDeclarations);
+            if (info.HasImplementedINukeBuild)
+            {
+                return hierarchyInfo.GetCompilationUnit(memberDeclarations);
+            }
+            else
+            {
+                return hierarchyInfo.GetCompilationUnit(memberDeclarations, ClassDeclaration.BaseList);
+            }
         }
     }
 }

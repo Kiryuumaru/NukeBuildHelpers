@@ -17,7 +17,7 @@ using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers.Attributes;
 
 [NukeBuildCommonHelpers]
-partial class Build : NukeBuild
+public partial class Build : NukeBuild
 {
     public static int Main () => Execute<Build>(x => x.Pack);
 

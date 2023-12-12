@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.Attributes;
 
-[AttributeUsage(AttributeTargets.Class)]
-public class NukeBuildCommonHelpersAttribute : Attribute
+/// <summary>
+/// Contains all methods for performing proper <see cref="IAsyncDisposable"/> operations.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class NukeBuildCommonHelpersAttribute : Attribute
 {
 }

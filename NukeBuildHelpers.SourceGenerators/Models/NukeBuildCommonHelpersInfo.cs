@@ -7,4 +7,5 @@ using Microsoft.CodeAnalysis;
 namespace NukeBuildHelpers.SourceGenerators.ComponentModel.Models;
 
 public sealed record NukeBuildCommonHelpersInfo(
-    string TypeName);
+    string TypeName,
+    bool HasImplementedINukeBuild);

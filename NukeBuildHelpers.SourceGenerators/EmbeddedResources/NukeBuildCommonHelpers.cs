@@ -1,7 +1,7 @@
 ﻿/// <summary>
-/// Contains all methods for performing proper <see cref="global::System.IDisposable"/> operations.
+/// Contains
 /// </summary>
-public class NukeBuildCommonHelpers
+public class NukeBuildCommonHelpers : global::Nuke.Common:NukeBuild
 {
     private const int DisposalNotStarted = 0;
     private const int DisposalStarted = 1;
