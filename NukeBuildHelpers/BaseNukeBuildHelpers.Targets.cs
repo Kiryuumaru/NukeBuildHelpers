@@ -46,6 +46,17 @@ partial class BaseNukeBuildHelpers
                 versionRaw = Args;
             }
 
+            bool strictBranch = true;
+            if (SplitArgs.TryGetValue("strict_branch", out string strictBranchRaw))
+            {
+                strictBranch = strictBranchRaw == "1";
+            }
+
+            if (!SplitArgs.TryGetValue("appid", out string appId))
+            {
+                appId = null;
+            }
+
             Log.Information("Validating bump version {ver}...", versionRaw);
 
             if (!SemVersion.TryParse(versionRaw, SemVersionStyles.Strict, out SemVersion version))
@@ -56,7 +67,7 @@ partial class BaseNukeBuildHelpers
 
             if (version.IsPrerelease)
             {
-                if (Repository.Branch.ToLowerInvariant() != version.PrereleaseIdentifiers[0])
+                if (strictBranch && Repository.Branch.ToLowerInvariant() != version.PrereleaseIdentifiers[0])
                 {
                     Assert.Fail($"{Args} should bump on {version.PrereleaseIdentifiers[0]} branch");
                     return;
@@ -78,7 +89,8 @@ partial class BaseNukeBuildHelpers
             }
             else
             {
-                if (Repository.Branch.ToLowerInvariant() != "master" &&
+                if (strictBranch && 
+                    Repository.Branch.ToLowerInvariant() != "master" &&
                     Repository.Branch.ToLowerInvariant() != "main" &&
                     Repository.Branch.ToLowerInvariant() != "prod")
                 {

@@ -107,7 +107,7 @@ partial class BaseNukeBuildHelpers
         List<SemVersion> allVersionList = new();
         Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
         List<string> groupKeySorted = new();
-        foreach (var refs in Git.Invoke("ls-remote -t", logOutput: false, logInvocation: false))
+        foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
         {
             string tag = refs.Text[(refs.Text.IndexOf("refs/tags/") + 10)..];
             if (!SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
