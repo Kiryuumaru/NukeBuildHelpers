@@ -98,23 +98,11 @@ partial class BaseNukeBuildHelpers
         return val;
     }
 
-    public void BumpRelease(string bump)
+    public AllVersions GetCurrentVersions()
     {
-        if (string.IsNullOrEmpty(bump))
-        {
-            Assert.Fail("bump value is empty");
-            return;
-        }
-
-        var bumpValLower = bump.ToLowerInvariant();
-        bool isMainBump = false;
-        if (bumpValLower == "major" || bumpValLower == "minor" || bumpValLower == "patch")
-        {
-            isMainBump = true;
-        }
-
-        Dictionary<string, List<SemVersion>> allVersionsDict = new();
-        List<KeyValuePair<string, List<SemVersion>>> allVersionsList = new();
+        List<SemVersion> allVersionList = new();
+        Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
+        List<string> groupKeySorted = new();
         foreach (var refs in Git.Invoke("ls-remote -t", logOutput: false, logInvocation: false))
         {
             string tag = refs.Text[(refs.Text.IndexOf("refs/tags/") + 10)..];
@@ -123,79 +111,155 @@ partial class BaseNukeBuildHelpers
                 continue;
             }
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
-            if (allVersionsDict.TryGetValue(env, out List<SemVersion> versions))
+            if (allVersionGroupDict.TryGetValue(env, out List<SemVersion> versions))
             {
                 versions.Add(tagSemver);
             }
             else
             {
                 versions = new() { tagSemver };
-                allVersionsDict.Add(env, versions);
-                allVersionsList.Add(new(env, versions));
+                allVersionGroupDict.Add(env, versions);
+                groupKeySorted.Add(env);
             }
+            allVersionList.Add(tagSemver);
         }
-        allVersionsList = allVersionsList.OrderBy(i => i.Key).ToList();
-        if (allVersionsList.Count > 0 && allVersionsList.First().Key == "")
+        groupKeySorted.Sort();
+        if (groupKeySorted.Count > 0 && groupKeySorted.First() == "")
         {
-            var toMove = allVersionsList.First();
-            allVersionsList.Remove(toMove);
-            allVersionsList.Add(toMove);
+            var toMove = groupKeySorted.First();
+            groupKeySorted.Remove(toMove);
+            groupKeySorted.Add(toMove);
         }
-        foreach (var allVersion in allVersionsList)
+        foreach (var groupKey in groupKeySorted)
         {
-            allVersion.Value.Sort(SemVersion.PrecedenceComparer);
-            var last = allVersion.Value.Last();
-            if (string.IsNullOrEmpty(allVersion.Key))
+            var allVersion = allVersionGroupDict[groupKey];
+            allVersion.Sort(SemVersion.PrecedenceComparer);
+        }
+        return new()
+        {
+            VersionList = allVersionList,
+            VersionGrouped = allVersionGroupDict,
+            GroupKeySorted = groupKeySorted,
+        };
+    }
+
+    public void BumpRelease(IDictionary<string, int> bumps)
+    {
+        var currentVersions = GetCurrentVersions();
+
+        foreach (var groupKey in currentVersions.GroupKeySorted)
+        {
+            if (string.IsNullOrEmpty(groupKey))
             {
-                Log.Information("Current main releases is {currentVersion}", last);
+                Log.Information("Current main releases is {currentVersion}", currentVersions.VersionGrouped[groupKey].Last());
             }
             else
             {
-                Log.Information("Current {env} is {currentVersion}", allVersion.Key, last);
+                Log.Information("Current {env} is {currentVersion}", groupKey, currentVersions.VersionGrouped[groupKey].Last());
             }
+        }
+
+        if (!bumps.Any())
+        {
+            Assert.Fail("bump is empty");
+            return;
+        }
+
+        bool hasMainBump = false;
+        bool hasPrerelBump = false;
+        KeyValuePair<string, int>? majorBump = null;
+        KeyValuePair<string, int>? minorBump = null;
+        KeyValuePair<string, int>? patchBump = null;
+        KeyValuePair<string, int>? prerelBump = null;
+        foreach (var bump in bumps)
+        {
+            if (bump.Key == "major")
+            {
+                majorBump = bump;
+                hasMainBump = true;
+            }
+            else if (bump.Key == "minor")
+            {
+                minorBump = bump;
+                hasMainBump = true;
+            }
+            else if (bump.Key == "patch")
+            {
+                patchBump = bump;
+                hasMainBump = true;
+            }
+            else
+            {
+                if (prerelBump.HasValue)
+                {
+                    Assert.Fail("multiple prerel bumps");
+                    return;
+                }
+                prerelBump = bump;
+                hasPrerelBump = true;
+            }
+        }
+
+        foreach (var bump in bumps)
+        {
+            Log.Information("Bump {env} with {val}", bump.Key, "+" + bump.Value.ToString());
         }
 
         SemVersion versionToBump = null;
-
-        if (versionToBump.IsPrerelease)
+        if (hasPrerelBump)
         {
-            Log.Information("Version to bump is {versionToBump} to {env}", versionToBump, versionToBump.PrereleaseIdentifiers[0].Value.ToLowerInvariant());
-        }
-        else
-        {
-            Log.Information("Version to bump is {versionToBump} to main releases", versionToBump);
-        }
-
-        SemVersion currentVersion = new(0);
-        foreach (var tag in Git.Invoke("tag -l", logOutput: false, logInvocation: false))
-        {
-            if (!SemVersion.TryParse(tag.Text, SemVersionStyles.Strict, out SemVersion tagSemver))
+            if (currentVersions.VersionGrouped.ContainsKey(prerelBump.Value.Key))
             {
-                continue;
-            }
-            if (string.IsNullOrEmpty(bump))
-            {
-                if (tagSemver.IsPrerelease)
-                {
-                    continue;
-                }
+                versionToBump = currentVersions.VersionGrouped[prerelBump.Value.Key].Last();
             }
             else
             {
-                if (!tagSemver.IsPrerelease)
-                {
-                    continue;
-                }
-                if (bump.ToLowerInvariant() != tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant())
-                {
-                    continue;
-                }
+                versionToBump = null;
             }
-            if (SemVersion.ComparePrecedence(currentVersion, tagSemver) > 0)
+        }
+        else
+        {
+            if (currentVersions.VersionGrouped.ContainsKey(""))
             {
-                continue;
+                versionToBump = currentVersions.VersionGrouped[""].Last();
             }
-            currentVersion = tagSemver;
+            else
+            {
+                versionToBump = null;
+            }
+        }
+
+        if (majorBump.HasValue)
+        {
+            versionToBump = versionToBump.WithMajor(versionToBump.Major + majorBump.Value.Value);
+            versionToBump = versionToBump.WithMinor(0);
+            versionToBump = versionToBump.WithPatch(0);
+        }
+        
+        if (minorBump.HasValue)
+        {
+            versionToBump = versionToBump.WithMinor(versionToBump.Minor + minorBump.Value.Value);
+            versionToBump = versionToBump.WithPatch(0);
+        }
+        
+        if (patchBump.HasValue)
+        {
+            versionToBump = versionToBump.WithPatch(versionToBump.Patch + patchBump.Value.Value);
+        }
+
+        if (prerelBump.HasValue)
+        {
+            var prerelNum = ((versionToBump.PrereleaseIdentifiers.Count > 1 ? int.Parse(versionToBump.PrereleaseIdentifiers[1]) : 0) + prerelBump.Value.Value).ToString();
+            versionToBump = versionToBump.WithPrerelease(prerelBump.Value.Key, prerelNum);
+        }
+
+        if (versionToBump.IsPrerelease)
+        {
+            Log.Information("Calculated bump {env} release to {versionToBump}", versionToBump.PrereleaseIdentifiers[0].Value.ToLowerInvariant(), versionToBump);
+        }
+        else
+        {
+            Log.Information("Calculated bump main release to {versionToBump}", versionToBump);
         }
     }
 }

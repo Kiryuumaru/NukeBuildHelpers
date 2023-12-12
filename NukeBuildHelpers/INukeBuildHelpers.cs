@@ -21,6 +21,8 @@ public partial interface INukeBuildHelpers : INukeBuild
     [PathVariable]
     Tool Git => TryGetValue(() => Git);
 
+    protected Target Version { get; }
+
     protected Target Bump { get; }
 
     protected Target BumpAlpha { get; }

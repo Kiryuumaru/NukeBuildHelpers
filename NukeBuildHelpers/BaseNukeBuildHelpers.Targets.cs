@@ -14,21 +14,51 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    Target INukeBuildHelpers.Bump => _ => _.Executes(() => BumpRelease(TargetParams["bump"]));
+    Target INukeBuildHelpers.Version => _ => _
+        .Executes(() =>
+        {
+            var currentVersions = GetCurrentVersions();
+            foreach (var groupKey in currentVersions.GroupKeySorted)
+            {
+                if (string.IsNullOrEmpty(groupKey))
+                {
+                    Log.Information("Current main releases is {currentVersion}", currentVersions.VersionGrouped[groupKey].Last());
+                }
+                else
+                {
+                    Log.Information("Current {env} is {currentVersion}", groupKey, currentVersions.VersionGrouped[groupKey].Last());
+                }
+            }
+        });
 
-    Target INukeBuildHelpers.BumpAlpha => _ => _.Executes(() => BumpRelease("alpha"));
+    Target INukeBuildHelpers.Bump => _ => _.
+        Executes(() =>
+        {
+            Dictionary<string, int> bumps = new();
+            foreach (var arg in TargetParams)
+            {
+                if (int.TryParse(arg.Value, out int bump))
+                {
+                    bumps.Add(arg.Key.ToLowerInvariant(), bump);
+                }
+            }
 
-    Target INukeBuildHelpers.BumpBeta => _ => _.Executes(() => BumpRelease("beta"));
+            BumpRelease(bumps);
+        });
 
-    Target INukeBuildHelpers.BumpRc => _ => _.Executes(() => BumpRelease("rc"));
+    Target INukeBuildHelpers.BumpAlpha => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "alpha", 1 } }));
 
-    Target INukeBuildHelpers.BumpRtm => _ => _.Executes(() => BumpRelease("rtm"));
+    Target INukeBuildHelpers.BumpBeta => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "beta", 1 } }));
 
-    Target INukeBuildHelpers.BumpPrerelease => _ => _.Executes(() => BumpRelease("prerelease"));
+    Target INukeBuildHelpers.BumpRc => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "rc", 1 } }));
 
-    Target INukeBuildHelpers.BumpPatch => _ => _.Executes(() => BumpRelease("patch"));
+    Target INukeBuildHelpers.BumpRtm => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "rtm", 1 } }));
 
-    Target INukeBuildHelpers.BumpMinor => _ => _.Executes(() => BumpRelease("minor"));
+    Target INukeBuildHelpers.BumpPrerelease => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "prerelease", 1 } }));
 
-    Target INukeBuildHelpers.BumpMajor => _ => _.Executes(() => BumpRelease("major"));
+    Target INukeBuildHelpers.BumpPatch => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "patch", 1 } }));
+
+    Target INukeBuildHelpers.BumpMinor => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "minor", 1 } }));
+
+    Target INukeBuildHelpers.BumpMajor => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "major", 1 } }));
 }

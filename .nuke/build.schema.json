@@ -76,7 +76,8 @@
               "Compile",
               "Pack",
               "Prepare",
-              "Publish"
+              "Publish",
+              "Version"
             ]
           }
         },
@@ -102,7 +103,8 @@
               "Compile",
               "Pack",
               "Prepare",
-              "Publish"
+              "Publish",
+              "Version"
             ]
           }
         },
