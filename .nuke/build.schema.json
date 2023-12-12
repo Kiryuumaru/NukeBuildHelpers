@@ -6,10 +6,6 @@
     "build": {
       "type": "object",
       "properties": {
-        "Args": {
-          "type": "string",
-          "description": "Args for target"
-        },
         "Continue": {
           "type": "boolean",
           "description": "Indicates to continue a previously failed build attempt"
@@ -68,12 +64,10 @@
           "items": {
             "type": "string",
             "enum": [
-              "Bump",
               "Compile",
               "Pack",
               "Prepare",
-              "Publish",
-              "Version"
+              "Publish"
             ]
           }
         },
@@ -87,12 +81,10 @@
           "items": {
             "type": "string",
             "enum": [
-              "Bump",
               "Compile",
               "Pack",
               "Prepare",
-              "Publish",
-              "Version"
+              "Publish"
             ]
           }
         },

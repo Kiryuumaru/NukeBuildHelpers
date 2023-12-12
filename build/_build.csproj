@@ -17,6 +17,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NukeBuildHelpers\NukeBuildHelpers.csproj" />
+    <ProjectReference Include="..\NukeBuildHelpers.SourceGenerators\NukeBuildHelpers.SourceGenerators.csproj"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="Analyzer" />
   </ItemGroup>
 
 </Project>

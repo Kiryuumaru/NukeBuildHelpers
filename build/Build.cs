@@ -14,8 +14,10 @@ using NukeBuildHelpers;
 using Serilog;
 using NukeBuildHelpers.Models;
 using Nuke.Common.Tools.DotNet;
+using NukeBuildHelpers.Attributes;
 
-class Build : BaseNukeBuildHelpers
+[NukeBuildCommonHelpers]
+partial class Build : NukeBuild
 {
     public static int Main () => Execute<Build>(x => x.Pack);
 
@@ -30,8 +32,6 @@ class Build : BaseNukeBuildHelpers
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(Solution.NukeBuildHelpers));
             OutputPath.DeleteDirectory();
-            var appEntries = AppEntryConfigs;
-            var appEntries1 = AppTestConfigs;
             int asc = 1;
         });
 
