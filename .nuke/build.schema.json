@@ -6,6 +6,10 @@
     "build": {
       "type": "object",
       "properties": {
+        "Args": {
+          "type": "string",
+          "description": "Args for target"
+        },
         "Continue": {
           "type": "boolean",
           "description": "Indicates to continue a previously failed build attempt"
@@ -91,10 +95,6 @@
               "Version"
             ]
           }
-        },
-        "TargetArgs": {
-          "type": "string",
-          "description": "Args for target"
         },
         "Verbosity": {
           "type": "string",

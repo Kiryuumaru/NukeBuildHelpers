@@ -23,11 +23,13 @@ public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 
     public IReadOnlyList<AppConfig<AppTestConfig>> AppTestConfigs { get; private set; }
 
-    public IReadOnlyDictionary<string, string> SplitTargetArgs { get; private set; }
+    public IReadOnlyDictionary<string, string> SplitArgs { get; private set; }
+
+    public AllVersions AllVersions { get; private set; }
 
     GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
-    string TargetParams => (this as INukeBuildHelpers).TargetArgs;
+    string Args => (this as INukeBuildHelpers).Args;
 
     Tool Git => (this as INukeBuildHelpers).Git;
 
@@ -43,6 +45,6 @@ public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 
         AppEntryConfigs = GetAppEntries<AppEntryConfig>().AsReadOnly();
         AppTestConfigs = GetAppTests<AppTestConfig>().AsReadOnly();
-        SplitTargetArgs = GetTargetParams().AsReadOnly();
+        SplitArgs = GetTargetArgs().AsReadOnly();
     }
 }

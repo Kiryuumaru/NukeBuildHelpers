@@ -73,12 +73,12 @@ partial class BaseNukeBuildHelpers
         return newConfigs;
     }
 
-    public Dictionary<string, string> GetTargetParams()
+    public Dictionary<string, string> GetTargetArgs()
     {
         Dictionary<string, string> targetParams = new();
-        if ((this as INukeBuildHelpers).TargetArgs != null)
+        if ((this as INukeBuildHelpers).Args != null)
         {
-            foreach (var targetParam in (this as INukeBuildHelpers).TargetArgs.Split(';'))
+            foreach (var targetParam in (this as INukeBuildHelpers).Args.Split(';'))
             {
                 if (string.IsNullOrEmpty(targetParam))
                 {
@@ -97,7 +97,7 @@ partial class BaseNukeBuildHelpers
 
     public string GetTargetParam(string key)
     {
-        var val = GetTargetParams().GetValueOrDefault(key);
+        var val = GetTargetArgs().GetValueOrDefault(key);
         ArgumentNullException.ThrowIfNull(val);
         return val;
     }

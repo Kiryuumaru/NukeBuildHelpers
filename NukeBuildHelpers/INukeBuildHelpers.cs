@@ -13,7 +13,7 @@ namespace NukeBuildHelpers;
 public partial interface INukeBuildHelpers : INukeBuild
 {
     [Parameter("Args for target")]
-    string TargetArgs => TryGetValue(() => TargetArgs);
+    string Args => TryGetValue(() => Args);
 
     [GitRepository]
     GitRepository Repository => TryGetValue(() => Repository);
