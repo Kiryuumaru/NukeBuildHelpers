@@ -2,7 +2,7 @@
   "profiles": {
     "_build": {
       "commandName": "Project",
-      "commandLineArgs": "bump bumpalpha"
+      "commandLineArgs": "bump --target-args 0.1.0-alpha.3"
     }
   }
 }

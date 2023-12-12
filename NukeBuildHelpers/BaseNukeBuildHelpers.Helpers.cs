@@ -76,16 +76,20 @@ partial class BaseNukeBuildHelpers
     public Dictionary<string, string> GetTargetParams()
     {
         Dictionary<string, string> targetParams = new();
-        if ((this as INukeBuildHelpers).TargetParams != null)
+        if ((this as INukeBuildHelpers).TargetArgs != null)
         {
-            foreach (var targetParam in (this as INukeBuildHelpers).TargetParams.Split(';'))
+            foreach (var targetParam in (this as INukeBuildHelpers).TargetArgs.Split(';'))
             {
                 if (string.IsNullOrEmpty(targetParam))
                 {
                     continue;
                 }
-                var split = targetParam.Split('=');
-                targetParams.Add(split[0], split[1]);
+                try
+                {
+                    var split = targetParam.Split('=');
+                    targetParams.Add(split[0], split[1]);
+                }
+                catch { }
             }
         }
         return targetParams;
@@ -141,125 +145,5 @@ partial class BaseNukeBuildHelpers
             VersionGrouped = allVersionGroupDict,
             GroupKeySorted = groupKeySorted,
         };
-    }
-
-    public void BumpRelease(IDictionary<string, int> bumps)
-    {
-        var currentVersions = GetCurrentVersions();
-
-        foreach (var groupKey in currentVersions.GroupKeySorted)
-        {
-            if (string.IsNullOrEmpty(groupKey))
-            {
-                Log.Information("Current main releases is {currentVersion}", currentVersions.VersionGrouped[groupKey].Last());
-            }
-            else
-            {
-                Log.Information("Current {env} is {currentVersion}", groupKey, currentVersions.VersionGrouped[groupKey].Last());
-            }
-        }
-
-        if (!bumps.Any())
-        {
-            Assert.Fail("bump is empty");
-            return;
-        }
-
-        bool hasMainBump = false;
-        bool hasPrerelBump = false;
-        KeyValuePair<string, int>? majorBump = null;
-        KeyValuePair<string, int>? minorBump = null;
-        KeyValuePair<string, int>? patchBump = null;
-        KeyValuePair<string, int>? prerelBump = null;
-        foreach (var bump in bumps)
-        {
-            if (bump.Key == "major")
-            {
-                majorBump = bump;
-                hasMainBump = true;
-            }
-            else if (bump.Key == "minor")
-            {
-                minorBump = bump;
-                hasMainBump = true;
-            }
-            else if (bump.Key == "patch")
-            {
-                patchBump = bump;
-                hasMainBump = true;
-            }
-            else
-            {
-                if (prerelBump.HasValue)
-                {
-                    Assert.Fail("multiple prerel bumps");
-                    return;
-                }
-                prerelBump = bump;
-                hasPrerelBump = true;
-            }
-        }
-
-        foreach (var bump in bumps)
-        {
-            Log.Information("Bump {env} with {val}", bump.Key, "+" + bump.Value.ToString());
-        }
-
-        SemVersion versionToBump = null;
-        if (hasPrerelBump)
-        {
-            if (currentVersions.VersionGrouped.ContainsKey(prerelBump.Value.Key))
-            {
-                versionToBump = currentVersions.VersionGrouped[prerelBump.Value.Key].Last();
-            }
-            else
-            {
-                versionToBump = null;
-            }
-        }
-        else
-        {
-            if (currentVersions.VersionGrouped.ContainsKey(""))
-            {
-                versionToBump = currentVersions.VersionGrouped[""].Last();
-            }
-            else
-            {
-                versionToBump = null;
-            }
-        }
-
-        if (majorBump.HasValue)
-        {
-            versionToBump = versionToBump.WithMajor(versionToBump.Major + majorBump.Value.Value);
-            versionToBump = versionToBump.WithMinor(0);
-            versionToBump = versionToBump.WithPatch(0);
-        }
-        
-        if (minorBump.HasValue)
-        {
-            versionToBump = versionToBump.WithMinor(versionToBump.Minor + minorBump.Value.Value);
-            versionToBump = versionToBump.WithPatch(0);
-        }
-        
-        if (patchBump.HasValue)
-        {
-            versionToBump = versionToBump.WithPatch(versionToBump.Patch + patchBump.Value.Value);
-        }
-
-        if (prerelBump.HasValue)
-        {
-            var prerelNum = ((versionToBump.PrereleaseIdentifiers.Count > 1 ? int.Parse(versionToBump.PrereleaseIdentifiers[1]) : 0) + prerelBump.Value.Value).ToString();
-            versionToBump = versionToBump.WithPrerelease(prerelBump.Value.Key, prerelNum);
-        }
-
-        if (versionToBump.IsPrerelease)
-        {
-            Log.Information("Calculated bump {env} release to {versionToBump}", versionToBump.PrereleaseIdentifiers[0].Value.ToLowerInvariant(), versionToBump);
-        }
-        else
-        {
-            Log.Information("Calculated bump main release to {versionToBump}", versionToBump);
-        }
     }
 }

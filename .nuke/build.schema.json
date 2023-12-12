@@ -65,14 +65,6 @@
             "type": "string",
             "enum": [
               "Bump",
-              "BumpAlpha",
-              "BumpBeta",
-              "BumpMajor",
-              "BumpMinor",
-              "BumpPatch",
-              "BumpPrerelease",
-              "BumpRc",
-              "BumpRtm",
               "Compile",
               "Pack",
               "Prepare",
@@ -92,14 +84,6 @@
             "type": "string",
             "enum": [
               "Bump",
-              "BumpAlpha",
-              "BumpBeta",
-              "BumpMajor",
-              "BumpMinor",
-              "BumpPatch",
-              "BumpPrerelease",
-              "BumpRc",
-              "BumpRtm",
               "Compile",
               "Pack",
               "Prepare",
@@ -107,6 +91,10 @@
               "Version"
             ]
           }
+        },
+        "TargetArgs": {
+          "type": "string",
+          "description": "Args for target"
         },
         "Verbosity": {
           "type": "string",

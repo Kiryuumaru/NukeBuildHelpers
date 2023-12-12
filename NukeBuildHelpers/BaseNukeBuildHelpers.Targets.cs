@@ -14,51 +14,74 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    Target INukeBuildHelpers.Version => _ => _
+    private AllVersions allVersions = null;
+
+    public Target Version => _ => _
+        .Description("Shows the current version from all releases")
         .Executes(() =>
         {
-            var currentVersions = GetCurrentVersions();
-            foreach (var groupKey in currentVersions.GroupKeySorted)
+            allVersions = GetCurrentVersions();
+            Log.Information("Commit: {Value}", Repository.Commit);
+            Log.Information("Branch: {Value}", Repository.Branch);
+            Log.Information("Tags: {Value}", Repository.Tags);
+            foreach (var groupKey in allVersions.GroupKeySorted)
             {
                 if (string.IsNullOrEmpty(groupKey))
                 {
-                    Log.Information("Current main releases is {currentVersion}", currentVersions.VersionGrouped[groupKey].Last());
+                    Log.Information("Current main: {currentVersion}", allVersions.VersionGrouped[groupKey].Last());
                 }
                 else
                 {
-                    Log.Information("Current {env} is {currentVersion}", groupKey, currentVersions.VersionGrouped[groupKey].Last());
+                    Log.Information("Current {env}: {currentVersion}", groupKey, allVersions.VersionGrouped[groupKey].Last());
                 }
             }
         });
 
-    Target INukeBuildHelpers.Bump => _ => _.
-        Executes(() =>
+    public Target Bump => _ => _
+        .Description("Bumps the version by tagging and validating tags")
+        .DependsOn(Version)
+        .OnlyWhenDynamic(() => allVersions != null)
+        .Executes(() =>
         {
-            Dictionary<string, int> bumps = new();
-            foreach (var arg in TargetParams)
+            if (!SemVersion.TryParse(TargetParams, SemVersionStyles.Strict, out SemVersion version))
             {
-                if (int.TryParse(arg.Value, out int bump))
-                {
-                    bumps.Add(arg.Key.ToLowerInvariant(), bump);
-                }
+                Assert.Fail($"{TargetParams} is not a valid semver version");
+                return;
             }
 
-            BumpRelease(bumps);
+            if (version.IsPrerelease)
+            {
+                if (allVersions.VersionGrouped.ContainsKey(version.PrereleaseIdentifiers[0]))
+                {
+                    var lastVersion = allVersions.VersionGrouped[version.PrereleaseIdentifiers[0]].Last();
+                    if (SemVersion.ComparePrecedence(lastVersion, version) == 0)
+                    {
+                        Assert.Fail($"The latest version in the {lastVersion.PrereleaseIdentifiers[0]} releases is already {TargetParams}");
+                        return;
+                    }
+                    if (SemVersion.ComparePrecedence(lastVersion, version) > 0)
+                    {
+                        Assert.Fail($"{TargetParams} is behind the latest version {lastVersion} in the {lastVersion.PrereleaseIdentifiers[0]} releases");
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                if (allVersions.VersionGrouped.ContainsKey(""))
+                {
+                    var lastVersion = allVersions.VersionGrouped[""].Last();
+                    if (SemVersion.ComparePrecedence(lastVersion, version) == 0)
+                    {
+                        Assert.Fail($"The latest version in the main releases is already {TargetParams}");
+                        return;
+                    }
+                    if (SemVersion.ComparePrecedence(lastVersion, version) > 0)
+                    {
+                        Assert.Fail($"{TargetParams} is behind the latest version {lastVersion} in the main releases");
+                        return;
+                    }
+                }
+            }
         });
-
-    Target INukeBuildHelpers.BumpAlpha => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "alpha", 1 } }));
-
-    Target INukeBuildHelpers.BumpBeta => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "beta", 1 } }));
-
-    Target INukeBuildHelpers.BumpRc => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "rc", 1 } }));
-
-    Target INukeBuildHelpers.BumpRtm => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "rtm", 1 } }));
-
-    Target INukeBuildHelpers.BumpPrerelease => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "prerelease", 1 } }));
-
-    Target INukeBuildHelpers.BumpPatch => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "patch", 1 } }));
-
-    Target INukeBuildHelpers.BumpMinor => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "minor", 1 } }));
-
-    Target INukeBuildHelpers.BumpMajor => _ => _.Executes(() => BumpRelease(new Dictionary<string, int>() { { "major", 1 } }));
 }

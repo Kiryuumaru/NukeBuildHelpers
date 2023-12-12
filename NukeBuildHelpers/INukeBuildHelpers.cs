@@ -12,8 +12,8 @@ namespace NukeBuildHelpers;
 
 public partial interface INukeBuildHelpers : INukeBuild
 {
-    [Parameter("Parameters for target")]
-    public string TargetParams => TryGetValue(() => TargetParams);
+    [Parameter("Args for target")]
+    string TargetArgs => TryGetValue(() => TargetArgs);
 
     [GitRepository]
     GitRepository Repository => TryGetValue(() => Repository);
@@ -21,23 +21,7 @@ public partial interface INukeBuildHelpers : INukeBuild
     [PathVariable]
     Tool Git => TryGetValue(() => Git);
 
-    protected Target Version { get; }
+    Target Version { get; }
 
-    protected Target Bump { get; }
-
-    protected Target BumpAlpha { get; }
-
-    protected Target BumpBeta { get; }
-
-    protected Target BumpRc { get; }
-
-    protected Target BumpRtm { get; }
-
-    protected Target BumpPrerelease { get; }
-
-    protected Target BumpPatch { get; }
-
-    protected Target BumpMinor { get; }
-
-    protected Target BumpMajor { get; }
+    Target Bump { get; }
 }
