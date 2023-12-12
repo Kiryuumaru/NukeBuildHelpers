@@ -56,6 +56,11 @@ partial class BaseNukeBuildHelpers
 
             if (version.IsPrerelease)
             {
+                if (Repository.Branch.ToLowerInvariant() != version.PrereleaseIdentifiers[0])
+                {
+                    Assert.Fail($"{Args} should bump on {version.PrereleaseIdentifiers[0]} branch");
+                    return;
+                }
                 if (AllVersions.VersionGrouped.ContainsKey(version.PrereleaseIdentifiers[0]))
                 {
                     var lastVersion = AllVersions.VersionGrouped[version.PrereleaseIdentifiers[0]].Last();
@@ -73,6 +78,13 @@ partial class BaseNukeBuildHelpers
             }
             else
             {
+                if (Repository.Branch.ToLowerInvariant() != "master" &&
+                    Repository.Branch.ToLowerInvariant() != "main" &&
+                    Repository.Branch.ToLowerInvariant() != "prod")
+                {
+                    Assert.Fail($"{Args} should bump on main branch");
+                    return;
+                }
                 if (AllVersions.VersionGrouped.ContainsKey(""))
                 {
                     var lastVersion = AllVersions.VersionGrouped[""].Last();
