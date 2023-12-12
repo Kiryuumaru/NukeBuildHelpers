@@ -1,5 +1,6 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Git;
+using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities;
@@ -14,6 +15,10 @@ namespace NukeBuildHelpers;
 
 public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
+    public AbsolutePath PublishPath { get; } = RootDirectory / "publish";
+
+    public AbsolutePath ArtifactsPath { get; } = RootDirectory / "publish" / "artifacts";
+
     public IReadOnlyList<AppConfig<AppEntryConfig>> AppEntryConfigs { get; private set; }
 
     public IReadOnlyList<AppConfig<AppTestConfig>> AppTestConfigs { get; private set; }

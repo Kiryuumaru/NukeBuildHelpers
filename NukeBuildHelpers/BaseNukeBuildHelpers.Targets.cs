@@ -14,94 +14,21 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    Target INukeBuildHelpers.Bump => _ => _
-        .Executes(() =>
-        {
-            var bumpVal = TargetParams["bump"];
+    Target INukeBuildHelpers.Bump => _ => _.Executes(() => BumpRelease(TargetParams["bump"]));
 
-            if (string.IsNullOrEmpty(bumpVal))
-            {
-                Assert.Fail("bump value is empty");
-                return;
-            }
+    Target INukeBuildHelpers.BumpAlpha => _ => _.Executes(() => BumpRelease("alpha"));
 
-            Dictionary<string, List<SemVersion>> allVersions = new();
-            foreach (var tag in Git.Invoke("tag -l", logOutput: false, logInvocation: false))
-            {
-                if (!SemVersion.TryParse(tag.Text, SemVersionStyles.Strict, out SemVersion tagSemver))
-                {
-                    continue;
-                }
-                string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
-                if (allVersions.TryGetValue(env, out List<SemVersion> versions))
-                {
-                    versions.Add(tagSemver);
-                }
-                else
-                {
-                    versions = new()
-                    {
-                        tagSemver
-                    };
-                    allVersions.Add(env, versions);
-                }
-            }
+    Target INukeBuildHelpers.BumpBeta => _ => _.Executes(() => BumpRelease("beta"));
 
-            SemVersion versionToBump = null;
-            foreach (var allVersion in allVersions.ToList().OrderByDescending(i => i.Key))
-            {
-                allVersion.Value.Sort(SemVersion.PrecedenceComparer);
-                if (string.IsNullOrEmpty(allVersion.Key))
-                {
-                    Log.Information("Last version for main releases is {currentVersion}", allVersion.Value.Last());
-                }
-                else
-                {
-                    Log.Information("Last version for {env} is {currentVersion}", allVersion.Key, allVersion.Value.Last());
-                }
-            }
+    Target INukeBuildHelpers.BumpRc => _ => _.Executes(() => BumpRelease("rc"));
 
-            if (versionToBump.IsPrerelease)
-            {
-                Log.Information("Version to bump is {versionToBump} to {env}", versionToBump, versionToBump.PrereleaseIdentifiers[0].Value.ToLowerInvariant());
-            }
-            else
-            {
-                Log.Information("Version to bump is {versionToBump} to main releases", versionToBump);
-            }
+    Target INukeBuildHelpers.BumpRtm => _ => _.Executes(() => BumpRelease("rtm"));
 
-            SemVersion currentVersion = new(0);
-            foreach (var tag in Git.Invoke("tag -l", logOutput: false, logInvocation: false))
-            {
-                if (!SemVersion.TryParse(tag.Text, SemVersionStyles.Strict, out SemVersion tagSemver))
-                {
-                    continue;
-                }
-                if (string.IsNullOrEmpty(bumpVal))
-                {
-                    if (tagSemver.IsPrerelease)
-                    {
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (!tagSemver.IsPrerelease)
-                    {
-                        continue;
-                    }
-                    if (bumpVal.ToLowerInvariant() != tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant())
-                    {
-                        continue;
-                    }
-                }
-                if (SemVersion.ComparePrecedence(currentVersion, tagSemver) > 0)
-                {
-                    continue;
-                }
-                currentVersion = tagSemver;
-            }
+    Target INukeBuildHelpers.BumpPrerelease => _ => _.Executes(() => BumpRelease("prerelease"));
 
-            int sss = 1;
-        });
+    Target INukeBuildHelpers.BumpPatch => _ => _.Executes(() => BumpRelease("patch"));
+
+    Target INukeBuildHelpers.BumpMinor => _ => _.Executes(() => BumpRelease("minor"));
+
+    Target INukeBuildHelpers.BumpMajor => _ => _.Executes(() => BumpRelease("major"));
 }

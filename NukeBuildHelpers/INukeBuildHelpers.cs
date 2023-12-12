@@ -22,4 +22,20 @@ public partial interface INukeBuildHelpers : INukeBuild
     Tool Git => TryGetValue(() => Git);
 
     protected Target Bump { get; }
+
+    protected Target BumpAlpha { get; }
+
+    protected Target BumpBeta { get; }
+
+    protected Target BumpRc { get; }
+
+    protected Target BumpRtm { get; }
+
+    protected Target BumpPrerelease { get; }
+
+    protected Target BumpPatch { get; }
+
+    protected Target BumpMinor { get; }
+
+    protected Target BumpMajor { get; }
 }
