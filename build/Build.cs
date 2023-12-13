@@ -26,12 +26,13 @@ public partial class Build : NukeBuild
 
     readonly AbsolutePath OutputPath = RootDirectory / "output";
 
-    Target Prepare => _ => _
+    Target Prepare => _ => _    
         .Executes(() =>
         {
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(Solution.NukeBuildHelpers));
             OutputPath.DeleteDirectory();
+            var ss = Salple();
             int asc = 1;
         });
 
