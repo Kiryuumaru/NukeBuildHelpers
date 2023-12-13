@@ -89,6 +89,10 @@ namespace NukeBuildHelpers.SourceGenerators
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
+            var appEntries = context.AdditionalTextsProvider
+                .Where(a => a.Path.EndsWith("appentry.json"))
+                .Select((a, c) => (a.Path, a.GetText(c)!.ToString()));
+
             // Get all class declarations
             IncrementalValuesProvider<INamedTypeSymbol> typeSymbols =
                 context.SyntaxProvider
