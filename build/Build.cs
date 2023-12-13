@@ -56,8 +56,8 @@ public partial class Build : NukeBuild
                 .SetNoBuild(true)
                 .SetIncludeSymbols(true)
                 .SetSymbolPackageFormat("snupkg")
-                .SetVersion("1.2.3-prerelease.1")
-                .SetPackageReleaseNotes("Helloooow")
+                .SetVersion("0.1.0-prerelease.1")
+                .SetPackageReleaseNotes("* Initial prerelease")
                 .SetOutputDirectory(OutputPath / "build"));
         });
 
