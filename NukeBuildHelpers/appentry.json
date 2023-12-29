@@ -2,6 +2,6 @@
   "enable": true,
   "id": "nuke_build_helpers",
   "name": "NukeBuildHelpers",
-  "releaseTagging": "no_id",
+  "mainRelease": true,
   "buildsOn": "ubuntu-22.04"
 }

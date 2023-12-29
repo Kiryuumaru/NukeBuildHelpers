@@ -33,17 +33,4 @@
 		<PackageReference Include="Semver" Version="2.3.0" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\NukeBuildHelpers.SourceGenerators\NukeBuildHelpers.SourceGenerators.csproj"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="Analyzer"
-                      PrivateAssets="contentfiles;build" />
-	</ItemGroup>
-
-  <ItemGroup Label="Package">
-    <None Include="..\NukeBuildHelpers.SourceGenerators\bin\$(Configuration)\netstandard2.0\NukeBuildHelpers.SourceGenerators.dll"
-          PackagePath="analyzers\dotnet\roslyn4.0\cs"
-          Pack="true"
-          Visible="false" />
-  </ItemGroup>
 </Project>

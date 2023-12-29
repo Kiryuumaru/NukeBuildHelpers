@@ -16,8 +16,7 @@ using NukeBuildHelpers.Models;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers.Attributes;
 
-[NukeBuildCommonHelpers]
-public partial class Build : NukeBuild
+public partial class Build : BaseNukeBuildHelpers
 {
     public static int Main () => Execute<Build>(x => x.Pack);
 
@@ -32,7 +31,6 @@ public partial class Build : NukeBuild
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(Solution.NukeBuildHelpers));
             OutputPath.DeleteDirectory();
-            var ss = Salple();
             int asc = 1;
         });
 

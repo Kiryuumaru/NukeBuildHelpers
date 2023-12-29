@@ -8,16 +8,13 @@ using NukeBuildHelpers.Enums;
 
 namespace NukeBuildHelpers.Models;
 
-public class AppTestConfig
+public class AppTestEntryConfig
 {
     public bool Enable { get; set; }
 
-    public string Id { get; set; }
+    public string AppEntryId { get; set; }
 
     public string Name { get; set; }
-
-    [JsonConverter(typeof(JsonStringEnumMemberConverter))]
-    public ReleaseTagging ReleaseTagging { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumMemberConverter))]
     public BuildsOnType BuildsOn { get; set; }

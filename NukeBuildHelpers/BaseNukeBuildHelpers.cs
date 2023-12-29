@@ -1,4 +1,5 @@
-﻿using Nuke.Common;
+﻿using ICSharpCode.SharpZipLib.Zip;
+using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
@@ -15,36 +16,52 @@ namespace NukeBuildHelpers;
 
 public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
-    public AbsolutePath PublishPath { get; } = RootDirectory / "publish";
-
-    public AbsolutePath ArtifactsPath { get; } = RootDirectory / "publish" / "artifacts";
-
-    public IReadOnlyList<AppConfig<AppEntryConfig>> AppEntryConfigs { get; private set; }
-
-    public IReadOnlyList<AppConfig<AppTestConfig>> AppTestConfigs { get; private set; }
-
-    public IReadOnlyDictionary<string, string> SplitArgs { get; private set; }
-
-    public AllVersions AllVersions { get; private set; }
-
     GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
     string Args => (this as INukeBuildHelpers).Args;
 
     Tool Git => (this as INukeBuildHelpers).Git;
 
+    public static AbsolutePath PublishPath => RootDirectory / "publish";
+
+    public static AbsolutePath ArtifactsPath => PublishPath / "artifacts";
+
+    private IReadOnlyDictionary<string, string> splitArgs;
+    public IReadOnlyDictionary<string, string> SplitArgs
+    {
+        get
+        {
+            if (splitArgs == null)
+            {
+                Dictionary<string, string> targetParams = new();
+                if ((this as INukeBuildHelpers).Args != null)
+                {
+                    foreach (var targetParam in (this as INukeBuildHelpers).Args.Split(';'))
+                    {
+                        if (string.IsNullOrEmpty(targetParam))
+                        {
+                            continue;
+                        }
+                        try
+                        {
+                            var split = targetParam.Split('=');
+                            targetParams.Add(split[0], split[1]);
+                        }
+                        catch { }
+                    }
+                }
+
+                splitArgs = targetParams;
+            }
+
+            return splitArgs;
+        }
+    }
+
     static readonly JsonSerializerOptions jsonSerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true
     };
-
-    protected override void OnBuildInitialized()
-    {
-        base.OnBuildInitialized();
-
-        AppEntryConfigs = GetAppEntries<AppEntryConfig>().AsReadOnly();
-        AppTestConfigs = GetAppTests<AppTestConfig>().AsReadOnly();
-        SplitArgs = GetTargetArgs().AsReadOnly();
-    }
 }

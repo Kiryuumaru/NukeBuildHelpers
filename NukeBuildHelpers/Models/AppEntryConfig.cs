@@ -16,8 +16,7 @@ public class AppEntryConfig
 
     public string Name { get; set; }
 
-    [JsonConverter(typeof(JsonStringEnumMemberConverter))]
-    public ReleaseTagging ReleaseTagging { get; set; }
+    public bool MainRelease { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumMemberConverter))]
     public BuildsOnType BuildsOn { get; set; }
