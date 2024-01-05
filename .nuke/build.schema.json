@@ -70,8 +70,11 @@
             "enum": [
               "Bump",
               "Compile",
+              "DeleteOriginTags",
+              "Fetch",
               "GenerateAppEntry",
               "GenerateAppTestEntry",
+              "GenerateVersionFiles",
               "GithubPublish",
               "Pack",
               "Prepare",
@@ -92,8 +95,11 @@
             "enum": [
               "Bump",
               "Compile",
+              "DeleteOriginTags",
+              "Fetch",
               "GenerateAppEntry",
               "GenerateAppTestEntry",
+              "GenerateVersionFiles",
               "GithubPublish",
               "Pack",
               "Prepare",

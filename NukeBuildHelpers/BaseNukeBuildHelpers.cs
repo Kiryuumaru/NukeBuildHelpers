@@ -1,5 +1,7 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using Nuke.Common;
+using Nuke.Common.CI.AzurePipelines;
+using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
@@ -16,15 +18,15 @@ namespace NukeBuildHelpers;
 
 public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
+    public static AbsolutePath PublishPath => RootDirectory / "publish";
+
+    public static AbsolutePath ArtifactsPath => PublishPath / "artifacts";
+
     GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
     string Args => (this as INukeBuildHelpers).Args;
 
     Tool Git => (this as INukeBuildHelpers).Git;
-
-    public static AbsolutePath PublishPath => RootDirectory / "publish";
-
-    public static AbsolutePath ArtifactsPath => PublishPath / "artifacts";
 
     private IReadOnlyDictionary<string, string> splitArgs;
     public IReadOnlyDictionary<string, string> SplitArgs
@@ -47,7 +49,10 @@ public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
                             var split = targetParam.Split('=');
                             targetParams.Add(split[0], split[1]);
                         }
-                        catch { }
+                        catch
+                        {
+                            targetParams.Add(targetParam, null);
+                        }
                     }
                 }
 

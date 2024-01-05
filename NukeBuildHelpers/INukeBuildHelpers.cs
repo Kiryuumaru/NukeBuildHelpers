@@ -1,4 +1,5 @@
 ﻿using Nuke.Common;
+using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
@@ -24,4 +25,6 @@ public partial interface INukeBuildHelpers : INukeBuild
     Target Version { get; }
 
     Target Bump { get; }
+
+    Target DeleteOriginTags { get; }
 }

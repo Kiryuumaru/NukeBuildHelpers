@@ -40,154 +40,144 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> appEntryConfigs;
-    private IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> GetAppEntryConfigs(bool cache = true)
+    private static IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> GetAppEntryConfigs()
     {
-        if (appEntryConfigs == null || !cache)
+        Dictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> configs = new();
+
+        bool hasMainReleaseEntry = false;
+        List<AppConfig<AppEntryConfig>> appEntries = new();
+        foreach (var config in GetConfigs("appentry*.json"))
         {
-            Dictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> configs = new();
-
-            bool hasMainReleaseEntry = false;
-            List<AppConfig<AppEntryConfig>> appEntries = new();
-            foreach (var config in GetConfigs("appentry*.json"))
+            var appEntryConfig = JsonSerializer.Deserialize<AppEntryConfig>(config.Json, jsonSerializerOptions);
+            if (!appEntryConfig.Enable)
             {
-                var appEntryConfig = JsonSerializer.Deserialize<AppEntryConfig>(config.Json, jsonSerializerOptions);
-                if (!appEntryConfig.Enable)
-                {
-                    continue;
-                }
-                if (appEntryConfig.MainRelease)
-                {
-                    if (hasMainReleaseEntry)
-                    {
-                        throw new Exception("Contains multiple main release app entry");
-                    }
-                    hasMainReleaseEntry = true;
-                }
-                if (string.IsNullOrEmpty(appEntryConfig.Id))
-                {
-                    throw new Exception($"App entry contains null or empty id \"{config.AbsolutePath}\"");
-                }
-                appEntries.Add(new()
-                {
-                    Config = appEntryConfig,
-                    Json = config.Json,
-                    AbsolutePath = config.AbsolutePath
-                });
+                continue;
             }
-
-            List<AppConfig<AppTestEntryConfig>> appTestEntries = new();
-            foreach (var config in GetConfigs("apptestentry*.json"))
+            if (appEntryConfig.MainRelease)
             {
-                var appTestEntryConfig = JsonSerializer.Deserialize<AppTestEntryConfig>(config.Json, jsonSerializerOptions);
-                if (!appTestEntryConfig.Enable)
+                if (hasMainReleaseEntry)
                 {
-                    continue;
+                    throw new Exception("Contains multiple main release app entry");
                 }
-                if (string.IsNullOrEmpty(appTestEntryConfig.AppEntryId))
-                {
-                    throw new Exception($"App test entry contains null or empty app entry id \"{config.AbsolutePath}\"");
-                }
-                appTestEntries.Add(new()
-                {
-                    Config = appTestEntryConfig,
-                    Json = config.Json,
-                    AbsolutePath = config.AbsolutePath
-                });
+                hasMainReleaseEntry = true;
             }
-
-            foreach (var appEntry in appEntries)
+            if (string.IsNullOrEmpty(appEntryConfig.Id))
             {
-                if (configs.ContainsKey(appEntry.Config.Id))
-                {
-                    throw new Exception($"Contains multiple app entry id \"{appEntry.Config.Id}\"");
-                }
-                var appTestEntriesFound = appTestEntries
-                    .Where(at => at.Config.AppEntryId == appEntry.Config.Id)
-                    .ToList()
-                    .AsReadOnly();
-                configs.Add(appEntry.Config.Id, (appEntry, appTestEntriesFound));
-                appTestEntries.RemoveAll(at => at.Config.AppEntryId == appEntry.Config.Id);
+                throw new Exception($"App entry contains null or empty id \"{config.AbsolutePath}\"");
             }
-
-            if (appTestEntries.Count > 0)
+            appEntries.Add(new()
             {
-                foreach (var appTestEntry in appTestEntries)
-                {
-                    Assert.Fail($"App entry id \"{appTestEntry.Config.AppEntryId}\" does not exist, from app test entry \"{appTestEntry.AbsolutePath}\"");
-                }
-                throw new Exception("Some app test entry has non-existence app entry id");
-            }
-
-            appEntryConfigs = configs;
+                Config = appEntryConfig,
+                Json = config.Json,
+                AbsolutePath = config.AbsolutePath
+            });
         }
 
-        return appEntryConfigs;
+        List<AppConfig<AppTestEntryConfig>> appTestEntries = new();
+        foreach (var config in GetConfigs("apptestentry*.json"))
+        {
+            var appTestEntryConfig = JsonSerializer.Deserialize<AppTestEntryConfig>(config.Json, jsonSerializerOptions);
+            if (!appTestEntryConfig.Enable)
+            {
+                continue;
+            }
+            if (string.IsNullOrEmpty(appTestEntryConfig.AppEntryId))
+            {
+                throw new Exception($"App test entry contains null or empty app entry id \"{config.AbsolutePath}\"");
+            }
+            appTestEntries.Add(new()
+            {
+                Config = appTestEntryConfig,
+                Json = config.Json,
+                AbsolutePath = config.AbsolutePath
+            });
+        }
+
+        foreach (var appEntry in appEntries)
+        {
+            if (configs.ContainsKey(appEntry.Config.Id))
+            {
+                throw new Exception($"Contains multiple app entry id \"{appEntry.Config.Id}\"");
+            }
+            var appTestEntriesFound = appTestEntries
+                .Where(at => at.Config.AppEntryId == appEntry.Config.Id)
+                .ToList()
+                .AsReadOnly();
+            configs.Add(appEntry.Config.Id, (appEntry, appTestEntriesFound));
+            appTestEntries.RemoveAll(at => at.Config.AppEntryId == appEntry.Config.Id);
+        }
+
+        if (appTestEntries.Count > 0)
+        {
+            foreach (var appTestEntry in appTestEntries)
+            {
+                Assert.Fail($"App entry id \"{appTestEntry.Config.AppEntryId}\" does not exist, from app test entry \"{appTestEntry.AbsolutePath}\"");
+            }
+            throw new Exception("Some app test entry has non-existence app entry id");
+        }
+
+        return configs;
     }
 
-    private AllVersions allVersions;
-    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> appEntryConfigs, bool cache = true)
+    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> appEntryConfigs)
     {
-        if (allVersions == null || !cache)
+        GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
+        List<SemVersion> allVersionList = new();
+        Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
+        List<string> groupKeySorted = new();
+        string basePeel = "refs/tags/";
+        foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
         {
-            GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
-            List<SemVersion> allVersionList = new();
-            Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
-            List<string> groupKeySorted = new();
-            foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
+            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+            string tag;
+            if (appEntry.Entry.Config.MainRelease)
             {
-                string peel;
-                if (appEntry.Entry.Config.MainRelease)
-                {
-                    peel = "refs/tags/";
-                }
-                else if (refs.Text.StartsWith($"refs/tags/{appId.ToLowerInvariant()}"))
-                {
-                    peel = $"refs/tags/{appId.ToLowerInvariant()}";
-                }
-                else
-                {
-                    continue;
-                }
-                string tag = refs.Text[(refs.Text.IndexOf(peel) + peel.Length)..];
-                if (!SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
-                {
-                    continue;
-                }
-                string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
-                if (allVersionGroupDict.TryGetValue(env, out List<SemVersion> versions))
-                {
-                    versions.Add(tagSemver);
-                }
-                else
-                {
-                    versions = new() { tagSemver };
-                    allVersionGroupDict.Add(env, versions);
-                    groupKeySorted.Add(env);
-                }
-                allVersionList.Add(tagSemver);
+                tag = rawTag;
             }
-            groupKeySorted.Sort();
-            if (groupKeySorted.Count > 0 && groupKeySorted.First() == "")
+            else if (rawTag.StartsWith(appId.ToLowerInvariant()))
             {
-                var toMove = groupKeySorted.First();
-                groupKeySorted.Remove(toMove);
-                groupKeySorted.Add(toMove);
+                tag = rawTag[(rawTag.IndexOf(appId.ToLowerInvariant()) + appId.Length + 1)..];
             }
-            foreach (var groupKey in groupKeySorted)
+            else
             {
-                var allVersion = allVersionGroupDict[groupKey];
-                allVersion.Sort(SemVersion.PrecedenceComparer);
+                continue;
             }
-            allVersions = new()
+            if (!SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
             {
-                VersionList = allVersionList,
-                VersionGrouped = allVersionGroupDict,
-                GroupKeySorted = groupKeySorted,
-            };
+                continue;
+            }
+            string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
+            if (allVersionGroupDict.TryGetValue(env, out List<SemVersion> versions))
+            {
+                versions.Add(tagSemver);
+            }
+            else
+            {
+                versions = new() { tagSemver };
+                allVersionGroupDict.Add(env, versions);
+                groupKeySorted.Add(env);
+            }
+            allVersionList.Add(tagSemver);
+        }
+        groupKeySorted.Sort();
+        if (groupKeySorted.Count > 0 && groupKeySorted.First() == "")
+        {
+            var toMove = groupKeySorted.First();
+            groupKeySorted.Remove(toMove);
+            groupKeySorted.Add(toMove);
+        }
+        foreach (var groupKey in groupKeySorted)
+        {
+            var allVersion = allVersionGroupDict[groupKey];
+            allVersion.Sort(SemVersion.PrecedenceComparer);
         }
 
-        return allVersions;
+        return new()
+        {
+            VersionList = allVersionList,
+            VersionGrouped = allVersionGroupDict,
+            GroupKeySorted = groupKeySorted,
+        };
     }
 
     private static void GetOrFail<T>(Func<T> valFactory, out T valOut)
