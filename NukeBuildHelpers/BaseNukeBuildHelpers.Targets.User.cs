@@ -32,7 +32,7 @@ partial class BaseNukeBuildHelpers
                 {
                     ("App Id", HorizontalAlignment.Right),
                     ("Environment", HorizontalAlignment.Center),
-                    ("Current Version", HorizontalAlignment.Left)
+                    ("Current Version", HorizontalAlignment.Right)
                 };
             List<List<string>> rows = new();
 
@@ -42,6 +42,8 @@ partial class BaseNukeBuildHelpers
 
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
+
+                bool firstEntryRow = true;
 
                 if (allVersions.GroupKeySorted.Any())
                 {
@@ -56,7 +58,8 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        rows.Add(new List<string> { appId, env, allVersions.VersionGrouped[groupKey].Last().ToString() });
+                        rows.Add(new List<string> { firstEntryRow ? appId : "", env, allVersions.VersionGrouped[groupKey].Last().ToString() });
+                        firstEntryRow = false;
                     }
                 }
                 else

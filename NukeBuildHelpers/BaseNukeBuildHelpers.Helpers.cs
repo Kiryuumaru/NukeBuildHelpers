@@ -306,14 +306,14 @@ partial class BaseNukeBuildHelpers
             {
                 string rowTemplate = "{" + i.ToString() + "}";
                 string rowElement = row.ElementAt(i);
-                string inCell = columns[i].Alignment switch
+                int rowWidth = rowElement?.Length ?? 0;
+                textRow += columns[i].Alignment switch
                 {
-                    HorizontalAlignment.Left => rowElement.PadLeft(columns[i].Length),
-                    HorizontalAlignment.Center => rowElement.PadCenter(columns[i].Length),
-                    HorizontalAlignment.Right => rowElement.PadRight(columns[i].Length),
+                    HorizontalAlignment.Left => rowTemplate.PadLeft(columns[i].Length, rowWidth) + " ║ ",
+                    HorizontalAlignment.Center => rowTemplate.PadCenter(columns[i].Length, rowWidth) + " ║ ",
+                    HorizontalAlignment.Right => rowTemplate.PadRight(columns[i].Length, rowWidth) + " ║ ",
                     _ => throw new NotImplementedException()
                 };
-                textRow += inCell.Replace(rowElement, rowTemplate) + " ║ ";
             }
             Log.Information(textRow, row.Select(i => i as object).ToArray());
         }
