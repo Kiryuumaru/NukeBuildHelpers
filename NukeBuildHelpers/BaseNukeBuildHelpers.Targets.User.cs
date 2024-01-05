@@ -5,6 +5,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
 using Octokit;
 using Semver;
@@ -17,53 +18,6 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    public Target GenerateAppEntry => _ => _
-        .Description("Generates app entry template, with --args \"{path}\"")
-        .Executes(() => {
-            string pathRaw = Args;
-
-            AbsolutePath absolutePath = RootDirectory / "appentry.sample.json";
-            if (!string.IsNullOrEmpty(pathRaw))
-            {
-                absolutePath = AbsolutePath.Create(absolutePath);
-            }
-
-            Log.Information("Generating app config to \"{path}\"", absolutePath);
-
-            AppEntryConfig config = new()
-            {
-                MainRelease = true,
-                BuildsOn = Enums.BuildsOnType.Ubuntu2204
-            };
-
-            File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
-
-            Log.Information("Generate done");
-        });
-
-    public Target GenerateAppTestEntry => _ => _
-        .Description("Generates app test entry template, with --args \"{path}\"")
-        .Executes(() => {
-            string pathRaw = Args;
-
-            AbsolutePath absolutePath = RootDirectory / "apptestentry.sample.json";
-            if (!string.IsNullOrEmpty(pathRaw))
-            {
-                absolutePath = AbsolutePath.Create(absolutePath);
-            }
-
-            Log.Information("Generating app config to \"{path}\"", absolutePath);
-
-            AppTestEntryConfig config = new()
-            {
-                BuildsOn = Enums.BuildsOnType.Ubuntu2204
-            };
-
-            File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
-
-            Log.Information("Generate done");
-        });
-
     public Target Version => _ => _
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
         .Executes(() =>
@@ -73,29 +27,45 @@ partial class BaseNukeBuildHelpers
 
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
-            Log.Information("Tags: {Value}", Repository.Tags);
 
-            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : new List<string>() { "" })
+            List<(string Text, HorizontalAlignment Alignment)> headers = new()
+                {
+                    ("App Id", HorizontalAlignment.Right),
+                    ("Environment", HorizontalAlignment.Center),
+                    ("Current Version", HorizontalAlignment.Left)
+                };
+            List<List<string>> rows = new();
+
+            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
 
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
 
-                foreach (var groupKey in allVersions.GroupKeySorted)
+                if (allVersions.GroupKeySorted.Any())
                 {
-                    string env;
-                    if (string.IsNullOrEmpty(groupKey))
+                    foreach (var groupKey in allVersions.GroupKeySorted)
                     {
-                        env = "main";
+                        string env;
+                        if (string.IsNullOrEmpty(groupKey))
+                        {
+                            env = "main";
+                        }
+                        else
+                        {
+                            env = groupKey;
+                        }
+                        rows.Add(new List<string> { appId, env, allVersions.VersionGrouped[groupKey].Last().ToString() });
                     }
-                    else
-                    {
-                        env = groupKey;
-                    }
-                    Log.Information("{appId} {env}: {currentVersion}", appId, env, allVersions.VersionGrouped[groupKey].Last());
+                }
+                else
+                {
+                    rows.Add(new List<string> { appId, null, null });
                 }
             }
+
+            LogInfoTable(headers, rows.ToArray());
         });
 
     public Target Bump => _ => _
@@ -123,7 +93,7 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntryConfig);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
 
-                Log.Information("Validating bump {appId} version {version}...", appId, versionRaw);
+                Log.Information("Validating {appId} bump version {version}...", appId, versionRaw);
 
                 GetOrFail(versionRaw, out SemVersion version);
 
@@ -190,6 +160,52 @@ partial class BaseNukeBuildHelpers
             Log.Information("Pushing bump...");
             Git.Invoke("push origin " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
             Log.Information("Bump done");
+        });
+    public Target GenerateAppEntry => _ => _
+        .Description("Generates app entry template, with --args \"{path}\"")
+        .Executes(() => {
+            string pathRaw = Args;
+
+            AbsolutePath absolutePath = RootDirectory / "appentry.sample.json";
+            if (!string.IsNullOrEmpty(pathRaw))
+            {
+                absolutePath = AbsolutePath.Create(absolutePath);
+            }
+
+            Log.Information("Generating app config to \"{path}\"", absolutePath);
+
+            AppEntryConfig config = new()
+            {
+                MainRelease = true,
+                BuildsOn = Enums.BuildsOnType.Ubuntu2204
+            };
+
+            File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
+
+            Log.Information("Generate done");
+        });
+
+    public Target GenerateAppTestEntry => _ => _
+        .Description("Generates app test entry template, with --args \"{path}\"")
+        .Executes(() => {
+            string pathRaw = Args;
+
+            AbsolutePath absolutePath = RootDirectory / "apptestentry.sample.json";
+            if (!string.IsNullOrEmpty(pathRaw))
+            {
+                absolutePath = AbsolutePath.Create(absolutePath);
+            }
+
+            Log.Information("Generating app config to \"{path}\"", absolutePath);
+
+            AppTestEntryConfig config = new()
+            {
+                BuildsOn = Enums.BuildsOnType.Ubuntu2204
+            };
+
+            File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
+
+            Log.Information("Generate done");
         });
 
     public Target Fetch => _ => _

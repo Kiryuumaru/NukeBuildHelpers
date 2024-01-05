@@ -1,4 +1,4 @@
-using Nuke.Common;
+﻿using Nuke.Common;
 using Nuke.Common.IO;
 using System.Text.Json;
 using NuGet.Packaging;
@@ -7,6 +7,10 @@ using NukeBuildHelpers.Models;
 using Semver;
 using Serilog;
 using YamlDotNet.Core.Tokens;
+using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Common;
+using static System.Net.Mime.MediaTypeNames;
+using System.Runtime.CompilerServices;
 
 namespace NukeBuildHelpers;
 
@@ -263,5 +267,56 @@ partial class BaseNukeBuildHelpers
             Assert.Fail(ex.Message, ex);
             throw;
         }
+    }
+
+    private static void LogInfoTable(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, params IEnumerable<string>[] rows)
+    {
+        List<(int Length, string Text, HorizontalAlignment Alignment)> columns = new();
+
+        foreach (var (Text, AlignRight) in headers)
+        {
+            columns.Add((Text.Length, Text, AlignRight));
+        }
+
+        foreach (var row in rows)
+        {
+            int rowCount = row.Count();
+            for (int i = 0; i < row.Count(); i++)
+            {
+                var rowElement = row.ElementAt(i);
+                columns[i] = (MathExtensions.Max(rowCount, columns[i].Length, rowElement.Length), columns[i].Text, columns[i].Alignment);
+            }
+        }
+
+        string rowSeparator = "╬";
+        string textHeader = "║";
+        foreach (var (Length, Text, AlignRight) in columns)
+        {
+            rowSeparator += new string('═', Length + 2) + '╬';
+            textHeader += Text.PadCenter(Length + 2) + '║';
+        }
+
+        Log.Information(rowSeparator);
+        Log.Information(textHeader);
+        Log.Information(rowSeparator);
+        foreach (var row in rows)
+        {
+            string textRow = "║ ";
+            for (int i = 0; i < row.Count(); i++)
+            {
+                string rowTemplate = "{" + i.ToString() + "}";
+                string rowElement = row.ElementAt(i);
+                string inCell = columns[i].Alignment switch
+                {
+                    HorizontalAlignment.Left => rowElement.PadLeft(columns[i].Length),
+                    HorizontalAlignment.Center => rowElement.PadCenter(columns[i].Length),
+                    HorizontalAlignment.Right => rowElement.PadRight(columns[i].Length),
+                    _ => throw new NotImplementedException()
+                };
+                textRow += inCell.Replace(rowElement, rowTemplate) + " ║ ";
+            }
+            Log.Information(textRow, row.Select(i => i as object).ToArray());
+        }
+        Log.Information(rowSeparator);
     }
 }
