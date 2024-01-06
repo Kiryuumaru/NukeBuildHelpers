@@ -281,10 +281,11 @@ partial class BaseNukeBuildHelpers
         foreach (var row in rows)
         {
             int rowCount = row.Count();
-            for (int i = 0; i < row.Count(); i++)
+            for (int i = 0; i < rowCount; i++)
             {
                 var rowElement = row.ElementAt(i);
-                columns[i] = (MathExtensions.Max(rowCount, columns[i].Length, rowElement.Length), columns[i].Text, columns[i].Alignment);
+                int rowWidth = rowElement?.Length ?? 0;
+                columns[i] = (MathExtensions.Max(rowCount, columns[i].Length, rowWidth), columns[i].Text, columns[i].Alignment);
             }
         }
 
@@ -301,12 +302,13 @@ partial class BaseNukeBuildHelpers
         Log.Information(rowSeparator);
         foreach (var row in rows)
         {
+            int rowCount = row.Count();
             string textRow = "║ ";
-            for (int i = 0; i < row.Count(); i++)
+            for (int i = 0; i < rowCount; i++)
             {
                 string rowTemplate = "{" + i.ToString() + "}";
                 string rowElement = row.ElementAt(i);
-                int rowWidth = rowElement?.Length ?? 0;
+                int rowWidth = rowElement == null ? 4 : rowElement.Length;
                 textRow += columns[i].Alignment switch
                 {
                     HorizontalAlignment.Left => rowTemplate.PadLeft(columns[i].Length, rowWidth) + " ║ ",
