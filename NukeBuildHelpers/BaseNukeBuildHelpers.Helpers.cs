@@ -77,7 +77,7 @@ partial class BaseNukeBuildHelpers
             });
         }
 
-        List<AppConfig<AppTestEntryConfig>> appTestEntries = new();
+        List<(bool IsAdded, AppConfig<AppTestEntryConfig> AppTestEntry)> appTestEntries = new();
         foreach (var config in GetConfigs("apptestentry*.json"))
         {
             var appTestEntryConfig = JsonSerializer.Deserialize<AppTestEntryConfig>(config.Json, jsonSerializerOptions);
@@ -85,16 +85,16 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            if (string.IsNullOrEmpty(appTestEntryConfig.AppEntryId))
+            if (appTestEntryConfig.AppEntryIds == null || !appTestEntryConfig.AppEntryIds.Any())
             {
                 throw new Exception($"App test entry contains null or empty app entry id \"{config.AbsolutePath}\"");
             }
-            appTestEntries.Add(new()
+            appTestEntries.Add((false, new()
             {
                 Config = appTestEntryConfig,
                 Json = config.Json,
                 AbsolutePath = config.AbsolutePath
-            });
+            }));
         }
 
         foreach (var appEntry in appEntries)
@@ -103,21 +103,32 @@ partial class BaseNukeBuildHelpers
             {
                 throw new Exception($"Contains multiple app entry id \"{appEntry.Config.Id}\"");
             }
-            var appTestEntriesFound = appTestEntries
-                .Where(at => at.Config.AppEntryId == appEntry.Config.Id)
-                .ToList()
-                .AsReadOnly();
+            List<AppConfig<AppTestEntryConfig>> appTestEntriesFound = new();
+            for (int i = 0; appTestEntries.Count > i; i++)
+            {
+                if (appTestEntries[i].AppTestEntry.Config.AppEntryIds.Any(id => id == appEntry.Config.Id))
+                {
+                    appTestEntriesFound.Add(appTestEntries[i].AppTestEntry);
+                    appTestEntries[i] = (true, appTestEntries[i].AppTestEntry);
+                }
+            }
             configs.Add(appEntry.Config.Id, (appEntry, appTestEntriesFound));
-            appTestEntries.RemoveAll(at => at.Config.AppEntryId == appEntry.Config.Id);
         }
 
-        if (appTestEntries.Count > 0)
+        var nonAdded = appTestEntries.Where(i => !i.IsAdded);
+
+        if (nonAdded.Any())
         {
-            foreach (var appTestEntry in appTestEntries)
+            foreach (var (IsAdded, AppTestEntry) in nonAdded)
             {
-                Assert.Fail($"App entry id \"{appTestEntry.Config.AppEntryId}\" does not exist, from app test entry \"{appTestEntry.AbsolutePath}\"");
+                foreach (var appEntryId in AppTestEntry.Config.AppEntryIds)
+                {
+                    if (!appEntries.Any(i => string.Equals(i.Config.Id, appEntryId, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        throw new Exception($"App entry id \"{appEntryId}\" does not exist, from app test entry \"{AppTestEntry.AbsolutePath}\"");
+                    }
+                }
             }
-            throw new Exception("Some app test entry has non-existence app entry id");
         }
 
         return configs;

@@ -179,6 +179,9 @@ partial class BaseNukeBuildHelpers
 
             AppEntryConfig config = new()
             {
+                Enable = false,
+                Id = "string",
+                Name = "string",
                 MainRelease = true,
                 BuildsOn = Enums.BuildsOnType.Ubuntu2204
             };
@@ -203,6 +206,9 @@ partial class BaseNukeBuildHelpers
 
             AppTestEntryConfig config = new()
             {
+                Enable = false,
+                AppEntryIds = new string[] { "string" },
+                Name = "string",
                 BuildsOn = Enums.BuildsOnType.Ubuntu2204
             };
 
