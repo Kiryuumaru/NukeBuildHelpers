@@ -1,6 +1,7 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
+using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities;
@@ -55,4 +56,39 @@ partial class BaseNukeBuildHelpers
 
             Log.Information("Generate done");
         });
+
+    public Target Prepare => _ => _
+        .Executes(async () =>
+        {
+            await OnPrepare();
+        });
+
+    public Target Build => _ => _
+        .DependsOn(Prepare)
+        .Executes(async () =>
+        {
+            await OnBuild();
+        });
+
+    public Target Pack => _ => _
+        .DependsOn(Build)
+        .Executes(async () =>
+        {
+            await OnPack();
+        });
+
+    public Target Publish => _ => _
+        .DependsOn(Pack)
+        .Executes(async () =>
+        {
+            await OnPublish();
+        });
+
+    protected abstract Task OnPrepare();
+
+    protected abstract Task OnBuild();
+
+    protected abstract Task OnPack();
+
+    protected abstract Task OnPublish();
 }

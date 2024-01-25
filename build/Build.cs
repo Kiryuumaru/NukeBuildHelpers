@@ -14,6 +14,7 @@ using NukeBuildHelpers;
 using Serilog;
 using NukeBuildHelpers.Models;
 using Nuke.Common.Tools.DotNet;
+using System.Threading.Tasks;
 
 public partial class Build : BaseNukeBuildHelpers
 {
@@ -24,44 +25,40 @@ public partial class Build : BaseNukeBuildHelpers
 
     readonly AbsolutePath OutputPath = RootDirectory / "output";
 
-    Target Prepare => _ => _    
-        .Executes(() =>
-        {
-            DotNetTasks.DotNetClean(_ => _
-                .SetProject(Solution.NukeBuildHelpers));
-            OutputPath.DeleteDirectory();
-            int asc = 1;
-        });
+    protected override Task OnPrepare()
+    {
+        DotNetTasks.DotNetClean(_ => _
+            .SetProject(Solution.NukeBuildHelpers));
+        OutputPath.DeleteDirectory();
+        int asc = 1;
+        return Task.CompletedTask;
+    }
 
-    Target Compile => _ => _
-        .DependsOn(Prepare)
-        .Executes(() =>
-        {
-            DotNetTasks.DotNetBuild(_ => _
-                .SetProjectFile(Solution.NukeBuildHelpers)
-                .SetConfiguration("Release"));
-        });
+    protected override Task OnBuild()
+    {
+        DotNetTasks.DotNetBuild(_ => _
+            .SetProjectFile(Solution.NukeBuildHelpers)
+            .SetConfiguration("Release"));
+        return Task.CompletedTask;
+    }
 
-    Target Pack => _ => _
-        .DependsOn(Compile)
-        .Executes(() =>
-        {
-            DotNetTasks.DotNetPack(_ => _
-                .SetProject(Solution.NukeBuildHelpers)
-                .SetConfiguration("Release")
-                .SetNoRestore(true)
-                .SetNoBuild(true)
-                .SetIncludeSymbols(true)
-                .SetSymbolPackageFormat("snupkg")
-                .SetVersion("0.1.0-prerelease.1")
-                .SetPackageReleaseNotes("* Initial prerelease")
-                .SetOutputDirectory(OutputPath / "build"));
-        });
+    protected override Task OnPack()
+    {
+        DotNetTasks.DotNetPack(_ => _
+            .SetProject(Solution.NukeBuildHelpers)
+            .SetConfiguration("Release")
+            .SetNoRestore(true)
+            .SetNoBuild(true)
+            .SetIncludeSymbols(true)
+            .SetSymbolPackageFormat("snupkg")
+            .SetVersion("0.1.0-prerelease.1")
+            .SetPackageReleaseNotes("* Initial prerelease")
+            .SetOutputDirectory(OutputPath / "build"));
+        return Task.CompletedTask;
+    }
 
-    Target Publish => _ => _
-        .DependsOn(Pack)
-        .Executes(() =>
-        {
-
-        });
+    protected override Task OnPublish()
+    {
+        return Task.CompletedTask;
+    }
 }
