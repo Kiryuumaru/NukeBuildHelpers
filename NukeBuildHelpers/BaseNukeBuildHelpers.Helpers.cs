@@ -238,7 +238,6 @@ partial class BaseNukeBuildHelpers
         }
         foreach (var refs in lsRemoteOutput)
         {
-            string commitId = refs.Text[..refs.Text.IndexOf(' ')];
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
             string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
@@ -280,10 +279,8 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
             string latestIndicator = env == "" ? "latest" : "latest-" + env;
-
             if (latestVersionCommitId[latestIndicator] == commitId)
             {
                 Console.WriteLine("Latest is: " + tag);
