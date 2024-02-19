@@ -280,8 +280,10 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
+
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
             string latestIndicator = env == "" ? "latest" : "latest-" + env;
+
             if (latestVersionCommitId[latestIndicator] == commitId)
             {
                 Console.WriteLine("Latest is: " + tag);
