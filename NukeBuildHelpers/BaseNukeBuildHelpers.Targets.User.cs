@@ -232,24 +232,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            List<Task> tasks = new();
-            List<string> testAdded = new();
-
-            foreach (var appEntry in appEntries)
-            {
-                tasks.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
-                foreach (var appEntryTest in appEntry.Value.Tests)
-                {
-                    if (testAdded.Contains(appEntryTest.Name))
-                    {
-                        continue;
-                    }
-                    testAdded.Add(appEntryTest.Name);
-                    tasks.Add(Task.Run(() => appEntryTest.PrepareCore(this)));
-                }
-            }
-
-            await Task.WhenAll(tasks);
+            await PrepareAppEntries(appEntries);
         });
 
     public Target Test => _ => _
@@ -260,23 +243,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            List<Task> tasks = new();
-            List<string> testAdded = new();
-
-            foreach (var appEntry in appEntries)
-            {
-                foreach (var appEntryTest in appEntry.Value.Tests)
-                {
-                    if (testAdded.Contains(appEntryTest.Name))
-                    {
-                        continue;
-                    }
-                    testAdded.Add(appEntryTest.Name);
-                    tasks.Add(Task.Run(() => appEntryTest.RunCore(this)));
-                }
-            }
-
-            await Task.WhenAll(tasks);
+            await TestAppEntries(appEntries);
         });
 
     public Target Build => _ => _
@@ -287,14 +254,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            List<Task> tasks = new();
-
-            foreach (var appEntry in appEntries)
-            {
-                tasks.Add(Task.Run(() => appEntry.Value.Entry.BuildCore(this, OutputPath)));
-            }
-
-            await Task.WhenAll(tasks);
+            await BuildAppEntries(appEntries);
         });
 
     public Target Pack => _ => _
@@ -305,14 +265,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            List<Task> tasks = new();
-
-            foreach (var appEntry in appEntries)
-            {
-                tasks.Add(Task.Run(() => appEntry.Value.Entry.PackCore(this, OutputPath)));
-            }
-
-            await Task.WhenAll(tasks);
+            await PackAppEntries(appEntries);
         });
 
     public Target Release => _ => _
@@ -323,13 +276,6 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            List<Task> tasks = new();
-
-            foreach (var appEntry in appEntries)
-            {
-                tasks.Add(Task.Run(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath)));
-            }
-
-            await Task.WhenAll(tasks);
+            await ReleaseAppEntries(appEntries);
         });
 }

@@ -70,6 +70,7 @@
             "enum": [
               "Build",
               "Bump",
+              "ConsumeBuild",
               "DeleteOriginTags",
               "Fetch",
               "GenerateVersionFiles",
@@ -94,6 +95,7 @@
             "enum": [
               "Build",
               "Bump",
+              "ConsumeBuild",
               "DeleteOriginTags",
               "Fetch",
               "GenerateVersionFiles",
