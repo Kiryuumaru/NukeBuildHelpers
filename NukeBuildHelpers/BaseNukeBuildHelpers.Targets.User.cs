@@ -233,12 +233,18 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
             List<Task> tasks = new();
+            List<string> testAdded = new();
 
             foreach (var appEntry in appEntries)
             {
                 tasks.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
                 foreach (var appEntryTest in appEntry.Value.Tests)
                 {
+                    if (testAdded.Contains(appEntryTest.Name))
+                    {
+                        continue;
+                    }
+                    testAdded.Add(appEntryTest.Name);
                     tasks.Add(Task.Run(() => appEntryTest.PrepareCore(this)));
                 }
             }
@@ -255,11 +261,17 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
             List<Task> tasks = new();
+            List<string> testAdded = new();
 
             foreach (var appEntry in appEntries)
             {
                 foreach (var appEntryTest in appEntry.Value.Tests)
                 {
+                    if (testAdded.Contains(appEntryTest.Name))
+                    {
+                        continue;
+                    }
+                    testAdded.Add(appEntryTest.Name);
                     tasks.Add(Task.Run(() => appEntryTest.RunCore(this)));
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
+using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
@@ -24,6 +25,7 @@ public class NugetBuildHelpersTest : AppTestEntry<Build>
 
     public override void Run(Build nukeBuild)
     {
-        Console.WriteLine(Name + " Build");
+        DotNetTasks.DotNetTest(_ => _
+            .SetProjectFile(nukeBuild.Solution.NukeBuildHelpers_UnitTest));
     }
 }
