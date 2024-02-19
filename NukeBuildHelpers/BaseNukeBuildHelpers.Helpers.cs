@@ -12,6 +12,8 @@ using NukeBuildHelpers.Common;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using Microsoft.Extensions.DependencyModel;
+using Nuke.Common.Tooling;
+using Octokit;
 
 namespace NukeBuildHelpers;
 
@@ -202,15 +204,40 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs)
+    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output> lsRemoteOutput)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
         List<SemVersion> allVersionList = new();
         Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
+        Dictionary<string, List<SemVersion>> allLatestVersionGroupDict = new();
         List<string> groupKeySorted = new();
         string basePeel = "refs/tags/";
-        foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
+        lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
+        foreach (var refs in lsRemoteOutput)
         {
+            string commitId = refs.Text[..refs.Text.IndexOf(' ')];
+            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+            string tag;
+            if (appEntry.Entry.MainRelease)
+            {
+                tag = rawTag;
+            }
+            else if (rawTag.StartsWith(appId.ToLowerInvariant()))
+            {
+                tag = rawTag[(rawTag.IndexOf(appId.ToLowerInvariant()) + appId.Length + 1)..];
+            }
+            else
+            {
+                continue;
+            }
+            if (tag.ToLowerInvariant().StartsWith("latest-"))
+            {
+
+            }
+        }
+        foreach (var refs in lsRemoteOutput)
+        {
+            string commitId = refs.Text[..refs.Text.IndexOf(' ')];
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
             if (appEntry.Entry.MainRelease)
@@ -259,6 +286,7 @@ partial class BaseNukeBuildHelpers
         {
             VersionList = allVersionList,
             VersionGrouped = allVersionGroupDict,
+            LatestVersionGrouped = allLatestVersionGroupDict,
             GroupKeySorted = groupKeySorted,
         };
     }

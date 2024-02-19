@@ -25,12 +25,14 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
+            IReadOnlyCollection<Output> lsRemote = null;
+
             foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
 
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
+                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
                 JsonArray jsonArray = new();
 
