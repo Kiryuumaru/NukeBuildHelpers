@@ -216,6 +216,29 @@ partial class BaseNukeBuildHelpers
         lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
         foreach (var refs in lsRemoteOutput)
         {
+            string commitId = refs.Text[..refs.Text.IndexOf(' ')];
+            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+            string tag;
+            if (appEntry.Entry.MainRelease)
+            {
+                tag = rawTag;
+            }
+            else if (rawTag.StartsWith(appId.ToLowerInvariant()))
+            {
+                tag = rawTag[(rawTag.IndexOf(appId.ToLowerInvariant()) + appId.Length + 1)..];
+            }
+            else
+            {
+                continue;
+            }
+            if (tag.ToLowerInvariant().StartsWith("latest-"))
+            {
+
+            }
+        }
+        foreach (var refs in lsRemoteOutput)
+        {
+            string commitId = refs.Text[..refs.Text.IndexOf(' ')];
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
             string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
