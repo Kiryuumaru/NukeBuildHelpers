@@ -209,7 +209,7 @@ partial class BaseNukeBuildHelpers
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
         List<SemVersion> allVersionList = new();
         Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
-        Dictionary<string, List<SemVersion>> allLatestVersionGroupDict = new();
+        Dictionary<string, SemVersion> allLatestVersions = new();
         List<string> groupKeySorted = new();
         Dictionary<string, string> latestVersionCommitId = new();
         string basePeel = "refs/tags/";
@@ -259,8 +259,10 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
+
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
             string latestIndicator = env == "" ? "latest" : "latest-" + env;
+
             if (!appEntry.Entry.MainRelease)
             {
                 latestIndicator = appId.ToLowerInvariant() + "/" + latestIndicator;
@@ -298,7 +300,7 @@ partial class BaseNukeBuildHelpers
         {
             VersionList = allVersionList,
             VersionGrouped = allVersionGroupDict,
-            LatestVersionGrouped = allLatestVersionGroupDict,
+            LatestVersions = allLatestVersions,
             GroupKeySorted = groupKeySorted,
         };
     }

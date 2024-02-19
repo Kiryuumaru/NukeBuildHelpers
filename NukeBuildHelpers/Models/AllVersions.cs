@@ -15,7 +15,7 @@ public class AllVersions
 
     public Dictionary<string, List<SemVersion>> VersionGrouped { get; init; }
 
-    public Dictionary<string, List<SemVersion>> LatestVersionGrouped { get; init; }
+    public Dictionary<string, SemVersion> LatestVersions { get; init; }
 
     public List<string> GroupKeySorted { get; init; }
 }
