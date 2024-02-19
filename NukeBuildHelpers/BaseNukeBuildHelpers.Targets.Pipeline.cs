@@ -25,6 +25,8 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
+            JsonArray jsonArray = new();
+
             IReadOnlyCollection<Output> lsRemote = null;
 
             foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
@@ -34,7 +36,6 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
-                JsonArray jsonArray = new();
 
                 if (allVersions.GroupKeySorted.Any())
                 {
@@ -49,23 +50,28 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
+                        var currentVersion = allVersions.VersionGrouped[groupKey].Last();
+                        var releasedVersion = allVersions.LatestVersions[groupKey];
+                        bool hasRelease = currentVersion != releasedVersion;
                         jsonArray.Add(JsonNode.Parse($$"""
                             {
                                 "appid": "{{appId}}",
-                                "version": "{{allVersions.VersionGrouped[groupKey].Last()}}"
+                                "current": "{{currentVersion}}",
+                                "released": "{{releasedVersion}}",
+                                "hasRelease": {{hasRelease.ToString().ToLowerInvariant()}}
                             }
                             """));
                     }
                 }
-
-                var generatedVersion = JsonSerializer.Serialize(jsonArray, new JsonSerializerOptions { WriteIndented = true });
-
-                Console.WriteLine("Version file generated: \n" + generatedVersion);
-
-                File.WriteAllText(_generatedVersionPath.ToString(), generatedVersion);
-
-                Console.WriteLine("Saved to: " + _generatedVersionPath.ToString());
             }
+
+            var generatedVersion = JsonSerializer.Serialize(jsonArray, new JsonSerializerOptions { WriteIndented = true });
+
+            Log.Information("Version file generated: \n" + generatedVersion);
+
+            File.WriteAllText(_generatedVersionPath.ToString(), generatedVersion);
+
+            Log.Information("Saved to: " + _generatedVersionPath.ToString());
         });
 
     public Target ConsumeBuild => _ => _
@@ -78,11 +84,17 @@ partial class BaseNukeBuildHelpers
 
             var generatedVersion = JsonSerializer.Deserialize<JsonArray>(File.ReadAllText(_generatedVersionPath.ToString()));
 
-            List<(string Appid, string Version)> versions = new();
+            List<(string Appid, string CurrentVersion, string ReleasedVersion, bool HasRelease)> versions = new();
             foreach (var version in generatedVersion)
             {
-                versions.Add((version["appid"].ToString(), version["version"].ToString()));
+                versions.Add((
+                    version["appid"].ToString(),
+                    version["current"].ToString(),
+                    version["released"].ToString(),
+                    version["hasRelease"].GetValue<bool>()
+                    ));
             }
+
 
         });
 

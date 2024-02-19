@@ -269,7 +269,7 @@ partial class BaseNukeBuildHelpers
             }
             if (latestVersionCommitId.TryGetValue(latestIndicator, out var val) && val == commitId)
             {
-                Console.WriteLine("Latest for " + latestIndicator + " is: " + tag);
+                allLatestVersions[env] = tagSemver;
             }
             if (allVersionGroupDict.TryGetValue(env, out List<SemVersion> versions))
             {
