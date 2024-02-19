@@ -16,7 +16,7 @@ using System.Text.Json;
 
 namespace NukeBuildHelpers;
 
-public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
+public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
     public static AbsolutePath OutputPath => RootDirectory / "nuke_output";
 
