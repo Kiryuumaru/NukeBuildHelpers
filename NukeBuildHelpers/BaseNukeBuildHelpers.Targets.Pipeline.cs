@@ -46,12 +46,12 @@ partial class BaseNukeBuildHelpers
 
             Log.Information("Generating app config to \"{path}\"", absolutePath);
 
-            AppTestEntryConfig config = new()
-            {
-                BuildsOn = Enums.BuildsOnType.Ubuntu2204
-            };
+            //AppTestEntryConfig config = new()
+            //{
+            //    BuildsOn = Enums.BuildsOnType.Ubuntu2204
+            //};
 
-            File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
+            //File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
 
             Log.Information("Generate done");
         });

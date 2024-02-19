@@ -1,6 +1,0 @@
-{
-  "enable": true,
-  "appEntryIds": [ "nuke_build_helpers" ],
-  "name": "NukeBuildHelpers.UnitTest",
-  "buildsOn": "ubuntu-22.04"
-}

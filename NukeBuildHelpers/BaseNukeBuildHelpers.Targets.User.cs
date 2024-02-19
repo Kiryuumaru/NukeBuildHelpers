@@ -1,4 +1,6 @@
-﻿using Nuke.Common;
+﻿using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.DependencyModel;
+using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
@@ -11,6 +13,7 @@ using Octokit;
 using Semver;
 using Serilog;
 using Serilog.Events;
+using System.Reflection;
 using System.Text.Json;
 using YamlDotNet.Core.Tokens;
 
@@ -18,6 +21,62 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+
+    public Target Fetch => _ => _
+        .Description("Fetch git commits and tags")
+        .Executes(() =>
+        {
+            Log.Information("Fetching...");
+            Git.Invoke($"fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
+            Log.Information("Tags: {Value}", Git.Invoke("tag -l", logInvocation: false, logOutput: false).Select(i => i.Text));
+        });
+
+    public Target DeleteOriginTags => _ => _
+        .Description("Delete all origin tags, with --args \"{appid}\"")
+        .Executes(() =>
+        {
+            List<string> tagsToDelete = new();
+            if (string.IsNullOrEmpty(Args))
+            {
+                string basePeel = "refs/tags/";
+                foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
+                {
+                    string tag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+                    tagsToDelete.Add(tag);
+                }
+            }
+            else
+            {
+                GetOrFail(() => SplitArgs, out var splitArgs);
+                GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+
+                foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : new List<string>() { "" })
+                {
+                    string appId = key;
+
+                    GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
+                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
+
+                    if (appEntry.Entry.MainRelease)
+                    {
+                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => i.ToString()));
+                    }
+                    else
+                    {
+                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => appId + "/" + i.ToString()));
+                    }
+                }
+            }
+
+            foreach (var tag in tagsToDelete)
+            {
+                Log.Information("Deleting tag {tag}...", tag);
+                Git.Invoke("push origin :refs/tags/" + tag, logInvocation: false, logOutput: false);
+            }
+
+            Log.Information("Deleting tag done");
+        });
+
     public Target Version => _ => _
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
         .Executes(() =>
@@ -73,6 +132,7 @@ partial class BaseNukeBuildHelpers
 
     public Target Bump => _ => _
         .Description("Bumps the version by tagging and validating tags, with --args \"{appid}={semver}\"")
+        .DependsOn(Fetch)
         .Executes(() =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
@@ -143,7 +203,7 @@ partial class BaseNukeBuildHelpers
                     }
                 }
 
-                if (appEntryConfig.Entry.Config.MainRelease)
+                if (appEntryConfig.Entry.MainRelease)
                 {
                     tagsToPush.Add(versionRaw);
                 }
@@ -164,109 +224,100 @@ partial class BaseNukeBuildHelpers
             Git.Invoke("push origin " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
             Log.Information("Bump done");
         });
-    public Target GenerateAppEntry => _ => _
-        .Description("Generates app entry template, with --args \"{path}\"")
-        .Executes(() => {
-            string pathRaw = Args;
 
-            AbsolutePath absolutePath = RootDirectory / "appentry.sample.json";
-            if (!string.IsNullOrEmpty(pathRaw))
+    public Target Prepare => _ => _
+        .Description("Prepare project, with --args \"{appid}\"")
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            List<Task> tasks = new();
+
+            foreach (var appEntry in appEntries)
             {
-                absolutePath = AbsolutePath.Create(absolutePath);
-            }
-
-            Log.Information("Generating app config to \"{path}\"", absolutePath);
-
-            AppEntryConfig config = new()
-            {
-                Enable = false,
-                Id = "string",
-                Name = "string",
-                MainRelease = true,
-                BuildsOn = Enums.BuildsOnType.Ubuntu2204
-            };
-
-            File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
-
-            Log.Information("Generate done");
-        });
-
-    public Target GenerateAppTestEntry => _ => _
-        .Description("Generates app test entry template, with --args \"{path}\"")
-        .Executes(() => {
-            string pathRaw = Args;
-
-            AbsolutePath absolutePath = RootDirectory / "apptestentry.sample.json";
-            if (!string.IsNullOrEmpty(pathRaw))
-            {
-                absolutePath = AbsolutePath.Create(absolutePath);
-            }
-
-            Log.Information("Generating app config to \"{path}\"", absolutePath);
-
-            AppTestEntryConfig config = new()
-            {
-                Enable = false,
-                AppEntryIds = new string[] { "string" },
-                Name = "string",
-                BuildsOn = Enums.BuildsOnType.Ubuntu2204
-            };
-
-            File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));
-
-            Log.Information("Generate done");
-        });
-
-    public Target Fetch => _ => _
-        .Description("Fetch git commits and tags")
-        .Executes(() => {
-            Log.Information("Fetching...");
-            Git.Invoke($"fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
-            Log.Information("Tags: {Value}", Git.Invoke("tag -l", logInvocation: false, logOutput: false).Select(i => i.Text));
-        });
-
-    public Target DeleteOriginTags => _ => _
-        .Description("Delete all origin tags, with --args \"{appid}\"")
-        .Executes(() => {
-            List<string> tagsToDelete = new();
-            if (string.IsNullOrEmpty(Args))
-            {
-                string basePeel = "refs/tags/";
-                foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
+                tasks.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
+                foreach (var appEntryTest in appEntry.Value.Tests)
                 {
-                    string tag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
-                    tagsToDelete.Add(tag);
-                }
-            }
-            else
-            {
-                GetOrFail(() => SplitArgs, out var splitArgs);
-                GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
-
-                foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : new List<string>() { "" })
-                {
-                    string appId = key;
-
-                    GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
-
-                    if (appEntry.Entry.Config.MainRelease)
-                    {
-                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => i.ToString()));
-                    }
-                    else
-                    {
-                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => appId + "/" + i.ToString()));
-                    }
+                    tasks.Add(Task.Run(() => appEntryTest.PrepareCore(this)));
                 }
             }
 
-            foreach (var tag in tagsToDelete)
+            await Task.WhenAll(tasks);
+        });
+
+    public Target Test => _ => _
+        .Description("Test, with --args \"{appid}\"")
+        .DependsOn(Prepare)
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            List<Task> tasks = new();
+
+            foreach (var appEntry in appEntries)
             {
-                Log.Information("Deleting tag {tag}...", tag);
-                Git.Invoke("push origin :refs/tags/" + tag, logInvocation: false, logOutput: false);
+                foreach (var appEntryTest in appEntry.Value.Tests)
+                {
+                    tasks.Add(Task.Run(() => appEntryTest.RunCore(this)));
+                }
             }
 
-            Log.Information("Deleting tag done");
+            await Task.WhenAll(tasks);
+        });
+
+    public Target Build => _ => _
+        .Description("Build, with --args \"{appid}\"")
+        .DependsOn(Test)
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            List<Task> tasks = new();
+
+            foreach (var appEntry in appEntries)
+            {
+                tasks.Add(Task.Run(() => appEntry.Value.Entry.BuildCore(this, OutputPath)));
+            }
+
+            await Task.WhenAll(tasks);
+        });
+
+    public Target Pack => _ => _
+        .Description("Pack, with --args \"{appid}\"")
+        .DependsOn(Build)
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            List<Task> tasks = new();
+
+            foreach (var appEntry in appEntries)
+            {
+                tasks.Add(Task.Run(() => appEntry.Value.Entry.PackCore(this, OutputPath)));
+            }
+
+            await Task.WhenAll(tasks);
+        });
+
+    public Target Release => _ => _
+        .Description("Release, with --args \"{appid}\"")
+        .DependsOn(Pack)
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            List<Task> tasks = new();
+
+            foreach (var appEntry in appEntries)
+            {
+                tasks.Add(Task.Run(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath)));
+            }
+
+            await Task.WhenAll(tasks);
         });
 }

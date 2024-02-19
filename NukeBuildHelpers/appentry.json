@@ -1,7 +1,0 @@
-{
-  "enable": true,
-  "id": "nuke_build_helpers",
-  "name": "NukeBuildHelpers",
-  "mainRelease": true,
-  "buildsOn": "ubuntu-22.04"
-}

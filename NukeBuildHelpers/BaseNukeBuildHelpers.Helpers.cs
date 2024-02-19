@@ -9,55 +9,59 @@ using Serilog;
 using YamlDotNet.Core.Tokens;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Common;
-using static System.Net.Mime.MediaTypeNames;
 using System.Runtime.CompilerServices;
+using System.Reflection;
+using Microsoft.Extensions.DependencyModel;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private static List<AppConfig> GetConfigs(string name)
+    private static List<AppEntry> GetAppEntries()
     {
-        List<AppConfig> configs = new();
-        foreach (var configPath in RootDirectory.GetFiles(name, 10))
+        var asmNames = DependencyContext.Default.GetDefaultAssemblyNames();
+
+        var allTypes = asmNames.Select(Assembly.Load)
+            .SelectMany(t => t.GetTypes())
+            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(AppEntry)) && !p.ContainsGenericParameters);
+
+        List<AppEntry> entry = new();
+        foreach (Type type in allTypes)
         {
-            var configJson = File.ReadAllText(configPath);
-            List<JsonNode> newConfigs = new();
-            JsonNode node = JsonNode.Parse(configJson);
-            if (node is JsonArray arr)
-            {
-                foreach (var n in arr)
-                {
-                    newConfigs.Add(n);
-                }
-            }
-            else
-            {
-                newConfigs.Add(node);
-            }
-            configs.AddRange(newConfigs.Select(c => new AppConfig()
-            {
-                Json = c,
-                AbsolutePath = configPath
-            }));
+            entry.Add(Activator.CreateInstance(type) as AppEntry);
         }
-        return configs;
+        return entry;
     }
 
-    private static IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> GetAppEntryConfigs()
+    private static List<AppTestEntry> GetAppTestEntries()
     {
-        Dictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> configs = new();
+        var asmNames = DependencyContext.Default.GetDefaultAssemblyNames();
+
+        var allTypes = asmNames.Select(Assembly.Load)
+            .SelectMany(t => t.GetTypes())
+            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(AppTestEntry)) && !p.ContainsGenericParameters);
+
+        List<AppTestEntry> entry = new();
+        foreach (Type type in allTypes)
+        {
+            entry.Add(Activator.CreateInstance(type) as AppTestEntry);
+        }
+        return entry;
+    }
+
+    private static IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> GetAppEntryConfigs()
+    {
+        Dictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> configs = new();
 
         bool hasMainReleaseEntry = false;
-        List<AppConfig<AppEntryConfig>> appEntries = new();
-        foreach (var config in GetConfigs("appentry*.json"))
+        List<AppEntry> appEntries = new();
+        foreach (var appEntry in GetAppEntries())
         {
-            var appEntryConfig = JsonSerializer.Deserialize<AppEntryConfig>(config.Json, jsonSerializerOptions);
-            if (!appEntryConfig.Enable)
+            if (!appEntry.Enable)
             {
                 continue;
             }
-            if (appEntryConfig.MainRelease)
+            if (appEntry.MainRelease)
             {
                 if (hasMainReleaseEntry)
                 {
@@ -65,54 +69,39 @@ partial class BaseNukeBuildHelpers
                 }
                 hasMainReleaseEntry = true;
             }
-            if (string.IsNullOrEmpty(appEntryConfig.Id))
-            {
-                throw new Exception($"App entry contains null or empty id \"{config.AbsolutePath}\"");
-            }
-            appEntries.Add(new()
-            {
-                Config = appEntryConfig,
-                Json = config.Json,
-                AbsolutePath = config.AbsolutePath
-            });
+            appEntries.Add(appEntry);
         }
 
-        List<(bool IsAdded, AppConfig<AppTestEntryConfig> AppTestEntry)> appTestEntries = new();
-        foreach (var config in GetConfigs("apptestentry*.json"))
+        List<(bool IsAdded, AppTestEntry AppTestEntry)> appTestEntries = new();
+        foreach (var appTestEntry in GetAppTestEntries())
         {
-            var appTestEntryConfig = JsonSerializer.Deserialize<AppTestEntryConfig>(config.Json, jsonSerializerOptions);
-            if (!appTestEntryConfig.Enable)
+            if (!appTestEntry.Enable)
             {
                 continue;
             }
-            if (appTestEntryConfig.AppEntryIds == null || !appTestEntryConfig.AppEntryIds.Any())
+            if (appTestEntry.AppEntryTargets == null || !appTestEntry.AppEntryTargets.Any())
             {
-                throw new Exception($"App test entry contains null or empty app entry id \"{config.AbsolutePath}\"");
+                throw new Exception($"App test entry contains null or empty app entry id \"{appTestEntry.Name}\"");
             }
-            appTestEntries.Add((false, new()
-            {
-                Config = appTestEntryConfig,
-                Json = config.Json,
-                AbsolutePath = config.AbsolutePath
-            }));
+            appTestEntries.Add((false, appTestEntry));
         }
 
         foreach (var appEntry in appEntries)
         {
-            if (configs.ContainsKey(appEntry.Config.Id))
+            if (configs.ContainsKey(appEntry.Id))
             {
-                throw new Exception($"Contains multiple app entry id \"{appEntry.Config.Id}\"");
+                throw new Exception($"Contains multiple app entry id \"{appEntry.Id}\"");
             }
-            List<AppConfig<AppTestEntryConfig>> appTestEntriesFound = new();
+            List<AppTestEntry> appTestEntriesFound = new();
             for (int i = 0; appTestEntries.Count > i; i++)
             {
-                if (appTestEntries[i].AppTestEntry.Config.AppEntryIds.Any(id => id == appEntry.Config.Id))
+                if (appTestEntries[i].AppTestEntry.AppEntryTargets.Any(i => i == appEntry.GetType()))
                 {
                     appTestEntriesFound.Add(appTestEntries[i].AppTestEntry);
                     appTestEntries[i] = (true, appTestEntries[i].AppTestEntry);
                 }
             }
-            configs.Add(appEntry.Config.Id, (appEntry, appTestEntriesFound));
+            configs.Add(appEntry.Id, (appEntry, appTestEntriesFound));
         }
 
         var nonAdded = appTestEntries.Where(i => !i.IsAdded);
@@ -121,11 +110,11 @@ partial class BaseNukeBuildHelpers
         {
             foreach (var (IsAdded, AppTestEntry) in nonAdded)
             {
-                foreach (var appEntryId in AppTestEntry.Config.AppEntryIds)
+                foreach (var appEntryTarget in AppTestEntry.AppEntryTargets)
                 {
-                    if (!appEntries.Any(i => string.Equals(i.Config.Id, appEntryId, StringComparison.InvariantCultureIgnoreCase)))
+                    if (!appEntries.Any(i => string.Equals(i.Id, appEntryTarget.Name, StringComparison.InvariantCultureIgnoreCase)))
                     {
-                        throw new Exception($"App entry id \"{appEntryId}\" does not exist, from app test entry \"{AppTestEntry.AbsolutePath}\"");
+                        throw new Exception($"App entry id \"{appEntryTarget.Name}\" does not exist, from app test entry \"{AppTestEntry.Name}\"");
                     }
                 }
             }
@@ -134,7 +123,7 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> appEntryConfigs)
+    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
         List<SemVersion> allVersionList = new();
@@ -145,7 +134,7 @@ partial class BaseNukeBuildHelpers
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
-            if (appEntry.Entry.Config.MainRelease)
+            if (appEntry.Entry.MainRelease)
             {
                 tag = rawTag;
             }
@@ -208,12 +197,12 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void GetOrFail(string appId, IReadOnlyDictionary<string, (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests)> appEntryConfigs, out string appIdOut, out (AppConfig<AppEntryConfig> Entry, IReadOnlyList<AppConfig<AppTestEntryConfig>> Tests) appEntryConfig)
+    private static void GetOrFail(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests) appEntryConfig)
     {
         try
         {
             // Fail if appId is null and solution has multiple app entries
-            if (string.IsNullOrEmpty(appId) && !appEntryConfigs.Any(ae => ae.Value.Entry.Config.MainRelease))
+            if (string.IsNullOrEmpty(appId) && !appEntryConfigs.Any(ae => ae.Value.Entry.MainRelease))
             {
                 throw new InvalidOperationException($"App entries has no main release, appId should not be empty");
             }
@@ -228,34 +217,10 @@ partial class BaseNukeBuildHelpers
             }
             else
             {
-                appEntryConfig = appEntryConfigs.Where(ae => ae.Value.Entry.Config.MainRelease).First().Value;
+                appEntryConfig = appEntryConfigs.Where(ae => ae.Value.Entry.MainRelease).First().Value;
             }
 
-            appIdOut = appEntryConfig.Entry.Config.Id;
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail(ex.Message, ex);
-            throw;
-        }
-    }
-
-    private static void GetOrFail(string rawValue, out bool valOut)
-    {
-        try
-        {
-            valOut = rawValue?.ToLowerInvariant() switch
-            {
-                "1" => true,
-                "0" => false,
-                "true" => true,
-                "false" => false,
-                "yes" => true,
-                "no" => false,
-                "" => true,
-                null => true,
-                _ => throw new ArgumentException($"Invalid boolean value \"{rawValue}\""),
-            };
+            appIdOut = appEntryConfig.Entry.Id;
         }
         catch (Exception ex)
         {

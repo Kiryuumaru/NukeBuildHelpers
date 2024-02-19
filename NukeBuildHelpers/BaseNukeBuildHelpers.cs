@@ -18,9 +18,7 @@ namespace NukeBuildHelpers;
 
 public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
-    public static AbsolutePath PublishPath => RootDirectory / "publish";
-
-    public static AbsolutePath ArtifactsPath => PublishPath / "artifacts";
+    public static AbsolutePath OutputPath => RootDirectory / "nuke_output";
 
     GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
@@ -62,11 +60,4 @@ public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
             return splitArgs;
         }
     }
-
-    static readonly JsonSerializerOptions jsonSerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        WriteIndented = true
-    };
 }

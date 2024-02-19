@@ -17,51 +17,8 @@ using Nuke.Common.Tools.DotNet;
 
 public partial class Build : BaseNukeBuildHelpers
 {
-    public static int Main () => Execute<Build>(x => x.Pack);
+    public static int Main () => Execute<Build>(x => x.Version);
 
     [Solution(GenerateProjects = true)]
-    readonly Solution Solution;
-
-    readonly AbsolutePath OutputPath = RootDirectory / "output";
-
-    Target Prepare => _ => _    
-        .Executes(() =>
-        {
-            DotNetTasks.DotNetClean(_ => _
-                .SetProject(Solution.NukeBuildHelpers));
-            OutputPath.DeleteDirectory();
-            int asc = 1;
-        });
-
-    Target Compile => _ => _
-        .DependsOn(Prepare)
-        .Executes(() =>
-        {
-            DotNetTasks.DotNetBuild(_ => _
-                .SetProjectFile(Solution.NukeBuildHelpers)
-                .SetConfiguration("Release"));
-        });
-
-    Target Pack => _ => _
-        .DependsOn(Compile)
-        .Executes(() =>
-        {
-            DotNetTasks.DotNetPack(_ => _
-                .SetProject(Solution.NukeBuildHelpers)
-                .SetConfiguration("Release")
-                .SetNoRestore(true)
-                .SetNoBuild(true)
-                .SetIncludeSymbols(true)
-                .SetSymbolPackageFormat("snupkg")
-                .SetVersion("0.1.0-prerelease.1")
-                .SetPackageReleaseNotes("* Initial prerelease")
-                .SetOutputDirectory(OutputPath / "build"));
-        });
-
-    Target Publish => _ => _
-        .DependsOn(Pack)
-        .Executes(() =>
-        {
-
-        });
+    internal readonly Solution Solution;
 }
