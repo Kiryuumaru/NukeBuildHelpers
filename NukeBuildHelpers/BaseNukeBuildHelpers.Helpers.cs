@@ -219,6 +219,7 @@ partial class BaseNukeBuildHelpers
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
             string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
+
             if (appEntry.Entry.MainRelease)
             {
                 tag = rawTag;
@@ -241,6 +242,7 @@ partial class BaseNukeBuildHelpers
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
             string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
+
             if (appEntry.Entry.MainRelease)
             {
                 tag = rawTag;
@@ -257,8 +259,10 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
+
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
             string latestIndicator = env == "" ? "latest" : "latest-" + env;
+
             if (latestVersionCommitId.TryGetValue(latestIndicator, out var val) && val == commitId)
             {
                 Console.WriteLine("Latest is: " + tag);
