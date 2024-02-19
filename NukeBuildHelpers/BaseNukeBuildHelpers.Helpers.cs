@@ -234,7 +234,7 @@ partial class BaseNukeBuildHelpers
             }
             if (tag.ToLowerInvariant().StartsWith("latest"))
             {
-                latestVersionCommitId[tag.ToLowerInvariant()] = commitId;
+                latestVersionCommitId[rawTag] = commitId;
             }
         }
         foreach (var refs in lsRemoteOutput)
@@ -259,13 +259,15 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
             string latestIndicator = env == "" ? "latest" : "latest-" + env;
-
+            if (!appEntry.Entry.MainRelease)
+            {
+                latestIndicator = appId.ToLowerInvariant() + "/" + latestIndicator;
+            }
             if (latestVersionCommitId.TryGetValue(latestIndicator, out var val) && val == commitId)
             {
-                Console.WriteLine("Latest is: " + tag);
+                Console.WriteLine("Latest for " + latestIndicator + " is: " + tag);
             }
             if (allVersionGroupDict.TryGetValue(env, out List<SemVersion> versions))
             {
