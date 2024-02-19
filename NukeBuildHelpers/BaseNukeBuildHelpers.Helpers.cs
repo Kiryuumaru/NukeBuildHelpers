@@ -259,7 +259,7 @@ partial class BaseNukeBuildHelpers
             }
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
             string latestIndicator = env == "" ? "latest" : "latest-" + env;
-            if (latestVersionCommitId[latestIndicator] == commitId)
+            if (latestVersionCommitId.TryGetValue(latestIndicator, out var val) && val == commitId)
             {
                 Console.WriteLine("Latest is: " + tag);
             }
