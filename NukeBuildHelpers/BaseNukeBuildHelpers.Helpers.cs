@@ -12,6 +12,8 @@ using NukeBuildHelpers.Common;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using Microsoft.Extensions.DependencyModel;
+using Nuke.Common.Tooling;
+using Octokit;
 
 namespace NukeBuildHelpers;
 
@@ -202,17 +204,43 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs)
+    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output> lsRemoteOutput)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
         List<SemVersion> allVersionList = new();
         Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
+        Dictionary<string, List<SemVersion>> allLatestVersionGroupDict = new();
         List<string> groupKeySorted = new();
+        Dictionary<string, string> latestVersionCommitId = new();
         string basePeel = "refs/tags/";
-        foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
+        lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
+        foreach (var refs in lsRemoteOutput)
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
+            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
+            if (appEntry.Entry.MainRelease)
+            {
+                tag = rawTag;
+            }
+            else if (rawTag.StartsWith(appId.ToLowerInvariant()))
+            {
+                tag = rawTag[(rawTag.IndexOf(appId.ToLowerInvariant()) + appId.Length + 1)..];
+            }
+            else
+            {
+                continue;
+            }
+            if (tag.ToLowerInvariant().StartsWith("latest"))
+            {
+                latestVersionCommitId[tag.ToLowerInvariant()] = commitId;
+            }
+        }
+        foreach (var refs in lsRemoteOutput)
+        {
+            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+            string tag;
+            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
             if (appEntry.Entry.MainRelease)
             {
                 tag = rawTag;
@@ -230,6 +258,11 @@ partial class BaseNukeBuildHelpers
                 continue;
             }
             string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
+            string latestIndicator = env == "" ? "latest" : "latest-" + env;
+            if (latestVersionCommitId[latestIndicator] == commitId)
+            {
+                Console.WriteLine("Latest is: " + tag);
+            }
             if (allVersionGroupDict.TryGetValue(env, out List<SemVersion> versions))
             {
                 versions.Add(tagSemver);
@@ -259,6 +292,7 @@ partial class BaseNukeBuildHelpers
         {
             VersionList = allVersionList,
             VersionGrouped = allVersionGroupDict,
+            LatestVersionGrouped = allLatestVersionGroupDict,
             GroupKeySorted = groupKeySorted,
         };
     }

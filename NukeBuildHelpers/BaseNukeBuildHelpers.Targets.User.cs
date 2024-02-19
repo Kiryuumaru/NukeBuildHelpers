@@ -50,12 +50,14 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(() => SplitArgs, out var splitArgs);
                 GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
+                IReadOnlyCollection<Output> lsRemote = null;
+
                 foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : new List<string>() { "" })
                 {
                     string appId = key;
 
                     GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
+                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
                     if (appEntry.Entry.MainRelease)
                     {
@@ -95,12 +97,14 @@ partial class BaseNukeBuildHelpers
                 };
             List<List<string>> rows = new();
 
+            IReadOnlyCollection<Output> lsRemote = null;
+
             foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
 
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
+                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
                 bool firstEntryRow = true;
 
@@ -146,6 +150,8 @@ partial class BaseNukeBuildHelpers
 
             List<string> tagsToPush = new();
 
+            IReadOnlyCollection<Output> lsRemote = null;
+
             foreach (var pair in splitArgs.Count > 1 || !string.IsNullOrEmpty(splitArgs.Values.First()) ? splitArgs.ToList() : new List<KeyValuePair<string, string>>() { KeyValuePair.Create("", Args) })
             {
                 string appId = pair.Key;
@@ -154,7 +160,7 @@ partial class BaseNukeBuildHelpers
                 // ---------- Args validation ----------
 
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntryConfig);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs), out var allVersions);
+                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
                 Log.Information("Validating {appId} bump version {version}...", appId, versionRaw);
 
