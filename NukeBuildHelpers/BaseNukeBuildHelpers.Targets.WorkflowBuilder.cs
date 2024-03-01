@@ -107,6 +107,13 @@ partial class BaseNukeBuildHelpers
         return include;
     }
 
+    private static Dictionary<string, object> GenerateGithubWorkflowJobOutputs(Dictionary<string, object> job)
+    {
+        Dictionary<string, object> outputs = new();
+        ((List<object>)job["outputs"]).Add(outputs);
+        return outputs;
+    }
+
     public Target GithubWorkflow => _ => _
         .Description("Builds the cicd workflow for github")
         .Executes(() =>
@@ -122,8 +129,13 @@ partial class BaseNukeBuildHelpers
                 {
                     { "push", new Dictionary<string, object>()
                         {
-                            { "branches", new string[] { "*", "fix/*", "feat/*", "hotfix/*" } },
+                            { "branches", new string[] { "*" } },
                             { "tags", new string[] { "**" } }
+                        }
+                    },
+                    { "pull_request", new Dictionary<string, object>()
+                        {
+                            { "branches", new string[] { "fix/**", "feat/**", "hotfix/**" } }
                         }
                     }
                 },

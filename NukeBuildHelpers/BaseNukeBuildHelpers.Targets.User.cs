@@ -283,4 +283,54 @@ partial class BaseNukeBuildHelpers
 
             await ReleaseAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
+
+    public Target PipelinePreSetup => _ => _
+        .Description("To be used by pipeline")
+        .DependsOn(Version)
+        .Executes(() =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+
+            IReadOnlyCollection<Output> lsRemote = null;
+
+            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
+            {
+                string appId = key;
+
+                GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
+                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+
+                if (allVersions.GroupKeySorted.Any())
+                {
+                    foreach (var groupKey in allVersions.GroupKeySorted)
+                    {
+                        string env;
+                        if (string.IsNullOrEmpty(groupKey))
+                        {
+                            env = "main";
+                        }
+                        else
+                        {
+                            env = groupKey;
+                        }
+                        Log.Information("Latest: " + allVersions.VersionGrouped[groupKey].Last().ToString());
+                    }
+                }
+
+                foreach (var lat in allVersions.LatestVersions)
+                {
+                    string env;
+                    if (string.IsNullOrEmpty(lat.Key))
+                    {
+                        env = "main";
+                    }
+                    else
+                    {
+                        env = lat.Key;
+                    }
+                    Log.Information("Latest env: " + lat.Key + " has:" + lat.Value);
+                }
+            }
+        });
 }
