@@ -115,7 +115,7 @@ partial class BaseNukeBuildHelpers
             List<string> needs = new() { "pre_setup" };
 
             var preSetup = GenerateGithubWorkflowJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
-            GenerateGithubWorkflowJobStep(preSetup, "actions/checkout@v3");
+            GenerateGithubWorkflowJobStep(preSetup, "actions/checkout@v4");
 
             if (appTestEntries.Count > 0)
             {
@@ -129,7 +129,7 @@ partial class BaseNukeBuildHelpers
                     include["name"] = appTestEntry.Name;
                     include["runs_on"] = GetRunsOnGithub(appTestEntry.RunsOn);
                 }
-                GenerateGithubWorkflowJobStep(test, "actions/checkout@v3");
+                GenerateGithubWorkflowJobStep(test, "actions/checkout@v4");
             }
 
             var build = GenerateGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}");
@@ -142,7 +142,7 @@ partial class BaseNukeBuildHelpers
                 include["name"] = appEntry.Name;
                 include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
             }
-            GenerateGithubWorkflowJobStep(build, "actions/checkout@v3");
+            GenerateGithubWorkflowJobStep(build, "actions/checkout@v4");
 
             var publish = GenerateGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}");
             publish["needs"] = needs.ToArray();
@@ -153,18 +153,18 @@ partial class BaseNukeBuildHelpers
                 include["name"] = appEntry.Name;
                 include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
             }
-            GenerateGithubWorkflowJobStep(publish, "actions/checkout@v3");
+            GenerateGithubWorkflowJobStep(publish, "actions/checkout@v4");
 
             var release = GenerateGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204);
             release["needs"] = needs.ToArray();
-            GenerateGithubWorkflowJobStep(release, "actions/checkout@v3");
+            GenerateGithubWorkflowJobStep(release, "actions/checkout@v4");
 
             needs.Add("publish");
             needs.Add("release");
 
             var postSetup = GenerateGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204);
             postSetup["needs"] = needs.ToArray();
-            GenerateGithubWorkflowJobStep(postSetup, "actions/checkout@v3");
+            GenerateGithubWorkflowJobStep(postSetup, "actions/checkout@v4");
 
             var workflowDirPath = RootDirectory / ".github" / "workflows";
             var workflowPath = workflowDirPath / "nuke-cicd.yml";
