@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run Nuke
-      run: ${{ matrix.build_script }} test --args ${{ matrix.id }}
+      run: ${{ matrix.build_script }} test --args "${{ matrix.id }}"
     needs:
     - pre_setup
     strategy:
@@ -28,21 +28,24 @@ jobs:
           name: NugetBuildHelpersTest
           runs_on: windows-latest
           build_script: ./build.cmd
+          ids_to_run: nuget_build_helpers;nuget_build_helpers_test
         - id: nuget_build_helpers_test2
           name: NugetBuildHelpersTest2
           runs_on: windows-2022
           build_script: ./build.cmd
+          ids_to_run: nuget_build_helpers2;nuget_build_helpers_test2
         - id: nuget_build_helpers_test3
           name: NugetBuildHelpersTest3
           runs_on: ubuntu-22.04
           build_script: chmod +x ./build.sh && ./build.sh
+          ids_to_run: nuget_build_helpers;nuget_build_helpers_test3
   build:
     name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
     - name: Run Nuke
-      run: ${{ matrix.build_script }} pack --args ${{ matrix.id }}
+      run: ${{ matrix.build_script }} pack --args "${{ matrix.id }}"
     needs:
     - pre_setup
     - test

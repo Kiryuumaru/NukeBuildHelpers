@@ -151,15 +151,17 @@ partial class BaseNukeBuildHelpers
                 needs.Add("test");
                 foreach (var appTestEntry in appTestEntries)
                 {
+                    var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
                     var include = GenerateGithubWorkflowJobMatrixInclude(test);
                     include["id"] = appTestEntry.Id;
                     include["name"] = appTestEntry.Name;
                     include["runs_on"] = GetRunsOnGithub(appTestEntry.RunsOn);
                     include["build_script"] = GetBuildScriptGithub(appTestEntry.RunsOn);
+                    include["ids_to_run"] = $"{appEntry.Id};{appTestEntry.Id}";
                 }
                 GenerateGithubWorkflowJobStep(test, uses: "actions/checkout@v4");
                 var nukeTest = GenerateGithubWorkflowJobStep(test, name: "Run Nuke");
-                nukeTest.Add("run", "${{ matrix.build_script }} test --args ${{ matrix.id }}");
+                nukeTest.Add("run", "${{ matrix.build_script }} test --args \"${{ matrix.id }}\"");
             }
 
             // ██████████████████████████████████████
@@ -178,7 +180,7 @@ partial class BaseNukeBuildHelpers
             }
             GenerateGithubWorkflowJobStep(build, uses: "actions/checkout@v4");
             var nukeBuild = GenerateGithubWorkflowJobStep(build, name: "Run Nuke");
-            nukeBuild.Add("run", "${{ matrix.build_script }} pack --args ${{ matrix.id }}");
+            nukeBuild.Add("run", "${{ matrix.build_script }} pack --args \"${{ matrix.id }}\"");
 
             // ██████████████████████████████████████
             // ██████████████ Publish ███████████████
