@@ -174,6 +174,7 @@ partial class BaseNukeBuildHelpers
                 include["id"] = appEntry.Id;
                 include["name"] = appEntry.Name;
                 include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
+                include["build_script"] = GetBuildScriptGithub(appEntry.RunsOn);
             }
             GenerateGithubWorkflowJobStep(build, uses: "actions/checkout@v4");
             var nukeBuild = GenerateGithubWorkflowJobStep(build, name: "Run Nuke");

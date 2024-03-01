@@ -52,12 +52,15 @@ jobs:
         - id: nuget_build_helpers
           name: NugetBuildHelpers
           runs_on: ubuntu-22.04
+          build_script: chmod +x ./build.sh && ./build.sh
         - id: nuget_build_helpers2
           name: NugetBuildHelpers2
           runs_on: windows-2022
+          build_script: ./build.cmd
         - id: nuget_build_helpers3
           name: NugetBuildHelpers3
           runs_on: ubuntu-latest
+          build_script: chmod +x ./build.sh && ./build.sh
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
