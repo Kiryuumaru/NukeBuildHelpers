@@ -26,7 +26,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            if (idsToRun.Any() && !idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
@@ -52,7 +52,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            if (idsToRun.Any() && !idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
@@ -76,7 +76,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            if (idsToRun.Any() && !idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
@@ -92,7 +92,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            if (idsToRun.Any() && !idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
@@ -108,7 +108,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            if (idsToRun.Any() && !idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
