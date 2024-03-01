@@ -35,7 +35,7 @@ jobs:
         - id: nuget_build_helpers_test3
           name: NugetBuildHelpersTest3
           runs_on: ubuntu-22.04
-          build_script: ./build.sh
+          build_script: chmod +x ./build.sh | ./build.sh
   build:
     name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
