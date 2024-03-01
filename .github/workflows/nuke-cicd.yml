@@ -7,87 +7,32 @@ on:
 concurrency:
   group: nuke-cicd
 jobs:
-  setup:
-    name: Project Setup
+  pre_setup:
+    name: Pre Setup
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
-  test_nuget_build_helpers_test:
-    name: Test - NugetBuildHelpersTest
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-  test_nuget_build_helpers_test2:
-    name: Test - NugetBuildHelpersTest2
-    runs-on: ubuntu-22.04
+  test:
+    name: Test - ${{ matrix.name }}
+    runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v3
     needs:
     - setup
-  test_nuget_build_helpers_test3:
-    name: Test - NugetBuildHelpersTest3
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-  build_nuget_build_helpers:
-    name: Build - NugetBuildHelpers
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-    - test_nuget_build_helpers_test
-    - test_nuget_build_helpers_test3
-  build_nuget_build_helpers2:
-    name: Build - NugetBuildHelpers2
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-    - test_nuget_build_helpers_test2
-    - test_nuget_build_helpers_test3
-  build_nuget_build_helpers3:
-    name: Build - NugetBuildHelpers3
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-  publish_nuget_build_helpers:
-    name: Publish - NugetBuildHelpers
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-    - build_nuget_build_helpers
-    - test_nuget_build_helpers_test
-    - test_nuget_build_helpers_test3
-  publish_nuget_build_helpers2:
-    name: Publish - NugetBuildHelpers2
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-    - build_nuget_build_helpers2
-    - test_nuget_build_helpers_test2
-    - test_nuget_build_helpers_test3
-  publish_nuget_build_helpers3:
-    name: Publish - NugetBuildHelpers3
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - setup
-    - build_nuget_build_helpers3
-  cleanups:
-    name: Cleanups
+    strategy:
+      matrix:
+        include:
+        - id: nuget_build_helpers_test
+          name: NugetBuildHelpersTest
+          runs_on: ubuntu-22.04
+        - id: nuget_build_helpers_test2
+          name: NugetBuildHelpersTest2
+          runs_on: ubuntu-22.04
+        - id: nuget_build_helpers_test3
+          name: NugetBuildHelpersTest3
+          runs_on: ubuntu-22.04
+  post_setup:
+    name: Post Setup
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
