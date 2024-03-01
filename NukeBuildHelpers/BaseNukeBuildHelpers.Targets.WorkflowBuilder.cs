@@ -40,6 +40,18 @@ partial class BaseNukeBuildHelpers
         };
     }
 
+    private static string GetBuildScriptGithub(RunsOnType runsOnType)
+    {
+        return runsOnType switch
+        {
+            RunsOnType.WindowsLatest => "./build.cmd",
+            RunsOnType.Windows2022 => "./build.cmd",
+            RunsOnType.UbuntuLatest => "./build.sh",
+            RunsOnType.Ubuntu2204 => "./build.sh",
+            _ => throw new NotImplementedException()
+        };
+    }
+
     private static Dictionary<string, object> GenerateGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, string runsOn)
     {
         Dictionary<string, object> job = new()
@@ -143,10 +155,11 @@ partial class BaseNukeBuildHelpers
                     include["id"] = appTestEntry.Id;
                     include["name"] = appTestEntry.Name;
                     include["runs_on"] = GetRunsOnGithub(appTestEntry.RunsOn);
+                    include["build_script"] = GetBuildScriptGithub(appTestEntry.RunsOn);
                 }
                 GenerateGithubWorkflowJobStep(test, uses: "actions/checkout@v4");
                 var nukeTest = GenerateGithubWorkflowJobStep(test, name: "Run Nuke");
-                nukeTest.Add("run", "build test");
+                nukeTest.Add("run", "${{ matrix.build_script }} test");
             }
 
             // ██████████████████████████████████████
