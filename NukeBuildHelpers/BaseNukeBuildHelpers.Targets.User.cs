@@ -301,6 +301,8 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
+
+
                 if (allVersions.GroupKeySorted.Any())
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
