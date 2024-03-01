@@ -316,22 +316,15 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        Log.Information("Latest: " + allVersions.VersionGrouped[groupKey].Last().ToString());
+                        if (!allVersions.LatestVersions.ContainsKey(groupKey) || allVersions.LatestVersions[groupKey] != allVersions.VersionGrouped[groupKey].Last())
+                        {
+                            Log.Information("Current: {current} Latest: {latest}", allVersions.VersionGrouped[groupKey].Last().ToString(), allVersions.LatestVersions.ContainsKey(groupKey) ? allVersions.LatestVersions[groupKey].ToString() : "non");
+                        }
+                        else
+                        {
+                            Log.Information("Current: {current} Already latest", allVersions.VersionGrouped[groupKey].Last().ToString());
+                        }
                     }
-                }
-
-                foreach (var lat in allVersions.LatestVersions)
-                {
-                    string env;
-                    if (string.IsNullOrEmpty(lat.Key))
-                    {
-                        env = "main";
-                    }
-                    else
-                    {
-                        env = lat.Key;
-                    }
-                    Log.Information("Latest env: " + lat.Key + " has:" + lat.Value);
                 }
             }
         });
