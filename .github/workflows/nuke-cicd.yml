@@ -60,16 +60,22 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
+    needs:
+    - build_nuget_build_helpers
   publish_nuget_build_helpers2:
     name: Publish - NugetBuildHelpers2
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
+    needs:
+    - build_nuget_build_helpers2
   publish_nuget_build_helpers3:
     name: Publish - NugetBuildHelpers3
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
+    needs:
+    - build_nuget_build_helpers3
   cleanups:
     name: Cleanups
     runs-on: ubuntu-22.04

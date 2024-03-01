@@ -107,6 +107,7 @@ partial class BaseNukeBuildHelpers
             foreach (var appEntry in appEntries)
             {
                 var publish = GenerateGithubWorkflowJob(workflow, $"publish_{appEntry.Id}", $"Publish - {appEntry.Name}", appEntry.RunsOn);
+                publish["needs"] = new string[] { $"build_{appEntry.Id}" };
                 var checkout = GenerateGithubWorkflowJobStep(publish, "actions/checkout@v3");
             }
 
