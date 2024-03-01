@@ -118,7 +118,7 @@ partial class BaseNukeBuildHelpers
             if (appTestEntries.Count > 0)
             {
                 var test = GenerateGithubWorkflowJob(workflow, $"test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
-                test["needs"] = new string[] { "setup" };
+                test["needs"] = new string[] { "pre_setup" };
                 foreach (var appTestEntry in appTestEntries)
                 {
                     var include = GenerateGithubWorkflowJobMatrixInclude(test);
@@ -158,7 +158,7 @@ partial class BaseNukeBuildHelpers
             //}
 
             var postSetup = GenerateGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204);
-            postSetup["needs"] = new string[] { "setup" };
+            postSetup["needs"] = new string[] { "pre_setup" };
             GenerateGithubWorkflowJobStep(postSetup, "actions/checkout@v3");
 
             var workflowDirPath = RootDirectory / ".github" / "workflows";
