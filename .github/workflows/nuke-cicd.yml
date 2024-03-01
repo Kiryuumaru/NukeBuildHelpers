@@ -12,25 +12,6 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
-  test:
-    name: Test - ${{ matrix.name }}
-    runs-on: ${{ matrix.runs_on }}
-    steps:
-    - uses: actions/checkout@v3
-    needs:
-    - pre_setup
-    strategy:
-      matrix:
-        include:
-        - id: nuget_build_helpers_test
-          name: NugetBuildHelpersTest
-          runs_on: ubuntu-22.04
-        - id: nuget_build_helpers_test2
-          name: NugetBuildHelpersTest2
-          runs_on: ubuntu-22.04
-        - id: nuget_build_helpers_test3
-          name: NugetBuildHelpersTest3
-          runs_on: ubuntu-22.04
   build:
     name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -38,7 +19,6 @@ jobs:
     - uses: actions/checkout@v3
     needs:
     - pre_setup
-    - test
     strategy:
       matrix:
         include:
@@ -58,7 +38,6 @@ jobs:
     - uses: actions/checkout@v3
     needs:
     - pre_setup
-    - test
     - build
     strategy:
       matrix:
@@ -79,7 +58,6 @@ jobs:
     - uses: actions/checkout@v3
     needs:
     - pre_setup
-    - test
     - build
   post_setup:
     name: Post Setup
@@ -88,7 +66,6 @@ jobs:
     - uses: actions/checkout@v3
     needs:
     - pre_setup
-    - test
     - build
     - publish
     - release
