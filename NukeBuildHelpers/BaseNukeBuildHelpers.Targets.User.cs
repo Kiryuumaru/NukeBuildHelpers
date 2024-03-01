@@ -301,8 +301,6 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
-
-
                 if (allVersions.GroupKeySorted.Any())
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
@@ -311,10 +309,20 @@ partial class BaseNukeBuildHelpers
                         if (string.IsNullOrEmpty(groupKey))
                         {
                             env = "main";
+                            if (!Repository.Branch.Equals("master", StringComparison.OrdinalIgnoreCase) &&
+                                !Repository.Branch.Equals("main", StringComparison.OrdinalIgnoreCase) &&
+                                !Repository.Branch.Equals("prod", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
                         }
                         else
                         {
                             env = groupKey;
+                            if (!Repository.Branch.Equals(env, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
                         }
                         if (!allVersions.LatestVersions.ContainsKey(groupKey) || allVersions.LatestVersions[groupKey] != allVersions.VersionGrouped[groupKey].Last())
                         {
