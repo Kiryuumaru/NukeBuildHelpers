@@ -146,7 +146,7 @@ partial class BaseNukeBuildHelpers
                 }
                 GenerateGithubWorkflowJobStep(test, uses: "actions/checkout@v4");
                 var nukeTest = GenerateGithubWorkflowJobStep(test, name: "Run Nuke");
-                nukeTest.Add("run", "./build test");
+                nukeTest.Add("run", "build test");
             }
 
             // ██████████████████████████████████████

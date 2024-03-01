@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run Nuke
-      run: ./build test
+      run: build test
     needs:
     - pre_setup
     strategy:
