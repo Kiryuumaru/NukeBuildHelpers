@@ -41,6 +41,10 @@ partial class BaseNukeBuildHelpers
             }
             foreach (var appEntryTest in appEntry.Value.Tests)
             {
+                if (idsToRun.Any() && !idsToRun.Any(i => i == appEntryTest.Id))
+                {
+                    continue;
+                }
                 if (testAdded.Contains(appEntryTest.Name))
                 {
                     continue;
@@ -79,6 +83,10 @@ partial class BaseNukeBuildHelpers
             }
             foreach (var appEntryTest in appEntry.Value.Tests)
             {
+                if (idsToRun.Any() && !idsToRun.Any(i => i == appEntryTest.Id))
+                {
+                    continue;
+                }
                 if (testAdded.Contains(appEntryTest.Name))
                 {
                     continue;
