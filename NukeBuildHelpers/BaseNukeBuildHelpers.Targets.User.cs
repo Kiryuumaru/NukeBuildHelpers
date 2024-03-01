@@ -294,6 +294,8 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output> lsRemote = null;
 
+            List<(string AppId, string Env, SemVersion Version)> toRelease = new();
+
             foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
@@ -326,14 +328,21 @@ partial class BaseNukeBuildHelpers
                         }
                         if (!allVersions.LatestVersions.ContainsKey(groupKey) || allVersions.LatestVersions[groupKey] != allVersions.VersionGrouped[groupKey].Last())
                         {
-                            Log.Information("Current: {current} Latest: {latest}", allVersions.VersionGrouped[groupKey].Last().ToString(), allVersions.LatestVersions.ContainsKey(groupKey) ? allVersions.LatestVersions[groupKey].ToString() : "non");
+                            toRelease.Add((appId, env, allVersions.VersionGrouped[groupKey].Last()));
+                            Log.Information("Tag: {current}, current latest: {latest}", allVersions.VersionGrouped[groupKey].Last().ToString(), allVersions.LatestVersions.ContainsKey(groupKey) ? allVersions.LatestVersions[groupKey].ToString() : "non");
                         }
                         else
                         {
-                            Log.Information("Current: {current} Already latest", allVersions.VersionGrouped[groupKey].Last().ToString());
+                            Log.Information("Tag: {current}, already latest", allVersions.VersionGrouped[groupKey].Last().ToString());
                         }
                     }
                 }
+            }
+
+            foreach (var rel in toRelease)
+            {
+
+                Log.Information("{appId} on {env} has new version {newVersion}", rel.AppId, rel.Env, rel.Version);
             }
         });
 }
