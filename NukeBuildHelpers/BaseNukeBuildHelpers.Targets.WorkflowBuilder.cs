@@ -112,13 +112,16 @@ partial class BaseNukeBuildHelpers
                 ["jobs"] = new Dictionary<string, object>()
             };
 
+            List<string> needs = new() { "pre_setup" };
+
             var preSetup = GenerateGithubWorkflowJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
             GenerateGithubWorkflowJobStep(preSetup, "actions/checkout@v3");
 
             if (appTestEntries.Count > 0)
             {
-                var test = GenerateGithubWorkflowJob(workflow, $"test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
-                test["needs"] = new string[] { "pre_setup" };
+                var test = GenerateGithubWorkflowJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
+                test["needs"] = needs.ToArray();
+                needs.Add("test");
                 foreach (var appTestEntry in appTestEntries)
                 {
                     var include = GenerateGithubWorkflowJobMatrixInclude(test);
@@ -129,36 +132,38 @@ partial class BaseNukeBuildHelpers
                 GenerateGithubWorkflowJobStep(test, "actions/checkout@v3");
             }
 
-            //foreach (var appTestEntry in appTestEntries)
-            //{
-            //    var test = GenerateGithubWorkflowJob(workflow, $"test_{appTestEntry.Id}", $"Test - {appTestEntry.Name}", appTestEntry.RunsOn);
-            //    test["needs"] = new string[] { "setup" };
-            //    var checkout = GenerateGithubWorkflowJobStep(test, "actions/checkout@v3");
-            //}
+            var build = GenerateGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}");
+            build["needs"] = needs.ToArray();
+            needs.Add("build");
+            foreach (var appEntry in appEntries)
+            {
+                var include = GenerateGithubWorkflowJobMatrixInclude(build);
+                include["id"] = appEntry.Id;
+                include["name"] = appEntry.Name;
+                include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
+            }
+            GenerateGithubWorkflowJobStep(build, "actions/checkout@v3");
 
-            //foreach (var appEntryConfig in appEntryConfigs)
-            //{
-            //    var build = GenerateGithubWorkflowJob(workflow, $"build_{appEntryConfig.Value.Entry.Id}", $"Build - {appEntryConfig.Value.Entry.Name}", appEntryConfig.Value.Entry.RunsOn);
-            //    build["needs"] = new string[] { "setup" }
-            //        .Combine(appEntryConfig.Value.Tests.Select(i => $"test_{i.Id}"));
-            //    var checkout = GenerateGithubWorkflowJobStep(build, "actions/checkout@v3");
-            //}
+            var publish = GenerateGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}");
+            publish["needs"] = needs.ToArray();
+            foreach (var appEntry in appEntries)
+            {
+                var include = GenerateGithubWorkflowJobMatrixInclude(publish);
+                include["id"] = appEntry.Id;
+                include["name"] = appEntry.Name;
+                include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
+            }
+            GenerateGithubWorkflowJobStep(publish, "actions/checkout@v3");
 
-            //var release = GenerateGithubWorkflowJob(workflow, "release", $"Release", RunsOnType.Ubuntu2204);
-            //release["needs"] = new string[] { "setup" };
-            //GenerateGithubWorkflowJobStep(release, "actions/checkout@v3");
+            var release = GenerateGithubWorkflowJob(workflow, "release", "Release - ${{ matrix.name }}", "${{ matrix.runs_on }}");
+            release["needs"] = needs.ToArray();
+            GenerateGithubWorkflowJobStep(release, "actions/checkout@v3");
 
-            //foreach (var appEntryConfig in appEntryConfigs)
-            //{
-            //    var publish = GenerateGithubWorkflowJob(workflow, $"publish_{appEntryConfig.Value.Entry.Id}", $"Publish - {appEntryConfig.Value.Entry.Name}", appEntryConfig.Value.Entry.RunsOn);
-            //    publish["needs"] = new string[] { "setup" }
-            //        .Combine(new string[] { $"build_{appEntryConfig.Value.Entry.Id}" })
-            //        .Combine(appEntryConfig.Value.Tests.Select(i => $"test_{i.Id}"));
-            //    var checkout = GenerateGithubWorkflowJobStep(publish, "actions/checkout@v3");
-            //}
+            needs.Add("publish");
+            needs.Add("release");
 
             var postSetup = GenerateGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204);
-            postSetup["needs"] = new string[] { "pre_setup" };
+            postSetup["needs"] = needs.ToArray();
             GenerateGithubWorkflowJobStep(postSetup, "actions/checkout@v3");
 
             var workflowDirPath = RootDirectory / ".github" / "workflows";
