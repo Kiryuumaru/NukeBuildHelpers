@@ -46,8 +46,8 @@ partial class BaseNukeBuildHelpers
         {
             RunsOnType.WindowsLatest => "./build.cmd",
             RunsOnType.Windows2022 => "./build.cmd",
-            RunsOnType.UbuntuLatest => "./build.sh",
-            RunsOnType.Ubuntu2204 => "./build.sh",
+            RunsOnType.UbuntuLatest => "chmod +x ./build.sh | ./build.sh",
+            RunsOnType.Ubuntu2204 => "chmod +x ./build.sh | ./build.sh",
             _ => throw new NotImplementedException()
         };
     }
