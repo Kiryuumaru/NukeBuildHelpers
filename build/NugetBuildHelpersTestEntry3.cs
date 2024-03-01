@@ -12,11 +12,11 @@ using System.Threading.Tasks;
 
 namespace _build;
 
-public class NugetBuildHelpersTest : AppTestEntry<Build>
+public class NugetBuildHelpersTest3 : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
 
-    public override Type[] AppEntryTargets => new Type[] { typeof(NugetBuildHelpers) };
+    public override Type[] AppEntryTargets => new Type[] { typeof(NugetBuildHelpers), typeof(NugetBuildHelpers2) };
 
     public override void Prepare(Build nukeBuild)
     {

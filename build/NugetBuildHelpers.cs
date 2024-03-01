@@ -13,7 +13,7 @@ namespace _build;
 
 public class NugetBuildHelpers : AppEntry<Build>
 {
-    public override BuildsOnType BuildsOn => BuildsOnType.Ubuntu2204;
+    public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
 
     public override void Prepare(Build nukeBuild, AbsolutePath outputPath)
     {

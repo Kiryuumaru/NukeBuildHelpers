@@ -21,7 +21,6 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-
     public Target Fetch => _ => _
         .Description("Fetch git commits and tags")
         .Executes(() =>

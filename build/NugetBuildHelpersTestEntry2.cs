@@ -14,7 +14,7 @@ namespace _build;
 
 public class NugetBuildHelpersTest2 : AppTestEntry<Build>
 {
-    public override BuildsOnType BuildsOn => BuildsOnType.Ubuntu2204;
+    public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
 
     public override Type[] AppEntryTargets => new Type[] { typeof(NugetBuildHelpers2) };
 

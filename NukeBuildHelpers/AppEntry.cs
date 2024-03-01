@@ -12,29 +12,9 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public abstract class AppEntry
+public abstract class AppEntry : BaseEntry
 {
-    public virtual bool Enable { get; } = true;
-
     public virtual bool MainRelease { get; } = true;
-
-    public virtual string Id
-    {
-        get
-        {
-            return GetType().Name.ToSnakeCase();
-        }
-    }
-
-    public virtual string Name
-    {
-        get
-        {
-            return GetType().Name;
-        }
-    }
-
-    public abstract BuildsOnType BuildsOn { get; }
 
     internal Action<BaseNukeBuildHelpers, AbsolutePath> PrepareImpl;
     internal Action<BaseNukeBuildHelpers, AbsolutePath> BuildImpl;

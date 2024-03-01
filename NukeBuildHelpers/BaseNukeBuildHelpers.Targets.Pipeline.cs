@@ -115,7 +115,7 @@ partial class BaseNukeBuildHelpers
 
             //AppTestEntryConfig config = new()
             //{
-            //    BuildsOn = Enums.BuildsOnType.Ubuntu2204
+            //    RunsOn = Enums.RunsOnType.Ubuntu2204
             //};
 
             //File.WriteAllText(absolutePath, JsonSerializer.Serialize(config, jsonSerializerOptions));

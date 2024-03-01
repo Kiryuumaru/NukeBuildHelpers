@@ -11,21 +11,9 @@ using NukeBuildHelpers.Enums;
 
 namespace NukeBuildHelpers.Models;
 
-public abstract class AppTestEntry
+public abstract class AppTestEntry : BaseEntry
 {
-    public virtual bool Enable { get; } = true;
-
-    public virtual string Name
-    {
-        get
-        {
-            return GetType().Name;
-        }
-    }
-
     public abstract Type[] AppEntryTargets { get; }
-
-    public abstract BuildsOnType BuildsOn { get; }
 
     internal Action<BaseNukeBuildHelpers> PrepareImpl;
     internal Action<BaseNukeBuildHelpers> RunImpl;
