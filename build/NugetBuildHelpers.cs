@@ -15,6 +15,8 @@ public class NugetBuildHelpers : AppEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
 
+    public override bool RunParallel => false;
+
     public override void Prepare(Build nukeBuild, AbsolutePath outputPath)
     {
         DotNetTasks.DotNetClean(_ => _

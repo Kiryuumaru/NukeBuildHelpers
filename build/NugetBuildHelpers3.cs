@@ -17,6 +17,8 @@ public class NugetBuildHelpers3 : AppEntry<Build>
 
     public override bool MainRelease => false;
 
+    public override bool RunParallel => false;
+
     public override void Prepare(Build nukeBuild, AbsolutePath outputPath)
     {
         DotNetTasks.DotNetClean(_ => _

@@ -21,7 +21,8 @@ partial class BaseNukeBuildHelpers
 {
     private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
-        List<Task> tasks = new();
+        List<Task> parallels = new();
+        List<Action> nonParallels = new();
         List<string> testAdded = new();
 
         foreach (var appEntry in appEntries)
@@ -30,7 +31,14 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            tasks.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
+            if (appEntry.Value.Entry.RunParallel)
+            {
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
+            }
+            else
+            {
+                nonParallels.Add(() => appEntry.Value.Entry.PrepareCore(this, OutputPath));
+            }
             foreach (var appEntryTest in appEntry.Value.Tests)
             {
                 if (testAdded.Contains(appEntryTest.Name))
@@ -38,16 +46,29 @@ partial class BaseNukeBuildHelpers
                     continue;
                 }
                 testAdded.Add(appEntryTest.Name);
-                tasks.Add(Task.Run(() => appEntryTest.PrepareCore(this)));
+                if (appEntryTest.RunParallel)
+                {
+                    parallels.Add(Task.Run(() => appEntryTest.PrepareCore(this)));
+                }
+                else
+                {
+                    nonParallels.Add(() => appEntryTest.PrepareCore(this));
+                }
             }
         }
 
-        await Task.WhenAll(tasks);
+        foreach (var nonParallel in nonParallels)
+        {
+            await Task.Run(nonParallel);
+        }
+
+        await Task.WhenAll(parallels);
     }
 
     private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
-        List<Task> tasks = new();
+        List<Task> parallels = new();
+        List<Action> nonParallels = new();
         List<string> testAdded = new();
 
         foreach (var appEntry in appEntries)
@@ -63,16 +84,29 @@ partial class BaseNukeBuildHelpers
                     continue;
                 }
                 testAdded.Add(appEntryTest.Name);
-                tasks.Add(Task.Run(() => appEntryTest.RunCore(this)));
+                if (appEntry.Value.Entry.RunParallel)
+                {
+                    parallels.Add(Task.Run(() => appEntryTest.RunCore(this)));
+                }
+                else
+                {
+                    nonParallels.Add(() => appEntryTest.RunCore(this));
+                }
             }
         }
 
-        await Task.WhenAll(tasks);
+        foreach (var nonParallel in nonParallels)
+        {
+            await Task.Run(nonParallel);
+        }
+
+        await Task.WhenAll(parallels);
     }
 
     private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
-        List<Task> tasks = new();
+        List<Task> parallels = new();
+        List<Action> nonParallels = new();
 
         foreach (var appEntry in appEntries)
         {
@@ -80,15 +114,28 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            tasks.Add(Task.Run(() => appEntry.Value.Entry.BuildCore(this, OutputPath)));
+            if (appEntry.Value.Entry.RunParallel)
+            {
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
+            }
+            else
+            {
+                nonParallels.Add(() => appEntry.Value.Entry.BuildCore(this, OutputPath));
+            }
         }
 
-        await Task.WhenAll(tasks);
+        foreach (var nonParallel in nonParallels)
+        {
+            await Task.Run(nonParallel);
+        }
+
+        await Task.WhenAll(parallels);
     }
 
     private async Task PackAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
-        List<Task> tasks = new();
+        List<Task> parallels = new();
+        List<Action> nonParallels = new();
 
         foreach (var appEntry in appEntries)
         {
@@ -96,15 +143,28 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            tasks.Add(Task.Run(() => appEntry.Value.Entry.PackCore(this, OutputPath)));
+            if (appEntry.Value.Entry.RunParallel)
+            {
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.PackCore(this, OutputPath)));
+            }
+            else
+            {
+                nonParallels.Add(() => appEntry.Value.Entry.PackCore(this, OutputPath));
+            }
         }
 
-        await Task.WhenAll(tasks);
+        foreach (var nonParallel in nonParallels)
+        {
+            await Task.Run(nonParallel);
+        }
+
+        await Task.WhenAll(parallels);
     }
 
     private async Task ReleaseAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
-        List<Task> tasks = new();
+        List<Task> parallels = new();
+        List<Action> nonParallels = new();
 
         foreach (var appEntry in appEntries)
         {
@@ -112,10 +172,22 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            tasks.Add(Task.Run(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath)));
+            if (appEntry.Value.Entry.RunParallel)
+            {
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath)));
+            }
+            else
+            {
+                nonParallels.Add(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath));
+            }
         }
 
-        await Task.WhenAll(tasks);
+        foreach (var nonParallel in nonParallels)
+        {
+            await Task.Run(nonParallel);
+        }
+
+        await Task.WhenAll(parallels);
     }
 
     private static List<AppEntry> GetAppEntries()
