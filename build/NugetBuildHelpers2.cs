@@ -13,7 +13,7 @@ namespace _build;
 
 public class NugetBuildHelpers2 : AppEntry<Build>
 {
-    public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
+    public override RunsOnType RunsOn => RunsOnType.Windows2022;
 
     public override bool MainRelease => false;
 

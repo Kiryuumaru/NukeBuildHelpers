@@ -57,14 +57,23 @@ partial class BaseNukeBuildHelpers
         return GenerateGithubWorkflowJob(workflow, id, name, GetRunsOnGithub(buildsOnType));
     }
 
-    private static Dictionary<string, object> GenerateGithubWorkflowJobStep(Dictionary<string, object> job, string uses)
+    private static Dictionary<string, object> GenerateGithubWorkflowJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "")
     {
-        Dictionary<string, object> step = new()
-        {
-            ["uses"] = uses,
-        };
+        Dictionary<string, object> step = new();
         ((List<object>)job["steps"]).Add(step);
-        return job;
+        if (!string.IsNullOrEmpty(id))
+        {
+            step["id"] = id;
+        }
+        if (!string.IsNullOrEmpty(name))
+        {
+            step["name"] = name;
+        }
+        if (!string.IsNullOrEmpty(uses))
+        {
+            step["uses"] = uses;
+        }
+        return step;
     }
 
     private static Dictionary<string, object> GenerateGithubWorkflowJobMatrixInclude(Dictionary<string, object> job)
@@ -115,7 +124,7 @@ partial class BaseNukeBuildHelpers
             List<string> needs = new() { "pre_setup" };
 
             var preSetup = GenerateGithubWorkflowJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
-            GenerateGithubWorkflowJobStep(preSetup, "actions/checkout@v4");
+            GenerateGithubWorkflowJobStep(preSetup, uses: "actions/checkout@v4");
 
             if (appTestEntries.Count > 0)
             {
@@ -129,7 +138,9 @@ partial class BaseNukeBuildHelpers
                     include["name"] = appTestEntry.Name;
                     include["runs_on"] = GetRunsOnGithub(appTestEntry.RunsOn);
                 }
-                GenerateGithubWorkflowJobStep(test, "actions/checkout@v4");
+                GenerateGithubWorkflowJobStep(test, uses: "actions/checkout@v4");
+                var nukeTest = GenerateGithubWorkflowJobStep(test, name: "Run Nuke");
+                nukeTest.Add("run", "./build test");
             }
 
             var build = GenerateGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}");
@@ -142,7 +153,9 @@ partial class BaseNukeBuildHelpers
                 include["name"] = appEntry.Name;
                 include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
             }
-            GenerateGithubWorkflowJobStep(build, "actions/checkout@v4");
+            GenerateGithubWorkflowJobStep(build, uses: "actions/checkout@v4");
+            var nukeBuild = GenerateGithubWorkflowJobStep(build, name: "Run Nuke");
+            nukeBuild.Add("run", "./build pack");
 
             var publish = GenerateGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}");
             publish["needs"] = needs.ToArray();
@@ -153,18 +166,18 @@ partial class BaseNukeBuildHelpers
                 include["name"] = appEntry.Name;
                 include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
             }
-            GenerateGithubWorkflowJobStep(publish, "actions/checkout@v4");
+            GenerateGithubWorkflowJobStep(publish, uses: "actions/checkout@v4");
 
             var release = GenerateGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204);
             release["needs"] = needs.ToArray();
-            GenerateGithubWorkflowJobStep(release, "actions/checkout@v4");
+            GenerateGithubWorkflowJobStep(release, uses: "actions/checkout@v4");
 
             needs.Add("publish");
             needs.Add("release");
 
             var postSetup = GenerateGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204);
             postSetup["needs"] = needs.ToArray();
-            GenerateGithubWorkflowJobStep(postSetup, "actions/checkout@v4");
+            GenerateGithubWorkflowJobStep(postSetup, uses: "actions/checkout@v4");
 
             var workflowDirPath = RootDirectory / ".github" / "workflows";
             var workflowPath = workflowDirPath / "nuke-cicd.yml";

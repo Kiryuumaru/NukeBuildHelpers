@@ -17,6 +17,8 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+    - name: Run Nuke
+      run: ./build test
     needs:
     - pre_setup
     strategy:
@@ -24,10 +26,10 @@ jobs:
         include:
         - id: nuget_build_helpers_test
           name: NugetBuildHelpersTest
-          runs_on: ubuntu-22.04
+          runs_on: windows-latest
         - id: nuget_build_helpers_test2
           name: NugetBuildHelpersTest2
-          runs_on: ubuntu-22.04
+          runs_on: windows-2022
         - id: nuget_build_helpers_test3
           name: NugetBuildHelpersTest3
           runs_on: ubuntu-22.04
@@ -36,6 +38,8 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+    - name: Run Nuke
+      run: ./build pack
     needs:
     - pre_setup
     - test
@@ -47,10 +51,10 @@ jobs:
           runs_on: ubuntu-22.04
         - id: nuget_build_helpers2
           name: NugetBuildHelpers2
-          runs_on: ubuntu-22.04
+          runs_on: windows-2022
         - id: nuget_build_helpers3
           name: NugetBuildHelpers3
-          runs_on: ubuntu-22.04
+          runs_on: ubuntu-latest
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -68,10 +72,10 @@ jobs:
           runs_on: ubuntu-22.04
         - id: nuget_build_helpers2
           name: NugetBuildHelpers2
-          runs_on: ubuntu-22.04
+          runs_on: windows-2022
         - id: nuget_build_helpers3
           name: NugetBuildHelpers3
-          runs_on: ubuntu-22.04
+          runs_on: ubuntu-latest
   release:
     name: Release
     runs-on: ubuntu-22.04
