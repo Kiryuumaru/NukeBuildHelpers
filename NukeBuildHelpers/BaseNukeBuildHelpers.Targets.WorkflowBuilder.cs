@@ -106,11 +106,12 @@ partial class BaseNukeBuildHelpers
                 var checkout = GenerateGithubWorkflowJobStep(build, "actions/checkout@v3");
             }
 
-            foreach (var appEntry in appEntries)
+            foreach (var appEntryConfig in appEntryConfigs)
             {
-                var publish = GenerateGithubWorkflowJob(workflow, $"publish_{appEntry.Id}", $"Publish - {appEntry.Name}", appEntry.RunsOn);
+                var publish = GenerateGithubWorkflowJob(workflow, $"publish_{appEntryConfig.Value.Entry.Id}", $"Publish - {appEntryConfig.Value.Entry.Name}", appEntryConfig.Value.Entry.RunsOn);
                 publish["needs"] = new string[] { "setup" }
-                    .Combine(new string[] { $"build_{appEntry.Id}" });
+                    .Combine(new string[] { $"build_{appEntryConfig.Value.Entry.Id}" })
+                    .Combine(appEntryConfig.Value.Tests.Select(i => $"test_{i.Id}"));
                 var checkout = GenerateGithubWorkflowJobStep(publish, "actions/checkout@v3");
             }
 
