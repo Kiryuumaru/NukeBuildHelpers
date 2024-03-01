@@ -39,6 +39,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     needs:
+    - setup
     - test_nuget_build_helpers_test
     - test_nuget_build_helpers_test3
   build_nuget_build_helpers2:
@@ -47,6 +48,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     needs:
+    - setup
     - test_nuget_build_helpers_test2
     - test_nuget_build_helpers_test3
   build_nuget_build_helpers3:
@@ -54,13 +56,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
-    needs: []
+    needs:
+    - setup
   publish_nuget_build_helpers:
     name: Publish - NugetBuildHelpers
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     needs:
+    - setup
     - build_nuget_build_helpers
   publish_nuget_build_helpers2:
     name: Publish - NugetBuildHelpers2
@@ -68,6 +72,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     needs:
+    - setup
     - build_nuget_build_helpers2
   publish_nuget_build_helpers3:
     name: Publish - NugetBuildHelpers3
@@ -75,9 +80,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     needs:
+    - setup
     - build_nuget_build_helpers3
   cleanups:
     name: Cleanups
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
+    needs:
+    - setup

@@ -7,6 +7,7 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using Nuke.Utilities.Text.Yaml;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
 using Octokit;
@@ -100,18 +101,21 @@ partial class BaseNukeBuildHelpers
             foreach (var appEntryConfig in appEntryConfigs)
             {
                 var build = GenerateGithubWorkflowJob(workflow, $"build_{appEntryConfig.Value.Entry.Id}", $"Build - {appEntryConfig.Value.Entry.Name}", appEntryConfig.Value.Entry.RunsOn);
-                build["needs"] = appEntryConfig.Value.Tests.Select(i => $"test_{i.Id}");
+                build["needs"] = new string[] { "setup" }
+                    .Combine(appEntryConfig.Value.Tests.Select(i => $"test_{i.Id}"));
                 var checkout = GenerateGithubWorkflowJobStep(build, "actions/checkout@v3");
             }
 
             foreach (var appEntry in appEntries)
             {
                 var publish = GenerateGithubWorkflowJob(workflow, $"publish_{appEntry.Id}", $"Publish - {appEntry.Name}", appEntry.RunsOn);
-                publish["needs"] = new string[] { $"build_{appEntry.Id}" };
+                publish["needs"] = new string[] { "setup" }
+                    .Combine(new string[] { $"build_{appEntry.Id}" });
                 var checkout = GenerateGithubWorkflowJobStep(publish, "actions/checkout@v3");
             }
 
             var cleanups = GenerateGithubWorkflowJob(workflow, "cleanups", $"Cleanups", RunsOnType.Ubuntu2204);
+            cleanups["needs"] = new string[] { "setup" };
             GenerateGithubWorkflowJobStep(cleanups, "actions/checkout@v3");
 
             var workflowDirPath = RootDirectory / ".github" / "workflows";
