@@ -155,7 +155,7 @@ partial class BaseNukeBuildHelpers
             }
             GenerateGithubWorkflowJobStep(publish, "actions/checkout@v3");
 
-            var release = GenerateGithubWorkflowJob(workflow, "release", "Release - ${{ matrix.name }}", "${{ matrix.runs_on }}");
+            var release = GenerateGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204);
             release["needs"] = needs.ToArray();
             GenerateGithubWorkflowJobStep(release, "actions/checkout@v3");
 
