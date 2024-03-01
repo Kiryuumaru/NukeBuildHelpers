@@ -19,13 +19,17 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries)
+    private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
         List<Task> tasks = new();
         List<string> testAdded = new();
 
         foreach (var appEntry in appEntries)
         {
+            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
             tasks.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
             foreach (var appEntryTest in appEntry.Value.Tests)
             {
@@ -41,13 +45,17 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(tasks);
     }
 
-    private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries)
+    private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
         List<Task> tasks = new();
         List<string> testAdded = new();
 
         foreach (var appEntry in appEntries)
         {
+            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
             foreach (var appEntryTest in appEntry.Value.Tests)
             {
                 if (testAdded.Contains(appEntryTest.Name))
@@ -62,36 +70,48 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(tasks);
     }
 
-    private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries)
+    private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
         List<Task> tasks = new();
 
         foreach (var appEntry in appEntries)
         {
+            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
             tasks.Add(Task.Run(() => appEntry.Value.Entry.BuildCore(this, OutputPath)));
         }
 
         await Task.WhenAll(tasks);
     }
 
-    private async Task PackAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries)
+    private async Task PackAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
         List<Task> tasks = new();
 
         foreach (var appEntry in appEntries)
         {
+            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
             tasks.Add(Task.Run(() => appEntry.Value.Entry.PackCore(this, OutputPath)));
         }
 
         await Task.WhenAll(tasks);
     }
 
-    private async Task ReleaseAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries)
+    private async Task ReleaseAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
         List<Task> tasks = new();
 
         foreach (var appEntry in appEntries)
         {
+            if (!idsToRun.Any(i => i.Equals(appEntry.Key, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
             tasks.Add(Task.Run(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath)));
         }
 

@@ -237,7 +237,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await PrepareAppEntries(appEntries);
+            await PrepareAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 
     public Target Test => _ => _
@@ -248,7 +248,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await TestAppEntries(appEntries);
+            await TestAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 
     public Target Build => _ => _
@@ -259,7 +259,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await BuildAppEntries(appEntries);
+            await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 
     public Target Pack => _ => _
@@ -270,7 +270,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await PackAppEntries(appEntries);
+            await PackAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 
     public Target Release => _ => _
@@ -281,6 +281,6 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await ReleaseAppEntries(appEntries);
+            await ReleaseAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 }

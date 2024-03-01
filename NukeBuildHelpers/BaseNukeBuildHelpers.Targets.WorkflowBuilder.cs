@@ -159,7 +159,7 @@ partial class BaseNukeBuildHelpers
                 }
                 GenerateGithubWorkflowJobStep(test, uses: "actions/checkout@v4");
                 var nukeTest = GenerateGithubWorkflowJobStep(test, name: "Run Nuke");
-                nukeTest.Add("run", "${{ matrix.build_script }} test");
+                nukeTest.Add("run", "${{ matrix.build_script }} test ${{ matrix.id }}");
             }
 
             // ██████████████████████████████████████
@@ -177,7 +177,7 @@ partial class BaseNukeBuildHelpers
             }
             GenerateGithubWorkflowJobStep(build, uses: "actions/checkout@v4");
             var nukeBuild = GenerateGithubWorkflowJobStep(build, name: "Run Nuke");
-            nukeBuild.Add("run", "./build pack");
+            nukeBuild.Add("run", "${{ matrix.build_script }} pack ${{ matrix.id }}");
 
             // ██████████████████████████████████████
             // ██████████████ Publish ███████████████
