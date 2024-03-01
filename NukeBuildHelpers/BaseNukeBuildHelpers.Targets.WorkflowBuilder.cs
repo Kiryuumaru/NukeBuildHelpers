@@ -122,7 +122,8 @@ partial class BaseNukeBuildHelpers
                 {
                     { "push", new Dictionary<string, object>()
                         {
-                            { "branches", new string[] { "master", "alpha" } }
+                            { "branches", new string[] { "*", "fix/*", "feat/*", "hotfix/*" } },
+                            { "tags", new string[] { "**" } }
                         }
                     }
                 },

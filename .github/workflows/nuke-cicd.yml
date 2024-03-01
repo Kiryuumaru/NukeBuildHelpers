@@ -2,8 +2,12 @@ name: Nuke CICD Pipeline
 on:
   push:
     branches:
-    - master
-    - alpha
+    - '*'
+    - fix/*
+    - feat/*
+    - hotfix/*
+    tags:
+    - '**'
 concurrency:
   group: nuke-cicd
 jobs:
