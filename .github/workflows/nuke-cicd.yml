@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run Nuke
-      run: ${{ matrix.build_script }} test --args "${{ matrix.id }}"
+      run: ${{ matrix.build_script }} test --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
     strategy:
@@ -45,7 +45,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run Nuke
-      run: ${{ matrix.build_script }} pack --args "${{ matrix.id }}"
+      run: ${{ matrix.build_script }} pack --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
     - test
