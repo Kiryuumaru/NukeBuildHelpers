@@ -15,7 +15,7 @@ namespace NukeBuildHelpers;
 
 public class NewVersion
 {
-    public string Environment { get; init; }
+    public required string Environment { get; init; }
 
-    public SemVersion Version { get; init; }
+    public required SemVersion Version { get; init; }
 }

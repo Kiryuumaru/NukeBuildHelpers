@@ -49,7 +49,7 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(() => SplitArgs, out var splitArgs);
                 GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
-                IReadOnlyCollection<Output> lsRemote = null;
+                IReadOnlyCollection<Output>? lsRemote = null;
 
                 foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : new List<string>() { "" })
                 {
@@ -94,9 +94,9 @@ partial class BaseNukeBuildHelpers
                     ("Environment", HorizontalAlignment.Center),
                     ("Current Version", HorizontalAlignment.Right)
                 };
-            List<List<string>> rows = new();
+            List<List<string?>> rows = new();
 
-            IReadOnlyCollection<Output> lsRemote = null;
+            IReadOnlyCollection<Output>? lsRemote = null;
 
             foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
             {
@@ -120,13 +120,13 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        rows.Add(new List<string> { firstEntryRow ? appId : "", env, allVersions.VersionGrouped[groupKey].Last().ToString() });
+                        rows.Add(new List<string?> { firstEntryRow ? appId : "", env, allVersions.VersionGrouped[groupKey].Last().ToString() });
                         firstEntryRow = false;
                     }
                 }
                 else
                 {
-                    rows.Add(new List<string> { appId, null, null });
+                    rows.Add(new List<string?> { appId, null, null });
                 }
             }
 
@@ -149,12 +149,12 @@ partial class BaseNukeBuildHelpers
 
             List<string> tagsToPush = new();
 
-            IReadOnlyCollection<Output> lsRemote = null;
+            IReadOnlyCollection<Output>? lsRemote = null;
 
-            foreach (var pair in splitArgs.Count > 1 || !string.IsNullOrEmpty(splitArgs.Values.First()) ? splitArgs.ToList() : new List<KeyValuePair<string, string>>() { KeyValuePair.Create("", Args) })
+            foreach (var pair in splitArgs.Count > 1 || !string.IsNullOrEmpty(splitArgs.Values.First()) ? splitArgs.ToList() : new List<KeyValuePair<string, string?>>() { KeyValuePair.Create<string, string?>("", Args) })
             {
                 string appId = pair.Key;
-                string versionRaw = pair.Value;
+                string? versionRaw = pair.Value;
 
                 // ---------- Args validation ----------
 
@@ -210,11 +210,11 @@ partial class BaseNukeBuildHelpers
 
                 if (appEntryConfig.Entry.MainRelease)
                 {
-                    tagsToPush.Add(versionRaw);
+                    tagsToPush.Add(version.ToString());
                 }
                 else
                 {
-                    tagsToPush.Add(appId + "/" + versionRaw);
+                    tagsToPush.Add(appId + "/" + version.ToString());
                 }
             }
 
@@ -259,27 +259,12 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            string ss = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
-            Log.Information("From out: {ss}", ss);
-
-
             await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key), null);
-        });
-
-    public Target Pack => _ => _
-        .Description("Pack, with --args \"{appid}\"")
-        .DependsOn(Build)
-        .Executes(async () =>
-        {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
-
-            await PackAppEntries(appEntries, splitArgs.Select(i => i.Key), null);
         });
 
     public Target Publish => _ => _
         .Description("Publish, with --args \"{appid}\"")
-        .DependsOn(Pack)
+        .DependsOn(Build)
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);

@@ -26,14 +26,14 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 
     Tool Git => (this as INukeBuildHelpers).Git;
 
-    private IReadOnlyDictionary<string, string> splitArgs;
-    public IReadOnlyDictionary<string, string> SplitArgs
+    private IReadOnlyDictionary<string, string?>? splitArgs;
+    public IReadOnlyDictionary<string, string?> SplitArgs
     {
         get
         {
             if (splitArgs == null)
             {
-                Dictionary<string, string> targetParams = new();
+                Dictionary<string, string?> targetParams = new();
                 if ((this as INukeBuildHelpers).Args != null)
                 {
                     foreach (var targetParam in (this as INukeBuildHelpers).Args.Split(';'))

@@ -63,8 +63,6 @@ jobs:
       run: ${{ matrix.build_script }} PipelinePrepare --args "${{ matrix.ids_to_run }}"
     - name: Run Nuke Build
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
-    - name: Run Nuke Pack
-      run: ${{ matrix.build_script }} PipelinePack --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
     - test

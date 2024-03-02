@@ -11,11 +11,11 @@ namespace NukeBuildHelpers.Models;
 
 public class AllVersions
 {
-    public List<SemVersion> VersionList { get; init; }
+    public required List<SemVersion> VersionList { get; init; }
 
-    public Dictionary<string, List<SemVersion>> VersionGrouped { get; init; }
+    public required Dictionary<string, List<SemVersion>> VersionGrouped { get; init; }
 
-    public Dictionary<string, SemVersion> LatestVersions { get; init; }
+    public required Dictionary<string, SemVersion> LatestVersions { get; init; }
 
-    public List<string> GroupKeySorted { get; init; }
+    public required List<string> GroupKeySorted { get; init; }
 }

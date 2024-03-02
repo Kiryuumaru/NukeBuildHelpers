@@ -51,7 +51,7 @@ partial class BaseNukeBuildHelpers
         };
     }
 
-    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string> needs = null)
+    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string>? needs = null)
     {
         Dictionary<string, object> job = new()
         {
@@ -67,7 +67,7 @@ partial class BaseNukeBuildHelpers
         return job;
     }
 
-    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string> needs = null)
+    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null)
     {
         return AddGithubWorkflowJob(workflow, id, name, GetRunsOnGithub(buildsOnType), needs);
     }
@@ -221,7 +221,6 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStep(build, uses: "actions/checkout@v4");
             AddGithubWorkflowJobStep(build, name: "Run Nuke Prepare", run: "${{ matrix.build_script }} PipelinePrepare --args \"${{ matrix.ids_to_run }}\"");
             AddGithubWorkflowJobStep(build, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
-            AddGithubWorkflowJobStep(build, name: "Run Nuke Pack", run: "${{ matrix.build_script }} PipelinePack --args \"${{ matrix.ids_to_run }}\"");
 
             needs.Add("build");
 

@@ -20,11 +20,6 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Prepare(Build nukeBuild, AbsolutePath outputPath)
     {
-        if (NewVersion != null)
-        {
-            Log.Information("NugetBuildHelpers This has new version");
-        }
-
         DotNetTasks.DotNetClean(_ => _
             .SetProject(nukeBuild.Solution.NukeBuildHelpers));
         outputPath.DeleteDirectory();
@@ -32,21 +27,12 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Build(Build nukeBuild, AbsolutePath outputPath)
     {
-        DotNetTasks.DotNetBuild(_ => _
-            .SetProjectFile(nukeBuild.Solution.NukeBuildHelpers)
-            .SetConfiguration("Release"));
-    }
-
-    public override void Pack(Build nukeBuild, AbsolutePath outputPath)
-    {
         DotNetTasks.DotNetPack(_ => _
             .SetProject(nukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release")
-            .SetNoRestore(true)
-            .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion("0.1.0-prerelease.1")
+            .SetVersion(NewVersion?.Version.ToString() ?? "0.0.0")
             .SetPackageReleaseNotes("* Initial prerelease")
             .SetOutputDirectory(outputPath));
     }

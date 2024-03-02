@@ -16,22 +16,19 @@ public abstract class AppEntry : BaseEntry
 {
     public virtual bool MainRelease { get; } = true;
 
-    public NewVersion NewVersion => InternalNewVersion;
+    public NewVersion? NewVersion => InternalNewVersion;
 
-    internal NewVersion InternalNewVersion = null;
+    internal NewVersion? InternalNewVersion = null;
 
-    internal Action<BaseNukeBuildHelpers, AbsolutePath> PrepareImpl;
-    internal Action<BaseNukeBuildHelpers, AbsolutePath> BuildImpl;
-    internal Action<BaseNukeBuildHelpers, AbsolutePath> PackImpl;
-    internal Action<BaseNukeBuildHelpers, AbsolutePath> ReleaseImpl;
+    internal Action<BaseNukeBuildHelpers, AbsolutePath>? PrepareImpl;
+    internal Action<BaseNukeBuildHelpers, AbsolutePath>? BuildImpl;
+    internal Action<BaseNukeBuildHelpers, AbsolutePath>? PublishImpl;
 
-    internal void PrepareCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => PrepareImpl(nukeBuild, outputPath);
+    internal void PrepareCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => PrepareImpl?.Invoke(nukeBuild, outputPath);
 
-    internal void BuildCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => BuildImpl(nukeBuild, outputPath);
+    internal void BuildCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => BuildImpl?.Invoke(nukeBuild, outputPath);
 
-    internal void PackCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => PackImpl(nukeBuild, outputPath);
-
-    internal void ReleaseCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => ReleaseImpl(nukeBuild, outputPath);
+    internal void PublishCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => PublishImpl?.Invoke(nukeBuild, outputPath);
 }
 
 public abstract class AppEntry<TBuild> : AppEntry
@@ -39,17 +36,14 @@ public abstract class AppEntry<TBuild> : AppEntry
 {
     protected AppEntry()
     {
-        PrepareImpl = (build, path) => Prepare(build as TBuild, path);
-        BuildImpl = (build, path) => Build(build as TBuild, path);
-        PackImpl = (build, path) => Pack(build as TBuild, path);
-        ReleaseImpl = (build, path) => Publish(build as TBuild, path);
+        PrepareImpl = (build, path) => Prepare((TBuild)build, path);
+        BuildImpl = (build, path) => Build((TBuild)build, path);
+        PublishImpl = (build, path) => Publish((TBuild)build, path);
     }
 
     public virtual void Prepare(TBuild nukeBuild, AbsolutePath outputPath) { }
 
     public virtual void Build(TBuild nukeBuild, AbsolutePath outputPath) { }
-
-    public virtual void Pack(TBuild nukeBuild, AbsolutePath outputPath) { }
 
     public virtual void Publish(TBuild nukeBuild, AbsolutePath outputPath) { }
 }

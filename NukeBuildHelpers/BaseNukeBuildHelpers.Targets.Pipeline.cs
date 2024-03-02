@@ -23,21 +23,16 @@ partial class BaseNukeBuildHelpers
 {
     private static PreSetupOutput GetPreSetupOutput()
     {
-        string preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+        string? preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
 
         if (string.IsNullOrEmpty(preSetupOutputValue))
         {
             throw new Exception("PRE_SETUP_OUTPUT is empty");
         }
 
-        PreSetupOutput preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue);
+        PreSetupOutput? preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue);
 
-        if (preSetupOutput == null)
-        {
-            throw new Exception("PRE_SETUP_OUTPUT is empty");
-        }
-
-        return preSetupOutput;
+        return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
     }
 
     public Target PipelinePrepare => _ => _
@@ -70,16 +65,6 @@ partial class BaseNukeBuildHelpers
             await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
-    public Target PipelinePack => _ => _
-        .Description("To be used by pipeline")
-        .Executes(async () =>
-        {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
-
-            await PackAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
-        });
-
     public Target PipelinePublish => _ => _
         .Description("To be used by pipeline")
         .Executes(async () =>
@@ -98,7 +83,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
-            IReadOnlyCollection<Output> lsRemote = null;
+            IReadOnlyCollection<Output>? lsRemote = null;
 
             List<(string AppId, string Env, SemVersion Version)> toRelease = new();
 

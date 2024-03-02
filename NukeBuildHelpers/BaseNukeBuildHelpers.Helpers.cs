@@ -19,7 +19,7 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private void SetupAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, PreSetupOutput preSetupOutput)
+    private static void SetupAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
         if (preSetupOutput != null && preSetupOutput.HasRelease)
         {
@@ -37,7 +37,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
+    private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
@@ -89,7 +89,7 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
+    private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
@@ -133,7 +133,7 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
+    private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
@@ -164,7 +164,7 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task PackAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
+    private async Task PublishAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
@@ -179,42 +179,11 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.PackCore(this, OutputPath)));
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.PublishCore(this, OutputPath)));
             }
             else
             {
-                nonParallels.Add(() => appEntry.Value.Entry.PackCore(this, OutputPath));
-            }
-        }
-
-        foreach (var nonParallel in nonParallels)
-        {
-            await Task.Run(nonParallel);
-        }
-
-        await Task.WhenAll(parallels);
-    }
-
-    private async Task PublishAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
-    {
-        List<Task> parallels = new();
-        List<Action> nonParallels = new();
-
-        SetupAppEntries(appEntries, preSetupOutput);
-
-        foreach (var appEntry in appEntries)
-        {
-            if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
-            {
-                continue;
-            }
-            if (appEntry.Value.Entry.RunParallel)
-            {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath)));
-            }
-            else
-            {
-                nonParallels.Add(() => appEntry.Value.Entry.ReleaseCore(this, OutputPath));
+                nonParallels.Add(() => appEntry.Value.Entry.PublishCore(this, OutputPath));
             }
         }
 
@@ -228,7 +197,7 @@ partial class BaseNukeBuildHelpers
 
     private static List<AppEntry> GetAppEntries()
     {
-        var asmNames = DependencyContext.Default.GetDefaultAssemblyNames();
+        var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
 
         var allTypes = asmNames.Select(Assembly.Load)
             .SelectMany(t => t.GetTypes())
@@ -237,14 +206,14 @@ partial class BaseNukeBuildHelpers
         List<AppEntry> entry = new();
         foreach (Type type in allTypes)
         {
-            entry.Add(Activator.CreateInstance(type) as AppEntry);
+            entry.Add((AppEntry)Activator.CreateInstance(type)!);
         }
         return entry;
     }
 
     private static List<AppTestEntry> GetAppTestEntries()
     {
-        var asmNames = DependencyContext.Default.GetDefaultAssemblyNames();
+        var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
 
         var allTypes = asmNames.Select(Assembly.Load)
             .SelectMany(t => t.GetTypes())
@@ -253,7 +222,7 @@ partial class BaseNukeBuildHelpers
         List<AppTestEntry> entry = new();
         foreach (Type type in allTypes)
         {
-            entry.Add(Activator.CreateInstance(type) as AppTestEntry);
+            entry.Add((AppTestEntry)Activator.CreateInstance(type)!);
         }
         return entry;
     }
@@ -332,7 +301,7 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output> lsRemoteOutput)
+    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
         List<SemVersion> allVersionList = new();
@@ -399,7 +368,7 @@ partial class BaseNukeBuildHelpers
             {
                 allLatestVersions[env] = tagSemver;
             }
-            if (allVersionGroupDict.TryGetValue(env, out List<SemVersion> versions))
+            if (allVersionGroupDict.TryGetValue(env, out List<SemVersion>? versions))
             {
                 versions.Add(tagSemver);
             }
@@ -478,7 +447,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void GetOrFail(string rawValue, out SemVersion valOut)
+    private static void GetOrFail(string? rawValue, out SemVersion valOut)
     {
         try
         {
@@ -494,7 +463,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void LogInfoTable(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, params IEnumerable<string>[] rows)
+    private static void LogInfoTable(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, params IEnumerable<string?>[] rows)
     {
         List<(int Length, string Text, HorizontalAlignment Alignment)> columns = new();
 
@@ -532,7 +501,7 @@ partial class BaseNukeBuildHelpers
             for (int i = 0; i < rowCount; i++)
             {
                 string rowTemplate = "{" + i.ToString() + "}";
-                string rowElement = row.ElementAt(i);
+                string? rowElement = row?.ElementAt(i);
                 int rowWidth = rowElement == null ? 4 : rowElement.Length;
                 textRow += columns[i].Alignment switch
                 {
@@ -542,7 +511,7 @@ partial class BaseNukeBuildHelpers
                     _ => throw new NotImplementedException()
                 };
             }
-            Log.Information(textRow, row.Select(i => i as object).ToArray());
+            Log.Information(textRow, row?.Select(i => i as object)?.ToArray());
         }
         Log.Information(rowSeparator);
     }
