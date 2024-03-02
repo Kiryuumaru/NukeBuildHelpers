@@ -22,7 +22,7 @@ jobs:
       run: |
         chmod +x ./build.sh
         ./build.sh PipelinePreSetup
-        echo "${PRE_SETUP_OUTPUT}"
+        echo "Var is: ${PRE_SETUP_OUTPUT}"
     - name: Run Nuke 2
       run: echo $PRE_SETUP_OUTPUT
   test:
