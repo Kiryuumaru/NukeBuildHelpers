@@ -354,6 +354,6 @@ partial class BaseNukeBuildHelpers
 
             Log.Information("PRE_SETUP_OUTPUT: {output}", serializedOutput);
 
-            Environment.SetEnvironmentVariable("PRE_SETUP_OUTPUT", serializedOutput);
+            Environment.SetEnvironmentVariable("PRE_SETUP_OUTPUT", serializedOutput, EnvironmentVariableTarget.User);
         });
 }
