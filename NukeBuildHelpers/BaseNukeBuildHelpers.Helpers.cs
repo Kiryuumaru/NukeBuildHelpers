@@ -19,11 +19,31 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
+    private void SetupAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, PreSetupOutput preSetupOutput)
+    {
+        if (preSetupOutput != null && preSetupOutput.HasRelease)
+        {
+            foreach (var release in preSetupOutput.Releases)
+            {
+                foreach (var appEntry in appEntries.Where(i => i.Value.Entry.Id == release.Key))
+                {
+                    appEntry.Value.Entry.InternalNewVersion = new NewVersion()
+                    {
+                        Environment = release.Value.Environment,
+                        Version = SemVersion.Parse(release.Value.Version, SemVersionStyles.Strict),
+                    };
+                }
+            }
+        }
+    }
+
+    private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
         List<string> testAdded = new();
+
+        SetupAppEntries(appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {
@@ -69,11 +89,13 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
+    private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
         List<string> testAdded = new();
+
+        SetupAppEntries(appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {
@@ -111,10 +133,12 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
+    private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
+
+        SetupAppEntries(appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {
@@ -140,10 +164,12 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task PackAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
+    private async Task PackAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
+
+        SetupAppEntries(appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {
@@ -169,10 +195,12 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task PublishAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
+    private async Task PublishAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
+
+        SetupAppEntries(appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {

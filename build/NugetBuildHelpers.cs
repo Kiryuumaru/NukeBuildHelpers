@@ -20,6 +20,11 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Prepare(Build nukeBuild, AbsolutePath outputPath)
     {
+        if (NewVersion != null)
+        {
+            Log.Information("NugetBuildHelpers This has new version");
+        }
+
         DotNetTasks.DotNetClean(_ => _
             .SetProject(nukeBuild.Solution.NukeBuildHelpers));
         outputPath.DeleteDirectory();

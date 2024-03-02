@@ -47,7 +47,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await PrepareAppEntries(appEntries, splitArgs.Select(i => i.Key));
+            await PrepareAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelineTest => _ => _
@@ -57,7 +57,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await TestAppEntries(appEntries, splitArgs.Select(i => i.Key));
+            await TestAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelineBuild => _ => _
@@ -67,11 +67,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            PreSetupOutput preSetupOutput = GetPreSetupOutput();
-
-            Log.Information("From out: {ss}", JsonSerializer.Serialize(preSetupOutput, new JsonSerializerOptions() { WriteIndented = true }));
-
-            await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key));
+            await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelinePack => _ => _
@@ -81,7 +77,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await PackAppEntries(appEntries, splitArgs.Select(i => i.Key));
+            await PackAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelinePublish => _ => _
@@ -91,7 +87,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key));
+            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelinePreSetup => _ => _

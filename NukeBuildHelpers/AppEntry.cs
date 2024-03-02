@@ -16,6 +16,10 @@ public abstract class AppEntry : BaseEntry
 {
     public virtual bool MainRelease { get; } = true;
 
+    public NewVersion NewVersion => InternalNewVersion;
+
+    internal NewVersion InternalNewVersion = null;
+
     internal Action<BaseNukeBuildHelpers, AbsolutePath> PrepareImpl;
     internal Action<BaseNukeBuildHelpers, AbsolutePath> BuildImpl;
     internal Action<BaseNukeBuildHelpers, AbsolutePath> PackImpl;
