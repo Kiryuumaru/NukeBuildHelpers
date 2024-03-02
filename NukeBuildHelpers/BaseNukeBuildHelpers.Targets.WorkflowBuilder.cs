@@ -256,6 +256,7 @@ partial class BaseNukeBuildHelpers
             var downloadBuildStep = AddGithubWorkflowJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
+            AddGithubWorkflowJobStepWith(downloadBuildStep, "merge-multiple", "true");
             AddGithubWorkflowJobStep(publishJob, name: "Run Nuke Publish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
 
             // ██████████████████████████████████████

@@ -103,6 +103,7 @@ jobs:
       with:
         path: ./.nuke/temp/output
         pattern: ${{ matrix.id }}
+        merge-multiple: true
     - name: Run Nuke Publish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
     needs:
