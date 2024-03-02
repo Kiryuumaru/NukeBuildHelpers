@@ -15,14 +15,16 @@ namespace NukeBuildHelpers;
 
 public class PreSetupOutputVersion
 {
-    public string Environment { get; set; }
+    public string AppId { get; init; }
 
-    public string Version { get; set; }
+    public string Environment { get; init; }
+
+    public SemVersion Version { get; init; }
 }
 
 public class PreSetupOutput
 {
-    public bool HasRelease { get; set; }
+    public bool HasRelease { get; init; }
 
-    public Dictionary<string, PreSetupOutputVersion> Releases { get; set; }
+    public Dictionary<string, PreSetupOutputVersion> Releases { get; init; }
 }

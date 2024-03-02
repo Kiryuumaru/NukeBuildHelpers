@@ -51,7 +51,7 @@ partial class BaseNukeBuildHelpers
         };
     }
 
-    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, string runsOn)
+    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string> needs = null)
     {
         Dictionary<string, object> job = new()
         {
@@ -59,13 +59,17 @@ partial class BaseNukeBuildHelpers
             ["runs-on"] = runsOn,
             ["steps"] = new List<object>()
         };
+        if (needs != null && needs.Any())
+        {
+            job["needs"] = needs;
+        }
         ((Dictionary<string, object>)workflow["jobs"])[id] = job;
         return job;
     }
 
-    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType)
+    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string> needs = null)
     {
-        return AddGithubWorkflowJob(workflow, id, name, GetRunsOnGithub(buildsOnType));
+        return AddGithubWorkflowJob(workflow, id, name, GetRunsOnGithub(buildsOnType), needs);
     }
 
     private static Dictionary<string, object> AddGithubWorkflowJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "")
@@ -196,15 +200,14 @@ partial class BaseNukeBuildHelpers
                     include["ids_to_run"] = $"{appEntry.Id};{appTestEntry.Id}";
                 }
                 AddGithubWorkflowJobStep(test, uses: "actions/checkout@v4");
+                AddGithubWorkflowJobStep(test, name: "Run Nuke Prepare", run: "${{ matrix.build_script }} PipelinePrepare --args \"${{ matrix.ids_to_run }}\"");
                 AddGithubWorkflowJobStep(test, name: "Run Nuke Test", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"");
             }
 
             // ██████████████████████████████████████
             // ███████████████ Build ████████████████
             // ██████████████████████████████████████
-            var build = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}");
-            build["needs"] = needs.ToArray();
-            needs.Add("build");
+            var build = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(build, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             foreach (var appEntry in appEntries)
             {
@@ -216,14 +219,16 @@ partial class BaseNukeBuildHelpers
                 include["ids_to_run"] = appEntry.Id;
             }
             AddGithubWorkflowJobStep(build, uses: "actions/checkout@v4");
+            AddGithubWorkflowJobStep(build, name: "Run Nuke Prepare", run: "${{ matrix.build_script }} PipelinePrepare --args \"${{ matrix.ids_to_run }}\"");
             AddGithubWorkflowJobStep(build, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             AddGithubWorkflowJobStep(build, name: "Run Nuke Pack", run: "${{ matrix.build_script }} PipelinePack --args \"${{ matrix.ids_to_run }}\"");
+
+            needs.Add("build");
 
             // ██████████████████████████████████████
             // ██████████████ Publish ███████████████
             // ██████████████████████████████████████
-            var publish = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}");
-            publish["needs"] = needs.ToArray();
+            var publish = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(publish, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             foreach (var appEntry in appEntries)
             {
@@ -235,13 +240,12 @@ partial class BaseNukeBuildHelpers
                 include["ids_to_run"] = appEntry.Id;
             }
             AddGithubWorkflowJobStep(publish, uses: "actions/checkout@v4");
-            AddGithubWorkflowJobStep(publish, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
+            AddGithubWorkflowJobStep(publish, name: "Run Nuke Publish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
 
             // ██████████████████████████████████████
-            // ██████████████ Publish ███████████████
+            // ██████████████ Release ███████████████
             // ██████████████████████████████████████
-            var release = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204);
-            release["needs"] = needs.ToArray();
+            var release = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(release, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobStep(release, uses: "actions/checkout@v4");
 
@@ -251,8 +255,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             // █████████████ Post Setup █████████████
             // ██████████████████████████████████████
-            var postSetup = AddGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204);
-            postSetup["needs"] = needs.ToArray();
+            var postSetup = AddGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(postSetup, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobStep(postSetup, uses: "actions/checkout@v4");
 

@@ -28,6 +28,8 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+    - name: Run Nuke Prepare
+      run: ${{ matrix.build_script }} PipelinePrepare --args "${{ matrix.ids_to_run }}"
     - name: Run Nuke Test
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
     needs:
@@ -57,6 +59,8 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+    - name: Run Nuke Prepare
+      run: ${{ matrix.build_script }} PipelinePrepare --args "${{ matrix.ids_to_run }}"
     - name: Run Nuke Build
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
     - name: Run Nuke Pack
@@ -89,7 +93,7 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
-    - name: Run Nuke Build
+    - name: Run Nuke Publish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup

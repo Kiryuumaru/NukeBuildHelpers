@@ -21,6 +21,25 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    private static PreSetupOutput GetPreSetupOutput()
+    {
+        string preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+
+        if (string.IsNullOrEmpty(preSetupOutputValue))
+        {
+            throw new Exception("PRE_SETUP_OUTPUT is empty");
+        }
+
+        PreSetupOutput preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue);
+
+        if (preSetupOutput == null)
+        {
+            throw new Exception("PRE_SETUP_OUTPUT is empty");
+        }
+
+        return preSetupOutput;
+    }
+
     public Target PipelinePrepare => _ => _
         .Description("To be used by pipeline")
         .Executes(async () =>
@@ -48,15 +67,9 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            string preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+            PreSetupOutput preSetupOutput = GetPreSetupOutput();
 
-            if (string.IsNullOrEmpty(preSetupOutputValue))
-            {
-                throw new Exception("PRE_SETUP_OUTPUT is empty");
-            }
-
-            PreSetupOutput preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue);
-            Log.Information("From out: {ss}", preSetupOutputValue);
+            Log.Information("From out: {ss}", JsonSerializer.Serialize(preSetupOutput, new JsonSerializerOptions() { WriteIndented = true }));
 
             await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
@@ -144,7 +157,12 @@ partial class BaseNukeBuildHelpers
             PreSetupOutput output = new()
             {
                 HasRelease = toRelease.Any(),
-                Releases = toRelease.ToDictionary(i => i.AppId, i => new PreSetupOutputVersion() { Environment = i.Env, Version = i.Version.ToString() })
+                Releases = toRelease.ToDictionary(i => i.AppId, i => new PreSetupOutputVersion()
+                {
+                    AppId = i.AppId,
+                    Environment = i.Env,
+                    Version = i.Version 
+                })
             };
 
             var serializedOutput = JsonSerializer.Serialize(output);
