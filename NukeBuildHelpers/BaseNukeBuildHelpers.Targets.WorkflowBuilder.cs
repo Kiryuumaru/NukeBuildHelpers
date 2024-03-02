@@ -193,6 +193,10 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var preSetupJob = AddGithubWorkflowJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
             AddGithubWorkflowJobStep(preSetupJob, uses: "actions/checkout@v4");
+            var cachePreSetupStep = AddGithubWorkflowJobStep(preSetupJob, uses: "actions/cache@v4");
+            AddGithubWorkflowJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
+            AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", "${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}");
+            AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", "${{ runner.os }}-nuget-");
             AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke",
                 run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup && echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT", "setup", "PRE_SETUP_OUTPUT");
@@ -217,6 +221,10 @@ partial class BaseNukeBuildHelpers
                     matrixInclude["ids_to_run"] = $"{appEntry.Id};{appTestEntry.Id}";
                 }
                 AddGithubWorkflowJobStep(testJob, uses: "actions/checkout@v4");
+                var cacheTestStep = AddGithubWorkflowJobStep(testJob, uses: "actions/cache@v4");
+                AddGithubWorkflowJobStepWith(cacheTestStep, "path", "~/.nuget/packages");
+                AddGithubWorkflowJobStepWith(cacheTestStep, "key", "${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}");
+                AddGithubWorkflowJobStepWith(cacheTestStep, "restore-keys", "${{ runner.os }}-nuget-");
                 AddGithubWorkflowJobStep(testJob, name: "Run Nuke Prepare", run: "${{ matrix.build_script }} PipelinePrepare --args \"${{ matrix.ids_to_run }}\"");
                 AddGithubWorkflowJobStep(testJob, name: "Run Nuke Test", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"");
             }
@@ -236,6 +244,10 @@ partial class BaseNukeBuildHelpers
                 matrixInclude["ids_to_run"] = appEntry.Id;
             }
             AddGithubWorkflowJobStep(buildJob, uses: "actions/checkout@v4");
+            var cacheBuildStep = AddGithubWorkflowJobStep(buildJob, uses: "actions/cache@v4");
+            AddGithubWorkflowJobStepWith(cacheBuildStep, "path", "~/.nuget/packages");
+            AddGithubWorkflowJobStepWith(cacheBuildStep, "key", "${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}");
+            AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ runner.os }}-nuget-");
             AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Prepare", run: "${{ matrix.build_script }} PipelinePrepare --args \"${{ matrix.ids_to_run }}\"");
             AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             var uploadBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
@@ -261,6 +273,10 @@ partial class BaseNukeBuildHelpers
                 include["ids_to_run"] = appEntry.Id;
             }
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");
+            var cachePublishStep = AddGithubWorkflowJobStep(publishJob, uses: "actions/cache@v4");
+            AddGithubWorkflowJobStepWith(cachePublishStep, "path", "~/.nuget/packages");
+            AddGithubWorkflowJobStepWith(cachePublishStep, "key", "${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}");
+            AddGithubWorkflowJobStepWith(cachePublishStep, "restore-keys", "${{ runner.os }}-nuget-");
             var downloadBuildStep = AddGithubWorkflowJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
