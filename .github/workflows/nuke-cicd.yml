@@ -21,7 +21,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ runner.os }}-nuget-
     - id: setup
       name: Run Nuke
@@ -36,7 +36,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ runner.os }}-nuget-
     - name: Run Nuke Prepare
       run: ${{ matrix.build_script }} PipelinePrepare --args "${{ matrix.ids_to_run }}"
@@ -72,7 +72,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ runner.os }}-nuget-
     - name: Run Nuke Prepare
       run: ${{ matrix.build_script }} PipelinePrepare --args "${{ matrix.ids_to_run }}"
@@ -116,7 +116,7 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ runner.os }}-nuget-
     - name: Download artifacts
       uses: actions/download-artifact@v4
