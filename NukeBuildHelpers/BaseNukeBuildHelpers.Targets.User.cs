@@ -350,6 +350,10 @@ partial class BaseNukeBuildHelpers
                 Releases = toRelease.ToDictionary(i => i.AppId, i => i.Version)
             };
 
-            Environment.SetEnvironmentVariable("PRE_SETUP_OUTPUT", JsonSerializer.Serialize(output));
+            var serializedOutput = JsonSerializer.Serialize(output);
+
+            Log.Information("PRE_SETUP_OUTPUT: {output}", serializedOutput);
+
+            Environment.SetEnvironmentVariable("PRE_SETUP_OUTPUT", serializedOutput);
         });
 }
