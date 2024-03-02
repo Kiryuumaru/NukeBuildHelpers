@@ -19,12 +19,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run Nuke
+      id: ss
       run: |
         chmod +x ./build.sh && ./build.sh PipelinePreSetup
         cat ./.nuke/temp/pre_setup_output.json
         echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
     - name: Run Nuke 2
-      run: echo $PRE_SETUP_OUTPUT
+      run: echo ${{ steps.ss.outputs.PRE_SETUP_OUTPUT }}
   test:
     name: Test - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
