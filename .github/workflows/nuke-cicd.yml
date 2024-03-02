@@ -21,6 +21,7 @@ jobs:
     - name: Run Nuke
       run: |
         chmod +x ./build.sh && ./build.sh PipelinePreSetup
+        echo $PRE_SETUP_OUTPUT
         echo "PRE_SETUP_OUTPUT=${PRE_SETUP_OUTPUT}" >> $GITHUB_OUTPUT
     - name: Run Nuke 2
       run: echo $PRE_SETUP_OUTPUT
