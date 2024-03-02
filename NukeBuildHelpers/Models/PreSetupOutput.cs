@@ -17,5 +17,5 @@ public class PreSetupOutput
 {
     public bool HasRelease { get; set; }
 
-    public Dictionary<string, SemVersion> Releases { get; set; }
+    public Dictionary<string, (string Env, string Version)> Releases { get; set; }
 }
