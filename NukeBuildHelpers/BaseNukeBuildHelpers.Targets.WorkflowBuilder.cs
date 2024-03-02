@@ -232,7 +232,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             var uploadBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
-            AddGithubWorkflowJobStepWith(uploadBuildStep, "path", "nuke_output/*");
+            AddGithubWorkflowJobStepWith(uploadBuildStep, "path", "./.nuke/temp/output/*");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "if-no-files-found", "error");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "retention-days", "1");
 
@@ -254,7 +254,7 @@ partial class BaseNukeBuildHelpers
             }
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");
             var downloadBuildStep = AddGithubWorkflowJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
-            AddGithubWorkflowJobStepWith(downloadBuildStep, "path", "nuke_output");
+            AddGithubWorkflowJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}/*");
             AddGithubWorkflowJobStep(publishJob, name: "Run Nuke Publish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
 
