@@ -13,9 +13,16 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
+public class PreSetupOutputVersion
+{
+    public string Environment { get; set; }
+
+    public string Version { get; set; }
+}
+
 public class PreSetupOutput
 {
     public bool HasRelease { get; set; }
 
-    public Dictionary<string, (string Env, string Version)> Releases { get; set; }
+    public Dictionary<string, PreSetupOutputVersion> Releases { get; set; }
 }

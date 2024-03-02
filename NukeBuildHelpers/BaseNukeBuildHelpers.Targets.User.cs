@@ -347,7 +347,7 @@ partial class BaseNukeBuildHelpers
             PreSetupOutput output = new()
             {
                 HasRelease = toRelease.Any(),
-                Releases = toRelease.ToDictionary(i => i.AppId, i => (i.Env, i.Version.ToString()))
+                Releases = toRelease.ToDictionary(i => i.AppId, i => new PreSetupOutputVersion() { Environment = i.Env, Version = i.Version.ToString() })
             };
 
             var serializedOutput = JsonSerializer.Serialize(output);
