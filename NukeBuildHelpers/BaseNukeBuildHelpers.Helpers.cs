@@ -19,19 +19,28 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private static void SetupAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
+    private void SetupAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
-        if (preSetupOutput != null && preSetupOutput.HasRelease)
+        foreach (var appEntry in appEntries)
         {
-            foreach (var release in preSetupOutput.Releases)
+            appEntry.Value.Entry.NukeBuild = this;
+            appEntry.Value.Entry.OutputPath = OutputPath;
+            foreach (var appTestEntry in appEntry.Value.Tests)
             {
-                foreach (var appEntry in appEntries.Where(i => i.Value.Entry.Id == release.Key))
+                appTestEntry.NukeBuild = this;
+            }
+            if (preSetupOutput != null && preSetupOutput.HasRelease)
+            {
+                foreach (var release in preSetupOutput.Releases)
                 {
-                    appEntry.Value.Entry.InternalNewVersion = new NewVersion()
+                    if (appEntry.Value.Entry.Id == release.Key)
                     {
-                        Environment = release.Value.Environment,
-                        Version = SemVersion.Parse(release.Value.Version, SemVersionStyles.Strict),
-                    };
+                        appEntry.Value.Entry.NewVersion = new NewVersion()
+                        {
+                            Environment = release.Value.Environment,
+                            Version = SemVersion.Parse(release.Value.Version, SemVersionStyles.Strict),
+                        };
+                    }
                 }
             }
         }
@@ -53,11 +62,11 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.Prepare()));
             }
             else
             {
-                nonParallels.Add(() => appEntry.Value.Entry.PrepareCore(this, OutputPath));
+                nonParallels.Add(() => appEntry.Value.Entry.Prepare());
             }
             foreach (var appEntryTest in appEntry.Value.Tests)
             {
@@ -72,11 +81,11 @@ partial class BaseNukeBuildHelpers
                 testAdded.Add(appEntryTest.Name);
                 if (appEntryTest.RunParallel)
                 {
-                    parallels.Add(Task.Run(() => appEntryTest.PrepareCore(this)));
+                    parallels.Add(Task.Run(() => appEntryTest.Prepare()));
                 }
                 else
                 {
-                    nonParallels.Add(() => appEntryTest.PrepareCore(this));
+                    nonParallels.Add(() => appEntryTest.Prepare());
                 }
             }
         }
@@ -116,11 +125,11 @@ partial class BaseNukeBuildHelpers
                 testAdded.Add(appEntryTest.Name);
                 if (appEntry.Value.Entry.RunParallel)
                 {
-                    parallels.Add(Task.Run(() => appEntryTest.RunCore(this)));
+                    parallels.Add(Task.Run(() => appEntryTest.Run()));
                 }
                 else
                 {
-                    nonParallels.Add(() => appEntryTest.RunCore(this));
+                    nonParallels.Add(() => appEntryTest.Run());
                 }
             }
         }
@@ -148,11 +157,11 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.PrepareCore(this, OutputPath)));
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.Prepare()));
             }
             else
             {
-                nonParallels.Add(() => appEntry.Value.Entry.BuildCore(this, OutputPath));
+                nonParallels.Add(() => appEntry.Value.Entry.Build());
             }
         }
 
@@ -179,11 +188,11 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.PublishCore(this, OutputPath)));
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.Publish()));
             }
             else
             {
-                nonParallels.Add(() => appEntry.Value.Entry.PublishCore(this, OutputPath));
+                nonParallels.Add(() => appEntry.Value.Entry.Publish());
             }
         }
 
@@ -257,7 +266,7 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            if (appTestEntry.AppEntryTargets == null || !appTestEntry.AppEntryTargets.Any())
+            if (appTestEntry.AppEntryTargets == null || appTestEntry.AppEntryTargets.Length == 0)
             {
                 throw new Exception($"App test entry contains null or empty app entry id \"{appTestEntry.Name}\"");
             }
@@ -321,15 +330,15 @@ partial class BaseNukeBuildHelpers
             {
                 tag = rawTag;
             }
-            else if (rawTag.StartsWith(appId.ToLowerInvariant()))
+            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
             {
-                tag = rawTag[(rawTag.IndexOf(appId.ToLowerInvariant()) + appId.Length + 1)..];
+                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
             }
             else
             {
                 continue;
             }
-            if (tag.ToLowerInvariant().StartsWith("latest"))
+            if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
             {
                 latestVersionCommitId[rawTag] = commitId;
             }
@@ -344,9 +353,9 @@ partial class BaseNukeBuildHelpers
             {
                 tag = rawTag;
             }
-            else if (rawTag.StartsWith(appId.ToLowerInvariant()))
+            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
             {
-                tag = rawTag[(rawTag.IndexOf(appId.ToLowerInvariant()) + appId.Length + 1)..];
+                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
             }
             else
             {

@@ -15,24 +15,15 @@ public abstract class AppTestEntry : BaseEntry
 {
     public abstract Type[] AppEntryTargets { get; }
 
-    internal Action<BaseNukeBuildHelpers>? PrepareImpl;
-    internal Action<BaseNukeBuildHelpers>? RunImpl;
+    public BaseNukeBuildHelpers NukeBuild { get; internal set; } = null!;
 
-    internal void PrepareCore(BaseNukeBuildHelpers nukeBuild) => PrepareImpl?.Invoke(nukeBuild);
+    public virtual void Prepare() { }
 
-    internal void RunCore(BaseNukeBuildHelpers nukeBuild) => RunImpl?.Invoke(nukeBuild);
+    public virtual void Run() { }
 }
 
 public abstract class AppTestEntry<TBuild> : AppTestEntry
     where TBuild : BaseNukeBuildHelpers
 {
-    protected AppTestEntry()
-    {
-        PrepareImpl = (build) => Prepare((TBuild)build);
-        RunImpl = (build) => Run((TBuild)build);
-    }
-
-    public virtual void Prepare(TBuild nukeBuild) { }
-
-    public virtual void Run(TBuild nukeBuild) { }
+    public new TBuild NukeBuild => (TBuild)base.NukeBuild;
 }

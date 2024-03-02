@@ -16,34 +16,21 @@ public abstract class AppEntry : BaseEntry
 {
     public virtual bool MainRelease { get; } = true;
 
-    public NewVersion? NewVersion => InternalNewVersion;
+    public AbsolutePath OutputPath { get; internal set; } = null!;
 
-    internal NewVersion? InternalNewVersion = null;
+    public BaseNukeBuildHelpers NukeBuild { get; internal set; } = null!;
 
-    internal Action<BaseNukeBuildHelpers, AbsolutePath>? PrepareImpl;
-    internal Action<BaseNukeBuildHelpers, AbsolutePath>? BuildImpl;
-    internal Action<BaseNukeBuildHelpers, AbsolutePath>? PublishImpl;
+    public NewVersion? NewVersion { get; internal set; }
 
-    internal void PrepareCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => PrepareImpl?.Invoke(nukeBuild, outputPath);
+    public virtual void Prepare() { }
 
-    internal void BuildCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => BuildImpl?.Invoke(nukeBuild, outputPath);
+    public virtual void Build() { }
 
-    internal void PublishCore(BaseNukeBuildHelpers nukeBuild, AbsolutePath outputPath) => PublishImpl?.Invoke(nukeBuild, outputPath);
+    public virtual void Publish() { }
 }
 
 public abstract class AppEntry<TBuild> : AppEntry
     where TBuild : BaseNukeBuildHelpers
 {
-    protected AppEntry()
-    {
-        PrepareImpl = (build, path) => Prepare((TBuild)build, path);
-        BuildImpl = (build, path) => Build((TBuild)build, path);
-        PublishImpl = (build, path) => Publish((TBuild)build, path);
-    }
-
-    public virtual void Prepare(TBuild nukeBuild, AbsolutePath outputPath) { }
-
-    public virtual void Build(TBuild nukeBuild, AbsolutePath outputPath) { }
-
-    public virtual void Publish(TBuild nukeBuild, AbsolutePath outputPath) { }
+    public new TBuild NukeBuild => (TBuild)base.NukeBuild;
 }

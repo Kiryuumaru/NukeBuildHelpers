@@ -94,7 +94,7 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
-                if (allVersions.GroupKeySorted.Any())
+                if (allVersions.GroupKeySorted.Count != 0)
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {
@@ -117,10 +117,10 @@ partial class BaseNukeBuildHelpers
                                 continue;
                             }
                         }
-                        if (!allVersions.LatestVersions.ContainsKey(groupKey) || allVersions.LatestVersions[groupKey] != allVersions.VersionGrouped[groupKey].Last())
+                        if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != allVersions.VersionGrouped[groupKey].Last())
                         {
                             toRelease.Add((appId, env, allVersions.VersionGrouped[groupKey].Last()));
-                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), allVersions.LatestVersions.ContainsKey(groupKey) ? allVersions.LatestVersions[groupKey].ToString() : "non");
+                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
                         }
                         else
                         {
@@ -137,7 +137,7 @@ partial class BaseNukeBuildHelpers
 
             PreSetupOutput output = new()
             {
-                HasRelease = toRelease.Any(),
+                HasRelease = toRelease.Count != 0,
                 Releases = toRelease.ToDictionary(i => i.AppId, i => new PreSetupOutputVersion()
                 {
                     AppId = i.AppId,

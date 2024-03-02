@@ -107,7 +107,7 @@ partial class BaseNukeBuildHelpers
 
                 bool firstEntryRow = true;
 
-                if (allVersions.GroupKeySorted.Any())
+                if (allVersions.GroupKeySorted.Count != 0)
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {
@@ -170,7 +170,7 @@ partial class BaseNukeBuildHelpers
                 string env;
                 if (version.IsPrerelease)
                 {
-                    if (Repository.Branch.ToLowerInvariant() != version.PrereleaseIdentifiers[0])
+                    if (!Repository.Branch.Equals(version.PrereleaseIdentifiers[0], StringComparison.InvariantCultureIgnoreCase))
                     {
                         Assert.Fail($"{version} should bump on {version.PrereleaseIdentifiers[0]} branch");
                         return;
@@ -180,9 +180,9 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    if (Repository.Branch.ToLowerInvariant() != "master" &&
-                        Repository.Branch.ToLowerInvariant() != "main" &&
-                        Repository.Branch.ToLowerInvariant() != "prod")
+                    if (!Repository.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) &&
+                        !Repository.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) &&
+                        !Repository.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
                     {
                         Assert.Fail($"{version} should bump on main branch");
                         return;
@@ -191,9 +191,9 @@ partial class BaseNukeBuildHelpers
                     env = "main";
                 }
 
-                if (allVersions.VersionGrouped.ContainsKey(envIdentifier))
+                if (allVersions.VersionGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
                 {
-                    var lastVersion = allVersions.VersionGrouped[envIdentifier].Last();
+                    var lastVersion = value.Last();
                     // Fail if the version is already released
                     if (SemVersion.ComparePrecedence(lastVersion, version) == 0)
                     {

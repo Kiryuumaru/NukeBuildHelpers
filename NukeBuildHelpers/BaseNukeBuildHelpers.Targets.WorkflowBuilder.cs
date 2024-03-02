@@ -95,50 +95,58 @@ partial class BaseNukeBuildHelpers
         return step;
     }
 
+    private static readonly string[] valueArray0 = new string[] { "**" };
+    private static readonly string[] valueArray = new string[] { "*" };
+    private static readonly string[] value = new string[] { "fix/**", "feat/**", "hotfix/**" };
+
     private static void AddGithubWorkflowJobStepWith(Dictionary<string, object> step, string name, string value)
     {
-        if (!step.ContainsKey("with"))
+        if (!step.TryGetValue("with", out object? withValue))
         {
-            step["with"] = new Dictionary<string, object>();
+            withValue = new Dictionary<string, object>();
+            step["with"] = withValue;
         }
-        ((Dictionary<string, object>)step["with"]).Add(name, value);
+        ((Dictionary<string, object>)withValue).Add(name, value);
     }
 
     private static Dictionary<string, object> AddGithubWorkflowJobMatrixInclude(Dictionary<string, object> job)
     {
         Dictionary<string, object> include = new();
-        if (!job.ContainsKey("strategy"))
+        if (!job.TryGetValue("strategy", out object? value))
         {
-            job["strategy"] = new Dictionary<string, object>();
+            value = new Dictionary<string, object>();
+            job["strategy"] = value;
         }
-        if (!((Dictionary<string, object>)job["strategy"]).ContainsKey("matrix"))
+        if (!((Dictionary<string, object>)value).ContainsKey("matrix"))
         {
-            ((Dictionary<string, object>)job["strategy"])["matrix"] = new Dictionary<string, object>();
+            ((Dictionary<string, object>)value)["matrix"] = new Dictionary<string, object>();
         }
-        if (!((Dictionary<string, object>)((Dictionary<string, object>)job["strategy"])["matrix"]).ContainsKey("include"))
+        if (!((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"]).ContainsKey("include"))
         {
-            ((Dictionary<string, object>)((Dictionary<string, object>)job["strategy"])["matrix"])["include"] = new List<object>();
+            ((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"])["include"] = new List<object>();
         }
-        ((List<object>)((Dictionary<string, object>)((Dictionary<string, object>)job["strategy"])["matrix"])["include"]).Add(include);
+        ((List<object>)((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"])["include"]).Add(include);
         return include;
     }
 
     private static void AddGithubWorkflowJobOutput(Dictionary<string, object> job, string outputName, string fromStepId, string fromStepVariable)
     {
-        if (!job.ContainsKey("outputs"))
+        if (!job.TryGetValue("outputs", out object? value))
         {
-            job["outputs"] = new Dictionary<string, object>();
+            value = new Dictionary<string, object>();
+            job["outputs"] = value;
         }
-        ((Dictionary<string, object>)job["outputs"]).Add(outputName, $"${{{{ steps.{fromStepId}.outputs.{fromStepVariable} }}}}");
+        ((Dictionary<string, object>)value).Add(outputName, $"${{{{ steps.{fromStepId}.outputs.{fromStepVariable} }}}}");
     }
 
     private static void AddGithubWorkflowJobEnvVar(Dictionary<string, object> job, string envVarName, string envVarValue)
     {
-        if (!job.ContainsKey("env"))
+        if (!job.TryGetValue("env", out object? value))
         {
-            job["env"] = new Dictionary<string, object>();
+            value = new Dictionary<string, object>();
+            job["env"] = value;
         }
-        ((Dictionary<string, object>)job["env"]).Add(envVarName, envVarValue);
+        ((Dictionary<string, object>)value).Add(envVarName, envVarValue);
     }
 
     private static void AddGithubWorkflowJobEnvVarFromNeeds(Dictionary<string, object> job, string envVarName, string needsId, string outputName)
@@ -161,13 +169,13 @@ partial class BaseNukeBuildHelpers
                 {
                     { "push", new Dictionary<string, object>()
                         {
-                            { "branches", new string[] { "*" } },
-                            { "tags", new string[] { "**" } }
+                            { "branches", valueArray },
+                            { "tags", valueArray0 }
                         }
                     },
                     { "pull_request", new Dictionary<string, object>()
                         {
-                            { "branches", new string[] { "fix/**", "feat/**", "hotfix/**" } }
+                            { "branches", value }
                         }
                     }
                 },

@@ -20,14 +20,14 @@ public class NugetBuildHelpersTest2 : AppTestEntry<Build>
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers2)];
 
-    public override void Prepare(Build nukeBuild)
+    public override void Prepare()
     {
         Console.WriteLine(Name + " Prepare");
     }
 
-    public override void Run(Build nukeBuild)
+    public override void Run()
     {
         DotNetTasks.DotNetTest(_ => _
-            .SetProjectFile(nukeBuild.Solution.NukeBuildHelpers_UnitTest));
+            .SetProjectFile(NukeBuild.Solution.NukeBuildHelpers_UnitTest));
     }
 }

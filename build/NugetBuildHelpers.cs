@@ -18,20 +18,20 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override bool RunParallel => false;
 
-    public override void Prepare(Build nukeBuild, AbsolutePath outputPath)
+    public override void Prepare()
     {
         DotNetTasks.DotNetClean(_ => _
-            .SetProject(nukeBuild.Solution.NukeBuildHelpers));
-        outputPath.DeleteDirectory();
+            .SetProject(NukeBuild.Solution.NukeBuildHelpers));
+        OutputPath.DeleteDirectory();
     }
 
-    public override void Build(Build nukeBuild, AbsolutePath outputPath)
+    public override void Build()
     {
         DotNetTasks.DotNetBuild(_ => _
-            .SetProjectFile(nukeBuild.Solution.NukeBuildHelpers)
+            .SetProjectFile(NukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release"));
         DotNetTasks.DotNetPack(_ => _
-            .SetProject(nukeBuild.Solution.NukeBuildHelpers)
+            .SetProject(NukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release")
             .SetNoRestore(true)
             .SetNoBuild(true)
@@ -39,12 +39,12 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetSymbolPackageFormat("snupkg")
             .SetVersion(NewVersion?.Version.ToString() ?? "0.0.0")
             .SetPackageReleaseNotes("* Initial prerelease")
-            .SetOutputDirectory(outputPath));
+            .SetOutputDirectory(OutputPath));
     }
 
-    public override void Publish(Build nukeBuild, AbsolutePath outputPath)
+    public override void Publish()
     {
-        foreach (var ss in outputPath.GetFiles())
+        foreach (var ss in OutputPath.GetFiles())
         {
             Log.Information("Publish: {name}", ss.Name);
         }
