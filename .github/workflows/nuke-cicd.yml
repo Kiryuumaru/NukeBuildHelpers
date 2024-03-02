@@ -64,10 +64,10 @@ jobs:
     - name: Run Nuke Build
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.id }}
-        path: output/*
+        path: nuke_output/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -99,9 +99,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        path: output
+        path: nuke_output
+        pattern: ${{ matrix.id }}/*
     - name: Run Nuke Publish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
     needs:
