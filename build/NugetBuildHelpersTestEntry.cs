@@ -22,7 +22,8 @@ public class NugetBuildHelpersTest : AppTestEntry<Build>
 
     public override void Prepare()
     {
-        Console.WriteLine(Name + " Prepare");
+        DotNetTasks.DotNetClean(_ => _
+            .SetProject(NukeBuild.Solution.NukeBuildHelpers_UnitTest));
     }
 
     public override void Run()
