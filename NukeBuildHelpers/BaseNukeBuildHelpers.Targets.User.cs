@@ -329,11 +329,11 @@ partial class BaseNukeBuildHelpers
                         if (!allVersions.LatestVersions.ContainsKey(groupKey) || allVersions.LatestVersions[groupKey] != allVersions.VersionGrouped[groupKey].Last())
                         {
                             toRelease.Add((appId, env, allVersions.VersionGrouped[groupKey].Last()));
-                            Log.Information("Tag: {current}, current latest: {latest}", allVersions.VersionGrouped[groupKey].Last().ToString(), allVersions.LatestVersions.ContainsKey(groupKey) ? allVersions.LatestVersions[groupKey].ToString() : "non");
+                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), allVersions.LatestVersions.ContainsKey(groupKey) ? allVersions.LatestVersions[groupKey].ToString() : "non");
                         }
                         else
                         {
-                            Log.Information("Tag: {current}, already latest", allVersions.VersionGrouped[groupKey].Last().ToString());
+                            Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
                         }
                     }
                 }
@@ -341,8 +341,15 @@ partial class BaseNukeBuildHelpers
 
             foreach (var rel in toRelease)
             {
-
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppId, rel.Env, rel.Version);
             }
+
+            PreSetupOutput output = new()
+            {
+                HasRelease = toRelease.Any(),
+                Releases = toRelease.ToDictionary(i => i.AppId, i => i.Version)
+            };
+
+            Environment.SetEnvironmentVariable("PRE_SETUP_OUTPUT", JsonSerializer.Serialize(output));
         });
 }

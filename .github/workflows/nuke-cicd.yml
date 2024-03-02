@@ -3,11 +3,13 @@ on:
   push:
     branches:
     - '*'
-    - fix/*
-    - feat/*
-    - hotfix/*
     tags:
     - '**'
+  pull_request:
+    branches:
+    - fix/**
+    - feat/**
+    - hotfix/**
 concurrency:
   group: nuke-cicd
 jobs:
@@ -16,6 +18,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
+    - name: Run Nuke
+      run: ${{ matrix.build_script }} PipelinePreSetup
+    - name: Run Nuke 2
+      run: echo $PRE_SETUP_OUTPUT
   test:
     name: Test - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}

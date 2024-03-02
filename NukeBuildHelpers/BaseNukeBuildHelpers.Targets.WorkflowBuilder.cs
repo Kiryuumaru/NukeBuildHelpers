@@ -25,7 +25,6 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private readonly Deserializer _yamlDeserializer = new();
     private readonly Serializer _yamlSerializer = new();
 
     private static string GetRunsOnGithub(RunsOnType runsOnType)
@@ -110,8 +109,17 @@ partial class BaseNukeBuildHelpers
     private static Dictionary<string, object> GenerateGithubWorkflowJobOutputs(Dictionary<string, object> job)
     {
         Dictionary<string, object> outputs = new();
+        if (!job.ContainsKey("outputs"))
+        {
+            job["outputs"] = new List<object>();
+        }
         ((List<object>)job["outputs"]).Add(outputs);
         return outputs;
+    }
+
+    private static void SetVarGithub(string varName, string value)
+    {
+        Console.WriteLine($"echo '{varName}=\"{value}\"' >> $GITHUB_OUTPUT");
     }
 
     public Target GithubWorkflow => _ => _
@@ -153,6 +161,10 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var preSetup = GenerateGithubWorkflowJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
             GenerateGithubWorkflowJobStep(preSetup, uses: "actions/checkout@v4");
+            var nukePreSetup = GenerateGithubWorkflowJobStep(preSetup, name: "Run Nuke");
+            nukePreSetup.Add("run", "${{ matrix.build_script }} PipelinePreSetup");
+            var nukePreSetup1 = GenerateGithubWorkflowJobStep(preSetup, name: "Run Nuke 2");
+            nukePreSetup1.Add("run", "echo $PRE_SETUP_OUTPUT");
 
             // ██████████████████████████████████████
             // ████████████████ Test ████████████████
