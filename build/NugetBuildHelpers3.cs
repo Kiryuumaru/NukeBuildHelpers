@@ -34,9 +34,14 @@ public class NugetBuildHelpers3 : AppEntry<Build>
 
     public override void Build(Build nukeBuild, AbsolutePath outputPath)
     {
+        DotNetTasks.DotNetBuild(_ => _
+            .SetProjectFile(nukeBuild.Solution.NukeBuildHelpers)
+            .SetConfiguration("Release"));
         DotNetTasks.DotNetPack(_ => _
             .SetProject(nukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release")
+            .SetNoRestore(true)
+            .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
             .SetVersion(NewVersion?.Version.ToString() ?? "0.0.0")
