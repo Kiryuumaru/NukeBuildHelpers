@@ -22,7 +22,7 @@ jobs:
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-pre_setup-${{ hashFiles('**/*.csproj') }}
-        restore-keys: ${{ runner.os }}-nuget-
+        restore-keys: ${{ runner.os }}-nuget-pre_setup-
     - id: setup
       name: Run Nuke
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup && echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
@@ -37,7 +37,7 @@ jobs:
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-test-${{ hashFiles('**/*.csproj') }}
-        restore-keys: ${{ runner.os }}-nuget-
+        restore-keys: ${{ runner.os }}-nuget-test-
     - name: Run Nuke Prepare
       run: ${{ matrix.build_script }} PipelinePrepare --args "${{ matrix.ids_to_run }}"
     - name: Run Nuke Test
@@ -73,7 +73,7 @@ jobs:
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-build-${{ hashFiles('**/*.csproj') }}
-        restore-keys: ${{ runner.os }}-nuget-
+        restore-keys: ${{ runner.os }}-nuget-build-
     - name: Run Nuke Prepare
       run: ${{ matrix.build_script }} PipelinePrepare --args "${{ matrix.ids_to_run }}"
     - name: Run Nuke Build
@@ -117,7 +117,7 @@ jobs:
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-publish-${{ hashFiles('**/*.csproj') }}
-        restore-keys: ${{ runner.os }}-nuget-
+        restore-keys: ${{ runner.os }}-nuget-publish-
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
