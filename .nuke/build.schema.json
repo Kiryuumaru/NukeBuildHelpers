@@ -74,9 +74,14 @@
               "Fetch",
               "GithubWorkflow",
               "Pack",
+              "PipelineBuild",
+              "PipelinePack",
+              "PipelinePrepare",
               "PipelinePreSetup",
+              "PipelinePublish",
+              "PipelineTest",
               "Prepare",
-              "Release",
+              "Publish",
               "Test",
               "Version"
             ]
@@ -98,9 +103,14 @@
               "Fetch",
               "GithubWorkflow",
               "Pack",
+              "PipelineBuild",
+              "PipelinePack",
+              "PipelinePrepare",
               "PipelinePreSetup",
+              "PipelinePublish",
+              "PipelineTest",
               "Prepare",
-              "Release",
+              "Publish",
               "Test",
               "Version"
             ]

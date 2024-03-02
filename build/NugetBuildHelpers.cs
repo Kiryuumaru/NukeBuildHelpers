@@ -27,9 +27,6 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Build(Build nukeBuild, AbsolutePath outputPath)
     {
-        string ss = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
-        Log.Information("From out: {ss}", ss);
-
         DotNetTasks.DotNetBuild(_ => _
             .SetProjectFile(nukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release"));
@@ -49,8 +46,8 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetOutputDirectory(outputPath));
     }
 
-    public override void Release(Build nukeBuild, AbsolutePath outputPath)
+    public override void Publish(Build nukeBuild, AbsolutePath outputPath)
     {
-        Console.WriteLine(Name + " Release");
+        Console.WriteLine(Name + " Publish");
     }
 }

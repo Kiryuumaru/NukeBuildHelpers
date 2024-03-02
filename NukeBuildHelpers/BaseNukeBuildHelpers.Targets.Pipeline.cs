@@ -21,6 +21,66 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    public Target PipelinePrepare => _ => _
+        .Description("To be used by pipeline")
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            await PrepareAppEntries(appEntries, splitArgs.Select(i => i.Key));
+        });
+
+    public Target PipelineTest => _ => _
+        .Description("To be used by pipeline")
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            await TestAppEntries(appEntries, splitArgs.Select(i => i.Key));
+        });
+
+    public Target PipelineBuild => _ => _
+        .Description("To be used by pipeline")
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            string preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+
+            if (string.IsNullOrEmpty(preSetupOutputValue))
+            {
+                throw new Exception("PRE_SETUP_OUTPUT is empty");
+            }
+
+            PreSetupOutput preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue);
+            Log.Information("From out: {ss}", preSetupOutputValue);
+
+            await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key));
+        });
+
+    public Target PipelinePack => _ => _
+        .Description("To be used by pipeline")
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            await PackAppEntries(appEntries, splitArgs.Select(i => i.Key));
+        });
+
+    public Target PipelinePublish => _ => _
+        .Description("To be used by pipeline")
+        .Executes(async () =>
+        {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+
+            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key));
+        });
+
     public Target PipelinePreSetup => _ => _
         .Description("To be used by pipeline")
         .DependsOn(Version)

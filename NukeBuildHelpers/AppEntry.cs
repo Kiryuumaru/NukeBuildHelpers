@@ -38,7 +38,7 @@ public abstract class AppEntry<TBuild> : AppEntry
         PrepareImpl = (build, path) => Prepare(build as TBuild, path);
         BuildImpl = (build, path) => Build(build as TBuild, path);
         PackImpl = (build, path) => Pack(build as TBuild, path);
-        ReleaseImpl = (build, path) => Release(build as TBuild, path);
+        ReleaseImpl = (build, path) => Publish(build as TBuild, path);
     }
 
     public virtual void Prepare(TBuild nukeBuild, AbsolutePath outputPath) { }
@@ -47,5 +47,5 @@ public abstract class AppEntry<TBuild> : AppEntry
 
     public virtual void Pack(TBuild nukeBuild, AbsolutePath outputPath) { }
 
-    public virtual void Release(TBuild nukeBuild, AbsolutePath outputPath) { }
+    public virtual void Publish(TBuild nukeBuild, AbsolutePath outputPath) { }
 }

@@ -47,7 +47,7 @@ public class NugetBuildHelpers2 : AppEntry<Build>
             .SetOutputDirectory(outputPath));
     }
 
-    public override void Release(Build nukeBuild, AbsolutePath outputPath)
+    public override void Publish(Build nukeBuild, AbsolutePath outputPath)
     {
         Console.WriteLine(Name + " Release");
     }

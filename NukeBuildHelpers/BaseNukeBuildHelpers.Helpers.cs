@@ -169,7 +169,7 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task ReleaseAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
+    private async Task PublishAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();

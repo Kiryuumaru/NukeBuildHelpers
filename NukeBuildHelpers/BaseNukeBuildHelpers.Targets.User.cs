@@ -259,6 +259,10 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
+            string ss = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+            Log.Information("From out: {ss}", ss);
+
+
             await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 
@@ -273,14 +277,14 @@ partial class BaseNukeBuildHelpers
             await PackAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 
-    public Target Release => _ => _
-        .Description("Release, with --args \"{appid}\"")
+    public Target Publish => _ => _
+        .Description("Publish, with --args \"{appid}\"")
         .DependsOn(Pack)
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await ReleaseAppEntries(appEntries, splitArgs.Select(i => i.Key));
+            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key));
         });
 }

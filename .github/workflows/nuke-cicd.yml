@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - name: Run Nuke
-      id: setup
+    - id: setup
+      name: Run Nuke
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup && echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
     outputs:
       PRE_SETUP_OUTPUT: ${{ steps.setup.outputs.PRE_SETUP_OUTPUT }}
@@ -28,8 +28,8 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
-    - name: Run Nuke
-      run: ${{ matrix.build_script }} test --args "${{ matrix.ids_to_run }}"
+    - name: Run Nuke Test
+      run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
     env:
@@ -57,8 +57,10 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
-    - name: Run Nuke
-      run: ${{ matrix.build_script }} pack --args "${{ matrix.ids_to_run }}"
+    - name: Run Nuke Build
+      run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
+    - name: Run Nuke Pack
+      run: ${{ matrix.build_script }} PipelinePack --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
     - test
@@ -71,19 +73,24 @@ jobs:
           name: NugetBuildHelpers
           runs_on: ubuntu-22.04
           build_script: chmod +x ./build.sh && ./build.sh
+          ids_to_run: nuget_build_helpers
         - id: nuget_build_helpers2
           name: NugetBuildHelpers2
           runs_on: windows-2022
           build_script: ./build.cmd
+          ids_to_run: nuget_build_helpers2
         - id: nuget_build_helpers3
           name: NugetBuildHelpers3
           runs_on: ubuntu-latest
           build_script: chmod +x ./build.sh && ./build.sh
+          ids_to_run: nuget_build_helpers3
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+    - name: Run Nuke Build
+      run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
     - test
@@ -96,12 +103,18 @@ jobs:
         - id: nuget_build_helpers
           name: NugetBuildHelpers
           runs_on: ubuntu-22.04
+          build_script: chmod +x ./build.sh && ./build.sh
+          ids_to_run: nuget_build_helpers
         - id: nuget_build_helpers2
           name: NugetBuildHelpers2
           runs_on: windows-2022
+          build_script: ./build.cmd
+          ids_to_run: nuget_build_helpers2
         - id: nuget_build_helpers3
           name: NugetBuildHelpers3
           runs_on: ubuntu-latest
+          build_script: chmod +x ./build.sh && ./build.sh
+          ids_to_run: nuget_build_helpers3
   release:
     name: Release
     runs-on: ubuntu-22.04
