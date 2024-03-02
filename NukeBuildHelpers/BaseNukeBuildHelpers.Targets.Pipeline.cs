@@ -161,7 +161,7 @@ partial class BaseNukeBuildHelpers
                 {
                     AppId = i.AppId,
                     Environment = i.Env,
-                    Version = i.Version 
+                    Version = i.Version.ToString()
                 })
             };
 

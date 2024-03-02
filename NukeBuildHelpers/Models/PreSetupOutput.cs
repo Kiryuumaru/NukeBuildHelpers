@@ -19,7 +19,7 @@ public class PreSetupOutputVersion
 
     public string Environment { get; init; }
 
-    public SemVersion Version { get; init; }
+    public string Version { get; init; }
 }
 
 public class PreSetupOutput
