@@ -162,7 +162,7 @@ partial class BaseNukeBuildHelpers
             var preSetup = GenerateGithubWorkflowJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
             GenerateGithubWorkflowJobStep(preSetup, uses: "actions/checkout@v4");
             var nukePreSetup = GenerateGithubWorkflowJobStep(preSetup, name: "Run Nuke");
-            nukePreSetup.Add("run", "${{ matrix.build_script }} PipelinePreSetup");
+            nukePreSetup.Add("run", $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup");
             var nukePreSetup1 = GenerateGithubWorkflowJobStep(preSetup, name: "Run Nuke 2");
             nukePreSetup1.Add("run", "echo $PRE_SETUP_OUTPUT");
 
