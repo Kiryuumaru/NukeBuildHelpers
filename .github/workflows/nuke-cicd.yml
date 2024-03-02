@@ -21,9 +21,7 @@ jobs:
     - name: Run Nuke
       id: ss
       run: |
-        chmod +x ./build.sh && ./build.sh PipelinePreSetup
-        cat ./.nuke/temp/pre_setup_output.json
-        echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
+        chmod +x ./build.sh && ./build.sh PipelinePreSetup && echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
     - name: Run Nuke 2
       run: echo ${{ steps.ss.outputs.PRE_SETUP_OUTPUT }}
   test:
