@@ -51,6 +51,9 @@ public class NugetBuildHelpers3 : AppEntry<Build>
 
     public override void Publish(Build nukeBuild, AbsolutePath outputPath)
     {
-        Console.WriteLine(Name + " Release");
+        foreach (var ss in outputPath.GetFiles())
+        {
+            Log.Information("Publish: {name}", ss.Name);
+        }
     }
 }
