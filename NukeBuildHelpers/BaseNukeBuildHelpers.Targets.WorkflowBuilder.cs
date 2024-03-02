@@ -106,20 +106,27 @@ partial class BaseNukeBuildHelpers
         return include;
     }
 
-    private static Dictionary<string, object> GenerateGithubWorkflowJobOutputs(Dictionary<string, object> job)
+    private static void AddGithubWorkflowJobOutput(Dictionary<string, object> job, string outputName, string fromStepId, string fromStepVariable)
     {
-        Dictionary<string, object> outputs = new();
         if (!job.ContainsKey("outputs"))
         {
-            job["outputs"] = new List<object>();
+            job["outputs"] = new Dictionary<string, object>();
         }
-        ((List<object>)job["outputs"]).Add(outputs);
-        return outputs;
+        ((Dictionary<string, object>)job["outputs"]).Add(outputName, $"${{{{ steps.{fromStepId}.outputs.{fromStepVariable} }}}}");
     }
 
-    private static void SetVarGithub(string varName, string value)
+    private static void AddGithubWorkflowJobEnvVar(Dictionary<string, object> job, string envVarName, string envVarValue)
     {
-        Console.WriteLine($"echo '{varName}=\"{value}\"' >> $GITHUB_OUTPUT");
+        if (!job.ContainsKey("env"))
+        {
+            job["env"] = new Dictionary<string, object>();
+        }
+        ((Dictionary<string, object>)job["env"]).Add(envVarName, envVarValue);
+    }
+
+    private static void AddGithubWorkflowJobEnvVarFromNeeds(Dictionary<string, object> job, string envVarName, string needsId, string outputName)
+    {
+        AddGithubWorkflowJobEnvVar(job, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
     }
 
     public Target GithubWorkflow => _ => _
@@ -164,8 +171,7 @@ partial class BaseNukeBuildHelpers
             var nukePreSetup = GenerateGithubWorkflowJobStep(preSetup, name: "Run Nuke");
             nukePreSetup.Add("id", "setup");
             nukePreSetup.Add("run", $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup && echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
-            var nukePreSetup1 = GenerateGithubWorkflowJobStep(preSetup, name: "Run Nuke 2");
-            nukePreSetup1.Add("run", "echo ${{ steps.setup.outputs.PRE_SETUP_OUTPUT }}");
+            AddGithubWorkflowJobOutput(preSetup, "PRE_SETUP_OUTPUT", "setup", "PRE_SETUP_OUTPUT");
 
             // ██████████████████████████████████████
             // ████████████████ Test ████████████████
@@ -175,6 +181,7 @@ partial class BaseNukeBuildHelpers
                 var test = GenerateGithubWorkflowJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
                 test["needs"] = needs.ToArray();
                 needs.Add("test");
+                AddGithubWorkflowJobEnvVarFromNeeds(test, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
                 foreach (var appTestEntry in appTestEntries)
                 {
                     var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
@@ -196,6 +203,7 @@ partial class BaseNukeBuildHelpers
             var build = GenerateGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}");
             build["needs"] = needs.ToArray();
             needs.Add("build");
+            AddGithubWorkflowJobEnvVarFromNeeds(build, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             foreach (var appEntry in appEntries)
             {
                 var include = GenerateGithubWorkflowJobMatrixInclude(build);
@@ -213,6 +221,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var publish = GenerateGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}");
             publish["needs"] = needs.ToArray();
+            AddGithubWorkflowJobEnvVarFromNeeds(publish, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             foreach (var appEntry in appEntries)
             {
                 var include = GenerateGithubWorkflowJobMatrixInclude(publish);
@@ -227,6 +236,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var release = GenerateGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204);
             release["needs"] = needs.ToArray();
+            AddGithubWorkflowJobEnvVarFromNeeds(release, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             GenerateGithubWorkflowJobStep(release, uses: "actions/checkout@v4");
 
             needs.Add("publish");
@@ -237,6 +247,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var postSetup = GenerateGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204);
             postSetup["needs"] = needs.ToArray();
+            AddGithubWorkflowJobEnvVarFromNeeds(postSetup, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             GenerateGithubWorkflowJobStep(postSetup, uses: "actions/checkout@v4");
 
             // ██████████████████████████████████████

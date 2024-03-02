@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,9 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Build(Build nukeBuild, AbsolutePath outputPath)
     {
+        string ss = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+        Log.Information("From out: {ss}", ss);
+
         DotNetTasks.DotNetBuild(_ => _
             .SetProjectFile(nukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release"));
