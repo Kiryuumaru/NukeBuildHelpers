@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run Nuke
-      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup && echo 'PRE_SETUP_OUTPUT=$PRE_SETUP_OUTPUT' >> $GITHUB_OUTPUT
+      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup && echo "PRE_SETUP_OUTPUT=${PRE_SETUP_OUTPUT}" >> $GITHUB_OUTPUT
     - name: Run Nuke 2
       run: echo $PRE_SETUP_OUTPUT
   test:
