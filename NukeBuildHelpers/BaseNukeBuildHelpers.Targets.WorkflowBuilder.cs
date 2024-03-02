@@ -225,7 +225,6 @@ partial class BaseNukeBuildHelpers
                 AddGithubWorkflowJobStepWith(cacheTestStep, "path", "~/.nuget/packages");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "key", "${{ runner.os }}-nuget-test-${{ hashFiles('**/*.csproj') }}");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "restore-keys", "${{ runner.os }}-nuget-test-");
-                AddGithubWorkflowJobStep(testJob, name: "Run Nuke Prepare", run: "${{ matrix.build_script }} PipelinePrepare --args \"${{ matrix.ids_to_run }}\"");
                 AddGithubWorkflowJobStep(testJob, name: "Run Nuke Test", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"");
             }
 
@@ -239,8 +238,8 @@ partial class BaseNukeBuildHelpers
                 var matrixInclude = AddGithubWorkflowJobMatrixInclude(buildJob);
                 matrixInclude["id"] = appEntry.Id;
                 matrixInclude["name"] = appEntry.Name;
-                matrixInclude["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
-                matrixInclude["build_script"] = GetBuildScriptGithub(appEntry.RunsOn);
+                matrixInclude["runs_on"] = GetRunsOnGithub(appEntry.BuildRunsOn);
+                matrixInclude["build_script"] = GetBuildScriptGithub(appEntry.BuildRunsOn);
                 matrixInclude["ids_to_run"] = appEntry.Id;
             }
             AddGithubWorkflowJobStep(buildJob, uses: "actions/checkout@v4");
@@ -248,7 +247,6 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cacheBuildStep, "path", "~/.nuget/packages");
             AddGithubWorkflowJobStepWith(cacheBuildStep, "key", "${{ runner.os }}-nuget-build-${{ hashFiles('**/*.csproj') }}");
             AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ runner.os }}-nuget-build-");
-            AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Prepare", run: "${{ matrix.build_script }} PipelinePrepare --args \"${{ matrix.ids_to_run }}\"");
             AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             var uploadBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
@@ -268,8 +266,8 @@ partial class BaseNukeBuildHelpers
                 var include = AddGithubWorkflowJobMatrixInclude(publishJob);
                 include["id"] = appEntry.Id;
                 include["name"] = appEntry.Name;
-                include["runs_on"] = GetRunsOnGithub(appEntry.RunsOn);
-                include["build_script"] = GetBuildScriptGithub(appEntry.RunsOn);
+                include["runs_on"] = GetRunsOnGithub(appEntry.PublishRunsOn);
+                include["build_script"] = GetBuildScriptGithub(appEntry.PublishRunsOn);
                 include["ids_to_run"] = appEntry.Id;
             }
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");

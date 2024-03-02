@@ -230,19 +230,8 @@ partial class BaseNukeBuildHelpers
             Log.Information("Bump done");
         });
 
-    public Target Prepare => _ => _
-        .Description("Prepare project, with --args \"{appid}\"")
-        .Executes(async () =>
-        {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
-
-            await PrepareAppEntries(appEntries, splitArgs.Select(i => i.Key), null);
-        });
-
     public Target Test => _ => _
         .Description("Test, with --args \"{appid}\"")
-        .DependsOn(Prepare)
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);

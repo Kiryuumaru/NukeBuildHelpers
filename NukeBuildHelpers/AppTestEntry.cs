@@ -13,11 +13,11 @@ namespace NukeBuildHelpers.Models;
 
 public abstract class AppTestEntry : BaseEntry
 {
+    public abstract RunsOnType RunsOn { get; }
+
     public abstract Type[] AppEntryTargets { get; }
 
     public BaseNukeBuildHelpers NukeBuild { get; internal set; } = null!;
-
-    public virtual void Prepare() { }
 
     public virtual void Run() { }
 }

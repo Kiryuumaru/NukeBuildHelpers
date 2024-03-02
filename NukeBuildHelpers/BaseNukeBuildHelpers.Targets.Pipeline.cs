@@ -35,16 +35,6 @@ partial class BaseNukeBuildHelpers
         return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
     }
 
-    public Target PipelinePrepare => _ => _
-        .Description("To be used by pipeline")
-        .Executes(async () =>
-        {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
-
-            await PrepareAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
-        });
-
     public Target PipelineTest => _ => _
         .Description("To be used by pipeline")
         .Executes(async () =>

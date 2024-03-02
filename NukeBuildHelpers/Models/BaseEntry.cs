@@ -33,6 +33,4 @@ public abstract class BaseEntry
             return GetType().Name;
         }
     }
-
-    public abstract RunsOnType RunsOn { get; }
 }

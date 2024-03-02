@@ -14,26 +14,19 @@ namespace _build;
 
 public class NugetBuildHelpers3 : AppEntry<Build>
 {
-    public override RunsOnType RunsOn => RunsOnType.UbuntuLatest;
+    public override RunsOnType BuildRunsOn => RunsOnType.Windows2022;
+
+    public override RunsOnType PublishRunsOn => RunsOnType.UbuntuLatest;
 
     public override bool MainRelease => false;
 
     public override bool RunParallel => false;
 
-    public override void Prepare()
-    {
-        if (NewVersion != null)
-        {
-            Log.Information("NugetBuildHelpers3 This has new version");
-        }
-
-        DotNetTasks.DotNetClean(_ => _
-            .SetProject(NukeBuild.Solution.NukeBuildHelpers));
-        OutputPath.DeleteDirectory();
-    }
-
     public override void Build()
     {
+        OutputPath.DeleteDirectory();
+        DotNetTasks.DotNetClean(_ => _
+            .SetProject(NukeBuild.Solution.NukeBuildHelpers));
         DotNetTasks.DotNetBuild(_ => _
             .SetProjectFile(NukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release"));

@@ -46,58 +46,6 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task PrepareAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
-    {
-        List<Task> parallels = new();
-        List<Action> nonParallels = new();
-        List<string> testAdded = new();
-
-        SetupAppEntries(appEntries, preSetupOutput);
-
-        foreach (var appEntry in appEntries)
-        {
-            if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
-            {
-                continue;
-            }
-            if (appEntry.Value.Entry.RunParallel)
-            {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.Prepare()));
-            }
-            else
-            {
-                nonParallels.Add(() => appEntry.Value.Entry.Prepare());
-            }
-            foreach (var appEntryTest in appEntry.Value.Tests)
-            {
-                if (idsToRun.Any() && !idsToRun.Any(i => i == appEntryTest.Id))
-                {
-                    continue;
-                }
-                if (testAdded.Contains(appEntryTest.Name))
-                {
-                    continue;
-                }
-                testAdded.Add(appEntryTest.Name);
-                if (appEntryTest.RunParallel)
-                {
-                    parallels.Add(Task.Run(() => appEntryTest.Prepare()));
-                }
-                else
-                {
-                    nonParallels.Add(() => appEntryTest.Prepare());
-                }
-            }
-        }
-
-        foreach (var nonParallel in nonParallels)
-        {
-            await Task.Run(nonParallel);
-        }
-
-        await Task.WhenAll(parallels);
-    }
-
     private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
@@ -157,7 +105,7 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.Prepare()));
+                parallels.Add(Task.Run(() => appEntry.Value.Entry.Build()));
             }
             else
             {

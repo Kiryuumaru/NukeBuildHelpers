@@ -14,19 +14,17 @@ namespace _build;
 
 public class NugetBuildHelpers : AppEntry<Build>
 {
-    public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
+    public override RunsOnType BuildRunsOn => RunsOnType.Ubuntu2204;
+
+    public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
     public override bool RunParallel => false;
 
-    public override void Prepare()
-    {
-        DotNetTasks.DotNetClean(_ => _
-            .SetProject(NukeBuild.Solution.NukeBuildHelpers));
-        OutputPath.DeleteDirectory();
-    }
-
     public override void Build()
     {
+        OutputPath.DeleteDirectory();
+        DotNetTasks.DotNetClean(_ => _
+            .SetProject(NukeBuild.Solution.NukeBuildHelpers));
         DotNetTasks.DotNetBuild(_ => _
             .SetProjectFile(NukeBuild.Solution.NukeBuildHelpers)
             .SetConfiguration("Release"));
