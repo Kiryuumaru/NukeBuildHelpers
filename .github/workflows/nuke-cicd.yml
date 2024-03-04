@@ -24,7 +24,7 @@ jobs:
         key: ubuntu-22.04-nuget-pre_setup-${{ hashFiles('**/*.csproj') }}
         restore-keys: ubuntu-22.04-nuget-pre_setup-
     - id: setup
-      name: Run Nuke
+      name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
     - id: PRE_SETUP_OUTPUT
       name: Output PRE_SETUP_OUTPUT
@@ -55,7 +55,7 @@ jobs:
         path: ~/.nuget/packages
         key: ${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ matrix.runs_on }}-nuget-test-
-    - name: Run Nuke Test
+    - name: Run Nuke PiplineTest
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
     needs:
@@ -75,10 +75,8 @@ jobs:
         path: ~/.nuget/packages
         key: ${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ matrix.runs_on }}-nuget-build-
-    - name: Run Nuke Build
+    - name: Run Nuke PiplineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
-    - name: Save Version File
-      run: echo "${{ matrix.version }}" > ./.nuke/temp/output/version.txt
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -110,7 +108,7 @@ jobs:
         path: ./.nuke/temp/output
         pattern: ${{ matrix.id }}
         merge-multiple: true
-    - name: Run Nuke Publish
+    - name: Run Nuke PiplinePublish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
@@ -126,13 +124,17 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ matrix.runs_on }}-nuget-release-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ matrix.runs_on }}-nuget-release-
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/output
-    - name: Zip artifacts
-      run: for folder_name in *; do if [ -d "$folder_name" ]; then mv "${folder_name}" "$(cat ./${folder_name}/version.txt)-${folder_name}"; zip -r -q "$(cat ./${folder_name}/version.txt)-${folder_name}.zip" "$(cat ./${folder_name}/version.txt)-${folder_name}"; fi; done
-      working-directory: ./.nuke/temp/output
+    - name: Run Nuke PiplineRelease
+      run: ${{ matrix.build_script }} PiplineRelease
     needs:
     - pre_setup
     - test

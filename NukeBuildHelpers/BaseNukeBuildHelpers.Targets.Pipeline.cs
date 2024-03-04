@@ -136,4 +136,14 @@ partial class BaseNukeBuildHelpers
                     break;
             }
         });
+
+    public Target PipelineRelease => _ => _
+        .Description("To be used by pipeline")
+        .Executes(() =>
+        {
+            foreach (var ss in OutputPath.GetDirectories())
+            {
+                Log.Information("Publish: {name}", ss.Name);
+            }
+        });
 }
