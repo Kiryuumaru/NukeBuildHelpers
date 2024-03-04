@@ -212,7 +212,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
-            AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup");
+            AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_TEST_MATRIX", name: "Output PRE_SETUP_OUTPUT_TEST_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_test_matrix_output.json)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_BUILD_MATRIX", name: "Output PRE_SETUP_OUTPUT_BUILD_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_build_matrix_output.json)\" >> $GITHUB_OUTPUT");

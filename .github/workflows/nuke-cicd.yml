@@ -25,7 +25,7 @@ jobs:
         restore-keys: ubuntu-22.04-nuget-pre_setup-
     - id: setup
       name: Run Nuke
-      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup
+      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
     - id: PRE_SETUP_OUTPUT
       name: Output PRE_SETUP_OUTPUT
       run: echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
