@@ -15,6 +15,8 @@ namespace NukeBuildHelpers;
 
 public class PreSetupOutput
 {
+    public required string Branch { get; init; }
+
     public required bool HasRelease { get; init; }
 
     public required bool IsFirstRelease { get; init; }

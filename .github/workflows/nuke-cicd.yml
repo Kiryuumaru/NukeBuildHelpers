@@ -28,9 +28,6 @@ jobs:
     - id: setup
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
-    - id: PRE_SETUP_BRANCH
-      name: Output PRE_SETUP_BRANCH
-      run: echo "PRE_SETUP_BRANCH=$(cat ./.nuke/temp/branch.txt)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_HAS_RELEASE
       name: Output PRE_SETUP_HAS_RELEASE
       run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/has_release.txt)" >> $GITHUB_OUTPUT
@@ -49,7 +46,6 @@ jobs:
     env:
       BRANCH_FROM_REF: ${{ github.ref }}
     outputs:
-      PRE_SETUP_BRANCH: ${{ steps.PRE_SETUP_BRANCH.outputs.PRE_SETUP_BRANCH }}
       PRE_SETUP_HAS_RELEASE: ${{ steps.PRE_SETUP_HAS_RELEASE.outputs.PRE_SETUP_HAS_RELEASE }}
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}
       PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX }}
@@ -156,7 +152,6 @@ jobs:
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-      PRE_SETUP_BRANCH: ${{ needs.pre_setup.outputs.PRE_SETUP_BRANCH }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   post_setup:
     name: Post Setup

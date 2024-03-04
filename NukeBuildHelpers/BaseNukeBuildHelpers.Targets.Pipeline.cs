@@ -173,6 +173,7 @@ partial class BaseNukeBuildHelpers
 
             PreSetupOutput output = new()
             {
+                Branch = branch,
                 HasRelease = toRelease.Count != 0,
                 IsFirstRelease = buildNumbers.Count == 0,
                 BuildTag = $"build.{buildId}",
@@ -190,7 +191,6 @@ partial class BaseNukeBuildHelpers
             Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
 
             File.WriteAllText(RootDirectory / ".nuke" / "temp" / "has_release.txt", toRelease.Count != 0 ? "true" : "false");
-            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "branch.txt", branch);
 
             pipelinePrepare?.Invoke(appTestEntries, appEntryConfigs, toRelease);
         });
@@ -201,8 +201,6 @@ partial class BaseNukeBuildHelpers
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
-
-            var branchName = Environment.GetEnvironmentVariable("PRE_SETUP_HAS_RELEASE") ?? Repository.Branch;
 
             var preSetupOutput = GetPreSetupOutput();
 
@@ -248,7 +246,7 @@ partial class BaseNukeBuildHelpers
 
             string args = $"release create {preSetupOutput.BuildTag} {OutputPath / "*.zip"} " +
                 $"--title {preSetupOutput.BuildTag} " +
-                $"--target {branchName} " +
+                $"--target {preSetupOutput.Branch} " +
                 $"--generate-notes";
 
             if (!preSetupOutput.IsFirstRelease)
