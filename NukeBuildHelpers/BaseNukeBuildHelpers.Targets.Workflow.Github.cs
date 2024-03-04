@@ -34,6 +34,10 @@ partial class BaseNukeBuildHelpers
         {
             branch = Repository.Branch;
         }
+        else
+        {
+            branch = Git.Invoke($"git branch -r --contains {branch}").FirstOrDefault().Text;
+        }
         return branch;
     }
 
