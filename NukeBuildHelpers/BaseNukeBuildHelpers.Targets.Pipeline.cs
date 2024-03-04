@@ -81,6 +81,8 @@ partial class BaseNukeBuildHelpers
 
             var branchName = Environment.GetEnvironmentVariable("PRE_SETUP_HAS_RELEASE") ?? Repository.Branch;
 
+            Log.Information("{appId} ccccccccccc", branchName);
+
             IReadOnlyCollection<Output>? lsRemote = null;
 
             List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = new();
