@@ -176,7 +176,7 @@ partial class BaseNukeBuildHelpers
                     AppId = i.AppEntry.Id,
                     AppName = i.AppEntry.Name,
                     Environment = i.Env,
-                    Version = i.Version.ToString() + "+build." + pipelineGetBuildId.Invoke()
+                    Version = i.Version.ToString()
                 })
             };
 
@@ -222,6 +222,7 @@ partial class BaseNukeBuildHelpers
                 {
                     latestTag += "-" + release.Environment.ToLowerInvariant();
                 }
+                Git.Invoke($"tag -f {release.Version}");
                 if (appEntry.Entry.MainRelease)
                 {
                     Git.Invoke($"tag -f {latestTag}");
@@ -234,7 +235,7 @@ partial class BaseNukeBuildHelpers
             Git.Invoke($"tag -f {preSetupOutput.BuildTag}");
             Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-            string args = $"release create {preSetupOutput.BuildTag} {OutputPath.ToString() + "/*.zip"} " +
+            string args = $"release create {preSetupOutput.BuildTag} {OutputPath / "*.zip"} " +
                 $"--title {preSetupOutput.BuildTag} " +
                 $"--target {Repository.Branch} " +
                 $"--generate-notes";

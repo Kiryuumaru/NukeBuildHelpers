@@ -44,13 +44,13 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish()
     {
-        DotNetTasks.DotNetNuGetPush(_ => _
+        NuGetTasks.NuGetPush(_ => _
             .SetTargetPath(OutputPath / "*.nupkg")
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-            .SetApiKey(NukeBuild.NuGetAuthToken));
-        DotNetTasks.DotNetNuGetPush(_ => _
+            .SetApiKey(NukeBuild.GithubToken));
+        NuGetTasks.NuGetPush(_ => _
             .SetTargetPath(OutputPath / "*.nupkg")
             .SetSource("https://api.nuget.org/v3/index.json")
-            .SetApiKey(NukeBuild.GithubToken));
+            .SetApiKey(NukeBuild.NuGetAuthToken));
     }
 }
