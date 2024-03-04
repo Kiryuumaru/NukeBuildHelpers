@@ -96,7 +96,7 @@ partial class BaseNukeBuildHelpers
 
             var branch = pipelineGetBranch();
 
-            Log.Information("{appId} cccccccccccccccccc", branch);
+            Log.Information("Target branch: {branch}", branch);
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
