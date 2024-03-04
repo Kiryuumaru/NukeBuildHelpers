@@ -79,6 +79,8 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetAppEntries(), out var appEntries);
             GetOrFail(() => GetAppTestEntries(), out var appTestEntries);
 
+            var branchName = Environment.GetEnvironmentVariable("PRE_SETUP_HAS_RELEASE") ?? Repository.Branch;
+
             IReadOnlyCollection<Output>? lsRemote = null;
 
             List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = new();
@@ -94,14 +96,13 @@ partial class BaseNukeBuildHelpers
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {
-                        Log.Information("{appId} scscsc", Repository.Branch);
                         string env;
                         if (string.IsNullOrEmpty(groupKey))
                         {
                             env = "main";
-                            if (!Repository.Branch.Equals("master", StringComparison.OrdinalIgnoreCase) &&
-                                !Repository.Branch.Equals("main", StringComparison.OrdinalIgnoreCase) &&
-                                !Repository.Branch.Equals("prod", StringComparison.OrdinalIgnoreCase))
+                            if (!branchName.Equals("master", StringComparison.OrdinalIgnoreCase) &&
+                                !branchName.Equals("main", StringComparison.OrdinalIgnoreCase) &&
+                                !branchName.Equals("prod", StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }
@@ -109,7 +110,7 @@ partial class BaseNukeBuildHelpers
                         else
                         {
                             env = groupKey;
-                            if (!Repository.Branch.Equals(env, StringComparison.OrdinalIgnoreCase))
+                            if (!branchName.Equals(env, StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }
@@ -196,6 +197,8 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
+            var branchName = Environment.GetEnvironmentVariable("PRE_SETUP_HAS_RELEASE") ?? Repository.Branch;
+
             var preSetupOutput = GetPreSetupOutput();
 
             foreach (var release in OutputPath.GetDirectories())
@@ -240,7 +243,7 @@ partial class BaseNukeBuildHelpers
 
             string args = $"release create {preSetupOutput.BuildTag} {OutputPath / "*.zip"} " +
                 $"--title {preSetupOutput.BuildTag} " +
-                $"--target {Repository.Branch} " +
+                $"--target {branchName} " +
                 $"--generate-notes";
 
             if (!preSetupOutput.IsFirstRelease)

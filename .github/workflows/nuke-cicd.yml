@@ -23,9 +23,14 @@ jobs:
         path: ~/.nuget/packages
         key: ubuntu-22.04-nuget-pre_setup-${{ hashFiles('**/*.csproj') }}
         restore-keys: ubuntu-22.04-nuget-pre_setup-
+    - id: PRE_SETUP_BRANCH_NAME
+      name: Resolve Branch Name
+      run: echo "PRE_SETUP_BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
     - id: setup
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
+      env:
+        PRE_SETUP_BRANCH_NAME: ${{ steps.PRE_SETUP_BRANCH_NAME.outputs.PRE_SETUP_BRANCH_NAME }}
     - id: PRE_SETUP_HAS_RELEASE
       name: Output PRE_SETUP_HAS_RELEASE
       run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/has_release.txt)" >> $GITHUB_OUTPUT
@@ -42,6 +47,7 @@ jobs:
       name: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
     outputs:
+      PRE_SETUP_BRANCH_NAME: ${{ steps.PRE_SETUP_BRANCH_NAME.outputs.PRE_SETUP_BRANCH_NAME }}
       PRE_SETUP_HAS_RELEASE: ${{ steps.PRE_SETUP_HAS_RELEASE.outputs.PRE_SETUP_HAS_RELEASE }}
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}
       PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX }}
@@ -148,6 +154,7 @@ jobs:
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+      PRE_SETUP_BRANCH_NAME: ${{ needs.pre_setup.outputs.PRE_SETUP_BRANCH_NAME }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   post_setup:
     name: Post Setup
