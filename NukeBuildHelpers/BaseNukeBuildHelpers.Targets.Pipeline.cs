@@ -94,6 +94,7 @@ partial class BaseNukeBuildHelpers
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {
+                        Log.Information("{appId} scscsc", Repository.Branch);
                         string env;
                         if (string.IsNullOrEmpty(groupKey))
                         {
