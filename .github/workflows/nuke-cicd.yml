@@ -91,11 +91,12 @@ jobs:
     needs:
     - pre_setup
     - test
+    if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
-        include: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
+        include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -118,6 +119,7 @@ jobs:
     - pre_setup
     - test
     - build
+    if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
@@ -143,12 +145,10 @@ jobs:
     - pre_setup
     - test
     - build
+    if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    strategy:
-      matrix:
-        include: success() || failure() || always()
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04

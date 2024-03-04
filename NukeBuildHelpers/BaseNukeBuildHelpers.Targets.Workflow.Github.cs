@@ -143,9 +143,9 @@ partial class BaseNukeBuildHelpers
         return job;
     }
 
-    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null)
+    private static Dictionary<string, object> AddGithubWorkflowJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string _if = "")
     {
-        return AddGithubWorkflowJob(workflow, id, name, GetRunsOnGithub(buildsOnType), needs);
+        return AddGithubWorkflowJob(workflow, id, name, GetRunsOnGithub(buildsOnType), needs, _if);
     }
 
     private static Dictionary<string, object> AddGithubWorkflowJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "", string _if = "")
@@ -300,9 +300,9 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             // ███████████████ Build ████████████████
             // ██████████████████████████████████████
-            var buildJob = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray(), _if: "");
+            var buildJob = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray(), _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
             AddGithubWorkflowJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobMatrixInclude(buildJob, "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
+            AddGithubWorkflowJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
             AddGithubWorkflowJobStep(buildJob, uses: "actions/checkout@v4");
             var cacheBuildStep = AddGithubWorkflowJobStep(buildJob, uses: "actions/cache@v4");
             AddGithubWorkflowJobStepWith(cacheBuildStep, "path", "~/.nuget/packages");
@@ -320,9 +320,8 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             // ██████████████ Publish ███████████████
             // ██████████████████████████████████████
-            var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray());
+            var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray(), _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
             AddGithubWorkflowJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobMatrixInclude(publishJob, "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
             AddGithubWorkflowJobMatrixInclude(publishJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");
             var cachePublishStep = AddGithubWorkflowJobStep(publishJob, uses: "actions/cache@v4");
@@ -338,9 +337,8 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             // ██████████████ Release ███████████████
             // ██████████████████████████████████████
-            var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, needs.ToArray());
+            var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, needs.ToArray(), _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
             AddGithubWorkflowJobEnvVarFromNeeds(releaseJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobMatrixInclude(releaseJob, "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
             AddGithubWorkflowJobEnvVar(releaseJob, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
             AddGithubWorkflowJobStep(releaseJob, uses: "actions/checkout@v4");
             var cacheReleaseStep = AddGithubWorkflowJobStep(releaseJob, uses: "actions/cache@v4");
@@ -359,7 +357,6 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var postSetupJob = AddGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobMatrixInclude(releaseJob, "success() || failure() || always()");
             AddGithubWorkflowJobStep(postSetupJob, uses: "actions/checkout@v4");
 
             // ██████████████████████████████████████
