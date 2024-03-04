@@ -72,7 +72,7 @@ partial class BaseNukeBuildHelpers
         return AddGithubWorkflowJob(workflow, id, name, GetRunsOnGithub(buildsOnType), needs);
     }
 
-    private static Dictionary<string, object> AddGithubWorkflowJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "")
+    private static Dictionary<string, object> AddGithubWorkflowJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "", string _if = "")
     {
         Dictionary<string, object> step = new();
         ((List<object>)job["steps"]).Add(step);
@@ -91,6 +91,10 @@ partial class BaseNukeBuildHelpers
         if (!string.IsNullOrEmpty(run))
         {
             step["run"] = run;
+        }
+        if (!string.IsNullOrEmpty(_if))
+        {
+            step["if"] = _if;
         }
         return step;
     }
@@ -211,12 +215,12 @@ partial class BaseNukeBuildHelpers
                 needs.Add("test");
                 AddGithubWorkflowJobEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
                 AddGithubWorkflowJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
-                AddGithubWorkflowJobStep(testJob, uses: "actions/checkout@v4");
-                var cacheTestStep = AddGithubWorkflowJobStep(testJob, uses: "actions/cache@v4");
+                AddGithubWorkflowJobStep(testJob, uses: "actions/checkout@v4", _if: "${{ matrix.id != 'skip' }}");
+                var cacheTestStep = AddGithubWorkflowJobStep(testJob, uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "path", "~/.nuget/packages");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "key", "${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "restore-keys", "${{ matrix.runs_on }}-nuget-test-");
-                AddGithubWorkflowJobStep(testJob, name: "Run Nuke Test", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"");
+                AddGithubWorkflowJobStep(testJob, name: "Run Nuke Test", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"", _if: "${{ matrix.id != 'skip' }}");
             }
 
             // ██████████████████████████████████████

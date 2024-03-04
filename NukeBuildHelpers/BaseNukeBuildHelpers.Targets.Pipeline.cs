@@ -165,6 +165,18 @@ partial class BaseNukeBuildHelpers
                             outputTestMatrix.Add(preSetupOutputMatrix);
                         }
                     }
+                    if (outputTestMatrix.Count == 0)
+                    {
+                        PreSetupOutputMatrix preSetupOutputMatrix = new()
+                        {
+                            Id = "skip",
+                            Name = "Skip",
+                            RunsOn = GetRunsOnGithub(RunsOnType.Ubuntu2204),
+                            BuildScript = "",
+                            IdsToRun = ""
+                        };
+                        outputTestMatrix.Add(preSetupOutputMatrix);
+                    }
                     foreach (var (Entry, Tests) in appEntryConfigs.Values)
                     {
                         var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);

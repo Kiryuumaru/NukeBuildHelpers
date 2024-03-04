@@ -48,13 +48,16 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+      if: ${{ matrix.id != 'skip' }}
     - uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
       with:
         path: ~/.nuget/packages
         key: ${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ matrix.runs_on }}-nuget-test-
     - name: Run Nuke Test
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
+      if: ${{ matrix.id != 'skip' }}
     needs:
     - pre_setup
     env:
