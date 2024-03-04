@@ -1,5 +1,6 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
+using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.NuGet;
 using NukeBuildHelpers;
@@ -45,12 +46,12 @@ public class NugetBuildHelpers : AppEntry<Build>
     public override void Publish()
     {
         NuGetTasks.NuGetPush(_ => _
-            .SetTargetPath(OutputPath / "*.nupkg")
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-            .SetApiKey(NukeBuild.GithubToken));
+            .SetApiKey(NukeBuild.GithubToken)
+            .CombineWith(OutputPath.GetFiles("*.zip"), (_, v) => _.SetTargetPath(v)));
         NuGetTasks.NuGetPush(_ => _
-            .SetTargetPath(OutputPath / "*.nupkg")
             .SetSource("https://api.nuget.org/v3/index.json")
-            .SetApiKey(NukeBuild.NuGetAuthToken));
+            .SetApiKey(NukeBuild.NuGetAuthToken)
+            .CombineWith(OutputPath.GetFiles(), (_, v) => _.SetTargetPath(v)));
     }
 }
