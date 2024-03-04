@@ -277,7 +277,8 @@ partial class BaseNukeBuildHelpers
             // ██████████████ Pre Setup █████████████
             // ██████████████████████████████████████
             var preSetupJob = AddGithubWorkflowJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
-            AddGithubWorkflowJobStep(preSetupJob, uses: "actions/checkout@v4");
+            var preSetupCheckoutStep = AddGithubWorkflowJobStep(preSetupJob, uses: "actions/checkout@v4");
+            AddGithubWorkflowJobStepWith(preSetupCheckoutStep, "fetch-depth", "0");
             var cachePreSetupStep = AddGithubWorkflowJobStep(preSetupJob, uses: "actions/cache@v4");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
