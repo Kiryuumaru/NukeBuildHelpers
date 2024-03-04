@@ -20,6 +20,7 @@ internal static class AbsolutePathExtensions
         //Copy all the files & Replaces any files with the same name
         foreach (string newPath in Directory.GetFiles(path.ToString(), "*.*", SearchOption.AllDirectories))
         {
+            Directory.CreateDirectory(AbsolutePath.Create(newPath.Replace(path.ToString(), targetPath.ToString())).Parent);
             File.Copy(newPath, newPath.Replace(path.ToString(), targetPath.ToString()), true);
         }
     }
