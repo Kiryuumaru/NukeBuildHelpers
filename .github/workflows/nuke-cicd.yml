@@ -88,7 +88,7 @@ jobs:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
+        include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
   publish:
     name: Publish - ${{ matrix.app_name }}
     runs-on: ${{ matrix.runs_on }}
@@ -113,6 +113,9 @@ jobs:
     - build
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
   release:
     name: Release
     runs-on: ubuntu-22.04

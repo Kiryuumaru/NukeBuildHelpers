@@ -244,7 +244,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.app_name }}", "${{ matrix.runs_on }}", needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
+            AddGithubWorkflowJobMatrixInclude(publishJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");
             var cachePublishStep = AddGithubWorkflowJobStep(publishJob, uses: "actions/cache@v4");
             AddGithubWorkflowJobStepWith(cachePublishStep, "path", "~/.nuget/packages");
