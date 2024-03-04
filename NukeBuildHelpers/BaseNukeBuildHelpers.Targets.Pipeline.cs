@@ -244,7 +244,7 @@ partial class BaseNukeBuildHelpers
             Git.Invoke($"tag -f {preSetupOutput.BuildTag}");
             Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-            string args = $"release create {preSetupOutput.BuildTag} {OutputPath / "*.zip"} " +
+            string args = $"release create {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))} " +
                 $"--title {preSetupOutput.BuildTag} " +
                 $"--target {preSetupOutput.Branch} " +
                 $"--generate-notes";
