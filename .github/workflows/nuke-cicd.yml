@@ -31,13 +31,13 @@ jobs:
       run: echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_OUTPUT_TEST_MATRIX
       name: Output PRE_SETUP_OUTPUT_TEST_MATRIX
-      run: echo "PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_test_matrix_output.json)" >> $GITHUB_OUTPUT
+      run: echo "PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_OUTPUT_BUILD_MATRIX
       name: Output PRE_SETUP_OUTPUT_BUILD_MATRIX
-      run: echo "PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_build_matrix_output.json)" >> $GITHUB_OUTPUT
+      run: echo "PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       name: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
-      run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_publish_matrix_output.json)" >> $GITHUB_OUTPUT
+      run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
     outputs:
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}
       PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX }}
