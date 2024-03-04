@@ -72,8 +72,6 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
-            splitArgs.TryGetValue("agent", out var agent);
-
             IReadOnlyCollection<Output>? lsRemote = null;
 
             List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = new();
@@ -148,7 +146,7 @@ partial class BaseNukeBuildHelpers
             File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output.json", serializedOutput);
             Log.Information("PRE_SETUP_OUTPUT: {output}", serializedOutput);
 
-            switch (agent?.ToLowerInvariant())
+            switch (Args?.ToLowerInvariant())
             {
                 case "github":
                     var outputTestMatrix = new List<PreSetupOutputMatrix>();

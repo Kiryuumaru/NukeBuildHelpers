@@ -2,7 +2,7 @@
   "profiles": {
     "_build": {
       "commandName": "Project",
-      "commandLineArgs": "build PipelinePreSetup"
+      "commandLineArgs": "build PipelinePreSetup --args \"github\""
     }
   }
 }
