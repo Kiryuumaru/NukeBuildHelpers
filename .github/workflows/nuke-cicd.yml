@@ -160,6 +160,6 @@ jobs:
     - build
     - publish
     - release
-    if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
+    if: success() || failure() || always()
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}

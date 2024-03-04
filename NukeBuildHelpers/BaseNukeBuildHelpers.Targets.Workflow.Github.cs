@@ -355,7 +355,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             // █████████████ Post Setup █████████████
             // ██████████████████████████████████████
-            var postSetupJob = AddGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs.ToArray(), _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
+            var postSetupJob = AddGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs.ToArray(), _if: "success() || failure() || always()");
             AddGithubWorkflowJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobStep(postSetupJob, uses: "actions/checkout@v4");
 
