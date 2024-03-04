@@ -41,16 +41,16 @@ partial class BaseNukeBuildHelpers
             })
         };
 
-        var outputTestMatrix = new List<PreSetupOutputMatrix>();
-        var outputBuildMatrix = new List<PreSetupOutputMatrix>();
-        var outputPublishMatrix = new List<PreSetupOutputMatrix>();
+        var outputTestMatrix = new List<PreSetupOutputAppTestEntryMatrix>();
+        var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
+        var outputPublishMatrix = new List<PreSetupOutputAppEntryMatrix>();
         foreach (var appTestEntry in appTestEntries)
         {
             var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
             var hasRelease = toRelease.Any(i => i.AppEntry.Id == appEntry.Id);
             if (hasRelease || appTestEntry.RunType == TestRunType.Always)
             {
-                PreSetupOutputMatrix preSetupOutputMatrix = new()
+                PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
                 {
                     Id = appTestEntry.Id,
                     Name = appTestEntry.Name,
@@ -63,7 +63,7 @@ partial class BaseNukeBuildHelpers
         }
         if (outputTestMatrix.Count == 0)
         {
-            PreSetupOutputMatrix preSetupOutputMatrix = new()
+            PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
             {
                 Id = "skip",
                 Name = "Skip",
@@ -84,7 +84,8 @@ partial class BaseNukeBuildHelpers
                     Name = Entry.Name,
                     RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
                     BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
-                    IdsToRun = Entry.Id
+                    IdsToRun = Entry.Id,
+                    Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
                 });
                 outputPublishMatrix.Add(new()
                 {
@@ -92,7 +93,8 @@ partial class BaseNukeBuildHelpers
                     Name = Entry.Name,
                     RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
                     BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
-                    IdsToRun = Entry.Id
+                    IdsToRun = Entry.Id,
+                    Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
                 });
             }
         }
@@ -310,6 +312,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cacheBuildStep, "key", "${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}");
             AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ matrix.runs_on }}-nuget-build-");
             AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
+            AddGithubWorkflowJobStep(buildJob, name: "Save Version File", run: "echo \"${{ matrix.version }}\" > ./.nuke/temp/output/version.txt");
             var uploadBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "path", "./.nuke/temp/output/*");
@@ -344,7 +347,7 @@ partial class BaseNukeBuildHelpers
             var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
             var zipArtifacts = AddGithubWorkflowJobStep(releaseJob, name: "Zip artifacts",
-                run: "for folder_name in *; do if [ \"$folder_name\" == \"version_notes\" ]; then continue; fi; if [ -d \"$folder_name\" ]; then zip -r -q \"${folder_name}.zip\" \"${folder_name}\"; fi; done");
+                run: "for folder_name in *; do if [ -d \"$folder_name\" ]; then mv \"${folder_name}\" \"$(cat ./version.txt)-${folder_name}\"; zip -r -q \"$(cat ./version.txt).zip\" \"try-${folder_name}\"; fi; done");
             zipArtifacts["working-directory"] = "./.nuke/temp/output";
 
             needs.Add("publish");
