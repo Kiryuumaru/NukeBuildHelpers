@@ -67,7 +67,6 @@ partial class BaseNukeBuildHelpers
 
     public Target PipelinePreSetup => _ => _
         .Description("To be used by pipeline")
-        .DependsOn(Version)
         .Executes(() =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
