@@ -41,10 +41,13 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
+            Console.WriteLine("heere");
             if (appEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var appSecretMap))
             {
+                Console.WriteLine("heere2");
                 foreach (var secret in appSecretMap.SecretHelpers)
                 {
+                    Console.WriteLine("heere3 " + secret.SecretHelper.Name);
                     var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
                     secret.MemberInfo.SetValue(appEntry.Value.Entry, secretValue);
                 }
@@ -54,10 +57,13 @@ partial class BaseNukeBuildHelpers
             appEntry.Value.Entry.OutputPath = OutputPath;
             foreach (var appTestEntry in appEntry.Value.Tests)
             {
+                Console.WriteLine("heeawdawdre1");
                 if (appTestEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var testSecretMap))
                 {
+                    Console.WriteLine("heeawdawdre2");
                     foreach (var secret in testSecretMap.SecretHelpers)
                     {
+                        Console.WriteLine("heeawdawdre3 " + secret.SecretHelper.Name);
                         var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
                         secret.MemberInfo.SetValue(appTestEntry, secretValue);
                     }
