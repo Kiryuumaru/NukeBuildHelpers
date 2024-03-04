@@ -29,17 +29,10 @@ partial class BaseNukeBuildHelpers
 
     private string GithubPipelineGetBranch()
     {
-        var branch = Environment.GetEnvironmentVariable("GITHUB_HEAD_REF");
-        Log.Information("{appId} cccccccccccccccccc1", branch);
-        if (string.IsNullOrEmpty(branch))
-        {
-            branch = Environment.GetEnvironmentVariable("GITHUB_REF")?.Replace("refs/heads/", "");
-            Log.Information("{appId} cccccccccccccccccc2", branch);
-        }
+        var branch = Environment.GetEnvironmentVariable("BRANCH_FROM_REF");
         if (string.IsNullOrEmpty(branch))
         {
             branch = Repository.Branch;
-            Log.Information("{appId} cccccccccccccccccc4", branch);
         }
         return branch;
     }
@@ -226,19 +219,19 @@ partial class BaseNukeBuildHelpers
         ((Dictionary<string, object>)value).Add(outputName, $"${{{{ steps.{fromStepId}.outputs.{fromStepVariable} }}}}");
     }
 
-    private static void AddGithubWorkflowJobOrStepEnvVar(Dictionary<string, object> job, string envVarName, string envVarValue)
+    private static void AddGithubWorkflowJobOrStepEnvVar(Dictionary<string, object> jobOrStep, string envVarName, string envVarValue)
     {
-        if (!job.TryGetValue("env", out object? value))
+        if (!jobOrStep.TryGetValue("env", out object? value))
         {
             value = new Dictionary<string, object>();
-            job["env"] = value;
+            jobOrStep["env"] = value;
         }
         ((Dictionary<string, object>)value).Add(envVarName, envVarValue);
     }
 
-    private static void AddGithubWorkflowJobEnvVarFromNeeds(Dictionary<string, object> job, string envVarName, string needsId, string outputName)
+    private static void AddGithubWorkflowJobOrStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId, string outputName)
     {
-        AddGithubWorkflowJobOrStepEnvVar(job, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
+        AddGithubWorkflowJobOrStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
     }
 
     public Target GithubWorkflow => _ => _
@@ -284,6 +277,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
+            AddGithubWorkflowJobOrStepEnvVar(preSetupJob, "BRANCH_FROM_REF", "${{ github.ref }}");
             AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_BRANCH", name: "Output PRE_SETUP_BRANCH", run: $"echo \"PRE_SETUP_BRANCH=$(cat ./.nuke/temp/branch.txt)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_HAS_RELEASE", name: "Output PRE_SETUP_HAS_RELEASE", run: $"echo \"PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/has_release.txt)\" >> $GITHUB_OUTPUT");
@@ -306,7 +300,7 @@ partial class BaseNukeBuildHelpers
                 var testJob = AddGithubWorkflowJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
                 testJob["needs"] = needs.ToArray();
                 needs.Add("test");
-                AddGithubWorkflowJobEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+                AddGithubWorkflowJobOrStepEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
                 AddGithubWorkflowJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
                 AddGithubWorkflowJobStep(testJob, uses: "actions/checkout@v4", _if: "${{ matrix.id != 'skip' }}");
                 var cacheTestStep = AddGithubWorkflowJobStep(testJob, uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
@@ -320,7 +314,7 @@ partial class BaseNukeBuildHelpers
             // ███████████████ Build ████████████████
             // ██████████████████████████████████████
             var buildJob = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray(), _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-            AddGithubWorkflowJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
             AddGithubWorkflowJobStep(buildJob, uses: "actions/checkout@v4");
             var cacheBuildStep = AddGithubWorkflowJobStep(buildJob, uses: "actions/cache@v4");
@@ -340,7 +334,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████ Publish ███████████████
             // ██████████████████████████████████████
             var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray(), _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-            AddGithubWorkflowJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobMatrixInclude(publishJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");
             var cachePublishStep = AddGithubWorkflowJobStep(publishJob, uses: "actions/cache@v4");
@@ -357,8 +351,8 @@ partial class BaseNukeBuildHelpers
             // ██████████████ Release ███████████████
             // ██████████████████████████████████████
             var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, needs.ToArray(), _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-            AddGithubWorkflowJobEnvVarFromNeeds(releaseJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobEnvVarFromNeeds(releaseJob, "PRE_SETUP_BRANCH", "pre_setup", "PRE_SETUP_BRANCH");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(releaseJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(releaseJob, "PRE_SETUP_BRANCH", "pre_setup", "PRE_SETUP_BRANCH");
             AddGithubWorkflowJobOrStepEnvVar(releaseJob, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
             AddGithubWorkflowJobStep(releaseJob, uses: "actions/checkout@v4");
             var cacheReleaseStep = AddGithubWorkflowJobStep(releaseJob, uses: "actions/cache@v4");
@@ -376,7 +370,7 @@ partial class BaseNukeBuildHelpers
             // █████████████ Post Setup █████████████
             // ██████████████████████████████████████
             var postSetupJob = AddGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs.ToArray(), _if: "success() || failure() || always()");
-            AddGithubWorkflowJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobStep(postSetupJob, uses: "actions/checkout@v4");
 
             // ██████████████████████████████████████
