@@ -29,7 +29,7 @@ partial class BaseNukeBuildHelpers
 
     private static long GithubPipelineGetBuildId()
     {
-        return GitHubActions.Instance.RunId;
+        return GitHubActions.Instance.RunNumber;
     }
 
     private static void GithubPipelinePrepare(List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
