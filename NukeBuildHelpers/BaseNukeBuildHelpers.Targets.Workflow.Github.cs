@@ -347,7 +347,7 @@ partial class BaseNukeBuildHelpers
             var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
             var zipArtifacts = AddGithubWorkflowJobStep(releaseJob, name: "Zip artifacts",
-                run: "for folder_name in *; do if [ -d \"$folder_name\" ]; then mv \"${folder_name}\" \"$(cat ./version.txt)-${folder_name}\"; zip -r -q \"$(cat ./version.txt).zip\" \"try-${folder_name}\"; fi; done");
+                run: "for folder_name in *; do if [ -d \"$folder_name\" ]; then mv \"${folder_name}\" \"$(cat ./${folder_name}/version.txt)-${folder_name}\"; zip -r -q \"$(cat ./${folder_name}/version.txt)-${folder_name}.zip\" \"$(cat ./${folder_name}/version.txt)-${folder_name}\"; fi; done");
             zipArtifacts["working-directory"] = "./.nuke/temp/output";
 
             needs.Add("publish");
