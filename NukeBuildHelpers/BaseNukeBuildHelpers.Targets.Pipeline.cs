@@ -190,8 +190,8 @@ partial class BaseNukeBuildHelpers
                         });
                     }
                     File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
+                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption));
+                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOption));
                     Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOptionIndented));
                     Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOptionIndented));
                     Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOptionIndented));
