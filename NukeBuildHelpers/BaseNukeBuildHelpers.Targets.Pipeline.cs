@@ -79,9 +79,24 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetAppEntries(), out var appEntries);
             GetOrFail(() => GetAppTestEntries(), out var appTestEntries);
 
-            var branchName = Environment.GetEnvironmentVariable("PRE_SETUP_HAS_RELEASE") ?? Repository.Branch;
+            Func<string>? pipelineGetBranch = null;
+            Func<long>? pipelineGetBuildId = null;
+            Action<List<AppTestEntry>, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)>, List<(AppEntry AppEntry, string Env, SemVersion Version)>>? pipelinePrepare = null;
 
-            Log.Information("{appId} ccccccccccc", branchName);
+            switch (Args?.ToLowerInvariant())
+            {
+                case "github":
+                    pipelineGetBranch = () => GithubPipelineGetBranch();
+                    pipelineGetBuildId = () => GithubPipelineGetBuildId();
+                    pipelinePrepare = (appTestEntries, appEntryConfigs, toRelease) => GithubPipelinePrepare(appTestEntries, appEntryConfigs, toRelease);
+                    break;
+                default:
+                    throw new Exception("No agent pipeline provided");
+            }
+
+            var branch = pipelineGetBranch();
+
+            Log.Information("{appId} cccccccccccccccccc", branch);
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -102,9 +117,9 @@ partial class BaseNukeBuildHelpers
                         if (string.IsNullOrEmpty(groupKey))
                         {
                             env = "main";
-                            if (!branchName.Equals("master", StringComparison.OrdinalIgnoreCase) &&
-                                !branchName.Equals("main", StringComparison.OrdinalIgnoreCase) &&
-                                !branchName.Equals("prod", StringComparison.OrdinalIgnoreCase))
+                            if (!branch.Equals("master", StringComparison.OrdinalIgnoreCase) &&
+                                !branch.Equals("main", StringComparison.OrdinalIgnoreCase) &&
+                                !branch.Equals("prod", StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }
@@ -112,7 +127,7 @@ partial class BaseNukeBuildHelpers
                         else
                         {
                             env = groupKey;
-                            if (!branchName.Equals(env, StringComparison.OrdinalIgnoreCase))
+                            if (!branch.Equals(env, StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }
@@ -138,19 +153,6 @@ partial class BaseNukeBuildHelpers
             foreach (var rel in toRelease)
             {
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppEntry.Id, rel.Env, rel.Version);
-            }
-
-            Func<long>? pipelineGetBuildId = null;
-            Action? pipelinePrepare = null;
-
-            switch (Args?.ToLowerInvariant())
-            {
-                case "github":
-                    pipelineGetBuildId = () => GithubPipelineGetBuildId();
-                    pipelinePrepare = () => GithubPipelinePrepare(appTestEntries, appEntryConfigs, toRelease);
-                    break;
-                default:
-                    throw new Exception("No agent pipeline provided");
             }
 
             List<long> buildNumbers = new();
@@ -188,8 +190,9 @@ partial class BaseNukeBuildHelpers
             Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
 
             File.WriteAllText(RootDirectory / ".nuke" / "temp" / "has_release.txt", toRelease.Count != 0 ? "true" : "false");
+            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "branch.txt", branch);
 
-            pipelinePrepare?.Invoke();
+            pipelinePrepare?.Invoke(appTestEntries, appEntryConfigs, toRelease);
         });
 
     public Target PipelineRelease => _ => _
