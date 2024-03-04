@@ -1,10 +1,13 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Build.Utilities;
 using Microsoft.Extensions.DependencyModel;
 using Nuke.Common;
+using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitReleaseManager;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common;
@@ -122,26 +125,72 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
+            if (lsRemote == null)
+            {
+                throw new Exception("lsRemote is null");
+            }
+
             foreach (var rel in toRelease)
             {
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppEntry.Id, rel.Env, rel.Version);
             }
 
+            Func<long>? pipelineGetBuildId = null;
+            Action? pipelinePrepare = null;
+
             switch (Args?.ToLowerInvariant())
             {
                 case "github":
-                    GithubPipelinePrepare(appTestEntries, appEntryConfigs, toRelease);
+                    pipelineGetBuildId = () => GithubPipelineGetBuildId();
+                    pipelinePrepare = () => GithubPipelinePrepare(appTestEntries, appEntryConfigs, toRelease);
                     break;
                 default:
-                    Log.Information("No agent pipeline provided");
-                    break;
+                    throw new Exception("No agent pipeline provided");
             }
+
+            List<long> buildNumbers = new();
+
+            string basePeel = "refs/tags/";
+            foreach (var refs in lsRemote)
+            {
+                string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+
+                if (rawTag.StartsWith("build.", StringComparison.OrdinalIgnoreCase))
+                {
+                    buildNumbers.Add(long.Parse(rawTag.Replace("build.", "")));
+                }
+            }
+
+            var buildId = pipelineGetBuildId.Invoke();
+
+            PreSetupOutput output = new()
+            {
+                HasRelease = toRelease.Count != 0,
+                IsFirstRelease = buildNumbers.Count == 0,
+                BuildTag = $"build.{buildId}",
+                LastBuildTag = $"build.{buildNumbers.Max()}",
+                Releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
+                {
+                    AppId = i.AppEntry.Id,
+                    AppName = i.AppEntry.Name,
+                    Environment = i.Env,
+                    Version = i.Version.ToString() + "+build." + pipelineGetBuildId.Invoke()
+                })
+            };
+
+            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
+            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
+
+            pipelinePrepare?.Invoke();
         });
 
     public Target PipelineRelease => _ => _
         .Description("To be used by pipeline")
         .Executes(() =>
         {
+            GetOrFail(() => SplitArgs, out var splitArgs);
+            GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+
             var preSetupOutput = GetPreSetupOutput();
 
             foreach (var release in OutputPath.GetDirectories())
@@ -159,5 +208,40 @@ partial class BaseNukeBuildHelpers
             {
                 Log.Information("Publish: {name}", release.Name);
             }
+
+            foreach (var release in preSetupOutput.Releases.Values)
+            {
+                if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
+                {
+                    continue;
+                }
+                string latestTag = "latest";
+                if (!release.Environment.Equals("main", StringComparison.OrdinalIgnoreCase))
+                {
+                    latestTag += "-" + release.Environment;
+                }
+                if (appEntry.Entry.MainRelease)
+                {
+                    Git.Invoke($"tag -f {latestTag}");
+                }
+                else
+                {
+                    Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{latestTag}");
+                }
+            }
+            Git.Invoke($"tag -f {preSetupOutput.BuildTag}");
+            Git.Invoke($"push -f --tags");
+
+            string args = $"release create {preSetupOutput.BuildTag} {OutputPath.ToString() + "/*.zip"} " +
+                $"--title {preSetupOutput.BuildTag} " +
+                $"--target {Repository.Branch} " +
+                $"--generate-notes";
+
+            if (!preSetupOutput.IsFirstRelease)
+            {
+                args += $" --notes-start-tag {preSetupOutput.LastBuildTag}";
+            }
+
+            Gh.Invoke(args, logInvocation: false, logOutput: false);
         });
 }

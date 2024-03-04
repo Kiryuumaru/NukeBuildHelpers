@@ -28,6 +28,8 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 
     Tool Git => (this as INukeBuildHelpers).Git;
 
+    Tool Gh => (this as INukeBuildHelpers).Gh;
+
     private IReadOnlyDictionary<string, string?>? splitArgs;
     public IReadOnlyDictionary<string, string?> SplitArgs
     {

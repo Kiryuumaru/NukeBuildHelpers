@@ -141,6 +141,7 @@ jobs:
     - build
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04

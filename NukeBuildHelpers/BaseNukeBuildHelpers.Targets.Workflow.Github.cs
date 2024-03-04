@@ -27,20 +27,13 @@ partial class BaseNukeBuildHelpers
 {
     private readonly Serializer _yamlSerializer = new();
 
+    private static long GithubPipelineGetBuildId()
+    {
+        return GitHubActions.Instance.RunId;
+    }
+
     private static void GithubPipelinePrepare(List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
     {
-        PreSetupOutput output = new()
-        {
-            HasRelease = toRelease.Count != 0,
-            Releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
-            {
-                AppId = i.AppEntry.Id,
-                AppName = i.AppEntry.Name,
-                Environment = i.Env,
-                Version = i.Version.ToString() + "+build." + GitHubActions.Instance.RunId
-            })
-        };
-
         var outputTestMatrix = new List<PreSetupOutputAppTestEntryMatrix>();
         var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
         var outputPublishMatrix = new List<PreSetupOutputAppEntryMatrix>();
@@ -98,11 +91,9 @@ partial class BaseNukeBuildHelpers
                 });
             }
         }
-        File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
         File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
         File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption));
         File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOption));
-        Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
         Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOptionIndented));
         Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOptionIndented));
         Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOptionIndented));
@@ -342,6 +333,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(releaseJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobEnvVar(releaseJob, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
             AddGithubWorkflowJobStep(releaseJob, uses: "actions/checkout@v4");
             var cacheReleaseStep = AddGithubWorkflowJobStep(releaseJob, uses: "actions/cache@v4");
             AddGithubWorkflowJobStepWith(cacheReleaseStep, "path", "~/.nuget/packages");

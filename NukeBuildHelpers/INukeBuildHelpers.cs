@@ -21,4 +21,7 @@ public partial interface INukeBuildHelpers : INukeBuild
 
     [PathVariable]
     Tool Git => TryGetValue(() => Git);
+
+    [PathVariable]
+    Tool Gh => TryGetValue(() => Gh);
 }
