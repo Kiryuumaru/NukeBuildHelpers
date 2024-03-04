@@ -19,13 +19,77 @@ using System.Text.Json;
 using YamlDotNet.Core.Tokens;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
     private readonly Serializer _yamlSerializer = new();
+
+    private static void GithubPipelinePrepare(List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
+    {
+        var outputTestMatrix = new List<PreSetupOutputMatrix>();
+        var outputBuildMatrix = new List<PreSetupOutputMatrix>();
+        var outputPublishMatrix = new List<PreSetupOutputMatrix>();
+        foreach (var appTestEntry in appTestEntries)
+        {
+            var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
+            var hasRelease = toRelease.Any(i => i.AppEntry.Id == appEntry.Id);
+            if (hasRelease || appTestEntry.RunType == TestRunType.Always)
+            {
+                PreSetupOutputMatrix preSetupOutputMatrix = new()
+                {
+                    Id = appTestEntry.Id,
+                    Name = appTestEntry.Name,
+                    RunsOn = GetRunsOnGithub(appTestEntry.RunsOn),
+                    BuildScript = GetBuildScriptGithub(appTestEntry.RunsOn),
+                    IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
+                };
+                outputTestMatrix.Add(preSetupOutputMatrix);
+            }
+        }
+        if (outputTestMatrix.Count == 0)
+        {
+            PreSetupOutputMatrix preSetupOutputMatrix = new()
+            {
+                Id = "skip",
+                Name = "Skip",
+                RunsOn = GetRunsOnGithub(RunsOnType.Ubuntu2204),
+                BuildScript = "",
+                IdsToRun = ""
+            };
+            outputTestMatrix.Add(preSetupOutputMatrix);
+        }
+        foreach (var (Entry, Tests) in appEntryConfigs.Values)
+        {
+            var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);
+            if (release.AppEntry != null)
+            {
+                outputBuildMatrix.Add(new()
+                {
+                    Id = Entry.Id,
+                    Name = Entry.Name,
+                    RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
+                    BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
+                    IdsToRun = Entry.Id
+                });
+                outputPublishMatrix.Add(new()
+                {
+                    Id = Entry.Id,
+                    Name = Entry.Name,
+                    RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
+                    BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
+                    IdsToRun = Entry.Id
+                });
+            }
+        }
+        File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
+        File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption));
+        File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOption));
+        Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOptionIndented));
+        Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOptionIndented));
+        Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOptionIndented));
+    }
 
     private static string GetRunsOnGithub(RunsOnType runsOnType)
     {
@@ -99,10 +163,6 @@ partial class BaseNukeBuildHelpers
         return step;
     }
 
-    private static readonly string[] valueArray0 = new string[] { "**" };
-    private static readonly string[] valueArray = new string[] { "*" };
-    private static readonly string[] value = new string[] { "fix/**", "feat/**", "hotfix/**" };
-
     private static void AddGithubWorkflowJobStepWith(Dictionary<string, object> step, string name, string value)
     {
         if (!step.TryGetValue("with", out object? withValue))
@@ -167,13 +227,13 @@ partial class BaseNukeBuildHelpers
                 {
                     { "push", new Dictionary<string, object>()
                         {
-                            { "branches", valueArray },
-                            { "tags", valueArray0 }
+                            { "branches", new List<string> { "*" } },
+                            { "tags", new List<string> { "**" } }
                         }
                     },
                     { "pull_request", new Dictionary<string, object>()
                         {
-                            { "branches", value }
+                            { "branches", new List<string> { "fix/**", "feat/**", "hotfix/**" } }
                         }
                     }
                 },
@@ -266,6 +326,11 @@ partial class BaseNukeBuildHelpers
             var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(releaseJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobStep(releaseJob, uses: "actions/checkout@v4");
+            var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
+            AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
+            var zipArtifacts = AddGithubWorkflowJobStep(releaseJob, name: "Zip artifacts",
+                run: "for folder_name in *; do if [ \"$folder_name\" == \"version_notes\" ]; then continue fi if [ -d \"$folder_name\" ]; then zip -r -q \"${folder_name}.zip\" \"${folder_name}\" fi done");
+            zipArtifacts["working-directory"] = "./.nuke/temp/output";
 
             needs.Add("publish");
             needs.Add("release");

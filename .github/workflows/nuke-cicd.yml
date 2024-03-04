@@ -124,6 +124,13 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/output
+    - name: Zip artifacts
+      run: for folder_name in *; do if [ "$folder_name" == "version_notes" ]; then continue fi if [ -d "$folder_name" ]; then zip -r -q "${folder_name}.zip" "${folder_name}" fi done
+      working-directory: ./.nuke/temp/output
     needs:
     - pre_setup
     - test

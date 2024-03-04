@@ -145,67 +145,7 @@ partial class BaseNukeBuildHelpers
             switch (Args?.ToLowerInvariant())
             {
                 case "github":
-                    var outputTestMatrix = new List<PreSetupOutputMatrix>();
-                    var outputBuildMatrix = new List<PreSetupOutputMatrix>();
-                    var outputPublishMatrix = new List<PreSetupOutputMatrix>();
-                    foreach (var appTestEntry in appTestEntries)
-                    {
-                        var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
-                        var hasRelease = toRelease.Any(i => i.AppEntry.Id == appEntry.Id);
-                        if (hasRelease || appTestEntry.RunType == TestRunType.Always)
-                        {
-                            PreSetupOutputMatrix preSetupOutputMatrix = new()
-                            {
-                                Id = appTestEntry.Id,
-                                Name = appTestEntry.Name,
-                                RunsOn = GetRunsOnGithub(appTestEntry.RunsOn),
-                                BuildScript = GetBuildScriptGithub(appTestEntry.RunsOn),
-                                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
-                            };
-                            outputTestMatrix.Add(preSetupOutputMatrix);
-                        }
-                    }
-                    if (outputTestMatrix.Count == 0)
-                    {
-                        PreSetupOutputMatrix preSetupOutputMatrix = new()
-                        {
-                            Id = "skip",
-                            Name = "Skip",
-                            RunsOn = GetRunsOnGithub(RunsOnType.Ubuntu2204),
-                            BuildScript = "",
-                            IdsToRun = ""
-                        };
-                        outputTestMatrix.Add(preSetupOutputMatrix);
-                    }
-                    foreach (var (Entry, Tests) in appEntryConfigs.Values)
-                    {
-                        var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);
-                        if (release.AppEntry != null)
-                        {
-                            outputBuildMatrix.Add(new()
-                            {
-                                Id = Entry.Id,
-                                Name = Entry.Name,
-                                RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
-                                BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
-                                IdsToRun = Entry.Id
-                            });
-                            outputPublishMatrix.Add(new()
-                            {
-                                Id = Entry.Id,
-                                Name = Entry.Name,
-                                RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
-                                BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
-                                IdsToRun = Entry.Id
-                            });
-                        }
-                    }
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption));
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOption));
-                    Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOptionIndented));
-                    Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOptionIndented));
-                    Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOptionIndented));
+                    GithubPipelinePrepare(appTestEntries, appEntryConfigs, toRelease);
                     break;
                 default:
                     Log.Information("No agent pipeline provided");
