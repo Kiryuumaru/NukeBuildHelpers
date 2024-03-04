@@ -138,9 +138,8 @@ partial class BaseNukeBuildHelpers
                 })
             };
 
-            var serializedOutput = JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption);
-            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output.json", serializedOutput);
-            Log.Information("PRE_SETUP_OUTPUT: {output}", serializedOutput);
+            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
+            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
 
             switch (Args?.ToLowerInvariant())
             {

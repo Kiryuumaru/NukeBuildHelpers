@@ -129,7 +129,8 @@ jobs:
       with:
         path: ./.nuke/temp/output
     - name: Zip artifacts
-      run: for folder_name in *; do if [ "$folder_name" == "version_notes" ]; then continue fi if [ -d "$folder_name" ]; then zip -r -q "${folder_name}.zip" "${folder_name}" fi done
+      run: >+
+        for folder_name in *; do if [ "$folder_name" == "version_notes" ]; then continue; fi; if [ -d "$folder_name" ]; then zip -r -q "${folder_name}.zip" "${folder_name}"; fi; done
       working-directory: ./.nuke/temp/output
     needs:
     - pre_setup
