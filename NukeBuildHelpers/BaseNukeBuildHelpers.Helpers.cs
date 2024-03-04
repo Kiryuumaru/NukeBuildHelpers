@@ -47,18 +47,21 @@ partial class BaseNukeBuildHelpers
                 Log.Information("heere2");
                 foreach (var secret in appSecretMap.SecretHelpers)
                 {
-                    Log.Information("heere3 " + secret.SecretHelper.Name);
-                    var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
-                    Log.Information("heere3val " + secretValue);
-                    Log.Information("heere3name " + secret.MemberInfo.Name);
-                    
-                    if (secret.MemberInfo is PropertyInfo prop)
+                    if (appSecretMap.EntryType == appEntry.Value.Entry.GetType())
                     {
-                        prop.SetValue(appEntry.Value.Entry, secretValue);
-                    }
-                    else if (secret.MemberInfo is FieldInfo field)
-                    {
-                        field.SetValue(appEntry.Value.Entry, secretValue);
+                        Log.Information("heere3 " + secret.SecretHelper.Name);
+                        var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                        Log.Information("heere3val " + secretValue);
+                        Log.Information("heere3name " + secret.MemberInfo.Name);
+
+                        if (secret.MemberInfo is PropertyInfo prop)
+                        {
+                            prop.SetValue(appEntry.Value.Entry, secretValue);
+                        }
+                        else if (secret.MemberInfo is FieldInfo field)
+                        {
+                            field.SetValue(appEntry.Value.Entry, secretValue);
+                        }
                     }
                 }
             }
@@ -73,17 +76,20 @@ partial class BaseNukeBuildHelpers
                     Log.Information("heeawdawdre2");
                     foreach (var secret in testSecretMap.SecretHelpers)
                     {
-                        Log.Information("heeawdawdre3 " + secret.SecretHelper.Name);
-                        var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
-                        Log.Information("heeawdawdre3val " + secretValue);
-                        Log.Information("heeawdawdre3name " + secret.MemberInfo.Name);
-                        if (secret.MemberInfo is PropertyInfo prop)
+                        if (appSecretMap.EntryType == appEntry.Value.Entry.GetType())
                         {
-                            prop.SetValue(appTestEntry, secretValue);
-                        }
-                        else if (secret.MemberInfo is FieldInfo field)
-                        {
-                            field.SetValue(appTestEntry, secretValue);
+                            Log.Information("heeawdawdre3 " + secret.SecretHelper.Name);
+                            var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                            Log.Information("heeawdawdre3val " + secretValue);
+                            Log.Information("heeawdawdre3name " + secret.MemberInfo.Name);
+                            if (secret.MemberInfo is PropertyInfo prop)
+                            {
+                                prop.SetValue(appTestEntry, secretValue);
+                            }
+                            else if (secret.MemberInfo is FieldInfo field)
+                            {
+                                field.SetValue(appTestEntry, secretValue);
+                            }
                         }
                     }
                 }
