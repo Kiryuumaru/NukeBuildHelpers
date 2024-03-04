@@ -19,4 +19,8 @@ public partial class Build : BaseNukeBuildHelpers
 
     [Solution(GenerateProjects = true)]
     internal readonly Solution Solution;
+
+    [Parameter(Name = "NUGET_AUTH_TOKEN")][Secret] internal readonly string NuGetAuthToken;
+
+    [Parameter(Name = "GITHUB_TOKEN")][Secret] internal readonly string GithubToken;
 }

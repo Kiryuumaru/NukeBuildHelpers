@@ -6,6 +6,7 @@ using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitReleaseManager;
 using Nuke.Common.Utilities;
@@ -231,7 +232,7 @@ partial class BaseNukeBuildHelpers
                 }
             }
             Git.Invoke($"tag -f {preSetupOutput.BuildTag}");
-            Git.Invoke($"push -f --tags");
+            Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
             string args = $"release create {preSetupOutput.BuildTag} {OutputPath.ToString() + "/*.zip"} " +
                 $"--title {preSetupOutput.BuildTag} " +

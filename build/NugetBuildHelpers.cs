@@ -1,12 +1,14 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.NuGet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -42,9 +44,13 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish()
     {
-        foreach (var ss in OutputPath.GetFiles())
-        {
-            Log.Information("Publish: {name}", ss.Name);
-        }
+        DotNetTasks.DotNetNuGetPush(_ => _
+            .SetTargetPath(OutputPath / "*.nupkg")
+            .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+            .SetApiKey(NukeBuild.NuGetAuthToken));
+        DotNetTasks.DotNetNuGetPush(_ => _
+            .SetTargetPath(OutputPath / "*.nupkg")
+            .SetSource("https://api.nuget.org/v3/index.json")
+            .SetApiKey(NukeBuild.GithubToken));
     }
 }

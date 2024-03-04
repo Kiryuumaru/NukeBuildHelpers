@@ -14,6 +14,10 @@
           "type": "boolean",
           "description": "Indicates to continue a previously failed build attempt"
         },
+        "GITHUB_TOKEN": {
+          "type": "string",
+          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
+        },
         "Help": {
           "type": "boolean",
           "description": "Shows the help text for this build assembly"
@@ -42,6 +46,10 @@
         "NoLogo": {
           "type": "boolean",
           "description": "Disables displaying the NUKE logo"
+        },
+        "NUGET_AUTH_TOKEN": {
+          "type": "string",
+          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
         },
         "Partition": {
           "type": "string",
