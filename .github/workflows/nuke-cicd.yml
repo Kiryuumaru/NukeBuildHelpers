@@ -55,7 +55,7 @@ jobs:
         path: ~/.nuget/packages
         key: ${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ matrix.runs_on }}-nuget-test-
-    - name: Run Nuke PiplineTest
+    - name: Run Nuke PipelineTest
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
     needs:
@@ -75,7 +75,7 @@ jobs:
         path: ~/.nuget/packages
         key: ${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}
         restore-keys: ${{ matrix.runs_on }}-nuget-build-
-    - name: Run Nuke PiplineBuild
+    - name: Run Nuke PipelineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -108,7 +108,7 @@ jobs:
         path: ./.nuke/temp/output
         pattern: ${{ matrix.id }}
         merge-multiple: true
-    - name: Run Nuke PiplinePublish
+    - name: Run Nuke PipelinePublish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
     needs:
     - pre_setup
@@ -133,8 +133,8 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/output
-    - name: Run Nuke PiplineRelease
-      run: ${{ matrix.build_script }} PiplineRelease
+    - name: Run Nuke PipelineRelease
+      run: ${{ matrix.build_script }} PipelineRelease
     needs:
     - pre_setup
     - test

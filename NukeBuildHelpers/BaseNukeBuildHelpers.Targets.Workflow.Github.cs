@@ -297,7 +297,7 @@ partial class BaseNukeBuildHelpers
                 AddGithubWorkflowJobStepWith(cacheTestStep, "path", "~/.nuget/packages");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "key", "${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "restore-keys", "${{ matrix.runs_on }}-nuget-test-");
-                AddGithubWorkflowJobStep(testJob, name: "Run Nuke PiplineTest", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"", _if: "${{ matrix.id != 'skip' }}");
+                AddGithubWorkflowJobStep(testJob, name: "Run Nuke PipelineTest", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"", _if: "${{ matrix.id != 'skip' }}");
             }
 
             // ██████████████████████████████████████
@@ -311,7 +311,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cacheBuildStep, "path", "~/.nuget/packages");
             AddGithubWorkflowJobStepWith(cacheBuildStep, "key", "${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}");
             AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ matrix.runs_on }}-nuget-build-");
-            AddGithubWorkflowJobStep(buildJob, name: "Run Nuke PiplineBuild", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
+            AddGithubWorkflowJobStep(buildJob, name: "Run Nuke PipelineBuild", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             var uploadBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "path", "./.nuke/temp/output/*");
@@ -335,7 +335,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "merge-multiple", "true");
-            AddGithubWorkflowJobStep(publishJob, name: "Run Nuke PiplinePublish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
+            AddGithubWorkflowJobStep(publishJob, name: "Run Nuke PipelinePublish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
 
             // ██████████████████████████████████████
             // ██████████████ Release ███████████████
@@ -349,7 +349,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cacheReleaseStep, "restore-keys", "${{ matrix.runs_on }}-nuget-release-");
             var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
-            AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PiplineRelease", run: "${{ matrix.build_script }} PiplineRelease");
+            AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: "${{ matrix.build_script }} PipelineRelease");
 
             needs.Add("publish");
             needs.Add("release");
