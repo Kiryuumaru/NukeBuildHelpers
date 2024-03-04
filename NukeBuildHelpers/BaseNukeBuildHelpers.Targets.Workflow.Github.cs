@@ -349,7 +349,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cacheReleaseStep, "restore-keys", "${{ matrix.runs_on }}-nuget-release-");
             var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
-            AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: "${{ matrix.build_script }} PipelineRelease");
+            AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelineRelease");
 
             needs.Add("publish");
             needs.Add("release");

@@ -134,7 +134,7 @@ jobs:
       with:
         path: ./.nuke/temp/output
     - name: Run Nuke PipelineRelease
-      run: ${{ matrix.build_script }} PipelineRelease
+      run: chmod +x ./build.sh && ./build.sh PipelineRelease
     needs:
     - pre_setup
     - test

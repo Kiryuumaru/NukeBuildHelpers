@@ -7,6 +7,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
 using Octokit;
@@ -141,9 +142,22 @@ partial class BaseNukeBuildHelpers
         .Description("To be used by pipeline")
         .Executes(() =>
         {
-            foreach (var ss in OutputPath.GetDirectories())
+            var preSetupOutput = GetPreSetupOutput();
+
+            foreach (var release in OutputPath.GetDirectories())
             {
-                Log.Information("Publish: {name}", ss.Name);
+                if (!preSetupOutput.Releases.TryGetValue(release.Name, out var preSetupOutputVersion))
+                {
+                    continue;
+                }
+                var outPath = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}";
+                var outPathZip = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}.zip";
+                release.CopyFilesRecursively(outPath);
+                outPath.ZipTo(outPathZip);
+            }
+            foreach (var release in OutputPath.GetFiles())
+            {
+                Log.Information("Publish: {name}", release.Name);
             }
         });
 }
