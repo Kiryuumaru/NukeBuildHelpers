@@ -214,9 +214,9 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
             AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
-            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_TEST_MATRIX", name: "Output PRE_SETUP_OUTPUT_TEST_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_test_matrix_output.json)\" >> $GITHUB_OUTPUT");
-            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_BUILD_MATRIX", name: "Output PRE_SETUP_OUTPUT_BUILD_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_build_matrix_output.json)\" >> $GITHUB_OUTPUT");
-            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", name: "Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_publish_matrix_output.json)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_TEST_MATRIX", name: "Output PRE_SETUP_OUTPUT_TEST_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_BUILD_MATRIX", name: "Output PRE_SETUP_OUTPUT_BUILD_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", name: "Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX");
