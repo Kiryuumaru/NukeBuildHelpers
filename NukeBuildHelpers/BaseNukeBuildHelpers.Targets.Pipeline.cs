@@ -162,13 +162,14 @@ partial class BaseNukeBuildHelpers
             }
 
             var buildId = pipelineGetBuildId.Invoke();
+            var buildMaxNumber = buildNumbers.Count != 0 ? buildNumbers.Max() : 0;
 
             PreSetupOutput output = new()
             {
                 HasRelease = toRelease.Count != 0,
                 IsFirstRelease = buildNumbers.Count == 0,
                 BuildTag = $"build.{buildId}",
-                LastBuildTag = $"build.{buildNumbers.Max()}",
+                LastBuildTag = $"build.{buildMaxNumber}",
                 Releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
                 {
                     AppId = i.AppEntry.Id,
