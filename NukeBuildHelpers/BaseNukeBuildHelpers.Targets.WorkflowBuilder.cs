@@ -109,29 +109,8 @@ partial class BaseNukeBuildHelpers
         ((Dictionary<string, object>)withValue).Add(name, value);
     }
 
-    private static Dictionary<string, object> AddGithubWorkflowJobMatrixInclude(Dictionary<string, object> job)
-    {
-        Dictionary<string, object> include = new();
-        if (!job.TryGetValue("strategy", out object? value))
-        {
-            value = new Dictionary<string, object>();
-            job["strategy"] = value;
-        }
-        if (!((Dictionary<string, object>)value).ContainsKey("matrix"))
-        {
-            ((Dictionary<string, object>)value)["matrix"] = new Dictionary<string, object>();
-        }
-        if (!((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"]).ContainsKey("include"))
-        {
-            ((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"])["include"] = new List<object>();
-        }
-        ((List<object>)((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"])["include"]).Add(include);
-        return include;
-    }
-
     private static void AddGithubWorkflowJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)
     {
-        Dictionary<string, object> include = new();
         if (!job.TryGetValue("strategy", out object? value))
         {
             value = new Dictionary<string, object>();
@@ -227,7 +206,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             if (appTestEntries.Count > 0)
             {
-                var testJob = AddGithubWorkflowJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
+                var testJob = AddGithubWorkflowJob(workflow, "test", "Test - ${{ matrix.app_name }}", "${{ matrix.runs_on }}");
                 testJob["needs"] = needs.ToArray();
                 needs.Add("test");
                 AddGithubWorkflowJobEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
@@ -243,7 +222,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             // ███████████████ Build ████████████████
             // ██████████████████████████████████████
-            var buildJob = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray());
+            var buildJob = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.app_name }}", "${{ matrix.runs_on }}", needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
             AddGithubWorkflowJobStep(buildJob, uses: "actions/checkout@v4");
@@ -253,7 +232,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ matrix.runs_on }}-nuget-build-");
             AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             var uploadBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
-            AddGithubWorkflowJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
+            AddGithubWorkflowJobStepWith(uploadBuildStep, "name", "${{ matrix.app_id }}");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "path", "./.nuke/temp/output/*");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "if-no-files-found", "error");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "retention-days", "1");
@@ -263,7 +242,7 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             // ██████████████ Publish ███████████████
             // ██████████████████████████████████████
-            var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray());
+            var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.app_name }}", "${{ matrix.runs_on }}", needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");
@@ -273,7 +252,7 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cachePublishStep, "restore-keys", "${{ matrix.runs_on }}-nuget-publish-");
             var downloadBuildStep = AddGithubWorkflowJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
-            AddGithubWorkflowJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
+            AddGithubWorkflowJobStepWith(downloadBuildStep, "pattern", "${{ matrix.app_id }}");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "merge-multiple", "true");
             AddGithubWorkflowJobStep(publishJob, name: "Run Nuke Publish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
 

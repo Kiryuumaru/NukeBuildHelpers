@@ -168,15 +168,12 @@ partial class BaseNukeBuildHelpers
                         outputBuildMatrix.Add(preSetupOutputMatrix);
                         outputPublishMatrix.Add(preSetupOutputMatrix);
                     }
-                    var serializedOutputTestMatrix = JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption);
-                    var serializedOutputBuildMatrix = JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption);
-                    var serializedOutputPublishMatrix = JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOption);
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", serializedOutputTestMatrix);
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", serializedOutputBuildMatrix);
-                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", serializedOutputPublishMatrix);
-                    Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", serializedOutputTestMatrix);
-                    Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", serializedOutputBuildMatrix);
-                    Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", serializedOutputPublishMatrix);
+                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
+                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
+                    File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
+                    Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOptionIndented));
+                    Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOptionIndented));
+                    Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOptionIndented));
                     break;
                 default:
                     Log.Information("No agent pipeline provided");

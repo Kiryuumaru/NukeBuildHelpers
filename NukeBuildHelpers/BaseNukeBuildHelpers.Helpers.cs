@@ -24,6 +24,12 @@ partial class BaseNukeBuildHelpers
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
     };
 
+    private static readonly JsonSerializerOptions _jsonSnakeCaseNamingOptionIndented = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        WriteIndented = true
+    };
+
     private void SetupAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
         foreach (var appEntry in appEntries)
