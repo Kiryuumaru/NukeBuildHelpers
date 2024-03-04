@@ -126,21 +126,6 @@ partial class BaseNukeBuildHelpers
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppEntry.Id, rel.Env, rel.Version);
             }
 
-            PreSetupOutput output = new()
-            {
-                HasRelease = toRelease.Count != 0,
-                Releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
-                {
-                    AppId = i.AppEntry.Id,
-                    AppName = i.AppEntry.Name,
-                    Environment = i.Env,
-                    Version = i.Version.ToString()
-                })
-            };
-
-            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
-            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
-
             switch (Args?.ToLowerInvariant())
             {
                 case "github":
