@@ -18,6 +18,7 @@ using Microsoft.Identity.Client;
 using NukeBuildHelpers.Attributes;
 using System.Collections.Generic;
 using Nuke.Common.Utilities;
+using System.Net.Sockets;
 
 namespace NukeBuildHelpers;
 
@@ -41,27 +42,22 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            Log.Information("heere");
-            if (appEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var appSecretMap))
+            if (appEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var appSecretMap) &&
+                appSecretMap.EntryType == appEntry.Value.Entry.GetType())
             {
-                Log.Information("heere2");
                 foreach (var secret in appSecretMap.SecretHelpers)
                 {
-                    if (appSecretMap.EntryType == appEntry.Value.Entry.GetType())
-                    {
-                        Log.Information("heere3 " + secret.SecretHelper.Name);
-                        var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
-                        Log.Information("heere3val " + secretValue);
-                        Log.Information("heere3name " + secret.MemberInfo.Name);
+                    var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
 
-                        if (secret.MemberInfo is PropertyInfo prop)
-                        {
-                            prop.SetValue(appEntry.Value.Entry, secretValue);
-                        }
-                        else if (secret.MemberInfo is FieldInfo field)
-                        {
-                            field.SetValue(appEntry.Value.Entry, secretValue);
-                        }
+                    Log.Information("heere3 {asc} {csa} {ss}" + secret.SecretHelper.Name, secret.MemberInfo.Name, secretValue);
+
+                    if (secret.MemberInfo is PropertyInfo prop)
+                    {
+                        prop.SetValue(appEntry.Value.Entry, secretValue);
+                    }
+                    else if (secret.MemberInfo is FieldInfo field)
+                    {
+                        field.SetValue(appEntry.Value.Entry, secretValue);
                     }
                 }
             }
@@ -70,26 +66,22 @@ partial class BaseNukeBuildHelpers
             appEntry.Value.Entry.OutputPath = OutputPath;
             foreach (var appTestEntry in appEntry.Value.Tests)
             {
-                Log.Information("heeawdawdre1");
-                if (appTestEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var testSecretMap))
+                if (appTestEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var testSecretMap) &&
+                    appSecretMap.EntryType == appEntry.Value.Entry.GetType())
                 {
-                    Log.Information("heeawdawdre2");
                     foreach (var secret in testSecretMap.SecretHelpers)
                     {
-                        if (appSecretMap.EntryType == appEntry.Value.Entry.GetType())
+                        var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+
+                        Log.Information("heerscscse3 {asc} {csa} {ss}" + secret.SecretHelper.Name, secret.MemberInfo.Name, secretValue);
+
+                        if (secret.MemberInfo is PropertyInfo prop)
                         {
-                            Log.Information("heeawdawdre3 " + secret.SecretHelper.Name);
-                            var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
-                            Log.Information("heeawdawdre3val " + secretValue);
-                            Log.Information("heeawdawdre3name " + secret.MemberInfo.Name);
-                            if (secret.MemberInfo is PropertyInfo prop)
-                            {
-                                prop.SetValue(appTestEntry, secretValue);
-                            }
-                            else if (secret.MemberInfo is FieldInfo field)
-                            {
-                                field.SetValue(appTestEntry, secretValue);
-                            }
+                            prop.SetValue(appTestEntry, secretValue);
+                        }
+                        else if (secret.MemberInfo is FieldInfo field)
+                        {
+                            field.SetValue(appTestEntry, secretValue);
                         }
                     }
                 }
