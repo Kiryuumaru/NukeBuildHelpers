@@ -49,6 +49,7 @@ partial class BaseNukeBuildHelpers
                 {
                     Log.Information("heere3 " + secret.SecretHelper.Name);
                     var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                    Log.Information("heere3val " + secretValue);
                     secret.MemberInfo.SetValue(appEntry.Value.Entry, secretValue);
                 }
             }
@@ -65,6 +66,7 @@ partial class BaseNukeBuildHelpers
                     {
                         Log.Information("heeawdawdre3 " + secret.SecretHelper.Name);
                         var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                        Log.Information("heeawdawdre3val " + secretValue);
                         secret.MemberInfo.SetValue(appTestEntry, secretValue);
                     }
                 }
