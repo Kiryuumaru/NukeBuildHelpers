@@ -62,6 +62,7 @@ partial class BaseNukeBuildHelpers
                 if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
                     appSecretMap.EntryType == appTestEntry.GetType())
                 {
+                    Log.Information("ccccccccccccc");
                     foreach (var secret in testSecretMap.SecretHelpers)
                     {
                         var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
