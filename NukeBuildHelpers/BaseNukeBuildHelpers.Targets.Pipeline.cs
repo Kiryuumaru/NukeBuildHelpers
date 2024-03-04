@@ -170,24 +170,23 @@ partial class BaseNukeBuildHelpers
                         var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);
                         if (release.AppEntry != null)
                         {
-
+                            outputBuildMatrix.Add(new()
+                            {
+                                Id = Entry.Id,
+                                Name = Entry.Name,
+                                RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
+                                BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
+                                IdsToRun = Entry.Id
+                            });
+                            outputPublishMatrix.Add(new()
+                            {
+                                Id = Entry.Id,
+                                Name = Entry.Name,
+                                RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
+                                BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
+                                IdsToRun = Entry.Id
+                            });
                         }
-                        outputBuildMatrix.Add(new()
-                        {
-                            Id = Entry.Id,
-                            Name = Entry.Name,
-                            RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
-                            BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
-                            IdsToRun = Entry.Id
-                        });
-                        outputPublishMatrix.Add(new()
-                        {
-                            Id = Entry.Id,
-                            Name = Entry.Name,
-                            RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
-                            BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
-                            IdsToRun = Entry.Id
-                        });
                     }
                     File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
                     File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption));
