@@ -50,6 +50,8 @@ partial class BaseNukeBuildHelpers
                     Log.Information("heere3 " + secret.SecretHelper.Name);
                     var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
                     Log.Information("heere3val " + secretValue);
+                    Log.Information("heere3name " + secret.MemberInfo.Name);
+                    
                     if (secret.MemberInfo is PropertyInfo prop)
                     {
                         prop.SetValue(appEntry.Value.Entry, secretValue);
@@ -74,6 +76,7 @@ partial class BaseNukeBuildHelpers
                         Log.Information("heeawdawdre3 " + secret.SecretHelper.Name);
                         var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
                         Log.Information("heeawdawdre3val " + secretValue);
+                        Log.Information("heeawdawdre3name " + secret.MemberInfo.Name);
                         if (secret.MemberInfo is PropertyInfo prop)
                         {
                             prop.SetValue(appTestEntry, secretValue);
