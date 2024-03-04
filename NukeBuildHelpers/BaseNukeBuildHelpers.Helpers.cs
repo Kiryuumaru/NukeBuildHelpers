@@ -48,9 +48,6 @@ partial class BaseNukeBuildHelpers
                 foreach (var secret in appSecretMap.SecretHelpers)
                 {
                     var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
-
-                    Log.Information("heere3 {asc} {csa} {ss}", secret.SecretHelper.Name, secret.MemberInfo.Name, secretValue);
-
                     secret.MemberInfo.SetValue(appEntry.Value.Entry, secretValue);
                 }
             }
@@ -59,17 +56,12 @@ partial class BaseNukeBuildHelpers
             appEntry.Value.Entry.OutputPath = OutputPath;
             foreach (var appTestEntry in appEntry.Value.Tests)
             {
-                Log.Information("ccccccccccccc1 {s} {s1} {ss} {cscs}", appTestEntry.Id, appTestEntrySecretMap.FirstOrDefault().Key, appTestEntrySecretMap.FirstOrDefault().Value.EntryType.ToString(), appTestEntry.GetType().ToString());
                 if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
-                    appSecretMap.EntryType == appTestEntry.GetType())
+                    testSecretMap.EntryType == appTestEntry.GetType())
                 {
-                    Log.Information("ccccccccccccc");
                     foreach (var secret in testSecretMap.SecretHelpers)
                     {
                         var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
-
-                        Log.Information("heerscscse3 {asc} {csa} {ss}", secret.SecretHelper.Name, secret.MemberInfo.Name, secretValue);
-
                         secret.MemberInfo.SetValue(appTestEntry, secretValue);
                     }
                 }
