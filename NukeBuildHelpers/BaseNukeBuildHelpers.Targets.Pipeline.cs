@@ -219,7 +219,7 @@ partial class BaseNukeBuildHelpers
                 string latestTag = "latest";
                 if (!release.Environment.Equals("main", StringComparison.OrdinalIgnoreCase))
                 {
-                    latestTag += "-" + release.Environment;
+                    latestTag += "-" + release.Environment.ToLowerInvariant();
                 }
                 if (appEntry.Entry.MainRelease)
                 {
