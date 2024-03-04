@@ -30,13 +30,16 @@ partial class BaseNukeBuildHelpers
     private string GithubPipelineGetBranch()
     {
         var branch = Environment.GetEnvironmentVariable("GITHUB_HEAD_REF");
+        Log.Information("{appId} cccccccccccccccccc1", branch);
         if (string.IsNullOrEmpty(branch))
         {
             branch = Environment.GetEnvironmentVariable("GITHUB_REF")?.Replace("refs/heads/", "");
+            Log.Information("{appId} cccccccccccccccccc2", branch);
         }
         if (string.IsNullOrEmpty(branch))
         {
             branch = Repository.Branch;
+            Log.Information("{appId} cccccccccccccccccc4", branch);
         }
         return branch;
     }
