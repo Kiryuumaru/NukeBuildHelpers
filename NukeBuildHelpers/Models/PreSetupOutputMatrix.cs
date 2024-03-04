@@ -15,11 +15,9 @@ namespace NukeBuildHelpers;
 
 public class PreSetupOutputMatrix
 {
-    public required string AppId { get; init; }
+    public required string Id { get; init; }
 
-    public required string AppName { get; init; }
-
-    public required bool HasRelease { get; init; }
+    public required string Name { get; init; }
 
     public required string IdsToRun { get; init; }
 

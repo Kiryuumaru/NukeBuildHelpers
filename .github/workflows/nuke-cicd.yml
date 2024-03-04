@@ -44,7 +44,7 @@ jobs:
       PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_BUILD_MATRIX.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX }}
       PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_PUBLISH_MATRIX.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
   test:
-    name: Test - ${{ matrix.app_name }}
+    name: Test - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}
   build:
-    name: Build - ${{ matrix.app_name }}
+    name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.app_id }}
+        name: ${{ matrix.id }}
         path: ./.nuke/temp/output/*
         if-no-files-found: error
         retention-days: 1
@@ -90,7 +90,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
   publish:
-    name: Publish - ${{ matrix.app_name }}
+    name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
@@ -103,7 +103,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/output
-        pattern: ${{ matrix.app_id }}
+        pattern: ${{ matrix.id }}
         merge-multiple: true
     - name: Run Nuke Publish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"

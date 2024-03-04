@@ -71,13 +71,12 @@ partial class BaseNukeBuildHelpers
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+            GetOrFail(() => GetAppEntries(), out var appEntries);
+            GetOrFail(() => GetAppTestEntries(), out var appTestEntries);
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
             List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = new();
-
-            Dictionary<string, AllVersions> appEntryVersions = new();
-            List<string> appEntryHasReleases = new();
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -85,8 +84,6 @@ partial class BaseNukeBuildHelpers
 
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
-
-                appEntryVersions[appEntry.Entry.Id] = allVersions;
 
                 if (allVersions.GroupKeySorted.Count != 0)
                 {
@@ -114,7 +111,6 @@ partial class BaseNukeBuildHelpers
                         if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != allVersions.VersionGrouped[groupKey].Last())
                         {
                             toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
-                            appEntryHasReleases.Add(appEntry.Entry.Id);
                             Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
                         }
                         else
@@ -152,21 +148,46 @@ partial class BaseNukeBuildHelpers
                     var outputTestMatrix = new List<PreSetupOutputMatrix>();
                     var outputBuildMatrix = new List<PreSetupOutputMatrix>();
                     var outputPublishMatrix = new List<PreSetupOutputMatrix>();
+                    foreach (var appTestEntry in appTestEntries)
+                    {
+                        var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
+                        var hasRelease = toRelease.Any(i => i.AppEntry.Id == appEntry.Id);
+                        if (hasRelease || appTestEntry.RunType == TestRunType.Always)
+                        {
+                            PreSetupOutputMatrix preSetupOutputMatrix = new()
+                            {
+                                Id = appTestEntry.Id,
+                                Name = appTestEntry.Name,
+                                RunsOn = GetRunsOnGithub(appTestEntry.RunsOn),
+                                BuildScript = GetBuildScriptGithub(appTestEntry.RunsOn),
+                                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
+                            };
+                            outputTestMatrix.Add(preSetupOutputMatrix);
+                        }
+                    }
                     foreach (var (Entry, Tests) in appEntryConfigs.Values)
                     {
-                        var allVersion = appEntryVersions[Entry.Id];
-                        PreSetupOutputMatrix preSetupOutputMatrix = new()
+                        var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);
+                        if (release.AppEntry != null)
                         {
-                            AppId = Entry.Id,
-                            AppName = Entry.Name,
+
+                        }
+                        outputBuildMatrix.Add(new()
+                        {
+                            Id = Entry.Id,
+                            Name = Entry.Name,
                             RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
                             BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
-                            IdsToRun = Entry.Id,
-                            HasRelease = appEntryHasReleases.Contains(Entry.Id)
-                        };
-                        outputTestMatrix.Add(preSetupOutputMatrix);
-                        outputBuildMatrix.Add(preSetupOutputMatrix);
-                        outputPublishMatrix.Add(preSetupOutputMatrix);
+                            IdsToRun = Entry.Id
+                        });
+                        outputPublishMatrix.Add(new()
+                        {
+                            Id = Entry.Id,
+                            Name = Entry.Name,
+                            RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
+                            BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
+                            IdsToRun = Entry.Id
+                        });
                     }
                     File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
                     File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));

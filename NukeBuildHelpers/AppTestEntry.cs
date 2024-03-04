@@ -15,6 +15,8 @@ public abstract class AppTestEntry : BaseEntry
 {
     public abstract RunsOnType RunsOn { get; }
 
+    public virtual TestRunType RunType { get; } = TestRunType.Always;
+
     public abstract Type[] AppEntryTargets { get; }
 
     public BaseNukeBuildHelpers NukeBuild { get; internal set; } = null!;
