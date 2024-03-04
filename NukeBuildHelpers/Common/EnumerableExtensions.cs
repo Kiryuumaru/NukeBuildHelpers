@@ -11,15 +11,7 @@ internal static class EnumerableExtensions
 {
     internal static IEnumerable<T> Combine<T>(this IEnumerable<T> source, IEnumerable<T> toCombine)
     {
-        List<T> result = new();
-        foreach (var item in source)
-        {
-            result.Add(item);
-        }
-        foreach (var item in toCombine)
-        {
-            result.Add(item);
-        }
+        List<T> result = [.. source, .. toCombine];
         return result;
     }
 }

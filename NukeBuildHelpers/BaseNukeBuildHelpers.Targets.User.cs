@@ -34,7 +34,7 @@ partial class BaseNukeBuildHelpers
         .Description("Delete all origin tags, with --args \"{appid}\"")
         .Executes(() =>
         {
-            List<string> tagsToDelete = new();
+            List<string> tagsToDelete = [];
             if (string.IsNullOrEmpty(Args))
             {
                 string basePeel = "refs/tags/";
@@ -51,7 +51,7 @@ partial class BaseNukeBuildHelpers
 
                 IReadOnlyCollection<Output>? lsRemote = null;
 
-                foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : new List<string>() { "" })
+                foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : [""])
                 {
                     string appId = key;
 
@@ -88,13 +88,13 @@ partial class BaseNukeBuildHelpers
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
 
-            List<(string Text, HorizontalAlignment Alignment)> headers = new()
-                {
+            List<(string Text, HorizontalAlignment Alignment)> headers =
+                [
                     ("App Id", HorizontalAlignment.Right),
                     ("Environment", HorizontalAlignment.Center),
                     ("Current Version", HorizontalAlignment.Right)
-                };
-            List<List<string?>> rows = new();
+                ];
+            List<List<string?>> rows = [];
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -120,13 +120,13 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        rows.Add(new List<string?> { firstEntryRow ? appId : "", env, allVersions.VersionGrouped[groupKey].Last().ToString() });
+                        rows.Add([firstEntryRow ? appId : "", env, allVersions.VersionGrouped[groupKey].Last().ToString()]);
                         firstEntryRow = false;
                     }
                 }
                 else
                 {
-                    rows.Add(new List<string?> { appId, null, null });
+                    rows.Add([appId, null, null]);
                 }
             }
 
@@ -147,7 +147,7 @@ partial class BaseNukeBuildHelpers
                 return;
             }
 
-            List<string> tagsToPush = new();
+            List<string> tagsToPush = [];
 
             IReadOnlyCollection<Output>? lsRemote = null;
 

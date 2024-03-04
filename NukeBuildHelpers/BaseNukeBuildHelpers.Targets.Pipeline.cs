@@ -76,8 +76,8 @@ partial class BaseNukeBuildHelpers
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
-            GetOrFail(() => GetAppEntries(), out var appEntries);
-            GetOrFail(() => GetAppTestEntries(), out var appTestEntries);
+            GetOrFail(() => GetEntries<AppEntry>(), out var appEntries);
+            GetOrFail(() => GetEntries<AppTestEntry>(), out var appTestEntries);
 
             Func<string>? pipelineGetBranch = null;
             Func<long>? pipelineGetBuildId = null;
@@ -100,7 +100,7 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = new();
+            List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = [];
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -155,7 +155,7 @@ partial class BaseNukeBuildHelpers
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppEntry.Id, rel.Env, rel.Version);
             }
 
-            List<long> buildNumbers = new();
+            List<long> buildNumbers = [];
 
             string basePeel = "refs/tags/";
             foreach (var refs in lsRemote)

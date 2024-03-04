@@ -4,6 +4,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.NuGet;
 using NukeBuildHelpers;
+using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Enums;
 using Serilog;
 using System;
@@ -21,10 +22,20 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
+    [SecretHelper("NUGET_AUTH_TOKEN")]
+    internal readonly string NuGetAuthToken;
+
+    [SecretHelper("GITHUB_TOKEN")]
+    internal readonly string GithubToken;
+
+    [SecretHelper("GITHUB_TOKEN")]
+    internal readonly string GithubToken1;
+
     public override bool RunParallel => false;
 
     public override void Build()
     {
+        Log.Information("Test ptint: {scs}", GithubToken1);
         OutputPath.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
@@ -47,11 +58,11 @@ public class NugetBuildHelpers : AppEntry<Build>
     {
         NuGetTasks.NuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-            .SetApiKey(NukeBuild.GithubToken)
+            .SetApiKey(GithubToken)
             .CombineWith(OutputPath.GetFiles("*.zip"), (_, v) => _.SetTargetPath(v)));
         NuGetTasks.NuGetPush(_ => _
             .SetSource("https://api.nuget.org/v3/index.json")
-            .SetApiKey(NukeBuild.NuGetAuthToken)
+            .SetApiKey(NuGetAuthToken)
             .CombineWith(OutputPath.GetFiles(), (_, v) => _.SetTargetPath(v)));
     }
 }

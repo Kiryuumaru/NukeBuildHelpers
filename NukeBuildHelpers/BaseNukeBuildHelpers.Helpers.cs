@@ -14,6 +14,10 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyModel;
 using Nuke.Common.Tooling;
 using Octokit;
+using Microsoft.Identity.Client;
+using NukeBuildHelpers.Attributes;
+using System.Collections.Generic;
+using Nuke.Common.Utilities;
 
 namespace NukeBuildHelpers;
 
@@ -32,12 +36,33 @@ partial class BaseNukeBuildHelpers
 
     private void SetupAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
+        var appEntrySecretMap = GetEntrySecretMap<AppEntry>();
+        var appTestEntrySecretMap = GetEntrySecretMap<AppTestEntry>();
+
         foreach (var appEntry in appEntries)
         {
+            if (appEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var appSecretMap))
+            {
+                foreach (var secret in appSecretMap.SecretHelpers)
+                {
+                    var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                    secret.MemberInfo.SetValue(appEntry.Value.Entry, secretValue);
+                }
+            }
+
             appEntry.Value.Entry.NukeBuild = this;
             appEntry.Value.Entry.OutputPath = OutputPath;
             foreach (var appTestEntry in appEntry.Value.Tests)
             {
+                if (appTestEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var testSecretMap))
+                {
+                    foreach (var secret in testSecretMap.SecretHelpers)
+                    {
+                        var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                        secret.MemberInfo.SetValue(appTestEntry, secretValue);
+                    }
+                }
+
                 appTestEntry.NukeBuild = this;
             }
             if (preSetupOutput != null && preSetupOutput.HasRelease)
@@ -59,9 +84,9 @@ partial class BaseNukeBuildHelpers
 
     private async Task TestAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> parallels = new();
-        List<Action> nonParallels = new();
-        List<string> testAdded = new();
+        List<Task> parallels = [];
+        List<Action> nonParallels = [];
+        List<string> testAdded = [];
 
         SetupAppEntries(appEntries, preSetupOutput);
 
@@ -103,8 +128,8 @@ partial class BaseNukeBuildHelpers
 
     private async Task BuildAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> parallels = new();
-        List<Action> nonParallels = new();
+        List<Task> parallels = [];
+        List<Action> nonParallels = [];
 
         SetupAppEntries(appEntries, preSetupOutput);
 
@@ -134,8 +159,8 @@ partial class BaseNukeBuildHelpers
 
     private async Task PublishAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> parallels = new();
-        List<Action> nonParallels = new();
+        List<Task> parallels = [];
+        List<Action> nonParallels = [];
 
         SetupAppEntries(appEntries, preSetupOutput);
 
@@ -163,45 +188,30 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private static List<AppEntry> GetAppEntries()
+    private static List<T> GetEntries<T>()
+        where T : BaseEntry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
 
         var allTypes = asmNames.Select(Assembly.Load)
             .SelectMany(t => t.GetTypes())
-            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(AppEntry)) && !p.ContainsGenericParameters);
+            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.ContainsGenericParameters);
 
-        List<AppEntry> entry = new();
+        List<T> entry = [];
         foreach (Type type in allTypes)
         {
-            entry.Add((AppEntry)Activator.CreateInstance(type)!);
-        }
-        return entry;
-    }
-
-    private static List<AppTestEntry> GetAppTestEntries()
-    {
-        var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
-
-        var allTypes = asmNames.Select(Assembly.Load)
-            .SelectMany(t => t.GetTypes())
-            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(AppTestEntry)) && !p.ContainsGenericParameters);
-
-        List<AppTestEntry> entry = new();
-        foreach (Type type in allTypes)
-        {
-            entry.Add((AppTestEntry)Activator.CreateInstance(type)!);
+            entry.Add((T)Activator.CreateInstance(type)!);
         }
         return entry;
     }
 
     private static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
     {
-        Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> configs = new();
+        Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> configs = [];
 
         bool hasMainReleaseEntry = false;
-        List<AppEntry> appEntries = new();
-        foreach (var appEntry in GetAppEntries())
+        List<AppEntry> appEntries = [];
+        foreach (var appEntry in GetEntries<AppEntry>())
         {
             if (!appEntry.Enable)
             {
@@ -218,8 +228,8 @@ partial class BaseNukeBuildHelpers
             appEntries.Add(appEntry);
         }
 
-        List<(bool IsAdded, AppTestEntry AppTestEntry)> appTestEntries = new();
-        foreach (var appTestEntry in GetAppTestEntries())
+        List<(bool IsAdded, AppTestEntry AppTestEntry)> appTestEntries = [];
+        foreach (var appTestEntry in GetEntries<AppTestEntry>())
         {
             if (!appTestEntry.Enable)
             {
@@ -238,7 +248,7 @@ partial class BaseNukeBuildHelpers
             {
                 throw new Exception($"Contains multiple app entry id \"{appEntry.Id}\"");
             }
-            List<AppTestEntry> appTestEntriesFound = new();
+            List<AppTestEntry> appTestEntriesFound = [];
             for (int i = 0; appTestEntries.Count > i; i++)
             {
                 if (appTestEntries[i].AppTestEntry.AppEntryTargets.Any(i => i == appEntry.GetType()))
@@ -269,14 +279,62 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
+    private static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
+        where T : BaseEntry
+    {
+        var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
+
+        var allTypes = asmNames.Select(Assembly.Load)
+            .SelectMany(t => t.GetTypes())
+            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.ContainsGenericParameters);
+
+        Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> entry = [];
+        foreach (Type type in allTypes)
+        {
+            foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                foreach (object attr in prop.GetCustomAttributes(true))
+                {
+                    if (attr is SecretHelperAttribute secretHelperAttr)
+                    {
+                        var id = ((T)Activator.CreateInstance(type)!).Id;
+                        if (!entry.TryGetValue(id, out var secrets))
+                        {
+                            secrets = (type, []);
+                            entry.Add(id, secrets);
+                        }
+                        secrets.SecretHelpers.Add((prop, secretHelperAttr));
+                    }
+                }
+            }
+            foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                foreach (object attr in field.GetCustomAttributes(true))
+                {
+                    if (attr is SecretHelperAttribute secretHelperAttr)
+                    {
+                        var id = ((T)Activator.CreateInstance(type)!).Id;
+                        if (!entry.TryGetValue(id, out var secrets))
+                        {
+                            secrets = (type, []);
+                            entry.Add(id, secrets);
+                        }
+                        secrets.SecretHelpers.Add((field, secretHelperAttr));
+                    }
+                }
+            }
+        }
+        return entry;
+    }
+
     private AllVersions GetAllVersions(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
-        List<SemVersion> allVersionList = new();
-        Dictionary<string, List<SemVersion>> allVersionGroupDict = new();
-        Dictionary<string, SemVersion> allLatestVersions = new();
-        List<string> groupKeySorted = new();
-        Dictionary<string, string> latestVersionCommitId = new();
+        List<SemVersion> allVersionList = [];
+        Dictionary<string, List<SemVersion>> allVersionGroupDict = [];
+        Dictionary<string, SemVersion> allLatestVersions = [];
+        List<string> groupKeySorted = [];
+        Dictionary<string, string> latestVersionCommitId = [];
         string basePeel = "refs/tags/";
         lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
         foreach (var refs in lsRemoteOutput)
@@ -342,7 +400,7 @@ partial class BaseNukeBuildHelpers
             }
             else
             {
-                versions = new() { tagSemver };
+                versions = [tagSemver];
                 allVersionGroupDict.Add(env, versions);
                 groupKeySorted.Add(env);
             }
@@ -433,7 +491,7 @@ partial class BaseNukeBuildHelpers
 
     private static void LogInfoTable(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, params IEnumerable<string?>[] rows)
     {
-        List<(int Length, string Text, HorizontalAlignment Alignment)> columns = new();
+        List<(int Length, string Text, HorizontalAlignment Alignment)> columns = [];
 
         foreach (var (Text, AlignRight) in headers)
         {
