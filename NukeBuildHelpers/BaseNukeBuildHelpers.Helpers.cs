@@ -59,6 +59,7 @@ partial class BaseNukeBuildHelpers
             appEntry.Value.Entry.OutputPath = OutputPath;
             foreach (var appTestEntry in appEntry.Value.Tests)
             {
+                Log.Information("ccccccccccccc1 {s}", appTestEntrySecretMap.Count);
                 if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
                     appSecretMap.EntryType == appTestEntry.GetType())
                 {
