@@ -26,6 +26,9 @@ jobs:
     - id: setup
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
+    - id: PRE_SETUP_HAS_RELEASE
+      name: Output PRE_SETUP_HAS_RELEASE
+      run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/has_release.txt)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_OUTPUT
       name: Output PRE_SETUP_OUTPUT
       run: echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
@@ -39,6 +42,7 @@ jobs:
       name: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
     outputs:
+      PRE_SETUP_HAS_RELEASE: ${{ steps.PRE_SETUP_HAS_RELEASE.outputs.PRE_SETUP_HAS_RELEASE }}
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}
       PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX }}
       PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_BUILD_MATRIX.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX }}
@@ -91,7 +95,7 @@ jobs:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
+        include: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -142,6 +146,9 @@ jobs:
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      matrix:
+        include: success() || failure() || always()
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
