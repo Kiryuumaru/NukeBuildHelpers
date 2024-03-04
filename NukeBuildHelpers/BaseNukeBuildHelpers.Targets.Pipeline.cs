@@ -184,7 +184,7 @@ partial class BaseNukeBuildHelpers
                         {
                             Id = Entry.Id,
                             Name = Entry.Name,
-                            RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
+                            RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
                             BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
                             IdsToRun = Entry.Id
                         });
