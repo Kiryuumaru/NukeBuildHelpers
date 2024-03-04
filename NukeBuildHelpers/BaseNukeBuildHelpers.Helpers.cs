@@ -19,7 +19,12 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private void SetupAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
+    private static readonly JsonSerializerOptions _jsonSnakeCaseNamingOption = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
+
+    private void SetupAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
         foreach (var appEntry in appEntries)
         {
@@ -46,7 +51,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task TestAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private async Task TestAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
@@ -90,7 +95,7 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task BuildAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private async Task BuildAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
@@ -121,7 +126,7 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(parallels);
     }
 
-    private async Task PublishAppEntries(IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private async Task PublishAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> parallels = new();
         List<Action> nonParallels = new();
@@ -184,9 +189,9 @@ partial class BaseNukeBuildHelpers
         return entry;
     }
 
-    private static IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> GetAppEntryConfigs()
+    private static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
     {
-        Dictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> configs = new();
+        Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> configs = new();
 
         bool hasMainReleaseEntry = false;
         List<AppEntry> appEntries = new();
@@ -258,7 +263,7 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private AllVersions GetAllVersions(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
+    private AllVersions GetAllVersions(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
         List<SemVersion> allVersionList = new();
@@ -372,7 +377,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void GetOrFail(string appId, IReadOnlyDictionary<string, (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, IReadOnlyList<AppTestEntry> Tests) appEntryConfig)
+    private static void GetOrFail(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, List<AppTestEntry> Tests) appEntryConfig)
     {
         try
         {

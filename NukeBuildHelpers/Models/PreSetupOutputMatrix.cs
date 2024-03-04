@@ -13,9 +13,17 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public class PreSetupOutput
+public class PreSetupOutputMatrix
 {
+    public required string AppId { get; init; }
+
+    public required string AppName { get; init; }
+
     public required bool HasRelease { get; init; }
 
-    public required Dictionary<string, PreSetupOutputVersion> Releases { get; init; }
+    public required string IdsToRun { get; init; }
+
+    public required string RunsOn { get; init; }
+
+    public required string BuildScript { get; init; }
 }

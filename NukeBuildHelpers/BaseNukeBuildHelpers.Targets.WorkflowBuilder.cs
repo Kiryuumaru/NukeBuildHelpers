@@ -129,6 +129,21 @@ partial class BaseNukeBuildHelpers
         return include;
     }
 
+    private static void AddGithubWorkflowJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)
+    {
+        Dictionary<string, object> include = new();
+        if (!job.TryGetValue("strategy", out object? value))
+        {
+            value = new Dictionary<string, object>();
+            job["strategy"] = value;
+        }
+        if (!((Dictionary<string, object>)value).ContainsKey("matrix"))
+        {
+            ((Dictionary<string, object>)value)["matrix"] = new Dictionary<string, object>();
+        }
+        ((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"])["include"] = matrixInclude;
+    }
+
     private static void AddGithubWorkflowJobOutput(Dictionary<string, object> job, string outputName, string fromStepId, string fromStepVariable)
     {
         if (!job.TryGetValue("outputs", out object? value))
@@ -195,11 +210,17 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStep(preSetupJob, uses: "actions/checkout@v4");
             var cachePreSetupStep = AddGithubWorkflowJobStep(preSetupJob, uses: "actions/cache@v4");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
-            AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", "${{ runner.os }}-nuget-pre_setup-${{ hashFiles('**/*.csproj') }}");
-            AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", "${{ runner.os }}-nuget-pre_setup-");
-            AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke",
-                run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup && echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
-            AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT", "setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
+            AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
+            AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup");
+            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_TEST_MATRIX", name: "Output PRE_SETUP_OUTPUT_TEST_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_test_matrix_output.json)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_BUILD_MATRIX", name: "Output PRE_SETUP_OUTPUT_BUILD_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_build_matrix_output.json)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", name: "Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_publish_matrix_output.json)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX");
+            AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX");
+            AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
 
             // ██████████████████████████████████████
             // ████████████████ Test ████████████████
@@ -210,21 +231,12 @@ partial class BaseNukeBuildHelpers
                 testJob["needs"] = needs.ToArray();
                 needs.Add("test");
                 AddGithubWorkflowJobEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-                foreach (var appTestEntry in appTestEntries)
-                {
-                    var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
-                    var matrixInclude = AddGithubWorkflowJobMatrixInclude(testJob);
-                    matrixInclude["id"] = appTestEntry.Id;
-                    matrixInclude["name"] = appTestEntry.Name;
-                    matrixInclude["runs_on"] = GetRunsOnGithub(appTestEntry.RunsOn);
-                    matrixInclude["build_script"] = GetBuildScriptGithub(appTestEntry.RunsOn);
-                    matrixInclude["ids_to_run"] = $"{appEntry.Id};{appTestEntry.Id}";
-                }
+                AddGithubWorkflowJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
                 AddGithubWorkflowJobStep(testJob, uses: "actions/checkout@v4");
                 var cacheTestStep = AddGithubWorkflowJobStep(testJob, uses: "actions/cache@v4");
                 AddGithubWorkflowJobStepWith(cacheTestStep, "path", "~/.nuget/packages");
-                AddGithubWorkflowJobStepWith(cacheTestStep, "key", "${{ runner.os }}-nuget-test-${{ hashFiles('**/*.csproj') }}");
-                AddGithubWorkflowJobStepWith(cacheTestStep, "restore-keys", "${{ runner.os }}-nuget-test-");
+                AddGithubWorkflowJobStepWith(cacheTestStep, "key", "${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}");
+                AddGithubWorkflowJobStepWith(cacheTestStep, "restore-keys", "${{ matrix.runs_on }}-nuget-test-");
                 AddGithubWorkflowJobStep(testJob, name: "Run Nuke Test", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"");
             }
 
@@ -233,20 +245,12 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var buildJob = AddGithubWorkflowJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            foreach (var appEntry in appEntries)
-            {
-                var matrixInclude = AddGithubWorkflowJobMatrixInclude(buildJob);
-                matrixInclude["id"] = appEntry.Id;
-                matrixInclude["name"] = appEntry.Name;
-                matrixInclude["runs_on"] = GetRunsOnGithub(appEntry.BuildRunsOn);
-                matrixInclude["build_script"] = GetBuildScriptGithub(appEntry.BuildRunsOn);
-                matrixInclude["ids_to_run"] = appEntry.Id;
-            }
+            AddGithubWorkflowJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
             AddGithubWorkflowJobStep(buildJob, uses: "actions/checkout@v4");
             var cacheBuildStep = AddGithubWorkflowJobStep(buildJob, uses: "actions/cache@v4");
             AddGithubWorkflowJobStepWith(cacheBuildStep, "path", "~/.nuget/packages");
-            AddGithubWorkflowJobStepWith(cacheBuildStep, "key", "${{ runner.os }}-nuget-build-${{ hashFiles('**/*.csproj') }}");
-            AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ runner.os }}-nuget-build-");
+            AddGithubWorkflowJobStepWith(cacheBuildStep, "key", "${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}");
+            AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ matrix.runs_on }}-nuget-build-");
             AddGithubWorkflowJobStep(buildJob, name: "Run Nuke Build", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             var uploadBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
             AddGithubWorkflowJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
@@ -261,20 +265,12 @@ partial class BaseNukeBuildHelpers
             // ██████████████████████████████████████
             var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs.ToArray());
             AddGithubWorkflowJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            foreach (var appEntry in appEntries)
-            {
-                var include = AddGithubWorkflowJobMatrixInclude(publishJob);
-                include["id"] = appEntry.Id;
-                include["name"] = appEntry.Name;
-                include["runs_on"] = GetRunsOnGithub(appEntry.PublishRunsOn);
-                include["build_script"] = GetBuildScriptGithub(appEntry.PublishRunsOn);
-                include["ids_to_run"] = appEntry.Id;
-            }
+            AddGithubWorkflowJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
             AddGithubWorkflowJobStep(publishJob, uses: "actions/checkout@v4");
             var cachePublishStep = AddGithubWorkflowJobStep(publishJob, uses: "actions/cache@v4");
             AddGithubWorkflowJobStepWith(cachePublishStep, "path", "~/.nuget/packages");
-            AddGithubWorkflowJobStepWith(cachePublishStep, "key", "${{ runner.os }}-nuget-publish-${{ hashFiles('**/*.csproj') }}");
-            AddGithubWorkflowJobStepWith(cachePublishStep, "restore-keys", "${{ runner.os }}-nuget-publish-");
+            AddGithubWorkflowJobStepWith(cachePublishStep, "key", "${{ matrix.runs_on }}-nuget-publish-${{ hashFiles('**/*.csproj') }}");
+            AddGithubWorkflowJobStepWith(cachePublishStep, "restore-keys", "${{ matrix.runs_on }}-nuget-publish-");
             var downloadBuildStep = AddGithubWorkflowJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
             AddGithubWorkflowJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
