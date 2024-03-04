@@ -59,7 +59,7 @@ public class NugetBuildHelpers : AppEntry<Build>
         NuGetTasks.NuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)
-            .CombineWith(OutputPath.GetFiles("*.zip"), (_, v) => _.SetTargetPath(v)));
+            .CombineWith(OutputPath.GetFiles(), (_, v) => _.SetTargetPath(v)));
         NuGetTasks.NuGetPush(_ => _
             .SetSource("https://api.nuget.org/v3/index.json")
             .SetApiKey(NuGetAuthToken)
