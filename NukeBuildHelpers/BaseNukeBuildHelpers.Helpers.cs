@@ -86,9 +86,9 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task TestAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private Task TestAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> parallels = [];
+        List<Task> tasks = [];
         List<Action> nonParallels = [];
         List<string> testAdded = [];
 
@@ -113,7 +113,7 @@ partial class BaseNukeBuildHelpers
                 testAdded.Add(appEntryTest.Name);
                 if (appEntry.Value.Entry.RunParallel)
                 {
-                    parallels.Add(Task.Run(() => appEntryTest.Run()));
+                    tasks.Add(Task.Run(() => appEntryTest.Run()));
                 }
                 else
                 {
@@ -122,17 +122,20 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        foreach (var nonParallel in nonParallels)
+        tasks.Add(Task.Run(async () =>
         {
-            await Task.Run(nonParallel);
-        }
+            foreach (var nonParallel in nonParallels)
+            {
+                await Task.Run(nonParallel);
+            }
+        }));
 
-        await Task.WhenAll(parallels);
+        return Task.WhenAll(tasks);
     }
 
-    private async Task BuildAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private Task BuildAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> parallels = [];
+        List<Task> tasks = [];
         List<Action> nonParallels = [];
 
         SetupAppEntries(appEntries, preSetupOutput);
@@ -145,7 +148,7 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.Build()));
+                tasks.Add(Task.Run(() => appEntry.Value.Entry.Build()));
             }
             else
             {
@@ -153,17 +156,20 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        foreach (var nonParallel in nonParallels)
+        tasks.Add(Task.Run(async () =>
         {
-            await Task.Run(nonParallel);
-        }
+            foreach (var nonParallel in nonParallels)
+            {
+                await Task.Run(nonParallel);
+            }
+        }));
 
-        await Task.WhenAll(parallels);
+        return Task.WhenAll(tasks);
     }
 
-    private async Task PublishAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private Task PublishAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> parallels = [];
+        List<Task> tasks = [];
         List<Action> nonParallels = [];
 
         SetupAppEntries(appEntries, preSetupOutput);
@@ -176,7 +182,7 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                parallels.Add(Task.Run(() => appEntry.Value.Entry.Publish()));
+                tasks.Add(Task.Run(() => appEntry.Value.Entry.Publish()));
             }
             else
             {
@@ -184,12 +190,15 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        foreach (var nonParallel in nonParallels)
+        tasks.Add(Task.Run(async () =>
         {
-            await Task.Run(nonParallel);
-        }
+            foreach (var nonParallel in nonParallels)
+            {
+                await Task.Run(nonParallel);
+            }
+        }));
 
-        await Task.WhenAll(parallels);
+        return Task.WhenAll(tasks);
     }
 
     private static List<T> GetEntries<T>()

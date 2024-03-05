@@ -370,21 +370,6 @@ partial class BaseNukeBuildHelpers
             needs.Add("build");
 
             // ██████████████████████████████████████
-            // ██████████████ Release ███████████████
-            // ██████████████████████████████████████
-            var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-            AddGithubWorkflowJobStep(releaseJob, uses: "actions/checkout@v4");
-            var cacheReleaseStep = AddGithubWorkflowJobStep(releaseJob, uses: "actions/cache@v4");
-            AddGithubWorkflowJobStepWith(cacheReleaseStep, "path", "~/.nuget/packages");
-            AddGithubWorkflowJobStepWith(cacheReleaseStep, "key", "${{ matrix.runs_on }}-nuget-release-${{ hashFiles('**/*.csproj') }}");
-            AddGithubWorkflowJobStepWith(cacheReleaseStep, "restore-keys", "${{ matrix.runs_on }}-nuget-release-");
-            var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
-            AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
-            var nukeReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelineRelease");
-            AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukeReleaseStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobOrStepEnvVar(nukeReleaseStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
-
-            // ██████████████████████████████████████
             // ██████████████ Publish ███████████████
             // ██████████████████████████████████████
             var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
@@ -407,16 +392,26 @@ partial class BaseNukeBuildHelpers
                     AddGithubWorkflowJobOrStepEnvVar(nukePublishStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
                 }
             }
+            AddGithubWorkflowJobStep(publishJob, id: "PUBLISH_OUTPUT_SUCCESS", name: "Output PUBLISH_OUTPUT_SUCCESS", run: $"echo \"PUBLISH_OUTPUT_SUCCESS=$(cat ./.nuke/temp/publish_success.txt)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobOutput(publishJob, "PUBLISH_OUTPUT_SUCCESS", "PUBLISH_OUTPUT_SUCCESS", "PUBLISH_OUTPUT_SUCCESS");
 
-            needs.Add("release");
             needs.Add("publish");
 
             // ██████████████████████████████████████
             // █████████████ Post Setup █████████████
             // ██████████████████████████████████████
             var postSetupJob = AddGithubWorkflowJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, [.. needs], _if: "success() || failure() || always()");
-            AddGithubWorkflowJobOrStepEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobStep(postSetupJob, uses: "actions/checkout@v4");
+            var cachePostSetupStep = AddGithubWorkflowJobStep(postSetupJob, uses: "actions/cache@v4");
+            AddGithubWorkflowJobStepWith(cachePostSetupStep, "path", "~/.nuget/packages");
+            AddGithubWorkflowJobStepWith(cachePostSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-post_setup-${{{{ hashFiles('**/*.csproj') }}}}");
+            AddGithubWorkflowJobStepWith(cachePostSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-post_setup-");
+            var downloadPostSetupStep = AddGithubWorkflowJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
+            AddGithubWorkflowJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
+            var nukePostSetupStep = AddGithubWorkflowJobStep(postSetupJob, name: "Run Nuke PipelinePostSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePostSetup");
+            AddGithubWorkflowJobOrStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PUBLISH_OUTPUT_SUCCESS", "publish", "PUBLISH_OUTPUT_SUCCESS");
 
             // ██████████████████████████████████████
             // ███████████████ Write ████████████████

@@ -32,7 +32,6 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Build()
     {
-        Log.Information("Build Release notes: {scs}", NewVersion.ReleaseNotes);
         OutputPath.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
@@ -47,7 +46,7 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
             .SetVersion(NewVersion?.Version?.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes("* Initial prerelease")
+            .SetPackageReleaseNotes(NewVersion.ReleaseNotes)
             .SetOutputDirectory(OutputPath));
     }
 

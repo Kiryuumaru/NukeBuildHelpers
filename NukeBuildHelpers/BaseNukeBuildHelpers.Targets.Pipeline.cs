@@ -67,7 +67,16 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
+            var publishTask = PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
+
+            await publishTask;
+
+            if (publishTask.Exception != null)
+            {
+                throw publishTask.Exception;
+            }
+
+            File.WriteAllText(TempPath / "publish_success.txt", "ok");
         });
 
     public Target PipelinePreSetup => _ => _
@@ -255,7 +264,7 @@ partial class BaseNukeBuildHelpers
             pipelinePrepare?.Invoke(appTestEntries, appEntryConfigs, toRelease);
         });
 
-    public Target PipelineRelease => _ => _
+    public Target PipelinePostSetup => _ => _
         .Description("To be used by pipeline")
         .Executes(() =>
         {
@@ -264,47 +273,56 @@ partial class BaseNukeBuildHelpers
 
             var preSetupOutput = GetPreSetupOutput();
 
-            foreach (var release in OutputPath.GetDirectories())
-            {
-                if (!preSetupOutput.Releases.TryGetValue(release.Name, out var preSetupOutputVersion))
-                {
-                    continue;
-                }
-                var outPath = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}";
-                var outPathZip = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}.zip";
-                release.CopyFilesRecursively(outPath);
-                outPath.ZipTo(outPathZip);
-            }
-            foreach (var release in OutputPath.GetFiles())
-            {
-                Log.Information("Publish: {name}", release.Name);
-            }
+            bool isPublishSuccess = Environment.GetEnvironmentVariable("PUBLISH_OUTPUT_SUCCESS") == "ok";
 
-            foreach (var release in preSetupOutput.Releases.Values)
+            if (isPublishSuccess)
             {
-                if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
+                foreach (var release in OutputPath.GetDirectories())
                 {
-                    continue;
+                    if (!preSetupOutput.Releases.TryGetValue(release.Name, out var preSetupOutputVersion))
+                    {
+                        continue;
+                    }
+                    var outPath = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}";
+                    var outPathZip = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}.zip";
+                    release.CopyFilesRecursively(outPath);
+                    outPath.ZipTo(outPathZip);
                 }
-                string latestTag = "latest";
-                if (!release.Environment.Equals("main", StringComparison.OrdinalIgnoreCase))
+                foreach (var release in OutputPath.GetFiles())
                 {
-                    latestTag += "-" + release.Environment.ToLowerInvariant();
+                    Log.Information("Publish: {name}", release.Name);
                 }
-                Git.Invoke($"tag -f {release.Version}");
-                if (appEntry.Entry.MainRelease)
+
+                foreach (var release in preSetupOutput.Releases.Values)
                 {
-                    Git.Invoke($"tag -f {latestTag}");
+                    if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
+                    {
+                        continue;
+                    }
+                    string latestTag = "latest";
+                    if (!release.Environment.Equals("main", StringComparison.OrdinalIgnoreCase))
+                    {
+                        latestTag += "-" + release.Environment.ToLowerInvariant();
+                    }
+                    Git.Invoke($"tag -f {release.Version}");
+                    if (appEntry.Entry.MainRelease)
+                    {
+                        Git.Invoke($"tag -f {latestTag}");
+                    }
+                    else
+                    {
+                        Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{latestTag}");
+                    }
                 }
-                else
-                {
-                    Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{latestTag}");
-                }
+                Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
+
+                Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))}");
+
+                Gh.Invoke($"release edit {preSetupOutput.BuildTag} --draft=false");
             }
-            Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
-
-            Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))}");
-
-            Gh.Invoke($"release edit {preSetupOutput.BuildTag} --draft=false");
+            else
+            {
+                Gh.Invoke($"release delete {preSetupOutput.BuildTag} --cleanup-tag -y");
+            }
         });
 }
