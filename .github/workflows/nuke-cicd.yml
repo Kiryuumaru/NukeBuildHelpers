@@ -27,9 +27,12 @@ jobs:
     - id: setup
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
+    - id: PRE_SETUP_RELEASE_NOTES
+      name: Output PRE_SETUP_RELEASE_NOTES
+      run: echo "PRE_SETUP_RELEASE_NOTES=$(cat ./.nuke/temp/pre_setup_release_notes.txt)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_HAS_RELEASE
       name: Output PRE_SETUP_HAS_RELEASE
-      run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/has_release.txt)" >> $GITHUB_OUTPUT
+      run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_OUTPUT
       name: Output PRE_SETUP_OUTPUT
       run: echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
@@ -43,6 +46,7 @@ jobs:
       name: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
     outputs:
+      PRE_SETUP_RELEASE_NOTES: ${{ steps.PRE_SETUP_RELEASE_NOTES.outputs.PRE_SETUP_RELEASE_NOTES }}
       PRE_SETUP_HAS_RELEASE: ${{ steps.PRE_SETUP_HAS_RELEASE.outputs.PRE_SETUP_HAS_RELEASE }}
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}
       PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX }}
@@ -63,10 +67,10 @@ jobs:
     - name: Run Nuke PipelineTest
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
+      env:
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     needs:
     - pre_setup
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}
@@ -83,6 +87,8 @@ jobs:
     - name: Run Nuke PipelineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
       env:
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+        PRE_SETUP_RELEASE_NOTES: ${{ needs.pre_setup.outputs.PRE_SETUP_RELEASE_NOTES }}
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifacts
@@ -96,8 +102,6 @@ jobs:
     - pre_setup
     - test
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
@@ -118,19 +122,14 @@ jobs:
     - name: Run Nuke PipelineRelease
       run: chmod +x ./build.sh && ./build.sh PipelineRelease
       env:
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+        PRE_SETUP_RELEASE_NOTES: ${{ needs.pre_setup.outputs.PRE_SETUP_RELEASE_NOTES }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - id: RELEASE_NOTES
-      name: Output RELEASE_NOTES
-      run: echo "RELEASE_NOTES=$(cat ./.nuke/temp/release_notes.txt)" >> $GITHUB_OUTPUT
     needs:
     - pre_setup
     - test
     - build
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-    outputs:
-      RELEASE_NOTES: ${{ steps.RELEASE_NOTES.outputs.RELEASE_NOTES }}
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -150,16 +149,15 @@ jobs:
     - name: Run Nuke PipelinePublish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
       env:
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+        PRE_SETUP_RELEASE_NOTES: ${{ needs.pre_setup.outputs.PRE_SETUP_RELEASE_NOTES }}
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
     - test
     - build
-    - release
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}

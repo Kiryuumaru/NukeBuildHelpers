@@ -191,29 +191,66 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
+            Dictionary<string, PreSetupOutputVersion> releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
+            {
+                AppId = i.AppEntry.Id,
+                AppName = i.AppEntry.Name,
+                Environment = i.Env,
+                Version = i.Version.ToString()
+            });
+
+            var releaseNotes = "";
             var buildId = pipelineGetBuildId.Invoke();
+            var buildTag = $"build.{buildId}";
+            var lastBuildTag = $"build.{buildMaxNumber}";
+            var isFirstRelease = buildMaxNumber == 0;
+            var hasRelease = toRelease.Count != 0;
+
+            if (hasRelease)
+            {
+                Git.Invoke($"tag -f {buildTag}");
+                Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
+
+                string ghReleaseCreateArgs = $"release create {buildTag} " +
+                    $"--title {buildTag} " +
+                    $"--target {pipelineInfo.Branch} " +
+                    $"--generate-notes " +
+                    $"--draft";
+
+                if (!isFirstRelease)
+                {
+                    ghReleaseCreateArgs += $" --notes-start-tag {lastBuildTag}";
+                }
+
+                Gh.Invoke(ghReleaseCreateArgs, logInvocation: false, logOutput: false);
+
+                var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body", logInvocation: false, logOutput: false).FirstOrDefault().Text;
+                var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
+                if (releaseNotesJsonDocument == null ||
+                    !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
+                    releaseNotesProp.GetString() is not string releaseNotesFromProp)
+                {
+                    throw new Exception("releaseNotesJsonDocument is empty");
+                }
+                releaseNotes = releaseNotesFromProp;
+            }
 
             PreSetupOutput output = new()
             {
                 Branch = pipelineInfo.Branch,
                 TriggerType = pipelineInfo.TriggerType,
-                HasRelease = toRelease.Count != 0,
-                IsFirstRelease = buildMaxNumber == 0,
-                BuildTag = $"build.{buildId}",
-                LastBuildTag = $"build.{buildMaxNumber}",
-                Releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
-                {
-                    AppId = i.AppEntry.Id,
-                    AppName = i.AppEntry.Name,
-                    Environment = i.Env,
-                    Version = i.Version.ToString()
-                })
+                HasRelease = hasRelease,
+                IsFirstRelease = isFirstRelease,
+                BuildTag = buildTag,
+                LastBuildTag = lastBuildTag,
+                Releases = releases
             };
 
             File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
-            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
+            File.WriteAllText(TempPath / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
+            File.WriteAllText(TempPath / "pre_setup_release_notes.txt", releaseNotes);
 
-            File.WriteAllText(TempPath / "has_release.txt", toRelease.Count != 0 ? "true" : "false");
+            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
 
             pipelinePrepare?.Invoke(appTestEntries, appEntryConfigs, toRelease);
         });
@@ -264,34 +301,11 @@ partial class BaseNukeBuildHelpers
                     Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{latestTag}");
                 }
             }
-            Git.Invoke($"tag -f {preSetupOutput.BuildTag}");
             Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-            string ghReleaseCreateArgs = $"release create {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))} " +
-                $"--title {preSetupOutput.BuildTag} " +
-                $"--target {preSetupOutput.Branch} " +
-                $"--generate-notes";
+            string ghReleaseEditArgs = $"release edit {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))} " +
+                $"--draft=false";
 
-            if (!preSetupOutput.IsFirstRelease)
-            {
-                ghReleaseCreateArgs += $" --notes-start-tag {preSetupOutput.LastBuildTag}";
-            }
-
-            Gh.Invoke(ghReleaseCreateArgs, logInvocation: false, logOutput: false);
-
-            string ghReleaseViewArgs = $"release view {preSetupOutput.BuildTag} --json body";
-
-            var releaseNotesJson = Gh.Invoke(ghReleaseViewArgs, logInvocation: false, logOutput: false).FirstOrDefault().Text;
-
-            var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
-
-            if (releaseNotesJsonDocument == null ||
-                !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
-                releaseNotesProp.GetString() is not string releaseNotes)
-            {
-                throw new Exception("releaseNotesJsonDocument is empty");
-            }
-
-            File.WriteAllText(TempPath / "release_notes.txt", releaseNotes);
+            Gh.Invoke(ghReleaseEditArgs, logInvocation: false, logOutput: false);
         });
 }

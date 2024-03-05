@@ -32,6 +32,7 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Build()
     {
+        Log.Information("Build Release notes: {scs}", NewVersion.ReleaseNotes);
         OutputPath.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
@@ -52,7 +53,7 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish()
     {
-        Log.Information("Release notes: {scs}", NewVersion.ReleaseNotes);
+        Log.Information("Publish Release notes: {scs}", NewVersion.ReleaseNotes);
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)
