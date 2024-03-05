@@ -67,7 +67,7 @@ jobs:
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
     needs:
     - pre_setup
     env:

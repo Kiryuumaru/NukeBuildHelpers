@@ -18,7 +18,7 @@ public class NugetBuildHelpersTest : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.WindowsLatest;
 
-    [SecretHelper("GITHUB_TOKEN")]
+    [SecretHelper("NUGET_AUTH_TOKEN")]
     internal readonly string GithubToken1;
 
     public override bool RunParallel => false;
