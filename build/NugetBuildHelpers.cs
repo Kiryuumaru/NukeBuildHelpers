@@ -52,11 +52,11 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish()
     {
-        NuGetTasks.NuGetPush(_ => _
+        DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)
             .CombineWith(OutputPath.GetFiles(), (_, v) => _.SetTargetPath(v)));
-        NuGetTasks.NuGetPush(_ => _
+        DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://api.nuget.org/v3/index.json")
             .SetApiKey(NuGetAuthToken)
             .CombineWith(OutputPath.GetFiles(), (_, v) => _.SetTargetPath(v)));
