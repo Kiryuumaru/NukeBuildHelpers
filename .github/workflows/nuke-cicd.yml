@@ -101,37 +101,6 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
-  publish:
-    name: Publish - ${{ matrix.name }}
-    runs-on: ${{ matrix.runs_on }}
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ matrix.runs_on }}-nuget-publish-${{ hashFiles('**/*.csproj') }}
-        restore-keys: ${{ matrix.runs_on }}-nuget-publish-
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: ./.nuke/temp/output
-        pattern: ${{ matrix.id }}
-        merge-multiple: true
-    - name: Run Nuke PipelinePublish
-      run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
-      env:
-        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    needs:
-    - pre_setup
-    - test
-    - build
-    if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
   release:
     name: Release
     runs-on: ubuntu-22.04
@@ -157,6 +126,38 @@ jobs:
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+  publish:
+    name: Publish - ${{ matrix.name }}
+    runs-on: ${{ matrix.runs_on }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ matrix.runs_on }}-nuget-publish-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ matrix.runs_on }}-nuget-publish-
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/output
+        pattern: ${{ matrix.id }}
+        merge-multiple: true
+    - name: Run Nuke PipelinePublish
+      run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    needs:
+    - pre_setup
+    - test
+    - build
+    - release
+    if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
+    env:
+      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
@@ -166,8 +167,8 @@ jobs:
     - pre_setup
     - test
     - build
-    - publish
     - release
+    - publish
     if: success() || failure() || always()
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}

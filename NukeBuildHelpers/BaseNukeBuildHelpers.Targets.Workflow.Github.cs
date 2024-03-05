@@ -369,6 +369,23 @@ partial class BaseNukeBuildHelpers
             needs.Add("build");
 
             // ██████████████████████████████████████
+            // ██████████████ Release ███████████████
+            // ██████████████████████████████████████
+            var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
+            AddGithubWorkflowJobOrStepEnvVarFromNeeds(releaseJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            AddGithubWorkflowJobStep(releaseJob, uses: "actions/checkout@v4");
+            var cacheReleaseStep = AddGithubWorkflowJobStep(releaseJob, uses: "actions/cache@v4");
+            AddGithubWorkflowJobStepWith(cacheReleaseStep, "path", "~/.nuget/packages");
+            AddGithubWorkflowJobStepWith(cacheReleaseStep, "key", "${{ matrix.runs_on }}-nuget-release-${{ hashFiles('**/*.csproj') }}");
+            AddGithubWorkflowJobStepWith(cacheReleaseStep, "restore-keys", "${{ matrix.runs_on }}-nuget-release-");
+            var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
+            AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
+            var nukeReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelineRelease");
+            AddGithubWorkflowJobOrStepEnvVar(nukeReleaseStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
+
+            needs.Add("release");
+
+            // ██████████████████████████████████████
             // ██████████████ Publish ███████████████
             // ██████████████████████████████████████
             var publishJob = AddGithubWorkflowJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
@@ -392,23 +409,7 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
-            // ██████████████████████████████████████
-            // ██████████████ Release ███████████████
-            // ██████████████████████████████████████
-            var releaseJob = AddGithubWorkflowJob(workflow, "release", "Release", RunsOnType.Ubuntu2204, [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-            AddGithubWorkflowJobOrStepEnvVarFromNeeds(releaseJob, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobStep(releaseJob, uses: "actions/checkout@v4");
-            var cacheReleaseStep = AddGithubWorkflowJobStep(releaseJob, uses: "actions/cache@v4");
-            AddGithubWorkflowJobStepWith(cacheReleaseStep, "path", "~/.nuget/packages");
-            AddGithubWorkflowJobStepWith(cacheReleaseStep, "key", "${{ matrix.runs_on }}-nuget-release-${{ hashFiles('**/*.csproj') }}");
-            AddGithubWorkflowJobStepWith(cacheReleaseStep, "restore-keys", "${{ matrix.runs_on }}-nuget-release-");
-            var downloadReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
-            AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
-            var nukeReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelineRelease");
-            AddGithubWorkflowJobOrStepEnvVar(nukeReleaseStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
-
             needs.Add("publish");
-            needs.Add("release");
 
             // ██████████████████████████████████████
             // █████████████ Post Setup █████████████
