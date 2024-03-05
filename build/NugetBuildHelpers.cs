@@ -23,10 +23,10 @@ public class NugetBuildHelpers : AppEntry<Build>
     public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
     [SecretHelper("NUGET_AUTH_TOKEN")]
-    internal readonly string NuGetAuthToken;
+    readonly string NuGetAuthToken;
 
     [SecretHelper("GITHUB_TOKEN")]
-    internal readonly string GithubToken;
+    readonly string GithubToken;
 
     public override bool RunParallel => false;
 
