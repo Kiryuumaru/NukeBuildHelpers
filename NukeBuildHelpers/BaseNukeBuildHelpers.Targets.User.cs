@@ -226,7 +226,7 @@ partial class BaseNukeBuildHelpers
             // ---------- Apply bump ----------
 
             Log.Information("Pushing bump...");
-            Git.Invoke("push origin " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
+            Git.Invoke("push origin HEAD " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
             Log.Information("Bump done");
         });
 
