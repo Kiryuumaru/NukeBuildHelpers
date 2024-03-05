@@ -17,5 +17,7 @@ internal class AllVersions
 
     public required Dictionary<string, SemVersion> LatestVersions { get; init; }
 
+    public required Dictionary<string, long> LatestBuildIds { get; init; }
+
     public required List<string> GroupKeySorted { get; init; }
 }
