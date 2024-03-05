@@ -386,8 +386,8 @@ partial class BaseNukeBuildHelpers
                 pairedTags[commitId] = (env, vals.BuildIds, vals.Versions, vals.LatestTags);
             }
         }
-
         pairedTags = pairedTags.Where(i => i.Value.Env != null).ToDictionary();
+
         Dictionary<string, (List<long> BuildIds, List<SemVersion> Versions, List<string> LatestTags)> pairedEnvGroup =
             pairedTags.Values.GroupBy(i => i.Env).ToDictionary(
                 i => i.Key,
@@ -395,13 +395,13 @@ partial class BaseNukeBuildHelpers
                     i.SelectMany(j => j.BuildIds).ToList(),
                     i.SelectMany(j => j.Versions).ToList(),
                     i.SelectMany(j => j.LatestTags).ToList()));
-        Dictionary<string, (long BuildId, SemVersion Version) > pairedLatests = pairedEnvGroup
+        Dictionary<string, (long BuildId, SemVersion Version) > pairedLatests = pairedTags
             .Where(i =>
             {
-                string latestIndicator = i.Key == "" ? "latest" : "latest-" + i.Key;
+                string latestIndicator = i.Value.Env == "" ? "latest" : "latest-" + i.Value.Env;
                 return i.Value.LatestTags.Any(j => j.Equals(latestIndicator, StringComparison.OrdinalIgnoreCase));
             })
-            .Select(i => KeyValuePair.Create(i.Key, (i.Value.BuildIds.Max(), i.Value.Versions.Max()!))).ToDictionary();
+            .Select(i => KeyValuePair.Create(i.Value.Env, (i.Value.BuildIds.Max(), i.Value.Versions.Max()!))).ToDictionary();
 
         List<SemVersion> allVersionList = pairedTags.SelectMany(i => i.Value.Versions).ToList();
         Dictionary<string, List<SemVersion>> allVersionGroupDict = pairedEnvGroup.ToDictionary(i => i.Key, i => i.Value.Versions);
