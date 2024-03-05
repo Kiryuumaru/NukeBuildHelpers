@@ -52,6 +52,7 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish()
     {
+        Log.Information("Release notes: {scs}", NewVersion.ReleaseNotes);
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)
