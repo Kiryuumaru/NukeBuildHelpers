@@ -176,6 +176,7 @@ partial class BaseNukeBuildHelpers
                 {
                     var containBranch = line;
                     containBranch = containBranch[(containBranch.IndexOf('/') + 1)..];
+                    Log.Information("{scsc} is eq {vv}", containBranch, branch);
                     if (containBranch.Equals(branch, StringComparison.OrdinalIgnoreCase))
                     {
                         buildMaxNumber = buildNumber;
