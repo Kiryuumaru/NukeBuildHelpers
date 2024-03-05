@@ -303,9 +303,9 @@ partial class BaseNukeBuildHelpers
             }
             Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-            string ghReleaseEditArgs = $"release edit {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))} " +
-                $"--draft=false";
-
-            Gh.Invoke(ghReleaseEditArgs, logInvocation: false, logOutput: false);
+            Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))}",
+                logInvocation: false, logOutput: false);
+            Gh.Invoke($"release edit {preSetupOutput.BuildTag} --draft=false",
+                logInvocation: false, logOutput: false);
         });
 }

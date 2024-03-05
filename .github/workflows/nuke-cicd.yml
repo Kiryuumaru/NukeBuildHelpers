@@ -27,6 +27,8 @@ jobs:
     - id: setup
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - id: PRE_SETUP_RELEASE_NOTES
       name: Output PRE_SETUP_RELEASE_NOTES
       run: echo "PRE_SETUP_RELEASE_NOTES=$(cat ./.nuke/temp/pre_setup_release_notes.txt)" >> $GITHUB_OUTPUT
