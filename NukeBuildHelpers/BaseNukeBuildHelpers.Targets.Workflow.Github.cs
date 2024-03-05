@@ -38,14 +38,14 @@ partial class BaseNukeBuildHelpers
         {
             if (branch.StartsWith("refs/pull", StringComparison.OrdinalIgnoreCase))
             {
-                branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF");
+                branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF")!;
             }
             else
             {
                 branch = Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
                 //branch = Git.Invoke($"branch -r --contains {branch}", logOutput: false, logInvocation: false).FirstOrDefault().Text;
-                branch = branch[(branch.IndexOf('/') + 1)..];
             }
+            branch = branch[(branch.IndexOf('/') + 1)..];
         }
         return branch;
     }
