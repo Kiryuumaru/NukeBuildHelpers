@@ -172,11 +172,9 @@ partial class BaseNukeBuildHelpers
 
             foreach (var buildNumber in buildNumbers.OrderByDescending(i => i))
             {
-                var containsResult = Git.Invoke($"branch -r --contains refs/tags/build.{buildNumber}").FirstOrDefault().Text.Split('\n');
-                Log.Information("count {scsc}", containsResult.Length);
-                foreach (var line in containsResult)
+                foreach (var line in Git.Invoke($"branch -r --contains refs/tags/build.{buildNumber}"))
                 {
-                    var containBranch = line;
+                    var containBranch = line.Text;
                     containBranch = containBranch[(containBranch.IndexOf('/') + 1)..];
                     Log.Information("{scsc} is eq {vv}", containBranch, branch);
                     if (containBranch.Equals(branch, StringComparison.OrdinalIgnoreCase))
