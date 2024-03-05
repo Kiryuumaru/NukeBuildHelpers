@@ -263,7 +263,7 @@ partial class BaseNukeBuildHelpers
                     },
                     { "pull_request", new Dictionary<string, object>()
                         {
-                            { "branches", new List<string> { "fix/**", "feat/**", "hotfix/**" } }
+                            { "branches", new List<string> { "**" } }
                         }
                     }
                 },
