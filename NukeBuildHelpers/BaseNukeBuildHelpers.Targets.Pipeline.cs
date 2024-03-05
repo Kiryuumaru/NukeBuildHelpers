@@ -168,8 +168,19 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
+            long buildMaxNumber = 0;
+
+            foreach (var buildNumber in buildNumbers.OrderByDescending(i => i))
+            {
+                var containBranch = Git.Invoke($"branch --contains tags/build.{buildNumber}").FirstOrDefault().Text.Trim().Trim('*').Trim();
+                if (containBranch.Equals(branch, StringComparison.OrdinalIgnoreCase))
+                {
+                    buildMaxNumber = buildNumber;
+                    break;
+                }
+            }
+
             var buildId = pipelineGetBuildId.Invoke();
-            var buildMaxNumber = buildNumbers.Count != 0 ? buildNumbers.Max() : 0;
 
             PreSetupOutput output = new()
             {
