@@ -29,9 +29,6 @@ jobs:
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - id: PRE_SETUP_RELEASE_NOTES
-      name: Output PRE_SETUP_RELEASE_NOTES
-      run: echo "PRE_SETUP_RELEASE_NOTES=$(cat ./.nuke/temp/pre_setup_release_notes.txt)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_HAS_RELEASE
       name: Output PRE_SETUP_HAS_RELEASE
       run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)" >> $GITHUB_OUTPUT
@@ -48,7 +45,6 @@ jobs:
       name: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
     outputs:
-      PRE_SETUP_RELEASE_NOTES: ${{ steps.PRE_SETUP_RELEASE_NOTES.outputs.PRE_SETUP_RELEASE_NOTES }}
       PRE_SETUP_HAS_RELEASE: ${{ steps.PRE_SETUP_HAS_RELEASE.outputs.PRE_SETUP_HAS_RELEASE }}
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}
       PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX }}
@@ -90,7 +86,6 @@ jobs:
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
       env:
         PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-        PRE_SETUP_RELEASE_NOTES: ${{ needs.pre_setup.outputs.PRE_SETUP_RELEASE_NOTES }}
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifacts
@@ -125,7 +120,6 @@ jobs:
       run: chmod +x ./build.sh && ./build.sh PipelineRelease
       env:
         PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-        PRE_SETUP_RELEASE_NOTES: ${{ needs.pre_setup.outputs.PRE_SETUP_RELEASE_NOTES }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
@@ -152,7 +146,6 @@ jobs:
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
       env:
         PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-        PRE_SETUP_RELEASE_NOTES: ${{ needs.pre_setup.outputs.PRE_SETUP_RELEASE_NOTES }}
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:

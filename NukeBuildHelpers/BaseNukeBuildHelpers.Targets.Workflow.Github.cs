@@ -306,13 +306,11 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
             var nukePreSetupStep = AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
             AddGithubWorkflowJobOrStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
-            AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_RELEASE_NOTES", name: "Output PRE_SETUP_RELEASE_NOTES", run: $"echo \"PRE_SETUP_RELEASE_NOTES=$(cat ./.nuke/temp/pre_setup_release_notes.txt)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_HAS_RELEASE", name: "Output PRE_SETUP_HAS_RELEASE", run: $"echo \"PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_TEST_MATRIX", name: "Output PRE_SETUP_OUTPUT_TEST_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_BUILD_MATRIX", name: "Output PRE_SETUP_OUTPUT_BUILD_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", name: "Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)\" >> $GITHUB_OUTPUT");
-            AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_RELEASE_NOTES", "PRE_SETUP_RELEASE_NOTES", "PRE_SETUP_RELEASE_NOTES");
             AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_HAS_RELEASE", "PRE_SETUP_HAS_RELEASE", "PRE_SETUP_HAS_RELEASE");
             AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT");
             AddGithubWorkflowJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX");
@@ -356,7 +354,6 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cacheBuildStep, "restore-keys", "${{ matrix.runs_on }}-nuget-build-");
             var nukeBuildStep = AddGithubWorkflowJobStep(buildJob, name: "Run Nuke PipelineBuild", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
             AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukeBuildStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukeBuildStep, "PRE_SETUP_RELEASE_NOTES", "pre_setup", "PRE_SETUP_RELEASE_NOTES");
             foreach (var map in appEntrySecretMap)
             {
                 foreach (var secrets in map.Value.SecretHelpers)
@@ -385,7 +382,6 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
             var nukeReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelineRelease");
             AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukeReleaseStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukeReleaseStep, "PRE_SETUP_RELEASE_NOTES", "pre_setup", "PRE_SETUP_RELEASE_NOTES");
             AddGithubWorkflowJobOrStepEnvVar(nukeReleaseStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 
             // ██████████████████████████████████████
@@ -404,7 +400,6 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(downloadBuildStep, "merge-multiple", "true");
             var nukePublishStep = AddGithubWorkflowJobStep(publishJob, name: "Run Nuke PipelinePublish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
             AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukePublishStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            AddGithubWorkflowJobOrStepEnvVarFromNeeds(nukePublishStep, "PRE_SETUP_RELEASE_NOTES", "pre_setup", "PRE_SETUP_RELEASE_NOTES");
             foreach (var map in appEntrySecretMap)
             {
                 foreach (var secrets in map.Value.SecretHelpers)

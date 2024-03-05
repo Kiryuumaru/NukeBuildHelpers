@@ -21,6 +21,8 @@ internal class PreSetupOutput
 
     public required bool HasRelease { get; init; }
 
+    public required string ReleaseNotes { get; init; }
+
     public required bool IsFirstRelease { get; init; }
 
     public required string BuildTag { get; init; }

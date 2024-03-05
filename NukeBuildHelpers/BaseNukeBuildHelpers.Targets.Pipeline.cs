@@ -240,6 +240,7 @@ partial class BaseNukeBuildHelpers
                 Branch = pipelineInfo.Branch,
                 TriggerType = pipelineInfo.TriggerType,
                 HasRelease = hasRelease,
+                ReleaseNotes = releaseNotes,
                 IsFirstRelease = isFirstRelease,
                 BuildTag = buildTag,
                 LastBuildTag = lastBuildTag,
@@ -248,7 +249,6 @@ partial class BaseNukeBuildHelpers
 
             File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
             File.WriteAllText(TempPath / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
-            File.WriteAllText(TempPath / "pre_setup_release_notes.txt", releaseNotes);
 
             Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
 
@@ -303,9 +303,8 @@ partial class BaseNukeBuildHelpers
             }
             Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-            Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))}",
-                logInvocation: false, logOutput: false);
-            Gh.Invoke($"release edit {preSetupOutput.BuildTag} --draft=false",
-                logInvocation: false, logOutput: false);
+            Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))}");
+
+            Gh.Invoke($"release edit {preSetupOutput.BuildTag} --draft=false");
         });
 }
