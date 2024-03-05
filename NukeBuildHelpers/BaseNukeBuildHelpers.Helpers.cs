@@ -346,10 +346,72 @@ partial class BaseNukeBuildHelpers
         List<SemVersion> allVersionList = [];
         Dictionary<string, List<SemVersion>> allVersionGroupDict = [];
         Dictionary<string, SemVersion> allLatestVersions = [];
+        Dictionary<string, long> allLatestIds = [];
         List<string> groupKeySorted = [];
         Dictionary<string, string> latestVersionCommitId = [];
         string basePeel = "refs/tags/";
         lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
+
+        Dictionary<string, List<string>> pairedTags = [];
+        foreach (var refs in lsRemoteOutput)
+        {
+            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+            string tag;
+            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
+
+            if (appEntry.Entry.MainRelease)
+            {
+                tag = rawTag;
+            }
+            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
+            {
+                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
+            }
+            else
+            {
+                continue;
+            }
+            if (!pairedTags.TryGetValue(commitId, out var tags))
+            {
+                tags = [];
+                pairedTags.Add(commitId, tags);
+            }
+            tags.Add(tag);
+        }
+
+        foreach (var pairedTag in pairedTags)
+        {
+            bool isLatest = false;
+            long buildId = 0;
+            SemVersion? version = null;
+            foreach (var tag in pairedTag.Value)
+            {
+                Log.Information("Commit: {comm} - Tag: {tag}", pairedTag.Key, tag);
+                if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    isLatest = true;
+                }
+                if (tag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var tagBuildId = long.Parse(tag.Replace("build.", ""));
+                    buildId = tagBuildId > buildId ? tagBuildId : buildId;
+                }
+                if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
+                {
+                    if (version != null)
+                    {
+                        version = tagSemver.ComparePrecedenceTo(version) > 0 ? tagSemver : version;
+                    }
+                    else
+                    {
+                        version = tagSemver;
+                    }
+                }
+            }
+        }
+
+        throw new Exception("ccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+
         foreach (var refs in lsRemoteOutput)
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
@@ -419,6 +481,25 @@ partial class BaseNukeBuildHelpers
             }
             allVersionList.Add(tagSemver);
         }
+        foreach (var refs in lsRemoteOutput)
+        {
+            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
+            string tag;
+            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
+
+            if (appEntry.Entry.MainRelease)
+            {
+                tag = rawTag;
+            }
+            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
+            {
+                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
+            }
+            else
+            {
+                continue;
+            }
+        }
         groupKeySorted.Sort();
         if (groupKeySorted.Count > 0 && groupKeySorted.First() == "")
         {
@@ -437,6 +518,7 @@ partial class BaseNukeBuildHelpers
             VersionList = allVersionList,
             VersionGrouped = allVersionGroupDict,
             LatestVersions = allLatestVersions,
+            LatestBuildIds = allLatestIds,
             GroupKeySorted = groupKeySorted,
         };
     }
