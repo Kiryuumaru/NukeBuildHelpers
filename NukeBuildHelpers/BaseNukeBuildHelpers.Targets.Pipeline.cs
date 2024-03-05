@@ -41,6 +41,7 @@ partial class BaseNukeBuildHelpers
     }
 
     public Target PipelineTest => _ => _
+        .Unlisted()
         .Description("To be used by pipeline")
         .Executes(async () =>
         {
@@ -51,6 +52,7 @@ partial class BaseNukeBuildHelpers
         });
 
     public Target PipelineBuild => _ => _
+        .Unlisted()
         .Description("To be used by pipeline")
         .Executes(async () =>
         {
@@ -61,6 +63,7 @@ partial class BaseNukeBuildHelpers
         });
 
     public Target PipelinePublish => _ => _
+        .Unlisted()
         .Description("To be used by pipeline")
         .Executes(async () =>
         {
@@ -80,6 +83,7 @@ partial class BaseNukeBuildHelpers
         });
 
     public Target PipelinePreSetup => _ => _
+        .Unlisted()
         .Description("To be used by pipeline")
         .Executes(() =>
         {
@@ -237,6 +241,7 @@ partial class BaseNukeBuildHelpers
         });
 
     public Target PipelinePostSetup => _ => _
+        .Unlisted()
         .Description("To be used by pipeline")
         .Executes(() =>
         {
