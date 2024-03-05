@@ -172,7 +172,7 @@ partial class BaseNukeBuildHelpers
 
             foreach (var buildNumber in buildNumbers.OrderByDescending(i => i))
             {
-                var containBranch = Git.Invoke($"branch -r --contains refs/tags/build.{buildNumber}").FirstOrDefault().Text;
+                var containBranch = Git.Invoke($"branch -r --contains refs/tags/build.{buildNumber}", logOutput: false, logInvocation: false).FirstOrDefault().Text;
                 containBranch = containBranch[(containBranch.IndexOf('/') + 1)..];
                 if (containBranch.Equals(branch, StringComparison.OrdinalIgnoreCase))
                 {
