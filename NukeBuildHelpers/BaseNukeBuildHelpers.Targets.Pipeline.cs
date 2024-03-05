@@ -112,6 +112,8 @@ partial class BaseNukeBuildHelpers
 
             List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = [];
 
+            long lastBuildId = 0;
+
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
@@ -145,6 +147,8 @@ partial class BaseNukeBuildHelpers
                         if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != allVersions.VersionGrouped[groupKey].Last())
                         {
                             toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
+                            var allVersionLastId = allVersions.LatestBuildIds[groupKey];
+                            lastBuildId = allVersionLastId > lastBuildId ? allVersionLastId : lastBuildId;
                             Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
                         }
                         else
@@ -155,49 +159,9 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
-            if (lsRemote == null)
-            {
-                throw new Exception("lsRemote is null");
-            }
-
             foreach (var rel in toRelease)
             {
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppEntry.Id, rel.Env, rel.Version);
-            }
-
-            List<long> buildNumbers = [];
-
-            string basePeel = "refs/tags/";
-            foreach (var refs in lsRemote)
-            {
-                string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
-
-                if (rawTag.StartsWith("build.", StringComparison.OrdinalIgnoreCase))
-                {
-                    buildNumbers.Add(long.Parse(rawTag.Replace("build.", "")));
-                }
-            }
-
-            long buildMaxNumber = 0;
-
-            foreach (var buildNumber in buildNumbers.OrderByDescending(i => i))
-            {
-                bool hasMatched = false;
-                foreach (var line in Git.Invoke($"branch -r --contains refs/tags/build.{buildNumber}"))
-                {
-                    var containBranch = line.Text;
-                    containBranch = containBranch[(containBranch.IndexOf('/') + 1)..];
-                    if (containBranch.Equals(pipelineInfo.Branch, StringComparison.OrdinalIgnoreCase))
-                    {
-                        buildMaxNumber = buildNumber;
-                        hasMatched = true;
-                        break;
-                    }
-                }
-                if (hasMatched)
-                {
-                    break;
-                }
             }
 
             Dictionary<string, PreSetupOutputVersion> releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
@@ -211,8 +175,8 @@ partial class BaseNukeBuildHelpers
             var releaseNotes = "";
             var buildId = pipelineGetBuildId.Invoke();
             var buildTag = $"build.{buildId}";
-            var lastBuildTag = $"build.{buildMaxNumber}";
-            var isFirstRelease = buildMaxNumber == 0;
+            var lastBuildTag = $"build.{lastBuildId}";
+            var isFirstRelease = lastBuildId == 0;
             var hasRelease = toRelease.Count != 0;
 
             if (hasRelease)
