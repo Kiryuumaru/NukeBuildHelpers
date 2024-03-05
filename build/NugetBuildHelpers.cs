@@ -28,14 +28,10 @@ public class NugetBuildHelpers : AppEntry<Build>
     [SecretHelper("GITHUB_TOKEN")]
     internal readonly string GithubToken;
 
-    [SecretHelper("GITHUB_TOKEN")]
-    internal readonly string GithubToken1;
-
     public override bool RunParallel => false;
 
     public override void Build()
     {
-        Log.Information("Test ptint: {scs}", GithubToken1);
         OutputPath.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));

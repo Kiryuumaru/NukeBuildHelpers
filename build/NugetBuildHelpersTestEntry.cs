@@ -18,16 +18,12 @@ public class NugetBuildHelpersTest : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.WindowsLatest;
 
-    [SecretHelper("NUGET_AUTH_TOKEN")]
-    internal readonly string GithubToken1;
-
     public override bool RunParallel => false;
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
     public override void Run()
     {
-        Log.Information("Test awdptint: {scs}", GithubToken1);
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers_UnitTest));
         DotNetTasks.DotNetTest(_ => _
