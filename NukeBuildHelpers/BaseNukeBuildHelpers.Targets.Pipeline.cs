@@ -196,7 +196,7 @@ partial class BaseNukeBuildHelpers
             {
                 Branch = branch,
                 HasRelease = toRelease.Count != 0,
-                IsFirstRelease = buildNumbers.Count == 0,
+                IsFirstRelease = buildMaxNumber == 0,
                 BuildTag = $"build.{buildId}",
                 LastBuildTag = $"build.{buildMaxNumber}",
                 Releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
