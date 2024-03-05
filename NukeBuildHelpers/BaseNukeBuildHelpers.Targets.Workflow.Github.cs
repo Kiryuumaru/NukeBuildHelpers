@@ -304,7 +304,8 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
-            AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
+            var nukePreSetupStep = AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
+            AddGithubWorkflowJobOrStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_RELEASE_NOTES", name: "Output PRE_SETUP_RELEASE_NOTES", run: $"echo \"PRE_SETUP_RELEASE_NOTES=$(cat ./.nuke/temp/pre_setup_release_notes.txt)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_HAS_RELEASE", name: "Output PRE_SETUP_HAS_RELEASE", run: $"echo \"PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
