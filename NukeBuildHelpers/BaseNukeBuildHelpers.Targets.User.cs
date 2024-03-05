@@ -30,6 +30,7 @@ partial class BaseNukeBuildHelpers
         });
 
     public Target DeleteOriginTags => _ => _
+        .Unlisted()
         .Description("Delete all origin tags, with --args \"{appid}\"")
         .Executes(() =>
         {
