@@ -151,7 +151,7 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            foreach (var pair in splitArgs.Count > 1 || !string.IsNullOrEmpty(splitArgs.Values.First()) ? splitArgs.ToList() : new List<KeyValuePair<string, string?>>() { KeyValuePair.Create<string, string?>("", Args) })
+            foreach (var pair in splitArgs.Count > 1 || !string.IsNullOrEmpty(splitArgs.Values.First()) ? [.. splitArgs] : new List<KeyValuePair<string, string?>>() { KeyValuePair.Create<string, string?>("", Args) })
             {
                 string appId = pair.Key;
                 string? versionRaw = pair.Value;
