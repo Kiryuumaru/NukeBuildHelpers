@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public class PreSetupOutputVersion
+internal class PreSetupOutputVersion
 {
     public required string AppId { get; init; }
 

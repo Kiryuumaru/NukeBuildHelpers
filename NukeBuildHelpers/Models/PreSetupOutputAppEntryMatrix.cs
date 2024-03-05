@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public class PreSetupOutputAppEntryMatrix : PreSetupOutputMatrix
+internal class PreSetupOutputAppEntryMatrix : PreSetupOutputMatrix
 {
     public required string Version { get; init; }
 }
