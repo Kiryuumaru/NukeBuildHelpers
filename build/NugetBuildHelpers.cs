@@ -55,10 +55,10 @@ public class NugetBuildHelpers : AppEntry<Build>
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)
-            .CombineWith(OutputPath.GetFiles(), (_, v) => _.SetTargetPath(v)));
+            .SetTargetPath(OutputPath / "**"));
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://api.nuget.org/v3/index.json")
             .SetApiKey(NuGetAuthToken)
-            .CombineWith(OutputPath.GetFiles(), (_, v) => _.SetTargetPath(v)));
+            .SetTargetPath(OutputPath / "**"));
     }
 }
