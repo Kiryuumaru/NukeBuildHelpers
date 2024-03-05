@@ -119,6 +119,9 @@ jobs:
       run: chmod +x ./build.sh && ./build.sh PipelineRelease
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - id: RELEASE_NOTES
+      name: Output RELEASE_NOTES
+      run: echo "RELEASE_NOTES=$(cat ./.nuke/temp/release_notes.txt)" >> $GITHUB_OUTPUT
     needs:
     - pre_setup
     - test
@@ -126,6 +129,8 @@ jobs:
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+    outputs:
+      RELEASE_NOTES: ${{ steps.RELEASE_NOTES.outputs.RELEASE_NOTES }}
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}

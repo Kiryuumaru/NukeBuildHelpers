@@ -210,10 +210,10 @@ partial class BaseNukeBuildHelpers
                 })
             };
 
-            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
+            File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
             Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
 
-            File.WriteAllText(RootDirectory / ".nuke" / "temp" / "has_release.txt", toRelease.Count != 0 ? "true" : "false");
+            File.WriteAllText(TempPath / "has_release.txt", toRelease.Count != 0 ? "true" : "false");
 
             pipelinePrepare?.Invoke(appTestEntries, appEntryConfigs, toRelease);
         });
@@ -267,16 +267,31 @@ partial class BaseNukeBuildHelpers
             Git.Invoke($"tag -f {preSetupOutput.BuildTag}");
             Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-            string args = $"release create {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))} " +
+            string ghReleaseCreateArgs = $"release create {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))} " +
                 $"--title {preSetupOutput.BuildTag} " +
                 $"--target {preSetupOutput.Branch} " +
                 $"--generate-notes";
 
             if (!preSetupOutput.IsFirstRelease)
             {
-                args += $" --notes-start-tag {preSetupOutput.LastBuildTag}";
+                ghReleaseCreateArgs += $" --notes-start-tag {preSetupOutput.LastBuildTag}";
             }
 
-            Gh.Invoke(args, logInvocation: false, logOutput: false);
+            Gh.Invoke(ghReleaseCreateArgs, logInvocation: false, logOutput: false);
+
+            string ghReleaseViewArgs = $"release view {preSetupOutput.BuildTag} --json body";
+
+            var releaseNotesJson = Gh.Invoke(ghReleaseViewArgs, logInvocation: false, logOutput: false).FirstOrDefault().Text;
+
+            var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
+
+            if (releaseNotesJsonDocument == null ||
+                !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
+                releaseNotesProp.GetString() is not string releaseNotes)
+            {
+                throw new Exception("releaseNotesJsonDocument is empty");
+            }
+
+            File.WriteAllText(TempPath / "release_notes.txt", releaseNotes);
         });
 }

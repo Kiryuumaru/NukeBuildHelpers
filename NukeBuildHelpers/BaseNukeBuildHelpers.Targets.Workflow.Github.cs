@@ -123,9 +123,9 @@ partial class BaseNukeBuildHelpers
                 });
             }
         }
-        File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
-        File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption));
-        File.WriteAllText(RootDirectory / ".nuke" / "temp" / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOption));
+        File.WriteAllText(TempPath / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOption));
+        File.WriteAllText(TempPath / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOption));
+        File.WriteAllText(TempPath / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOption));
         Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, _jsonSnakeCaseNamingOptionIndented));
         Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, _jsonSnakeCaseNamingOptionIndented));
         Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, _jsonSnakeCaseNamingOptionIndented));
@@ -382,6 +382,8 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(downloadReleaseStep, "path", "./.nuke/temp/output");
             var nukeReleaseStep = AddGithubWorkflowJobStep(releaseJob, name: "Run Nuke PipelineRelease", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelineRelease");
             AddGithubWorkflowJobOrStepEnvVar(nukeReleaseStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
+            AddGithubWorkflowJobStep(releaseJob, id: "RELEASE_NOTES", name: "Output RELEASE_NOTES", run: $"echo \"RELEASE_NOTES=$(cat ./.nuke/temp/release_notes.txt)\" >> $GITHUB_OUTPUT");
+            AddGithubWorkflowJobOutput(releaseJob, "RELEASE_NOTES", "RELEASE_NOTES", "RELEASE_NOTES");
 
             needs.Add("release");
 
