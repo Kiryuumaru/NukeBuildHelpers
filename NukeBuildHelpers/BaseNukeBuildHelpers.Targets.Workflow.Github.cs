@@ -276,7 +276,8 @@ partial class BaseNukeBuildHelpers
                 },
                 ["concurrency"] = new Dictionary<string, object>()
                 {
-                    { "group", "nuke-cicd" }
+                    { "group", "${{ github.workflow }}-${{ github.head_ref || github.ref_name }}" },
+                    { "cancel-in-progress", "true" }
                 },
                 ["jobs"] = new Dictionary<string, object>()
             };
