@@ -78,7 +78,7 @@ partial class BaseNukeBuildHelpers
                         {
                             Environment = release.Value.Environment,
                             Version = SemVersion.Parse(release.Value.Version, SemVersionStyles.Strict),
-                            ReleaseNotes = Environment.GetEnvironmentVariable("RELEASE_NOTES")!
+                            ReleaseNotes = Environment.GetEnvironmentVariable("PRE_SETUP_RELEASE_NOTES")!
                         };
                     }
                 }
