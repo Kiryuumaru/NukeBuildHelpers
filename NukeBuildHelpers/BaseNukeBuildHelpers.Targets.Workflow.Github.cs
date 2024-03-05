@@ -40,9 +40,12 @@ partial class BaseNukeBuildHelpers
             {
                 branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF");
             }
-            branch = Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
-            //branch = Git.Invoke($"branch -r --contains {branch}", logOutput: false, logInvocation: false).FirstOrDefault().Text;
-            branch = branch[(branch.IndexOf('/') + 1)..];
+            else
+            {
+                branch = Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
+                //branch = Git.Invoke($"branch -r --contains {branch}", logOutput: false, logInvocation: false).FirstOrDefault().Text;
+                branch = branch[(branch.IndexOf('/') + 1)..];
+            }
         }
         return branch;
     }
