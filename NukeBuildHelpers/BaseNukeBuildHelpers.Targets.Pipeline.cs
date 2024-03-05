@@ -148,7 +148,15 @@ partial class BaseNukeBuildHelpers
                         {
                             toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
                             var allVersionLastId = allVersions.LatestBuildIds[groupKey];
-                            lastBuildId = allVersionLastId > lastBuildId ? allVersionLastId : lastBuildId;
+                            if (lastBuildId == 0)
+                            {
+                                lastBuildId = allVersionLastId;
+                            }
+                            else
+                            {
+                                lastBuildId = allVersionLastId < lastBuildId ? allVersionLastId : lastBuildId;
+
+                            }
                             Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
                         }
                         else
