@@ -27,8 +27,9 @@ partial class BaseNukeBuildHelpers
 {
     private readonly Serializer _yamlSerializer = new();
 
-    private string GithubPipelineGetBranch()
+    private PipelineInfo GithubPipelineGetBranch()
     {
+        TriggerType triggerType = TriggerType.Commit;
         var branch = Environment.GetEnvironmentVariable("GITHUB_REF");
         if (string.IsNullOrEmpty(branch))
         {
@@ -38,15 +39,24 @@ partial class BaseNukeBuildHelpers
         {
             if (branch.StartsWith("refs/pull", StringComparison.OrdinalIgnoreCase))
             {
+                triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF")!;
             }
             else
             {
+                if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
+                {
+                    triggerType = TriggerType.Tag;
+                }
                 branch = Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
             }
             branch = branch[(branch.IndexOf('/') + 1)..];
         }
-        return branch;
+        return new()
+        {
+            Branch = branch,
+            TriggerType = triggerType,
+        };
     }
 
     private static long GithubPipelineGetBuildId()

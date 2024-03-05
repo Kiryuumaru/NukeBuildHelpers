@@ -17,6 +17,8 @@ internal class PreSetupOutput
 {
     public required string Branch { get; init; }
 
+    public required TriggerType TriggerType { get; init; }
+
     public required bool HasRelease { get; init; }
 
     public required bool IsFirstRelease { get; init; }

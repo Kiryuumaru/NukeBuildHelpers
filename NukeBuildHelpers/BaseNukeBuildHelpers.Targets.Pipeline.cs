@@ -79,7 +79,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetEntries<AppEntry>(), out var appEntries);
             GetOrFail(() => GetEntries<AppTestEntry>(), out var appTestEntries);
 
-            Func<string>? pipelineGetBranch = null;
+            Func<PipelineInfo>? pipelineGetBranch = null;
             Func<long>? pipelineGetBuildId = null;
             Action<List<AppTestEntry>, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)>, List<(AppEntry AppEntry, string Env, SemVersion Version)>>? pipelinePrepare = null;
 
@@ -94,9 +94,10 @@ partial class BaseNukeBuildHelpers
                     throw new Exception("No agent pipeline provided");
             }
 
-            var branch = pipelineGetBranch();
+            var pipelineInfo = pipelineGetBranch();
 
-            Log.Information("Target branch: {branch}", branch);
+            Log.Information("Target branch: {branch}", pipelineInfo.Branch);
+            Log.Information("Trigger type: {branch}", pipelineInfo.TriggerType);
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -117,9 +118,9 @@ partial class BaseNukeBuildHelpers
                         if (string.IsNullOrEmpty(groupKey))
                         {
                             env = "main";
-                            if (!branch.Equals("master", StringComparison.OrdinalIgnoreCase) &&
-                                !branch.Equals("main", StringComparison.OrdinalIgnoreCase) &&
-                                !branch.Equals("prod", StringComparison.OrdinalIgnoreCase))
+                            if (!pipelineInfo.Branch.Equals("master", StringComparison.OrdinalIgnoreCase) &&
+                                !pipelineInfo.Branch.Equals("main", StringComparison.OrdinalIgnoreCase) &&
+                                !pipelineInfo.Branch.Equals("prod", StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }
@@ -127,7 +128,7 @@ partial class BaseNukeBuildHelpers
                         else
                         {
                             env = groupKey;
-                            if (!branch.Equals(env, StringComparison.OrdinalIgnoreCase))
+                            if (!pipelineInfo.Branch.Equals(env, StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }
@@ -177,7 +178,7 @@ partial class BaseNukeBuildHelpers
                 {
                     var containBranch = line.Text;
                     containBranch = containBranch[(containBranch.IndexOf('/') + 1)..];
-                    if (containBranch.Equals(branch, StringComparison.OrdinalIgnoreCase))
+                    if (containBranch.Equals(pipelineInfo.Branch, StringComparison.OrdinalIgnoreCase))
                     {
                         buildMaxNumber = buildNumber;
                         hasMatched = true;
@@ -194,7 +195,8 @@ partial class BaseNukeBuildHelpers
 
             PreSetupOutput output = new()
             {
-                Branch = branch,
+                Branch = pipelineInfo.Branch,
+                TriggerType = pipelineInfo.TriggerType,
                 HasRelease = toRelease.Count != 0,
                 IsFirstRelease = buildMaxNumber == 0,
                 BuildTag = $"build.{buildId}",
