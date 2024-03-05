@@ -110,7 +110,7 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
-                if (allVersions.GroupKeySorted.Count != 0)
+                if (allVersions.GroupKeySorted.Count != 0 && pipelineInfo.TriggerType == TriggerType.Tag)
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {

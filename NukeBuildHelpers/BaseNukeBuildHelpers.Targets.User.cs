@@ -27,7 +27,6 @@ partial class BaseNukeBuildHelpers
         {
             Log.Information("Fetching...");
             Git.Invoke($"fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
-            Log.Information("Tags: {Value}", Git.Invoke("tag -l", logInvocation: false, logOutput: false).Select(i => i.Text));
         });
 
     public Target DeleteOriginTags => _ => _
