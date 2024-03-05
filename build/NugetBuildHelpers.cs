@@ -46,12 +46,13 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
             .SetVersion(NewVersion?.Version?.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes("* Initial prerelease")
+            .SetPackageReleaseNotes(NewVersion.ReleaseNotes)
             .SetOutputDirectory(OutputPath));
     }
 
     public override void Publish()
     {
+        Log.Information("Publish Release notes: {scs}", NewVersion.ReleaseNotes);
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)

@@ -27,9 +27,11 @@ jobs:
     - id: setup
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - id: PRE_SETUP_HAS_RELEASE
       name: Output PRE_SETUP_HAS_RELEASE
-      run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/has_release.txt)" >> $GITHUB_OUTPUT
+      run: echo "PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)" >> $GITHUB_OUTPUT
     - id: PRE_SETUP_OUTPUT
       name: Output PRE_SETUP_OUTPUT
       run: echo "PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
@@ -63,10 +65,10 @@ jobs:
     - name: Run Nuke PipelineTest
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
+      env:
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     needs:
     - pre_setup
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}
@@ -83,6 +85,7 @@ jobs:
     - name: Run Nuke PipelineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
       env:
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifacts
@@ -96,8 +99,6 @@ jobs:
     - pre_setup
     - test
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
@@ -120,54 +121,45 @@ jobs:
     - name: Run Nuke PipelinePublish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
       env:
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - id: PUBLISH_OUTPUT_SUCCESS
+      name: Output PUBLISH_OUTPUT_SUCCESS
+      run: echo "PUBLISH_OUTPUT_SUCCESS=$(cat ./.nuke/temp/publish_success.txt)" >> $GITHUB_OUTPUT
     needs:
     - pre_setup
     - test
     - build
     if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
-  release:
-    name: Release
+    outputs:
+      PUBLISH_OUTPUT_SUCCESS: ${{ steps.PUBLISH_OUTPUT_SUCCESS.outputs.PUBLISH_OUTPUT_SUCCESS }}
+  post_setup:
+    name: Post Setup
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
         path: ~/.nuget/packages
-        key: ${{ matrix.runs_on }}-nuget-release-${{ hashFiles('**/*.csproj') }}
-        restore-keys: ${{ matrix.runs_on }}-nuget-release-
+        key: ubuntu-22.04-nuget-post_setup-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ubuntu-22.04-nuget-post_setup-
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/output
-    - name: Run Nuke PipelineRelease
-      run: chmod +x ./build.sh && ./build.sh PipelineRelease
+    - name: Run Nuke PipelinePostSetup
+      run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    needs:
-    - pre_setup
-    - test
-    - build
-    if: ${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-  post_setup:
-    name: Post Setup
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v4
+        PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+        PUBLISH_OUTPUT_SUCCESS: ${{ needs.publish.outputs.PUBLISH_OUTPUT_SUCCESS }}
     needs:
     - pre_setup
     - test
     - build
     - publish
-    - release
     if: success() || failure() || always()
-    env:
-      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}

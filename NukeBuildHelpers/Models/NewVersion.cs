@@ -18,4 +18,6 @@ public class NewVersion
     public required string Environment { get; init; }
 
     public required SemVersion Version { get; init; }
+
+    public required string ReleaseNotes { get; init; }
 }
