@@ -32,7 +32,6 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Build()
     {
-        throw new Exception("testtt");
         OutputPath.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
