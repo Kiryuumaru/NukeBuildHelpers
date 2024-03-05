@@ -7,9 +7,7 @@ on:
     - '**'
   pull_request:
     branches:
-    - fix/**
-    - feat/**
-    - hotfix/**
+    - '**'
 concurrency:
   group: nuke-cicd
 jobs:
@@ -43,8 +41,6 @@ jobs:
     - id: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       name: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
-    env:
-      BRANCH_FROM_REF: ${{ github.ref }}
     outputs:
       PRE_SETUP_HAS_RELEASE: ${{ steps.PRE_SETUP_HAS_RELEASE.outputs.PRE_SETUP_HAS_RELEASE }}
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}

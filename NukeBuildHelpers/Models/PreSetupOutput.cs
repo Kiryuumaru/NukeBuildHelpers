@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public class PreSetupOutput
+internal class PreSetupOutput
 {
     public required string Branch { get; init; }
 

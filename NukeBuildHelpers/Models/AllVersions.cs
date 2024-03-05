@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.Models;
 
-public class AllVersions
+internal class AllVersions
 {
     public required List<SemVersion> VersionList { get; init; }
 

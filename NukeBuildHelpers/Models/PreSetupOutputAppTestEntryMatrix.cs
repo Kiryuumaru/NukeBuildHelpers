@@ -13,6 +13,6 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public class PreSetupOutputAppTestEntryMatrix : PreSetupOutputMatrix
+internal class PreSetupOutputAppTestEntryMatrix : PreSetupOutputMatrix
 {
 }
