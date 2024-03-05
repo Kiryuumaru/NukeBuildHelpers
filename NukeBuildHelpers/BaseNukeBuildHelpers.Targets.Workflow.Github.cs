@@ -29,13 +29,17 @@ partial class BaseNukeBuildHelpers
 
     private string GithubPipelineGetBranch()
     {
-        var branch = Environment.GetEnvironmentVariable("BRANCH_FROM_REF");
+        var branch = Environment.GetEnvironmentVariable("GITHUB_REF");
         if (string.IsNullOrEmpty(branch))
         {
             branch = Repository.Branch;
         }
         else
         {
+            if (branch.StartsWith("refs/pull", StringComparison.OrdinalIgnoreCase))
+            {
+                branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF");
+            }
             branch = Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
             //branch = Git.Invoke($"branch -r --contains {branch}", logOutput: false, logInvocation: false).FirstOrDefault().Text;
             branch = branch[(branch.IndexOf('/') + 1)..];
@@ -287,7 +291,6 @@ partial class BaseNukeBuildHelpers
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
             AddGithubWorkflowJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
-            AddGithubWorkflowJobOrStepEnvVar(preSetupJob, "BRANCH_FROM_REF", "${{ github.ref }}");
             AddGithubWorkflowJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_HAS_RELEASE", name: "Output PRE_SETUP_HAS_RELEASE", run: $"echo \"PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/has_release.txt)\" >> $GITHUB_OUTPUT");
             AddGithubWorkflowJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
