@@ -22,9 +22,6 @@ public partial interface INukeBuildHelpers : INukeBuild
     [PathVariable]
     Tool Git => TryGetValue(() => Git);
 
-    Target Version { get; }
-
-    Target Bump { get; }
-
-    Target DeleteOriginTags { get; }
+    [PathVariable]
+    Tool Gh => TryGetValue(() => Gh);
 }

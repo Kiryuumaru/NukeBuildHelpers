@@ -1,36 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<LangVersion>11</LangVersion>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<LangVersion>12.0</LangVersion>
+		<Nullable>enable</Nullable>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 	</PropertyGroup>
 
-  <PropertyGroup>
-    <Authors>Kiryuumaru</Authors>
-    <Company>Kiryuumaru</Company>
-    <Copyright>Kiryuumaru</Copyright>
-    <Description>NukeBuildHelpers for Nuke build.</Description>
-    <PackageTags>NukeBuildHelpers, Nuke, Build, Helpers</PackageTags>
-    <PackageProjectUrl>https://github.com/Kiryuumaru/NukeBuildHelpers</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/Kiryuumaru/NukeBuildHelpers</RepositoryUrl>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\LICENSE" Pack="true" PackagePath="" />
-    <None Include="..\README.md" Pack="true" PackagePath="" />
-  </ItemGroup>
+	<PropertyGroup>
+		<Authors>Kiryuumaru</Authors>
+		<Company>Kiryuumaru</Company>
+		<Copyright>Kiryuumaru</Copyright>
+		<Description>NukeBuildHelpers for Nuke build.</Description>
+		<PackageTags>NukeBuildHelpers, Nuke, Build, Helpers</PackageTags>
+		<PackageProjectUrl>https://github.com/Kiryuumaru/NukeBuildHelpers</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Kiryuumaru/NukeBuildHelpers</RepositoryUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Nuke.Common" Version="7.0.6" />
+		<None Include="..\LICENSE" Pack="true" PackagePath="" />
+		<None Include="..\README.md" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="NuGet.Packaging" Version="6.9.1" />
+		<PackageReference Include="Nuke.Common" Version="8.0.0" />
 		<PackageReference Include="Macross.Json.Extensions" Version="3.0.0" />
 		<PackageReference Include="Semver" Version="2.3.0" />
+		<PackageReference Include="System.Drawing.Common" Version="8.0.2" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.0" />
+		<PackageReference Include="YamlDotNet" Version="15.1.2" />
 	</ItemGroup>
 
 </Project>

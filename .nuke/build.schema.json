@@ -68,17 +68,18 @@
           "items": {
             "type": "string",
             "enum": [
+              "Build",
               "Bump",
-              "Compile",
               "DeleteOriginTags",
               "Fetch",
-              "GenerateAppEntry",
-              "GenerateAppTestEntry",
-              "GenerateVersionFiles",
-              "GithubPublish",
-              "Pack",
-              "Prepare",
+              "GithubWorkflow",
+              "PipelineBuild",
+              "PipelinePreSetup",
+              "PipelinePublish",
+              "PipelineRelease",
+              "PipelineTest",
               "Publish",
+              "Test",
               "Version"
             ]
           }
@@ -93,17 +94,18 @@
           "items": {
             "type": "string",
             "enum": [
+              "Build",
               "Bump",
-              "Compile",
               "DeleteOriginTags",
               "Fetch",
-              "GenerateAppEntry",
-              "GenerateAppTestEntry",
-              "GenerateVersionFiles",
-              "GithubPublish",
-              "Pack",
-              "Prepare",
+              "GithubWorkflow",
+              "PipelineBuild",
+              "PipelinePreSetup",
+              "PipelinePublish",
+              "PipelineRelease",
+              "PipelineTest",
               "Publish",
+              "Test",
               "Version"
             ]
           }

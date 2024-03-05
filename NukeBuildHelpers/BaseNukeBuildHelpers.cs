@@ -16,11 +16,11 @@ using System.Text.Json;
 
 namespace NukeBuildHelpers;
 
-public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
+public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
-    public static AbsolutePath PublishPath => RootDirectory / "publish";
+    public static AbsolutePath TempPath => RootDirectory / ".nuke" / "temp";
 
-    public static AbsolutePath ArtifactsPath => PublishPath / "artifacts";
+    public static AbsolutePath OutputPath => TempPath / "output";
 
     GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
@@ -28,14 +28,16 @@ public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 
     Tool Git => (this as INukeBuildHelpers).Git;
 
-    private IReadOnlyDictionary<string, string> splitArgs;
-    public IReadOnlyDictionary<string, string> SplitArgs
+    Tool Gh => (this as INukeBuildHelpers).Gh;
+
+    private IReadOnlyDictionary<string, string?>? splitArgs;
+    public IReadOnlyDictionary<string, string?> SplitArgs
     {
         get
         {
             if (splitArgs == null)
             {
-                Dictionary<string, string> targetParams = new();
+                Dictionary<string, string?> targetParams = new();
                 if ((this as INukeBuildHelpers).Args != null)
                 {
                     foreach (var targetParam in (this as INukeBuildHelpers).Args.Split(';'))
@@ -62,11 +64,4 @@ public partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
             return splitArgs;
         }
     }
-
-    static readonly JsonSerializerOptions jsonSerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        WriteIndented = true
-    };
 }

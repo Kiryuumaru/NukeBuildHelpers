@@ -8,11 +8,8 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.Enums;
 
-public enum BuildsOnType
+public enum TestRunType
 {
-    [EnumMember(Value = "windows-2022")]
-    Windows2022,
-
-    [EnumMember(Value = "ubuntu-22.04")]
-    Ubuntu2204
+    Always,
+    OnAppEntryVersionBump
 }
