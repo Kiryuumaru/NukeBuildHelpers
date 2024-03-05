@@ -7,9 +7,7 @@ on:
     - '**'
   pull_request:
     branches:
-    - fix/**
-    - feat/**
-    - hotfix/**
+    - '**'
 concurrency:
   group: nuke-cicd
 jobs:
