@@ -343,16 +343,11 @@ partial class BaseNukeBuildHelpers
     private AllVersions GetAllVersions(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
-        List<SemVersion> allVersionList = [];
-        Dictionary<string, List<SemVersion>> allVersionGroupDict = [];
-        Dictionary<string, SemVersion> allLatestVersions = [];
-        Dictionary<string, long> allLatestIds = [];
-        List<string> groupKeySorted = [];
-        Dictionary<string, string> latestVersionCommitId = [];
+
         string basePeel = "refs/tags/";
         lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
 
-        Dictionary<string, List<string>> pairedTags = [];
+        Dictionary<string, (string Env, List<long> BuildIds, List<SemVersion> Versions, List<string> LatestTags)> pairedTags = [];
         foreach (var refs in lsRemoteOutput)
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
@@ -371,135 +366,49 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            if (!pairedTags.TryGetValue(commitId, out var tags))
+            if (!pairedTags.TryGetValue(commitId, out var vals))
             {
-                tags = [];
-                pairedTags.Add(commitId, tags);
-            }
-            tags.Add(tag);
-        }
-
-        foreach (var pairedTag in pairedTags)
-        {
-            bool isLatest = false;
-            long buildId = 0;
-            SemVersion? version = null;
-            foreach (var tag in pairedTag.Value)
-            {
-                Log.Information("Commit: {comm} - Tag: {tag}", pairedTag.Key, tag);
-                if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    isLatest = true;
-                }
-                if (tag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    var tagBuildId = long.Parse(tag.Replace("build.", ""));
-                    buildId = tagBuildId > buildId ? tagBuildId : buildId;
-                }
-                if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
-                {
-                    if (version != null)
-                    {
-                        version = tagSemver.ComparePrecedenceTo(version) > 0 ? tagSemver : version;
-                    }
-                    else
-                    {
-                        version = tagSemver;
-                    }
-                }
-            }
-        }
-
-        throw new Exception("ccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
-
-        foreach (var refs in lsRemoteOutput)
-        {
-            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
-            string tag;
-            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
-
-            if (appEntry.Entry.MainRelease)
-            {
-                tag = rawTag;
-            }
-            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
-            {
-                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
-            }
-            else
-            {
-                continue;
+                vals = (null!, [], [], []);
+                pairedTags.Add(commitId, vals);
             }
             if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
             {
-                latestVersionCommitId[rawTag] = commitId;
+                vals.LatestTags.Add(tag);
+            }
+            if (tag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
+            {
+                vals.BuildIds.Add(long.Parse(tag.Replace("build.", "")));
+            }
+            if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
+            {
+                vals.Versions.Add(tagSemver);
+                string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
+                pairedTags[commitId] = (env, vals.BuildIds, vals.Versions, vals.LatestTags);
             }
         }
-        foreach (var refs in lsRemoteOutput)
-        {
-            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
-            string tag;
-            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
 
-            if (appEntry.Entry.MainRelease)
+        pairedTags = pairedTags.Where(i => i.Value.Env != null).ToDictionary();
+        Dictionary<string, (List<long> BuildIds, List<SemVersion> Versions, List<string> LatestTags)> pairedEnvGroup =
+            pairedTags.Values.GroupBy(i => i.Env).ToDictionary(
+                i => i.Key,
+                i => (
+                    i.SelectMany(j => j.BuildIds).ToList(),
+                    i.SelectMany(j => j.Versions).ToList(),
+                    i.SelectMany(j => j.LatestTags).ToList()));
+        Dictionary<string, (long BuildId, SemVersion Version) > pairedLatests = pairedEnvGroup
+            .Where(i =>
             {
-                tag = rawTag;
-            }
-            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
-            {
-                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
-            }
-            else
-            {
-                continue;
-            }
-            if (!SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
-            {
-                continue;
-            }
+                string latestIndicator = i.Key == "" ? "latest" : "latest-" + i.Key;
+                return i.Value.LatestTags.Any(j => j.Equals(latestIndicator, StringComparison.OrdinalIgnoreCase));
+            })
+            .Select(i => KeyValuePair.Create(i.Key, (i.Value.BuildIds.Max(), i.Value.Versions.Max()!))).ToDictionary();
 
-            string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
-            string latestIndicator = env == "" ? "latest" : "latest-" + env;
+        List<SemVersion> allVersionList = pairedTags.SelectMany(i => i.Value.Versions).ToList();
+        Dictionary<string, List<SemVersion>> allVersionGroupDict = pairedEnvGroup.ToDictionary(i => i.Key, i => i.Value.Versions);
+        Dictionary<string, SemVersion> allLatestVersions = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
+        Dictionary<string, long> allLatestIds = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
+        List<string> groupKeySorted = pairedEnvGroup.Select(i => i.Key).ToList();
 
-            if (!appEntry.Entry.MainRelease)
-            {
-                latestIndicator = appId.ToLowerInvariant() + "/" + latestIndicator;
-            }
-            if (latestVersionCommitId.TryGetValue(latestIndicator, out var val) && val == commitId)
-            {
-                allLatestVersions[env] = tagSemver;
-            }
-            if (allVersionGroupDict.TryGetValue(env, out List<SemVersion>? versions))
-            {
-                versions.Add(tagSemver);
-            }
-            else
-            {
-                versions = [tagSemver];
-                allVersionGroupDict.Add(env, versions);
-                groupKeySorted.Add(env);
-            }
-            allVersionList.Add(tagSemver);
-        }
-        foreach (var refs in lsRemoteOutput)
-        {
-            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
-            string tag;
-            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
-
-            if (appEntry.Entry.MainRelease)
-            {
-                tag = rawTag;
-            }
-            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
-            {
-                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
-            }
-            else
-            {
-                continue;
-            }
-        }
         groupKeySorted.Sort();
         if (groupKeySorted.Count > 0 && groupKeySorted.First() == "")
         {
@@ -604,36 +513,45 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        string rowSeparator = "╬";
+        string headerSeparator = "╬";
+        string rowSeparator = "║";
         string textHeader = "║";
         foreach (var (Length, Text, AlignRight) in columns)
         {
-            rowSeparator += new string('═', Length + 2) + '╬';
+            headerSeparator += new string('═', Length + 2) + '╬';
+            rowSeparator += new string('-', Length + 2) + '║';
             textHeader += Text.PadCenter(Length + 2) + '║';
         }
 
-        Log.Information(rowSeparator);
+        Log.Information(headerSeparator);
         Log.Information(textHeader);
-        Log.Information(rowSeparator);
+        Log.Information(headerSeparator);
         foreach (var row in rows)
         {
-            int rowCount = row.Count();
-            string textRow = "║ ";
-            for (int i = 0; i < rowCount; i++)
+            if (row.All(i => i == "-"))
             {
-                string rowTemplate = "{" + i.ToString() + "}";
-                string? rowElement = row?.ElementAt(i);
-                int rowWidth = rowElement == null ? 4 : rowElement.Length;
-                textRow += columns[i].Alignment switch
-                {
-                    HorizontalAlignment.Left => rowTemplate.PadLeft(columns[i].Length, rowWidth) + " ║ ",
-                    HorizontalAlignment.Center => rowTemplate.PadCenter(columns[i].Length, rowWidth) + " ║ ",
-                    HorizontalAlignment.Right => rowTemplate.PadRight(columns[i].Length, rowWidth) + " ║ ",
-                    _ => throw new NotImplementedException()
-                };
+                Log.Information(rowSeparator);
             }
-            Log.Information(textRow, row?.Select(i => i as object)?.ToArray());
+            else
+            {
+                int rowCount = row.Count();
+                string textRow = "║ ";
+                for (int i = 0; i < rowCount; i++)
+                {
+                    string rowTemplate = "{" + i.ToString() + "}";
+                    string? rowElement = row?.ElementAt(i);
+                    int rowWidth = rowElement == null ? 4 : rowElement.Length;
+                    textRow += columns[i].Alignment switch
+                    {
+                        HorizontalAlignment.Left => rowTemplate.PadLeft(columns[i].Length, rowWidth) + " ║ ",
+                        HorizontalAlignment.Center => rowTemplate.PadCenter(columns[i].Length, rowWidth) + " ║ ",
+                        HorizontalAlignment.Right => rowTemplate.PadRight(columns[i].Length, rowWidth) + " ║ ",
+                        _ => throw new NotImplementedException()
+                    };
+                }
+                Log.Information(textRow, row?.Select(i => i as object)?.ToArray());
+            }
         }
-        Log.Information(rowSeparator);
+        Log.Information(headerSeparator);
     }
 }

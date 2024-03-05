@@ -127,7 +127,9 @@ partial class BaseNukeBuildHelpers
                 {
                     rows.Add([appId, null, null]);
                 }
+                rows.Add(["-", "-", "-"]);
             }
+            rows.RemoveAt(rows.Count - 1);
 
             LogInfoTable(headers, rows.ToArray());
         });
