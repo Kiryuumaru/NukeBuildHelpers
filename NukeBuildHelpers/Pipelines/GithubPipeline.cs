@@ -191,7 +191,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         if (appTestEntries.Count > 0)
         {
             var testJob = AddJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs]);
-            AddJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
+            AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
             AddJobStepNukeBuildCache(testJob, "${{ matrix.runs_on }}", _if: "${{ matrix.id != 'skip' }}");
             var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", "${{ matrix.id != 'skip' }}");
@@ -205,7 +205,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
         var buildJob = AddJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-        AddJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
+        AddJobMatrixIncludeFromPreSetup(buildJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobStepCheckout(buildJob);
         AddJobStepNukeBuildCache(buildJob, "${{ matrix.runs_on }}");
         var nukeBuildStep = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}");
@@ -223,7 +223,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Publish ███████████████
         // ██████████████████████████████████████
         var publishJob = AddJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-        AddJobMatrixInclude(publishJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
+        AddJobMatrixIncludeFromPreSetup(publishJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob);
         AddJobStepNukeBuildCache(publishJob, "${{ matrix.runs_on }}");
         var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
@@ -394,6 +394,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             ((Dictionary<string, object>)value)["matrix"] = new Dictionary<string, object>();
         }
         ((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"])["include"] = matrixInclude;
+    }
+
+    private static void AddJobMatrixIncludeFromPreSetup(Dictionary<string, object> job, string outputName)
+    {
+        AddJobMatrixInclude(job, $"${{{{ fromJson(needs.pre_setup.outputs.{outputName}) }}}}");
     }
 
     private static void AddJobOutput(Dictionary<string, object> job, string outputName, string fromStepId, string fromStepVariable)

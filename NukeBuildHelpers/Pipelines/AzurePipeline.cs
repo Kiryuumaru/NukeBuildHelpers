@@ -191,7 +191,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         if (appTestEntries.Count > 0)
         {
             var testJob = AddJob(workflow, "test", "Test - $(name)", "$(runs_on)", needs: [.. needs]);
-            AddJobMatrixInclude(testJob, "$[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX'] ]");
+            AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, condition: "neq(id, 'skip')");
             var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "neq(id, 'skip')");
             AddStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup");
@@ -244,6 +244,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             job["strategy"] = value;
         }
         ((Dictionary<string, object>)value)["matrix"] = matrixInclude;
+    }
+
+    private static void AddJobMatrixIncludeFromPreSetup(Dictionary<string, object> job, string outputName)
+    {
+        AddJobMatrixInclude(job, $"$[ dependencies.pre_setup.outputs['{outputName}.{outputName}'] ]");
     }
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, object runsOn, IEnumerable<string>? needs = null, string _if = "")

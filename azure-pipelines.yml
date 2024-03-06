@@ -49,4 +49,4 @@ jobs:
   dependsOn:
   - pre_setup
   strategy:
-    matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX'] ]
+    matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX.PRE_SETUP_OUTPUT_TEST_MATRIX'] ]
