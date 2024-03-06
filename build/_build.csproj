@@ -9,6 +9,7 @@
     <NukeScriptDirectory>..</NukeScriptDirectory>
     <NukeTelemetryVersion>1</NukeTelemetryVersion>
     <IsPackable>false</IsPackable>
+	<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,34 +22,6 @@
 
   <ItemGroup>
     <PackageDownload Include="NuGet.CommandLine" Version="[6.9.1]" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\.github\workflows\nuke-cicd.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\.github\workflows\nuke-cicd.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\.github\workflows\nuke-cicd.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\.github\workflows\nuke-cicd.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\.github\workflows\nuke-cicd.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\.github\workflows\nuke-cicd.yml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="..\.github\workflows\nuke-cicd.yml" />
   </ItemGroup>
 
 </Project>

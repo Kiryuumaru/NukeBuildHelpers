@@ -18,7 +18,7 @@ jobs:
   - task: Cache@2
     inputs:
       path: $(NUGET_PACKAGES)
-      key: '"ubuntu-22.04" | "nuget"'
+      key: '"ubuntu-22.04" | "nuget" | ./build/packages.lock.json'
       restore-keys: '"ubuntu-22.04" | "nuget"'
   - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "azure"
     name: setup
