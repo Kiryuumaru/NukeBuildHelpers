@@ -301,8 +301,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             step["condition"] = condition;
         }
         AddJobStepInputs(step, "path", "$(NUGET_PACKAGES)");
-        AddJobStepInputs(step, "key", $"\"{keyRoot} | nuget | \"");
-        AddJobStepInputs(step, "restore-keys", $"\"{keyRoot} | nuget | \"");
+        AddJobStepInputs(step, "key", $"\"{keyRoot}\" | \"nuget\"");
+        AddJobStepInputs(step, "restore-keys", $"\"{keyRoot}\" | \"nuget\"");
         return step;
     }
 
