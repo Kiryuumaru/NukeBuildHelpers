@@ -292,6 +292,8 @@ partial class BaseNukeBuildHelpers
             throw new Exception("PRE_SETUP_OUTPUT is empty");
         }
 
+        Log.Information("preSetupOutputValue: {preSetupOutputValue}", preSetupOutputValue);
+
         PreSetupOutput? preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue, JsonExtension.SnakeCaseNamingOption);
 
         return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
