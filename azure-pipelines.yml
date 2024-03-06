@@ -16,7 +16,7 @@ jobs:
     persistCredentials: true
     fetchDepth: 0
   - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "azure"
-    name: Run Nuke PipelinePreSetup
+    displayName: Run Nuke PipelinePreSetup
     env:
       GITHUB_TOKEN: $(GITHUB_TOKEN)
   - script: echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE]$(cat ./.nuke/temp/pre_setup_has_release.txt)" && echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_release.txt)"
@@ -42,7 +42,7 @@ jobs:
     persistCredentials: true
     condition: neq(id, 'skip')
   - script: $(build_script) PipelineTest --args "$(ids_to_run)"
-    name: Run Nuke PipelineTest
+    displayName: Run Nuke PipelineTest
     condition: neq(id, 'skip')
     env:
       PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT'] ]

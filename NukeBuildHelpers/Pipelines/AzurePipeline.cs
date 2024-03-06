@@ -322,7 +322,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             script += $" --args \"{args}\"";
         }
-        return AddJobStep(job, name: $"Run Nuke {targetName}", script: script, condition: condition);
+        return AddJobStep(job, displayName: $"Run Nuke {targetName}", script: script, condition: condition);
     }
 
     private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunsOnType runsOnType, string targetName, string args = "", string condition = "")
