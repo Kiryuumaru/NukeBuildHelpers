@@ -20,3 +20,8 @@ jobs:
       path: ~/.nuget/packages
       key: '"ubuntu-22.04-nuget-"'
       restore-keys: '"ubuntu-22.04-nuget-"'
+  - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
+    name: setup
+    displayName: Run Nuke PipelinePreSetup
+    variables:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
