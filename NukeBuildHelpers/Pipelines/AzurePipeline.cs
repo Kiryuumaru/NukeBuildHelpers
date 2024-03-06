@@ -174,7 +174,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
-        AddJobEnvVar(preSetupJob, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
+        AddJobEnvVar(preSetupJob, "GITHUB_TOKEN", "$(GITHUB_PAT)");
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "azure");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
