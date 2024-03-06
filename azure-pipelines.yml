@@ -48,6 +48,6 @@ jobs:
   dependsOn:
   - pre_setup
   variables:
-    PRE_SETUP_OUTPUT: $(dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'])
+    PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
   strategy:
     matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX.PRE_SETUP_OUTPUT_TEST_MATRIX'] ]
