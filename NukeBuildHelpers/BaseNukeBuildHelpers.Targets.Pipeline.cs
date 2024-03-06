@@ -111,7 +111,7 @@ partial class BaseNukeBuildHelpers
                     lastBuildId = maxBuildId > lastBuildId ? maxBuildId : lastBuildId;
                 }
 
-                if (allVersions.GroupKeySorted.Count != 0 && pipelineInfo.TriggerType == TriggerType.Tag)
+                if (allVersions.GroupKeySorted.Count != 0)
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {
@@ -136,7 +136,6 @@ partial class BaseNukeBuildHelpers
                         }
                         if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != allVersions.VersionGrouped[groupKey].Last())
                         {
-                            toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
                             var allVersionLastId = allVersions.LatestBuildIds[groupKey];
                             if (targetBuildId == 0)
                             {
@@ -145,13 +144,19 @@ partial class BaseNukeBuildHelpers
                             else
                             {
                                 targetBuildId = allVersionLastId < targetBuildId ? allVersionLastId : targetBuildId;
-
                             }
-                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
+                            if (pipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
+                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
+                            }
                         }
                         else
                         {
-                            Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
+                            if (pipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
+                            }
                         }
                     }
                 }
