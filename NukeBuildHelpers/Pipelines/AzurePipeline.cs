@@ -212,14 +212,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         Log.Information("Workflow built at " + workflowPath.ToString());
     }
 
-    private static object GetRunsOn(RunsOnType runsOnType)
+    private static string GetRunsOn(RunsOnType runsOnType)
     {
         return runsOnType switch
         {
-            RunsOnType.WindowsLatest => new { vmImage = "windows-latest" },
-            RunsOnType.Windows2022 => new { vmImage = "windows-2022" },
-            RunsOnType.UbuntuLatest => new { vmImage = "ubuntu-latest" },
-            RunsOnType.Ubuntu2204 => new { vmImage = "ubuntu-22.04" },
+            RunsOnType.WindowsLatest => "windows-latest",
+            RunsOnType.Windows2022 => "windows-2022",
+            RunsOnType.UbuntuLatest => "ubuntu-latest",
+            RunsOnType.Ubuntu2204 => "ubuntu-22.04",
             _ => throw new NotImplementedException()
         };
     }
@@ -257,7 +257,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             ["job"] = id,
             ["displayName"] = name,
-            ["pool"] = runsOn,
+            ["pool"] = new Dictionary<string, object>
+            {
+                { "vmImage", runsOn }
+            },
             ["steps"] = new List<object>()
         };
         if (needs != null && needs.Any())
@@ -274,7 +277,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string _if = "")
     {
-        return AddJob(workflow, id, name, GetRunsOn(buildsOnType), needs, _if);
+        return AddJob(workflow, id, name, new Dictionary<string, object>() { { "vmImage", GetRunsOn(buildsOnType) } }, needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string name = "", string displayName = "", string task = "", string script = "", string condition = "")

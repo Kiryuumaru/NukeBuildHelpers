@@ -10,7 +10,8 @@ jobs:
 - job: pre_setup
   displayName: Pre Setup
   pool:
-    vmImage: ubuntu-22.04
+    vmImage:
+      vmImage: ubuntu-22.04
   steps:
   - checkout: self
     persistCredentials: true
@@ -36,7 +37,8 @@ jobs:
     displayName: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
 - job: test
   displayName: Test - $(name)
-  pool: $(runs_on)
+  pool:
+    vmImage: $(runs_on)
   steps:
   - checkout: self
     persistCredentials: true
