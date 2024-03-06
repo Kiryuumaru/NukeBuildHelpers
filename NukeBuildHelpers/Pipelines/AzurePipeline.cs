@@ -209,7 +209,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVarFromSecretMap(buildJob, appEntrySecretMap);
         AddJobStepCheckout(buildJob);
         AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)");
-        var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", task: "PublishPipelineArtifact@1");
+        var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1");
         AddJobStepInputs(uploadBuildStep, "artifactName", "$(id)");
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output/*");
 

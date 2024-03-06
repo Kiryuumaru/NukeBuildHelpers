@@ -61,7 +61,7 @@ jobs:
   - script: $(build_script) PipelineBuild --args "$(ids_to_run)"
     displayName: Run Nuke PipelineBuild
   - task: PublishPipelineArtifact@1
-    name: Upload artifacts
+    displayName: Upload artifacts
     inputs:
       artifactName: $(id)
       targetPath: ./.nuke/temp/output/*
