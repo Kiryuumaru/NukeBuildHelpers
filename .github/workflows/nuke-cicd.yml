@@ -20,6 +20,10 @@ jobs:
       with:
         fetch-depth: 0
     - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ubuntu-22.04-nuget-pre_setup-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ubuntu-22.04-nuget-pre_setup-
     - id: setup
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
@@ -40,10 +44,6 @@ jobs:
     - id: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       name: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
       run: echo "PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
-    with:
-      path: ~/.nuget/packages
-      key: ubuntu-22.04-nuget-pre_setup-${{ hashFiles('**/*.csproj') }}
-      restore-keys: ubuntu-22.04-nuget-pre_setup-
     outputs:
       PRE_SETUP_HAS_RELEASE: ${{ steps.PRE_SETUP_HAS_RELEASE.outputs.PRE_SETUP_HAS_RELEASE }}
       PRE_SETUP_OUTPUT: ${{ steps.PRE_SETUP_OUTPUT.outputs.PRE_SETUP_OUTPUT }}
@@ -57,6 +57,10 @@ jobs:
     - uses: actions/checkout@v4
       if: ${{ matrix.id != 'skip' }}
     - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ matrix.runs_on }}-nuget-test-
     - name: Run Nuke PipelineTest
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
@@ -67,16 +71,16 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}
-    with:
-      path: ~/.nuget/packages
-      key: ${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}
-      restore-keys: ${{ matrix.runs_on }}-nuget-test-
   build:
     name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ matrix.runs_on }}-nuget-build-
     - name: Run Nuke PipelineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
       env:
@@ -97,16 +101,16 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
-    with:
-      path: ~/.nuget/packages
-      key: ${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}
-      restore-keys: ${{ matrix.runs_on }}-nuget-build-
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ matrix.runs_on }}-nuget-publish-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ matrix.runs_on }}-nuget-publish-
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
@@ -130,10 +134,6 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
-    with:
-      path: ~/.nuget/packages
-      key: ${{ matrix.runs_on }}-nuget-publish-${{ hashFiles('**/*.csproj') }}
-      restore-keys: ${{ matrix.runs_on }}-nuget-publish-
     outputs:
       PUBLISH_OUTPUT_SUCCESS: ${{ steps.PUBLISH_OUTPUT_SUCCESS.outputs.PUBLISH_OUTPUT_SUCCESS }}
   post_setup:
@@ -142,6 +142,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ubuntu-22.04-nuget-post_setup-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ubuntu-22.04-nuget-post_setup-
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
@@ -158,7 +162,3 @@ jobs:
     - build
     - publish
     if: success() || failure() || always()
-    with:
-      path: ~/.nuget/packages
-      key: ubuntu-22.04-nuget-post_setup-${{ hashFiles('**/*.csproj') }}
-      restore-keys: ubuntu-22.04-nuget-post_setup-
