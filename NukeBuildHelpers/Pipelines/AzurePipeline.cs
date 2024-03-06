@@ -174,9 +174,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
+        AddJobEnvVar(preSetupJob, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "azure");
-        AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
@@ -191,11 +191,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         if (appTestEntries.Count > 0)
         {
             var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs]);
+            AddJobEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup");
+            AddJobEnvVarFromSecretMap(testJob, appTestEntrySecretMap);
             AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
             var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
-            AddStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup");
-            AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
             needs.Add("test");
         }
@@ -348,28 +348,28 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)withValue)[name] = value;
     }
 
-    private static void AddStepEnvVar(Dictionary<string, object> jobOrStep, string envVarName, string envVarValue)
+    private static void AddJobEnvVar(Dictionary<string, object> job, string envVarName, string envVarValue)
     {
-        if (!jobOrStep.TryGetValue("env", out object? value))
+        if (!job.TryGetValue("variables", out object? value))
         {
             value = new Dictionary<string, object>();
-            jobOrStep["env"] = value;
+            job["variables"] = value;
         }
         ((Dictionary<string, object>)value)[envVarName] = envVarValue;
     }
 
-    private static void AddStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId)
+    private static void AddJobEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId)
     {
-        AddStepEnvVar(jobOrStep, envVarName, $"$(dependencies.{needsId}.outputs['{envVarName}.{envVarName}'])");
+        AddJobEnvVar(jobOrStep, envVarName, $"$(dependencies.{needsId}.outputs['{envVarName}.{envVarName}'])");
     }
 
-    private static void AddStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
+    private static void AddJobEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
     {
         foreach (var map in secretMap)
         {
             foreach (var secrets in map.Value.SecretHelpers)
             {
-                AddStepEnvVar(jobOrStep, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
+                AddJobEnvVar(jobOrStep, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
             }
         }
     }

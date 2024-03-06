@@ -17,8 +17,6 @@ jobs:
     fetchDepth: 0
   - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "azure"
     displayName: Run Nuke PipelinePreSetup
-    env:
-      GITHUB_TOKEN: $(GITHUB_TOKEN)
   - script: echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE]$(cat ./.nuke/temp/pre_setup_has_release.txt)" && echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_release.txt)"
     name: PRE_SETUP_HAS_RELEASE
     displayName: Output PRE_SETUP_HAS_RELEASE
@@ -34,6 +32,8 @@ jobs:
   - script: echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" && echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)"
     name: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
     displayName: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
+  variables:
+    GITHUB_TOKEN: $(GITHUB_TOKEN)
 - job: test
   displayName: Test
   pool:
@@ -45,9 +45,9 @@ jobs:
   - script: $(build_script) PipelineTest --args "$(ids_to_run)"
     displayName: Run Nuke PipelineTest
     condition: ne(variables['id'], 'skip')
-    env:
-      PRE_SETUP_OUTPUT: $(dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'])
   dependsOn:
   - pre_setup
+  variables:
+    PRE_SETUP_OUTPUT: $(dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'])
   strategy:
     matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX.PRE_SETUP_OUTPUT_TEST_MATRIX'] ]
