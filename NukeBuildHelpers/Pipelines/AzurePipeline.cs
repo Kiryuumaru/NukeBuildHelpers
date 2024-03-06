@@ -174,7 +174,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        AddJobStepNugetCache(preSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204), "pre_setup");
+        AddJobStepNukeBuildCache(preSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204));
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
@@ -291,7 +291,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)withValue)[name] = value;
     }
 
-    private static Dictionary<string, object> AddJobStepNugetCache(Dictionary<string, object> job, string keyRoot, string keyName, string condition = "")
+    private static Dictionary<string, object> AddJobStepNukeBuildCache(Dictionary<string, object> job, string keyRoot, string condition = "")
     {
         Dictionary<string, object> step = AddJobStep(job, task: "Cache@2");
         if (!string.IsNullOrEmpty(condition))
@@ -299,8 +299,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             step["condition"] = condition;
         }
         AddJobStepInputs(step, "path", "~/.nuget/packages");
-        AddJobStepInputs(step, "key", $"{keyRoot}-nuget-{keyName}-${{{{ hashFiles('**/*.csproj') }}}}");
-        AddJobStepInputs(step, "restore-keys", $"{keyRoot}-nuget-{keyName}-");
+        AddJobStepInputs(step, "key", $"{keyRoot}-nuget-");
+        AddJobStepInputs(step, "restore-keys", $"{keyRoot}-nuget-");
         return step;
     }
 }
