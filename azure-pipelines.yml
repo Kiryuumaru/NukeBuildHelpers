@@ -68,7 +68,7 @@ jobs:
   dependsOn:
   - pre_setup
   - test
-  condition: eq([ dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'] ], 'true')
+  condition: eq(dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'], 'true')
   strategy:
     matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_BUILD_MATRIX.PRE_SETUP_OUTPUT_BUILD_MATRIX'] ]
   variables:

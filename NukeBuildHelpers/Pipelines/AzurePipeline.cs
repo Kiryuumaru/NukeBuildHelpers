@@ -203,7 +203,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
-        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "eq([ dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'] ], 'true')");
+        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "eq(dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'], 'true')");
         AddJobMatrixIncludeFromPreSetup(buildJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobEnvVarFromSecretMap(buildJob, appEntrySecretMap);
