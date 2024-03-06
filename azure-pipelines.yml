@@ -15,7 +15,7 @@ jobs:
   - checkout: self
     persistCredentials: true
     fetchDepth: 0
-  - task: Cache@3
+  - task: Cache@2
     inputs:
       path: ~/.nuget/packages
       key: ubuntu-22.04-nuget-
