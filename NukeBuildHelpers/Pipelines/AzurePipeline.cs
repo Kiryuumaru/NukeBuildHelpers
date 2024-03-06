@@ -281,6 +281,23 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
+    private static Dictionary<string, object> AddJobStepCache(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
+    {
+        Dictionary<string, object> step = [];
+        ((List<object>)job["steps"]).Add(step);
+        step["checkout"] = "self";
+        step["persistCredentials"] = "true";
+        if (!string.IsNullOrEmpty(condition))
+        {
+            step["condition"] = condition;
+        }
+        if (fetchDepth != null)
+        {
+            step["fetchDepth"] = fetchDepth.Value.ToString();
+        }
+        return step;
+    }
+
     private static void AddJobStepInputs(Dictionary<string, object> step, string name, string value)
     {
         if (!step.TryGetValue("inputs", out object? withValue))
