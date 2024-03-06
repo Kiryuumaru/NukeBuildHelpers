@@ -75,9 +75,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void Prepare(List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
     {
-        var outputTestMatrix = new List<PreSetupOutputAppTestEntryMatrix>();
-        var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
-        var outputPublishMatrix = new List<PreSetupOutputAppEntryMatrix>();
+        var outputTestMatrix = new Dictionary<string, PreSetupOutputAppTestEntryMatrix>();
+        var outputBuildMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
+        var outputPublishMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
         foreach (var appTestEntry in appTestEntries)
         {
             var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
@@ -92,7 +92,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     BuildScript = GetBuildScript(appTestEntry.RunsOn),
                     IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
                 };
-                outputTestMatrix.Add(preSetupOutputMatrix);
+                outputTestMatrix.Add(appTestEntry.Id, preSetupOutputMatrix);
             }
         }
         if (outputTestMatrix.Count == 0 && appTestEntries.Count != 0)
@@ -105,14 +105,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 BuildScript = "",
                 IdsToRun = ""
             };
-            outputTestMatrix.Add(preSetupOutputMatrix);
+            outputTestMatrix.Add("skip", preSetupOutputMatrix);
         }
         foreach (var (Entry, Tests) in appEntryConfigs.Values)
         {
             var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);
             if (release.AppEntry != null)
             {
-                outputBuildMatrix.Add(new()
+                outputBuildMatrix.Add(Entry.Id, new()
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
@@ -121,7 +121,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     IdsToRun = Entry.Id,
                     Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
                 });
-                outputPublishMatrix.Add(new()
+                outputPublishMatrix.Add(Entry.Id, new()
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
