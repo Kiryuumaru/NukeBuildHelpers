@@ -175,7 +175,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         AddJobStepNukeBuildCache(preSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204));
-        var nukePreSetupStep = AddJobStep(preSetupJob, name: "setup", displayName: "Run Nuke PipelinePreSetup", script: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
+        var nukePreSetupStep = AddJobStep(preSetupJob, name: "setup", displayName: "Run Nuke PipelinePreSetup", script: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"azure\"");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
 
         // ██████████████████████████████████████
