@@ -46,7 +46,7 @@ jobs:
     displayName: Run Nuke PipelineTest
     condition: ne(variables['id'], 'skip')
     env:
-      PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
+      PRE_SETUP_OUTPUT: $(dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'])
   dependsOn:
   - pre_setup
   strategy:
