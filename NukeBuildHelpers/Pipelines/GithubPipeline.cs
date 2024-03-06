@@ -372,9 +372,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static Dictionary<string, object> AddJobStepNugetCache(Dictionary<string, object> job, string keyRoot, string keyName, string _if = "")
     {
         var step = AddJobStep(job, uses: "actions/cache@v4", _if: _if);
-        AddJobStepWith(job, "path", "~/.nuget/packages");
-        AddJobStepWith(job, "key", $"{keyRoot}-nuget-{keyName}-${{{{ hashFiles('**/*.csproj') }}}}");
-        AddJobStepWith(job, "restore-keys", $"{keyRoot}-nuget-{keyName}-");
+        AddJobStepWith(step, "path", "~/.nuget/packages");
+        AddJobStepWith(step, "key", $"{keyRoot}-nuget-{keyName}-${{{{ hashFiles('**/*.csproj') }}}}");
+        AddJobStepWith(step, "restore-keys", $"{keyRoot}-nuget-{keyName}-");
         return step;
     }
 
