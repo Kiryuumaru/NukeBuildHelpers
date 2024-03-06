@@ -22,13 +22,13 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 
     public static AbsolutePath OutputPath => TempPath / "output";
 
-    GitRepository Repository => (this as INukeBuildHelpers).Repository;
+    protected internal GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
-    string Args => (this as INukeBuildHelpers).Args;
+    protected internal string Args => (this as INukeBuildHelpers).Args;
 
-    Tool Git => (this as INukeBuildHelpers).Git;
+    protected internal Tool Git => (this as INukeBuildHelpers).Git;
 
-    Tool Gh => (this as INukeBuildHelpers).Gh;
+    protected internal Tool Gh => (this as INukeBuildHelpers).Gh;
 
     private IReadOnlyDictionary<string, string?>? splitArgs;
     public IReadOnlyDictionary<string, string?> SplitArgs

@@ -13,6 +13,7 @@ using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Interfaces;
 using NukeBuildHelpers.Models;
 using Octokit;
 using Semver;
@@ -26,20 +27,6 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private static PreSetupOutput GetPreSetupOutput()
-    {
-        string? preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
-
-        if (string.IsNullOrEmpty(preSetupOutputValue))
-        {
-            throw new Exception("PRE_SETUP_OUTPUT is empty");
-        }
-
-        PreSetupOutput? preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue, _jsonSnakeCaseNamingOption);
-
-        return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
-    }
-
     public Target PipelineTest => _ => _
         .Unlisted()
         .Description("To be used by pipeline")
@@ -92,22 +79,14 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetEntries<AppEntry>(), out var appEntries);
             GetOrFail(() => GetEntries<AppTestEntry>(), out var appTestEntries);
 
-            Func<PipelineInfo>? pipelineGetBranch = null;
-            Func<long>? pipelineGetBuildId = null;
-            Action<List<AppTestEntry>, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)>, List<(AppEntry AppEntry, string Env, SemVersion Version)>>? pipelinePrepare = null;
-
-            switch (Args?.ToLowerInvariant())
+            IPipeline pipeline = (Args?.ToLowerInvariant()) switch
             {
-                case "github":
-                    pipelineGetBranch = () => GithubPipelineGetBranch();
-                    pipelineGetBuildId = () => GithubPipelineGetBuildId();
-                    pipelinePrepare = (appTestEntries, appEntryConfigs, toRelease) => GithubPipelinePrepare(appTestEntries, appEntryConfigs, toRelease);
-                    break;
-                default:
-                    throw new Exception("No agent pipeline provided");
-            }
+                "github" => new GithubPipeline(this),
+                "azure" => new AzurePipeline(this),
+                _ => throw new Exception("No agent pipeline provided"),
+            };
 
-            var pipelineInfo = pipelineGetBranch();
+            var pipelineInfo = pipeline.GetPipelineInfo();
 
             Log.Information("Target branch: {branch}", pipelineInfo.Branch);
             Log.Information("Trigger type: {branch}", pipelineInfo.TriggerType);
@@ -185,7 +164,7 @@ partial class BaseNukeBuildHelpers
             });
 
             var releaseNotes = "";
-            var buildId = pipelineGetBuildId.Invoke();
+            var buildId = pipeline.GetBuildId();
             var buildTag = $"build.{buildId}";
             var lastBuildTag = $"build.{lastBuildId}";
             var isFirstRelease = lastBuildId == 0;
@@ -232,12 +211,12 @@ partial class BaseNukeBuildHelpers
                 Releases = releases
             };
 
-            File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
+            File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOption));
             File.WriteAllText(TempPath / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
 
-            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
+            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
-            pipelinePrepare?.Invoke(appTestEntries, appEntryConfigs, toRelease);
+            pipeline.Prepare(appTestEntries, appEntryConfigs, toRelease);
         });
 
     public Target PipelinePostSetup => _ => _
@@ -303,4 +282,18 @@ partial class BaseNukeBuildHelpers
                 }
             }
         });
+
+    private static PreSetupOutput GetPreSetupOutput()
+    {
+        string? preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+
+        if (string.IsNullOrEmpty(preSetupOutputValue))
+        {
+            throw new Exception("PRE_SETUP_OUTPUT is empty");
+        }
+
+        PreSetupOutput? preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue, JsonExtension.SnakeCaseNamingOption);
+
+        return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
+    }
 }

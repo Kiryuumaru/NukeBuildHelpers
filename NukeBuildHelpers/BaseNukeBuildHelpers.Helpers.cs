@@ -19,22 +19,12 @@ using NukeBuildHelpers.Attributes;
 using System.Collections.Generic;
 using Nuke.Common.Utilities;
 using System.Net.Sockets;
+using YamlDotNet.Serialization;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private static readonly JsonSerializerOptions _jsonSnakeCaseNamingOption = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-    };
-
-    private static readonly JsonSerializerOptions _jsonSnakeCaseNamingOptionIndented = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        WriteIndented = true
-    };
-
     private void SetupAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
         var appEntrySecretMap = GetEntrySecretMap<AppEntry>();
@@ -201,7 +191,7 @@ partial class BaseNukeBuildHelpers
         return Task.WhenAll(tasks);
     }
 
-    private static List<T> GetEntries<T>()
+    internal static List<T> GetEntries<T>()
         where T : BaseEntry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
@@ -218,7 +208,7 @@ partial class BaseNukeBuildHelpers
         return entry;
     }
 
-    private static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
+    internal static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
     {
         Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> configs = [];
 
@@ -292,7 +282,7 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
+    internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
         where T : BaseEntry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
@@ -432,7 +422,7 @@ partial class BaseNukeBuildHelpers
         };
     }
 
-    private static void GetOrFail<T>(Func<T> valFactory, out T valOut)
+    internal static void GetOrFail<T>(Func<T> valFactory, out T valOut)
     {
         try
         {
@@ -445,7 +435,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void GetOrFail(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, List<AppTestEntry> Tests) appEntryConfig)
+    internal static void GetOrFail(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, List<AppTestEntry> Tests) appEntryConfig)
     {
         try
         {
@@ -477,7 +467,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void GetOrFail(string? rawValue, out SemVersion valOut)
+    internal static void GetOrFail(string? rawValue, out SemVersion valOut)
     {
         try
         {

@@ -29,55 +29,6 @@ partial class BaseNukeBuildHelpers
             Git.Invoke($"fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
         });
 
-    public Target DeleteOriginTags => _ => _
-        .Unlisted()
-        .Description("Delete all origin tags, with --args \"{appid}\"")
-        .Executes(() =>
-        {
-            List<string> tagsToDelete = [];
-            if (string.IsNullOrEmpty(Args))
-            {
-                string basePeel = "refs/tags/";
-                foreach (var refs in Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false))
-                {
-                    string tag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
-                    tagsToDelete.Add(tag);
-                }
-            }
-            else
-            {
-                GetOrFail(() => SplitArgs, out var splitArgs);
-                GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
-
-                IReadOnlyCollection<Output>? lsRemote = null;
-
-                foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : [""])
-                {
-                    string appId = key;
-
-                    GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
-
-                    if (appEntry.Entry.MainRelease)
-                    {
-                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => i.ToString()));
-                    }
-                    else
-                    {
-                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => appId + "/" + i.ToString()));
-                    }
-                }
-            }
-
-            foreach (var tag in tagsToDelete)
-            {
-                Log.Information("Deleting tag {tag}...", tag);
-                Git.Invoke("push origin :refs/tags/" + tag, logInvocation: false, logOutput: false);
-            }
-
-            Log.Information("Deleting tag done");
-        });
-
     public Target Version => _ => _
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
         .Executes(() =>
@@ -263,5 +214,21 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
             await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), null);
+        });
+
+    public Target GithubWorkflow => _ => _
+        .Description("Builds the cicd workflow for github")
+        .DependsOn(Build)
+        .Executes(() =>
+        {
+            new GithubPipeline(this).BuildWorkflow();
+        });
+
+    public Target AzureWorkflow => _ => _
+        .Description("Builds the cicd workflow for azure")
+        .DependsOn(Build)
+        .Executes(() =>
+        {
+            new AzurePipeline(this).BuildWorkflow();
         });
 }
