@@ -174,6 +174,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
+        AddJobStepNugetCache(preSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204), "pre_setup");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
@@ -266,25 +267,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
     {
-        Dictionary<string, object> step = [];
-        ((List<object>)job["steps"]).Add(step);
-        step["checkout"] = "self";
-        step["persistCredentials"] = "true";
-        if (!string.IsNullOrEmpty(condition))
-        {
-            step["condition"] = condition;
-        }
-        if (fetchDepth != null)
-        {
-            step["fetchDepth"] = fetchDepth.Value.ToString();
-        }
-        return step;
-    }
-
-    private static Dictionary<string, object> AddJobStepNugetCache(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
-    {
-        Dictionary<string, object> step = [];
-        ((List<object>)job["steps"]).Add(step);
+        Dictionary<string, object> step = AddJobStep(job);
         step["checkout"] = "self";
         step["persistCredentials"] = "true";
         if (!string.IsNullOrEmpty(condition))
@@ -306,5 +289,18 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             step["inputs"] = withValue;
         }
         ((Dictionary<string, object>)withValue)[name] = value;
+    }
+
+    private static Dictionary<string, object> AddJobStepNugetCache(Dictionary<string, object> job, string keyRoot, string keyName, string condition = "")
+    {
+        Dictionary<string, object> step = AddJobStep(job, task: "Cache@2");
+        if (!string.IsNullOrEmpty(condition))
+        {
+            step["condition"] = condition;
+        }
+        AddJobStepInputs(step, "path", "~/.nuget/packages");
+        AddJobStepInputs(step, "key", $"{keyRoot}-nuget-{keyName}-${{{{ hashFiles('**/*.csproj') }}}}");
+        AddJobStepInputs(step, "restore-keys", $"{keyRoot}-nuget-{keyName}-");
+        return step;
     }
 }

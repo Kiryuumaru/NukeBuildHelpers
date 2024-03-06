@@ -15,3 +15,8 @@ jobs:
   - checkout: self
     persistCredentials: true
     fetchDepth: 0
+  - task: Cache@2
+    inputs:
+      path: ~/.nuget/packages
+      key: ubuntu-22.04-nuget-pre_setup-${{ hashFiles('**/*.csproj') }}
+      restore-keys: ubuntu-22.04-nuget-pre_setup-
