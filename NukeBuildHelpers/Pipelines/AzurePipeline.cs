@@ -210,8 +210,24 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(buildJob);
         AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)");
         var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1");
-        AddJobStepInputs(uploadBuildStep, "artifactName", "$(id)");
+        AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output/*");
+
+        needs.Add("build");
+
+        // ██████████████████████████████████████
+        // ██████████████ Publish ███████████████
+        // ██████████████████████████████████████
+        var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "eq(dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'], 'true')");
+        AddJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup");
+        AddJobEnvVarFromSecretMap(publishJob, appEntrySecretMap);
+        AddJobMatrixIncludeFromPreSetup(publishJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
+        AddJobStepCheckout(publishJob);
+        var downloadBuildStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
+        AddJobStepInputs(downloadBuildStep, "artifact", "$(id)");
+        AddJobStepInputs(downloadBuildStep, "path", "./.nuke/temp/output");
+        AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
+        AddJobOutputFromFile(publishJob, "PUBLISH_OUTPUT_SUCCESS", "./.nuke/temp/publish_success.txt");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
@@ -288,9 +304,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return job;
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string _if = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string condition = "")
     {
-        return AddJob(workflow, id, name, GetRunsOn(buildsOnType), needs, _if);
+        return AddJob(workflow, id, name, GetRunsOn(buildsOnType), needs, condition);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string name = "", string displayName = "", string task = "", string script = "", string condition = "")
