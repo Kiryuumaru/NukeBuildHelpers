@@ -35,4 +35,20 @@
     <None Remove="..\.github\workflows\nuke-cicd.yml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="..\.github\workflows\nuke-cicd.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="..\.github\workflows\nuke-cicd.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="..\.github\workflows\nuke-cicd.yml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="..\.github\workflows\nuke-cicd.yml" />
+  </ItemGroup>
+
 </Project>

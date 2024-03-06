@@ -281,7 +281,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static Dictionary<string, object> AddJobStepCache(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
+    private static Dictionary<string, object> AddJobStepNugetCache(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
     {
         Dictionary<string, object> step = [];
         ((List<object>)job["steps"]).Add(step);
