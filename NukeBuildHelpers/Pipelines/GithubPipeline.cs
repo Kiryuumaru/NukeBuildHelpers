@@ -29,11 +29,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
     public BaseNukeBuildHelpers NukeBuild { get; set; } = nukeBuild;
 
-    public long GetBuildId()
-    {
-        return GitHubActions.Instance.RunNumber;
-    }
-
     public PipelineInfo GetPipelineInfo()
     {
         TriggerType triggerType = TriggerType.Commit;

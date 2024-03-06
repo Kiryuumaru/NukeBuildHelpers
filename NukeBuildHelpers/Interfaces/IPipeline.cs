@@ -17,8 +17,6 @@ internal interface IPipeline
 {
     BaseNukeBuildHelpers NukeBuild { get; set; }
 
-    long GetBuildId();
-
     PipelineInfo GetPipelineInfo();
 
     void Prepare(List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease);
