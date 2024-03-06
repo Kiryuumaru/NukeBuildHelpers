@@ -24,4 +24,4 @@ jobs:
     name: setup
     displayName: Run Nuke PipelinePreSetup
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
