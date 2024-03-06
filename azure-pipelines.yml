@@ -51,3 +51,27 @@ jobs:
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
   strategy:
     matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX.PRE_SETUP_OUTPUT_TEST_MATRIX'] ]
+- job: build
+  displayName: Build
+  pool:
+    vmImage: $(runs_on)
+  steps:
+  - checkout: self
+    persistCredentials: true
+  - script: $(build_script) PipelineBuild --args "$(ids_to_run)"
+    displayName: Run Nuke PipelineBuild
+  - task: PublishPipelineArtifact@1
+    name: Upload artifacts
+    inputs:
+      artifactName: $(id)
+      targetPath: ./.nuke/temp/output/*
+  dependsOn:
+  - pre_setup
+  - test
+  condition: eq([ dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'] ], 'true')
+  strategy:
+    matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_BUILD_MATRIX.PRE_SETUP_OUTPUT_BUILD_MATRIX'] ]
+  variables:
+    PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
+    NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
+    GITHUB_TOKEN: $(GITHUB_TOKEN)

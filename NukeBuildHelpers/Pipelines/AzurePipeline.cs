@@ -201,6 +201,19 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
 
         // ██████████████████████████████████████
+        // ███████████████ Build ████████████████
+        // ██████████████████████████████████████
+        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "eq([ dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'] ], 'true')");
+        AddJobMatrixIncludeFromPreSetup(buildJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX");
+        AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup");
+        AddJobEnvVarFromSecretMap(buildJob, appEntrySecretMap);
+        AddJobStepCheckout(buildJob);
+        AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)");
+        var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", task: "PublishPipelineArtifact@1");
+        AddJobStepInputs(uploadBuildStep, "artifactName", "$(id)");
+        AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output/*");
+
+        // ██████████████████████████████████████
         // ███████████████ Write ████████████████
         // ██████████████████████████████████████
         var workflowDirPath = Nuke.Common.NukeBuild.RootDirectory;
@@ -251,7 +264,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixInclude(job, $"$[ dependencies.pre_setup.outputs['{outputName}.{outputName}'] ]");
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string>? needs = null, string _if = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string>? needs = null, string condition = "")
     {
         Dictionary<string, object> job = new()
         {
@@ -267,9 +280,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             job["dependsOn"] = needs;
         }
-        if (!string.IsNullOrEmpty(_if))
+        if (!string.IsNullOrEmpty(condition))
         {
-            job["if"] = _if;
+            job["condition"] = condition;
         }
         ((List<object>)workflow["jobs"]).Add(job);
         return job;
