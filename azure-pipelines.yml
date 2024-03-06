@@ -35,7 +35,7 @@ jobs:
     name: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
     displayName: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
 - job: test
-  displayName: Test - $(name)
+  displayName: Test
   pool:
     vmImage: $(runs_on)
   steps:
@@ -44,7 +44,7 @@ jobs:
     condition: neq(id, 'skip')
   - script: $(build_script) PipelineTest --args "$(ids_to_run)"
     displayName: Run Nuke PipelineTest
-    condition: neq(id, 'skip')
+    condition: ne(id, 'skip')
     env:
       PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
   dependsOn:

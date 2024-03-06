@@ -190,10 +190,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         if (appTestEntries.Count > 0)
         {
-            var testJob = AddJob(workflow, "test", "Test - $(name)", "$(runs_on)", needs: [.. needs]);
+            var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs]);
             AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, condition: "neq(id, 'skip')");
-            var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "neq(id, 'skip')");
+            var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(id, 'skip')");
             AddStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup");
             AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
