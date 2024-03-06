@@ -17,7 +17,7 @@ jobs:
     fetchDepth: 0
   - task: Cache@2
     inputs:
-      path: $(NUGET_PACKAGES)
+      path: $(Pipeline.Workspace)/.nuget/packages
       key: '"ubuntu-22.04" | "nuget" | ./build/packages.lock.json'
       restore-keys: '"ubuntu-22.04" | "nuget"'
   - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "azure"
