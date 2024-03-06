@@ -9,6 +9,7 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using Nuke.Utilities.Text.Yaml;
+using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Interfaces;
@@ -87,8 +88,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = appTestEntry.Id,
                     Name = appTestEntry.Name,
-                    RunsOn = GetRunsOnGithub(appTestEntry.RunsOn),
-                    BuildScript = GetBuildScriptGithub(appTestEntry.RunsOn),
+                    RunsOn = GetRunsOn(appTestEntry.RunsOn),
+                    BuildScript = GetBuildScript(appTestEntry.RunsOn),
                     IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
                 };
                 outputTestMatrix.Add(preSetupOutputMatrix);
@@ -100,7 +101,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 Id = "skip",
                 Name = "Skip",
-                RunsOn = GetRunsOnGithub(RunsOnType.Ubuntu2204),
+                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = ""
             };
@@ -115,8 +116,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
-                    RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
-                    BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
+                    RunsOn = GetRunsOn(Entry.BuildRunsOn),
+                    BuildScript = GetBuildScript(Entry.BuildRunsOn),
                     IdsToRun = Entry.Id,
                     Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
                 });
@@ -124,8 +125,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
-                    RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
-                    BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
+                    RunsOn = GetRunsOn(Entry.PublishRunsOn),
+                    BuildScript = GetBuildScript(Entry.PublishRunsOn),
                     IdsToRun = Entry.Id,
                     Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
                 });
@@ -167,20 +168,37 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             ["jobs"] = new List<object>()
         };
 
-        List<string> needs = ["pre_setup"];
+        List<string> needs = [];
 
         // ██████████████████████████████████████
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        var nukePreSetupStep = AddJobStep(preSetupJob, name: "setup", displayName: "Run Nuke PipelinePreSetup", script: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"azure\"");
+        var nukePreSetupStep = AddJobStep(preSetupJob, name: "setup", displayName: "Run Nuke PipelinePreSetup", script: $"{GetBuildScript(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"azure\"");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX", "./.nuke/temp/pre_setup_output_build_matrix.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "./.nuke/temp/pre_setup_output_publish_matrix.json");
+
+        needs.Add("pre_setup");
+
+        // ██████████████████████████████████████
+        // ████████████████ Test ████████████████
+        // ██████████████████████████████████████
+        if (appTestEntries.Count > 0)
+        {
+            var testJob = AddJob(workflow, "test", "Test - $(name)", "$(runs_on)", needs: [.. needs]);
+            AddJobMatrixInclude(testJob, "$[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX'] ]");
+            AddJobStepCheckout(testJob, condition: "${{ matrix.id != 'skip' }}");
+            var nukeTestStep = AddJobStep(testJob, name: "Run Nuke PipelineTest", script: "$(build_script) PipelineTest --args \"$(ids_to_run)\"", condition: "neq(id, 'skip')");
+            AddStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup");
+            AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
+
+            needs.Add("test");
+        }
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
@@ -194,7 +212,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         Log.Information("Workflow built at " + workflowPath.ToString());
     }
 
-    private static string GetRunsOnGithub(RunsOnType runsOnType)
+    private static string GetRunsOn(RunsOnType runsOnType)
     {
         return runsOnType switch
         {
@@ -206,7 +224,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    private static string GetBuildScriptGithub(RunsOnType runsOnType)
+    private static string GetBuildScript(RunsOnType runsOnType)
     {
         return runsOnType switch
         {
@@ -216,6 +234,16 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             RunsOnType.Ubuntu2204 => "chmod +x ./build.sh && ./build.sh",
             _ => throw new NotImplementedException()
         };
+    }
+
+    private static void AddJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)
+    {
+        if (!job.TryGetValue("strategy", out object? value))
+        {
+            value = new Dictionary<string, object>();
+            job["strategy"] = value;
+        }
+        ((Dictionary<string, object>)value)["matrix"] = matrixInclude;
     }
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, object runsOn, IEnumerable<string>? needs = null, string _if = "")
@@ -229,7 +257,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
         if (needs != null && needs.Any())
         {
-            job["needs"] = needs;
+            job["dependsOn"] = needs;
         }
         if (!string.IsNullOrEmpty(_if))
         {
@@ -241,7 +269,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string _if = "")
     {
-        return AddJob(workflow, id, name, new Dictionary<string, string>() { { "vmImage", GetRunsOnGithub(buildsOnType) } }, needs, _if);
+        return AddJob(workflow, id, name, new Dictionary<string, string>() { { "vmImage", GetRunsOn(buildsOnType) } }, needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string name = "", string displayName = "", string task = "", string script = "", string condition = "")
@@ -307,9 +335,20 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)value)[envVarName] = envVarValue;
     }
 
-    private static void AddStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId, string outputName)
+    private static void AddStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId)
     {
-        AddStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
+        AddStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{envVarName} }}}}");
+    }
+
+    private static void AddStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
+    {
+        foreach (var map in secretMap)
+        {
+            foreach (var secrets in map.Value.SecretHelpers)
+            {
+                AddStepEnvVar(jobOrStep, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
+            }
+        }
     }
 
     private static void AddJobOutputFromFile(Dictionary<string, object> job, string envVarName, string filename)

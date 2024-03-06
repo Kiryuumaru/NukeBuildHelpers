@@ -35,3 +35,19 @@ jobs:
   - script: echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" && echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)"
     name: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
     displayName: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
+- job: test
+  displayName: Test - $(name)
+  pool: $(runs_on)
+  steps:
+  - checkout: self
+    persistCredentials: true
+    condition: ${{ matrix.id != 'skip' }}
+  - script: $(build_script) PipelineTest --args "$(ids_to_run)"
+    name: Run Nuke PipelineTest
+    condition: neq(id, 'skip')
+    env:
+      PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
+  dependsOn:
+  - pre_setup
+  strategy:
+    matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX'] ]

@@ -81,8 +81,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = appTestEntry.Id,
                     Name = appTestEntry.Name,
-                    RunsOn = GetRunsOnGithub(appTestEntry.RunsOn),
-                    BuildScript = GetBuildScriptGithub(appTestEntry.RunsOn),
+                    RunsOn = GetRunsOn(appTestEntry.RunsOn),
+                    BuildScript = GetBuildScript(appTestEntry.RunsOn),
                     IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
                 };
                 outputTestMatrix.Add(preSetupOutputMatrix);
@@ -94,7 +94,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 Id = "skip",
                 Name = "Skip",
-                RunsOn = GetRunsOnGithub(RunsOnType.Ubuntu2204),
+                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = ""
             };
@@ -109,8 +109,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
-                    RunsOn = GetRunsOnGithub(Entry.BuildRunsOn),
-                    BuildScript = GetBuildScriptGithub(Entry.BuildRunsOn),
+                    RunsOn = GetRunsOn(Entry.BuildRunsOn),
+                    BuildScript = GetBuildScript(Entry.BuildRunsOn),
                     IdsToRun = Entry.Id,
                     Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
                 });
@@ -118,8 +118,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
-                    RunsOn = GetRunsOnGithub(Entry.PublishRunsOn),
-                    BuildScript = GetBuildScriptGithub(Entry.PublishRunsOn),
+                    RunsOn = GetRunsOn(Entry.PublishRunsOn),
+                    BuildScript = GetBuildScript(Entry.PublishRunsOn),
                     IdsToRun = Entry.Id,
                     Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
                 });
@@ -167,21 +167,23 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             ["jobs"] = new Dictionary<string, object>()
         };
 
-        List<string> needs = ["pre_setup"];
+        List<string> needs = [];
 
         // ██████████████████████████████████████
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        AddJobStepNukeBuildCache(preSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204));
-        var nukePreSetupStep = AddJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
+        AddJobStepNukeBuildCache(preSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
+        var nukePreSetupStep = AddJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScript(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
         AddJobOrStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX", "./.nuke/temp/pre_setup_output_build_matrix.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "./.nuke/temp/pre_setup_output_publish_matrix.json");
+
+        needs.Add("pre_setup");
 
         // ██████████████████████████████████████
         // ████████████████ Test ████████████████
@@ -240,10 +242,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], _if: "success() || failure() || always()");
         AddJobStepCheckout(postSetupJob);
-        AddJobStepNukeBuildCache(postSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204));
+        AddJobStepNukeBuildCache(postSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
-        var nukePostSetupStep = AddJobStep(postSetupJob, name: "Run Nuke PipelinePostSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePostSetup");
+        var nukePostSetupStep = AddJobStep(postSetupJob, name: "Run Nuke PipelinePostSetup", run: $"{GetBuildScript(RunsOnType.Ubuntu2204)} PipelinePostSetup");
         AddJobOrStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PUBLISH_OUTPUT_SUCCESS", "publish");
@@ -260,7 +262,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         Log.Information("Workflow built at " + workflowPath.ToString());
     }
 
-    private static string GetRunsOnGithub(RunsOnType runsOnType)
+    private static string GetRunsOn(RunsOnType runsOnType)
     {
         return runsOnType switch
         {
@@ -272,7 +274,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    private static string GetBuildScriptGithub(RunsOnType runsOnType)
+    private static string GetBuildScript(RunsOnType runsOnType)
     {
         return runsOnType switch
         {
@@ -306,7 +308,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string _if = "")
     {
-        return AddJob(workflow, id, name, GetRunsOnGithub(buildsOnType), needs, _if);
+        return AddJob(workflow, id, name, GetRunsOn(buildsOnType), needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "", string _if = "")
