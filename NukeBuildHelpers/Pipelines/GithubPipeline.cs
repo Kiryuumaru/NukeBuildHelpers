@@ -175,7 +175,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         AddJobStepNukeBuildCache(preSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
-        var nukePreSetupStep = AddJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScript(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
+        var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "github");
         AddJobOrStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
@@ -194,7 +194,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
             AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
             AddJobStepNukeBuildCache(testJob, "${{ matrix.runs_on }}", _if: "${{ matrix.id != 'skip' }}");
-            var nukeTestStep = AddJobStep(testJob, name: "Run Nuke PipelineTest", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"", _if: "${{ matrix.id != 'skip' }}");
+            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", "${{ matrix.id != 'skip' }}");
             AddJobOrStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup");
             AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
@@ -208,7 +208,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
         AddJobStepCheckout(buildJob);
         AddJobStepNukeBuildCache(buildJob, "${{ matrix.runs_on }}");
-        var nukeBuildStep = AddJobStep(buildJob, name: "Run Nuke PipelineBuild", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
+        var nukeBuildStep = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}");
         AddJobOrStepEnvVarFromNeeds(nukeBuildStep, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobOrStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
@@ -230,7 +230,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
         AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
         AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
-        var nukePublishStep = AddJobStep(publishJob, name: "Run Nuke PipelinePublish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
+        var nukePublishStep = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}");
         AddJobOrStepEnvVarFromNeeds(nukePublishStep, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobOrStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobOutputFromFile(publishJob, "PUBLISH_OUTPUT_SUCCESS", "./.nuke/temp/publish_success.txt");
@@ -245,7 +245,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepNukeBuildCache(postSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
-        var nukePostSetupStep = AddJobStep(postSetupJob, name: "Run Nuke PipelinePostSetup", run: $"{GetBuildScript(RunsOnType.Ubuntu2204)} PipelinePostSetup");
+        var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, RunsOnType.Ubuntu2204, "PipelinePostSetup", "${{ matrix.ids_to_run }}");
         AddJobOrStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PUBLISH_OUTPUT_SUCCESS", "publish");
@@ -346,6 +346,21 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepWith(step, "fetch-depth", fetchDepth.Value.ToString());
         }
         return step;
+    }
+
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string args = "", string _if = "")
+    {
+        var script = $"{buildScript} {targetName}";
+        if (!string.IsNullOrEmpty(args))
+        {
+            script += $" --args \"{args}\"";
+        }
+        return AddJobStep(job, name: $"Run Nuke {targetName}", run: script, _if: _if);
+    }
+
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunsOnType runsOnType, string targetName, string args = "", string _if = "")
+    {
+        return AddJobStepNukeRun(job, GetBuildScript(runsOnType), targetName, args, _if);
     }
 
     private static Dictionary<string, object> AddJobStepNukeBuildCache(Dictionary<string, object> job, string keyRoot, string _if = "")

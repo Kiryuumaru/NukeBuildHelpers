@@ -175,7 +175,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        var nukePreSetupStep = AddJobStep(preSetupJob, name: "setup", displayName: "Run Nuke PipelinePreSetup", script: $"{GetBuildScript(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"azure\"");
+        var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "azure");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
@@ -193,7 +193,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var testJob = AddJob(workflow, "test", "Test - $(name)", "$(runs_on)", needs: [.. needs]);
             AddJobMatrixInclude(testJob, "$[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_TEST_MATRIX'] ]");
             AddJobStepCheckout(testJob, condition: "neq(id, 'skip')");
-            var nukeTestStep = AddJobStep(testJob, displayName: "Run Nuke PipelineTest", script: "$(build_script) PipelineTest --args \"$(ids_to_run)\"", condition: "neq(id, 'skip')");
+            var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "neq(id, 'skip')");
             AddStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup");
             AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
@@ -313,6 +313,21 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             step["fetchDepth"] = fetchDepth.Value.ToString();
         }
         return step;
+    }
+
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string args = "", string condition = "")
+    {
+        var script = $"{buildScript} {targetName}";
+        if (!string.IsNullOrEmpty(args))
+        {
+            script += $" --args \"{args}\"";
+        }
+        return AddJobStep(job, name: $"Run Nuke {targetName}", script: script, condition: condition);
+    }
+
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunsOnType runsOnType, string targetName, string args = "", string condition = "")
+    {
+        return AddJobStepNukeRun(job, GetBuildScript(runsOnType), targetName, args, condition);
     }
 
     private static void AddJobStepInputs(Dictionary<string, object> step, string name, string value)
