@@ -45,15 +45,17 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_TARGETBRANCH")!;
             }
-            else
+            else if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
             {
-                if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
-                {
-                    triggerType = TriggerType.Tag;
-                    branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
-                }
+                triggerType = TriggerType.Tag;
+                branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
+                branch = branch[(branch.IndexOf('/') + 1)..];
             }
-            branch = branch[(branch.IndexOf('/') + 1)..];
+            else if (branch.StartsWith("refs/heads", StringComparison.OrdinalIgnoreCase))
+            {
+                triggerType = TriggerType.Commit;
+                branch = branch[11..];
+            }
         }
         return new()
         {
