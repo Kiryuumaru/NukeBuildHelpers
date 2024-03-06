@@ -293,7 +293,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJobStepNukeBuildCache(Dictionary<string, object> job, string keyRoot, string condition = "")
     {
-        Dictionary<string, object> step = AddJobStep(job, task: "Cache@3");
+        Dictionary<string, object> step = AddJobStep(job, task: "Cache@2");
         if (!string.IsNullOrEmpty(condition))
         {
             step["condition"] = condition;
