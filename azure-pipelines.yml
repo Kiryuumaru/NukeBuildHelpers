@@ -15,13 +15,23 @@ jobs:
   - checkout: self
     persistCredentials: true
     fetchDepth: 0
-  - task: Cache@2
-    inputs:
-      path: $(Pipeline.Workspace)/.nuget/packages
-      key: '"ubuntu-22.04" | "nuget" | ./build/packages.lock.json'
-      restore-keys: '"ubuntu-22.04" | "nuget"'
   - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "azure"
     name: setup
     displayName: Run Nuke PipelinePreSetup
     env:
       GITHUB_TOKEN: $(GITHUB_TOKEN)
+  - script: echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE]$(cat ./.nuke/temp/pre_setup_has_release.txt)" && echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_release.txt)"
+    name: PRE_SETUP_HAS_RELEASE
+    displayName: Output PRE_SETUP_HAS_RELEASE
+  - script: echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT]$(cat ./.nuke/temp/pre_setup_output.json)" && echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT;isOutput=true]$(cat ./.nuke/temp/pre_setup_output.json)"
+    name: PRE_SETUP_OUTPUT
+    displayName: Output PRE_SETUP_OUTPUT
+  - script: echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_TEST_MATRIX]$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)" && echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_TEST_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)"
+    name: PRE_SETUP_OUTPUT_TEST_MATRIX
+    displayName: Output PRE_SETUP_OUTPUT_TEST_MATRIX
+  - script: echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_BUILD_MATRIX]$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)" && echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_BUILD_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)"
+    name: PRE_SETUP_OUTPUT_BUILD_MATRIX
+    displayName: Output PRE_SETUP_OUTPUT_BUILD_MATRIX
+  - script: echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" && echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)"
+    name: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
+    displayName: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX

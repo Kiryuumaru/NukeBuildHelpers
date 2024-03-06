@@ -174,9 +174,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        AddJobStepNukeBuildCache(preSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204));
         var nukePreSetupStep = AddJobStep(preSetupJob, name: "setup", displayName: "Run Nuke PipelinePreSetup", script: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"azure\"");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
+        AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
+        AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
+        AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
+        AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX", "./.nuke/temp/pre_setup_output_build_matrix.json");
+        AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "./.nuke/temp/pre_setup_output_publish_matrix.json");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
@@ -293,19 +297,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)withValue)[name] = value;
     }
 
-    private static Dictionary<string, object> AddJobStepNukeBuildCache(Dictionary<string, object> job, string keyRoot, string condition = "")
-    {
-        Dictionary<string, object> step = AddJobStep(job, task: "Cache@2");
-        if (!string.IsNullOrEmpty(condition))
-        {
-            step["condition"] = condition;
-        }
-        AddJobStepInputs(step, "path", "$(Pipeline.Workspace)/.nuget/packages");
-        AddJobStepInputs(step, "key", $"\"{keyRoot}\" | \"nuget\" | ./build/packages.lock.json");
-        AddJobStepInputs(step, "restore-keys", $"\"{keyRoot}\" | \"nuget\"");
-        return step;
-    }
-
     private static void AddStepEnvVar(Dictionary<string, object> jobOrStep, string envVarName, string envVarValue)
     {
         if (!jobOrStep.TryGetValue("env", out object? value))
@@ -319,5 +310,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static void AddStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId, string outputName)
     {
         AddStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
+    }
+
+    private static void AddJobOutputFromFile(Dictionary<string, object> job, string envVarName, string filename)
+    {
+        AddJobStep(job, name: envVarName, displayName: $"Output {envVarName}",
+            script: $"echo \"##vso[task.setvariable variable={envVarName}]$(cat {filename})\" && echo \"##vso[task.setvariable variable={envVarName};isOutput=true]$(cat {filename})\"");
     }
 }
