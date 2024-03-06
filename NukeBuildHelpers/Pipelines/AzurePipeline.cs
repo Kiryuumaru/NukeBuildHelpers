@@ -274,7 +274,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string _if = "")
     {
-        return AddJob(workflow, id, name, new Dictionary<string, object>() { { "vmImage", GetRunsOn(buildsOnType) } }, needs, _if);
+        return AddJob(workflow, id, name, GetRunsOn(buildsOnType), needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string name = "", string displayName = "", string task = "", string script = "", string condition = "")

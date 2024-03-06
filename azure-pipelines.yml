@@ -10,8 +10,7 @@ jobs:
 - job: pre_setup
   displayName: Pre Setup
   pool:
-    vmImage:
-      vmImage: ubuntu-22.04
+    vmImage: ubuntu-22.04
   steps:
   - checkout: self
     persistCredentials: true
