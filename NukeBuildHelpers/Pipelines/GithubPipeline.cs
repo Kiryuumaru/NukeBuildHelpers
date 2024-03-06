@@ -132,6 +132,172 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
     }
 
+    public void BuildWorkflow()
+    {
+        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetAppEntryConfigs(), out var appEntryConfigs);
+        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppEntry>(), out var appEntries);
+        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppTestEntry>(), out var appTestEntries);
+
+        var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
+        var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
+
+        Dictionary<string, object> workflow = new()
+        {
+            ["name"] = "Nuke CICD Pipeline",
+            ["on"] = new Dictionary<string, object>()
+                {
+                    { "push", new Dictionary<string, object>()
+                        {
+                            { "branches", new List<string> { "*" } },
+                            { "tags", new List<string> { "**" } }
+                        }
+                    },
+                    { "pull_request", new Dictionary<string, object>()
+                        {
+                            { "branches", new List<string> { "**" } }
+                        }
+                    }
+                },
+            ["concurrency"] = new Dictionary<string, object>()
+                {
+                    { "group", "${{ github.workflow }}-${{ github.head_ref || github.ref_name }}" },
+                    { "cancel-in-progress", "true" }
+                },
+            ["jobs"] = new Dictionary<string, object>()
+        };
+
+        List<string> needs = ["pre_setup"];
+
+        // ██████████████████████████████████████
+        // ██████████████ Pre Setup █████████████
+        // ██████████████████████████████████████
+        var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
+        AddJobStepCheckout(preSetupJob, fetchDepth: 0);
+        var cachePreSetupStep = AddJobStep(preSetupJob, uses: "actions/cache@v4");
+        AddJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
+        AddJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
+        AddJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
+        var nukePreSetupStep = AddJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
+        AddJobOrStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
+        AddJobStep(preSetupJob, id: "PRE_SETUP_HAS_RELEASE", name: "Output PRE_SETUP_HAS_RELEASE", run: $"echo \"PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)\" >> $GITHUB_OUTPUT");
+        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
+        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_TEST_MATRIX", name: "Output PRE_SETUP_OUTPUT_TEST_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)\" >> $GITHUB_OUTPUT");
+        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_BUILD_MATRIX", name: "Output PRE_SETUP_OUTPUT_BUILD_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)\" >> $GITHUB_OUTPUT");
+        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", name: "Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)\" >> $GITHUB_OUTPUT");
+        AddJobOutput(preSetupJob, "PRE_SETUP_HAS_RELEASE", "PRE_SETUP_HAS_RELEASE", "PRE_SETUP_HAS_RELEASE");
+        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT");
+        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX");
+        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX");
+        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
+
+        // ██████████████████████████████████████
+        // ████████████████ Test ████████████████
+        // ██████████████████████████████████████
+        if (appTestEntries.Count > 0)
+        {
+            var testJob = AddJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
+            testJob["needs"] = needs.ToArray();
+            needs.Add("test");
+            AddJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
+            AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
+            var cacheTestStep = AddJobStep(testJob, uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
+            AddJobStepWith(cacheTestStep, "path", "~/.nuget/packages");
+            AddJobStepWith(cacheTestStep, "key", "${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}");
+            AddJobStepWith(cacheTestStep, "restore-keys", "${{ matrix.runs_on }}-nuget-test-");
+            var nukeTestStep = AddJobStep(testJob, name: "Run Nuke PipelineTest", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"", _if: "${{ matrix.id != 'skip' }}");
+            AddJobOrStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+            foreach (var map in appTestEntrySecretMap)
+            {
+                foreach (var secrets in map.Value.SecretHelpers)
+                {
+                    AddJobOrStepEnvVar(nukeTestStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
+                }
+            }
+        }
+
+        // ██████████████████████████████████████
+        // ███████████████ Build ████████████████
+        // ██████████████████████████████████████
+        var buildJob = AddJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
+        AddJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
+        AddJobStepCheckout(buildJob);
+        var cacheBuildStep = AddJobStep(buildJob, uses: "actions/cache@v4");
+        AddJobStepWith(cacheBuildStep, "path", "~/.nuget/packages");
+        AddJobStepWith(cacheBuildStep, "key", "${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}");
+        AddJobStepWith(cacheBuildStep, "restore-keys", "${{ matrix.runs_on }}-nuget-build-");
+        var nukeBuildStep = AddJobStep(buildJob, name: "Run Nuke PipelineBuild", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
+        AddJobOrStepEnvVarFromNeeds(nukeBuildStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+        foreach (var map in appEntrySecretMap)
+        {
+            foreach (var secrets in map.Value.SecretHelpers)
+            {
+                AddJobOrStepEnvVar(nukeBuildStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
+            }
+        }
+        var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
+        AddJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
+        AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/output/*");
+        AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
+        AddJobStepWith(uploadBuildStep, "retention-days", "1");
+
+        needs.Add("build");
+
+        // ██████████████████████████████████████
+        // ██████████████ Publish ███████████████
+        // ██████████████████████████████████████
+        var publishJob = AddJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
+        AddJobMatrixInclude(publishJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
+        AddJobStepCheckout(publishJob);
+        var cachePublishStep = AddJobStep(publishJob, uses: "actions/cache@v4");
+        AddJobStepWith(cachePublishStep, "path", "~/.nuget/packages");
+        AddJobStepWith(cachePublishStep, "key", "${{ matrix.runs_on }}-nuget-publish-${{ hashFiles('**/*.csproj') }}");
+        AddJobStepWith(cachePublishStep, "restore-keys", "${{ matrix.runs_on }}-nuget-publish-");
+        var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
+        AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
+        AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
+        AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
+        var nukePublishStep = AddJobStep(publishJob, name: "Run Nuke PipelinePublish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
+        AddJobOrStepEnvVarFromNeeds(nukePublishStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+        foreach (var map in appEntrySecretMap)
+        {
+            foreach (var secrets in map.Value.SecretHelpers)
+            {
+                AddJobOrStepEnvVar(nukePublishStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
+            }
+        }
+        AddJobStep(publishJob, id: "PUBLISH_OUTPUT_SUCCESS", name: "Output PUBLISH_OUTPUT_SUCCESS", run: $"echo \"PUBLISH_OUTPUT_SUCCESS=$(cat ./.nuke/temp/publish_success.txt)\" >> $GITHUB_OUTPUT");
+        AddJobOutput(publishJob, "PUBLISH_OUTPUT_SUCCESS", "PUBLISH_OUTPUT_SUCCESS", "PUBLISH_OUTPUT_SUCCESS");
+
+        needs.Add("publish");
+
+        // ██████████████████████████████████████
+        // █████████████ Post Setup █████████████
+        // ██████████████████████████████████████
+        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, [.. needs], _if: "success() || failure() || always()");
+        AddJobStepCheckout(postSetupJob);
+        var cachePostSetupStep = AddJobStep(postSetupJob, uses: "actions/cache@v4");
+        AddJobStepWith(cachePostSetupStep, "path", "~/.nuget/packages");
+        AddJobStepWith(cachePostSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-post_setup-${{{{ hashFiles('**/*.csproj') }}}}");
+        AddJobStepWith(cachePostSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-post_setup-");
+        var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
+        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
+        var nukePostSetupStep = AddJobStep(postSetupJob, name: "Run Nuke PipelinePostSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePostSetup");
+        AddJobOrStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
+        AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
+        AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PUBLISH_OUTPUT_SUCCESS", "publish", "PUBLISH_OUTPUT_SUCCESS");
+
+        // ██████████████████████████████████████
+        // ███████████████ Write ████████████████
+        // ██████████████████████████████████████
+        var workflowDirPath = Nuke.Common.NukeBuild.RootDirectory / ".github" / "workflows";
+        var workflowPath = workflowDirPath / "nuke-cicd.yml";
+
+        Directory.CreateDirectory(workflowDirPath);
+        File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
+
+        Log.Information("Workflow built at " + workflowPath.ToString());
+    }
+
     private static string GetRunsOnGithub(RunsOnType runsOnType)
     {
         return runsOnType switch
@@ -208,6 +374,16 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
+    private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string _if = "", int? fetchDepth = null)
+    {
+        var step = AddJobStep(job, uses: "actions/checkout@v4", _if: _if);
+        if (fetchDepth != null)
+        {
+            AddJobStepWith(step, "fetch-depth", fetchDepth.Value.ToString());
+        }
+        return step;
+    }
+
     private static void AddJobStepWith(Dictionary<string, object> step, string name, string value)
     {
         if (!step.TryGetValue("with", out object? withValue))
@@ -255,172 +431,5 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static void AddJobOrStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId, string outputName)
     {
         AddJobOrStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
-    }
-
-    public void BuildWorkflow()
-    {
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetAppEntryConfigs(), out var appEntryConfigs);
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppEntry>(), out var appEntries);
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppTestEntry>(), out var appTestEntries);
-
-        var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
-        var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
-
-        Dictionary<string, object> workflow = new()
-        {
-            ["name"] = "Nuke CICD Pipeline",
-            ["on"] = new Dictionary<string, object>()
-                {
-                    { "push", new Dictionary<string, object>()
-                        {
-                            { "branches", new List<string> { "*" } },
-                            { "tags", new List<string> { "**" } }
-                        }
-                    },
-                    { "pull_request", new Dictionary<string, object>()
-                        {
-                            { "branches", new List<string> { "**" } }
-                        }
-                    }
-                },
-            ["concurrency"] = new Dictionary<string, object>()
-                {
-                    { "group", "${{ github.workflow }}-${{ github.head_ref || github.ref_name }}" },
-                    { "cancel-in-progress", "true" }
-                },
-            ["jobs"] = new Dictionary<string, object>()
-        };
-
-        List<string> needs = ["pre_setup"];
-
-        // ██████████████████████████████████████
-        // ██████████████ Pre Setup █████████████
-        // ██████████████████████████████████████
-        var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
-        var preSetupCheckoutStep = AddJobStep(preSetupJob, uses: "actions/checkout@v4");
-        AddJobStepWith(preSetupCheckoutStep, "fetch-depth", "0");
-        var cachePreSetupStep = AddJobStep(preSetupJob, uses: "actions/cache@v4");
-        AddJobStepWith(cachePreSetupStep, "path", "~/.nuget/packages");
-        AddJobStepWith(cachePreSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-${{{{ hashFiles('**/*.csproj') }}}}");
-        AddJobStepWith(cachePreSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-pre_setup-");
-        var nukePreSetupStep = AddJobStep(preSetupJob, id: "setup", name: "Run Nuke PipelinePreSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
-        AddJobOrStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
-        AddJobStep(preSetupJob, id: "PRE_SETUP_HAS_RELEASE", name: "Output PRE_SETUP_HAS_RELEASE", run: $"echo \"PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)\" >> $GITHUB_OUTPUT");
-        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT", name: "Output PRE_SETUP_OUTPUT", run: $"echo \"PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)\" >> $GITHUB_OUTPUT");
-        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_TEST_MATRIX", name: "Output PRE_SETUP_OUTPUT_TEST_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)\" >> $GITHUB_OUTPUT");
-        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_BUILD_MATRIX", name: "Output PRE_SETUP_OUTPUT_BUILD_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)\" >> $GITHUB_OUTPUT");
-        AddJobStep(preSetupJob, id: "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", name: "Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX", run: $"echo \"PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)\" >> $GITHUB_OUTPUT");
-        AddJobOutput(preSetupJob, "PRE_SETUP_HAS_RELEASE", "PRE_SETUP_HAS_RELEASE", "PRE_SETUP_HAS_RELEASE");
-        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT", "PRE_SETUP_OUTPUT");
-        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX", "PRE_SETUP_OUTPUT_TEST_MATRIX");
-        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX", "PRE_SETUP_OUTPUT_BUILD_MATRIX");
-        AddJobOutput(preSetupJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
-
-        // ██████████████████████████████████████
-        // ████████████████ Test ████████████████
-        // ██████████████████████████████████████
-        if (appTestEntries.Count > 0)
-        {
-            var testJob = AddJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}");
-            testJob["needs"] = needs.ToArray();
-            needs.Add("test");
-            AddJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
-            AddJobStep(testJob, uses: "actions/checkout@v4", _if: "${{ matrix.id != 'skip' }}");
-            var cacheTestStep = AddJobStep(testJob, uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
-            AddJobStepWith(cacheTestStep, "path", "~/.nuget/packages");
-            AddJobStepWith(cacheTestStep, "key", "${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}");
-            AddJobStepWith(cacheTestStep, "restore-keys", "${{ matrix.runs_on }}-nuget-test-");
-            var nukeTestStep = AddJobStep(testJob, name: "Run Nuke PipelineTest", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"", _if: "${{ matrix.id != 'skip' }}");
-            AddJobOrStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-            foreach (var map in appTestEntrySecretMap)
-            {
-                foreach (var secrets in map.Value.SecretHelpers)
-                {
-                    AddJobOrStepEnvVar(nukeTestStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
-                }
-            }
-        }
-
-        // ██████████████████████████████████████
-        // ███████████████ Build ████████████████
-        // ██████████████████████████████████████
-        var buildJob = AddJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-        AddJobMatrixInclude(buildJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_BUILD_MATRIX) }}");
-        AddJobStep(buildJob, uses: "actions/checkout@v4");
-        var cacheBuildStep = AddJobStep(buildJob, uses: "actions/cache@v4");
-        AddJobStepWith(cacheBuildStep, "path", "~/.nuget/packages");
-        AddJobStepWith(cacheBuildStep, "key", "${{ matrix.runs_on }}-nuget-build-${{ hashFiles('**/*.csproj') }}");
-        AddJobStepWith(cacheBuildStep, "restore-keys", "${{ matrix.runs_on }}-nuget-build-");
-        var nukeBuildStep = AddJobStep(buildJob, name: "Run Nuke PipelineBuild", run: "${{ matrix.build_script }} PipelineBuild --args \"${{ matrix.ids_to_run }}\"");
-        AddJobOrStepEnvVarFromNeeds(nukeBuildStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-        foreach (var map in appEntrySecretMap)
-        {
-            foreach (var secrets in map.Value.SecretHelpers)
-            {
-                AddJobOrStepEnvVar(nukeBuildStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
-            }
-        }
-        var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
-        AddJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
-        AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/output/*");
-        AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
-        AddJobStepWith(uploadBuildStep, "retention-days", "1");
-
-        needs.Add("build");
-
-        // ██████████████████████████████████████
-        // ██████████████ Publish ███████████████
-        // ██████████████████████████████████████
-        var publishJob = AddJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", [.. needs], _if: "${{ needs.pre_setup.outputs.PRE_SETUP_HAS_RELEASE == 'true' }}");
-        AddJobMatrixInclude(publishJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}");
-        AddJobStep(publishJob, uses: "actions/checkout@v4");
-        var cachePublishStep = AddJobStep(publishJob, uses: "actions/cache@v4");
-        AddJobStepWith(cachePublishStep, "path", "~/.nuget/packages");
-        AddJobStepWith(cachePublishStep, "key", "${{ matrix.runs_on }}-nuget-publish-${{ hashFiles('**/*.csproj') }}");
-        AddJobStepWith(cachePublishStep, "restore-keys", "${{ matrix.runs_on }}-nuget-publish-");
-        var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
-        AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
-        AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
-        AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
-        var nukePublishStep = AddJobStep(publishJob, name: "Run Nuke PipelinePublish", run: "${{ matrix.build_script }} PipelinePublish --args \"${{ matrix.ids_to_run }}\"");
-        AddJobOrStepEnvVarFromNeeds(nukePublishStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-        foreach (var map in appEntrySecretMap)
-        {
-            foreach (var secrets in map.Value.SecretHelpers)
-            {
-                AddJobOrStepEnvVar(nukePublishStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
-            }
-        }
-        AddJobStep(publishJob, id: "PUBLISH_OUTPUT_SUCCESS", name: "Output PUBLISH_OUTPUT_SUCCESS", run: $"echo \"PUBLISH_OUTPUT_SUCCESS=$(cat ./.nuke/temp/publish_success.txt)\" >> $GITHUB_OUTPUT");
-        AddJobOutput(publishJob, "PUBLISH_OUTPUT_SUCCESS", "PUBLISH_OUTPUT_SUCCESS", "PUBLISH_OUTPUT_SUCCESS");
-
-        needs.Add("publish");
-
-        // ██████████████████████████████████████
-        // █████████████ Post Setup █████████████
-        // ██████████████████████████████████████
-        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, [.. needs], _if: "success() || failure() || always()");
-        AddJobStep(postSetupJob, uses: "actions/checkout@v4");
-        var cachePostSetupStep = AddJobStep(postSetupJob, uses: "actions/cache@v4");
-        AddJobStepWith(cachePostSetupStep, "path", "~/.nuget/packages");
-        AddJobStepWith(cachePostSetupStep, "key", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-post_setup-${{{{ hashFiles('**/*.csproj') }}}}");
-        AddJobStepWith(cachePostSetupStep, "restore-keys", $"{GetRunsOnGithub(RunsOnType.Ubuntu2204)}-nuget-post_setup-");
-        var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
-        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
-        var nukePostSetupStep = AddJobStep(postSetupJob, name: "Run Nuke PipelinePostSetup", run: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePostSetup");
-        AddJobOrStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
-        AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
-        AddJobOrStepEnvVarFromNeeds(nukePostSetupStep, "PUBLISH_OUTPUT_SUCCESS", "publish", "PUBLISH_OUTPUT_SUCCESS");
-
-        // ██████████████████████████████████████
-        // ███████████████ Write ████████████████
-        // ██████████████████████████████████████
-        var workflowDirPath = Nuke.Common.NukeBuild.RootDirectory / ".github" / "workflows";
-        var workflowPath = workflowDirPath / "nuke-cicd.yml";
-
-        Directory.CreateDirectory(workflowDirPath);
-        File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
-
-        Log.Information("Workflow built at " + workflowPath.ToString());
     }
 }

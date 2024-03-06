@@ -218,17 +218,9 @@ partial class BaseNukeBuildHelpers
 
     public Target GithubWorkflow => _ => _
         .Description("Builds the cicd workflow for github")
-        .DependsOn(Build)
-        .Executes(() =>
-        {
-            new GithubPipeline(this).BuildWorkflow();
-        });
+        .Executes(BuildWorkflow<GithubPipeline>);
 
     public Target AzureWorkflow => _ => _
         .Description("Builds the cicd workflow for azure")
-        .DependsOn(Build)
-        .Executes(() =>
-        {
-            new AzurePipeline(this).BuildWorkflow();
-        });
+        .Executes(BuildWorkflow<AzurePipeline>);
 }

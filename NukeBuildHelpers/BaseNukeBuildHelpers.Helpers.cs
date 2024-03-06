@@ -20,11 +20,18 @@ using System.Collections.Generic;
 using Nuke.Common.Utilities;
 using System.Net.Sockets;
 using YamlDotNet.Serialization;
+using NukeBuildHelpers.Interfaces;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    private void BuildWorkflow<T>()
+        where T : IPipeline
+    {
+        (Activator.CreateInstance(typeof(T), this) as IPipeline)!.BuildWorkflow();
+    }
+
     private void SetupAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
         var appEntrySecretMap = GetEntrySecretMap<AppEntry>();

@@ -141,7 +141,50 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void BuildWorkflow()
     {
+        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetAppEntryConfigs(), out var appEntryConfigs);
+        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppEntry>(), out var appEntries);
+        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppTestEntry>(), out var appTestEntries);
 
+        var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
+        var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
+
+        Dictionary<string, object> workflow = new()
+        {
+            ["name"] = "Nuke CICD Pipeline",
+            ["trigger"] = new Dictionary<string, object>()
+                {
+                    { "branches", new Dictionary<string, object>()
+                        {
+                            { "include", new List<string> { "*" } },
+                        }
+                    },
+                    { "tags", new Dictionary<string, object>()
+                        {
+                            { "include", new List<string> { "**" } },
+                        }
+                    }
+                },
+            ["jobs"] = new List<object>()
+        };
+
+        List<string> needs = ["pre_setup"];
+
+        // ██████████████████████████████████████
+        // ██████████████ Pre Setup █████████████
+        // ██████████████████████████████████████
+        var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
+        AddJobStepCheckout(preSetupJob, fetchDepth: 0);
+
+        // ██████████████████████████████████████
+        // ███████████████ Write ████████████████
+        // ██████████████████████████████████████
+        var workflowDirPath = Nuke.Common.NukeBuild.RootDirectory;
+        var workflowPath = Nuke.Common.NukeBuild.RootDirectory / "azure-pipelines.yml";
+
+        Directory.CreateDirectory(workflowDirPath);
+        File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
+
+        Log.Information("Workflow built at " + workflowPath.ToString());
     }
 
     private static string GetRunsOnGithub(RunsOnType runsOnType)
@@ -166,5 +209,85 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             RunsOnType.Ubuntu2204 => "chmod +x ./build.sh && ./build.sh",
             _ => throw new NotImplementedException()
         };
+    }
+
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, object runsOn, IEnumerable<string>? needs = null, string _if = "")
+    {
+        Dictionary<string, object> job = new()
+        {
+            ["job"] = id,
+            ["displayName"] = name,
+            ["pool"] = runsOn,
+            ["steps"] = new List<object>()
+        };
+        if (needs != null && needs.Any())
+        {
+            job["needs"] = needs;
+        }
+        if (!string.IsNullOrEmpty(_if))
+        {
+            job["if"] = _if;
+        }
+        ((List<object>)workflow["jobs"]).Add(job);
+        return job;
+    }
+
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string _if = "")
+    {
+        return AddJob(workflow, id, name, new Dictionary<string, string>() { { "vmImage", GetRunsOnGithub(buildsOnType) } }, needs, _if);
+    }
+
+    private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string name = "", string displayName = "", string task = "", string script = "", string condition = "")
+    {
+        Dictionary<string, object> step = [];
+        ((List<object>)job["steps"]).Add(step);
+        if (!string.IsNullOrEmpty(script))
+        {
+            step["script"] = script;
+        }
+        if (!string.IsNullOrEmpty(task))
+        {
+            step["task"] = task;
+        }
+        if (!string.IsNullOrEmpty(name))
+        {
+            step["name"] = name;
+        }
+        if (!string.IsNullOrEmpty(displayName))
+        {
+            step["displayName"] = displayName;
+        }
+        if (!string.IsNullOrEmpty(condition))
+        {
+            step["condition"] = condition;
+        }
+        return step;
+    }
+
+    private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
+    {
+        Dictionary<string, object> step = [];
+        ((List<object>)job["steps"]).Add(step);
+        step["checkout"] = "self";
+        step["persistCredentials"] = "true";
+        if (!string.IsNullOrEmpty(condition))
+        {
+            step["condition"] = condition;
+        }
+        if (fetchDepth != null)
+        {
+            step["fetchDepth"] = fetchDepth.Value.ToString();
+        }
+        return step;
+    }
+
+    private static void AddJobStepInputs(Dictionary<string, object> step, string name, string value)
+    {
+        if (!step.TryGetValue("inputs", out object? withValue))
+        {
+            withValue = new Dictionary<string, object>();
+            step["inputs"] = withValue;
+        }
+        ((Dictionary<string, object>)withValue)[name] = value;
     }
 }
