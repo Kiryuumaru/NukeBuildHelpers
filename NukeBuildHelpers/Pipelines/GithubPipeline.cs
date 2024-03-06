@@ -197,7 +197,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             needs.Add("test");
             AddJobMatrixInclude(testJob, "${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_TEST_MATRIX) }}");
             AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
-            AddJobStepNugetCache(testJob, "${{ matrix.runs_on }}", "test");
+            AddJobStepNugetCache(testJob, "${{ matrix.runs_on }}", "test", _if: "${{ matrix.id != 'skip' }}");
             var nukeTestStep = AddJobStep(testJob, name: "Run Nuke PipelineTest", run: "${{ matrix.build_script }} PipelineTest --args \"${{ matrix.ids_to_run }}\"", _if: "${{ matrix.id != 'skip' }}");
             AddJobOrStepEnvVarFromNeeds(nukeTestStep, "PRE_SETUP_OUTPUT", "pre_setup", "PRE_SETUP_OUTPUT");
             foreach (var map in appTestEntrySecretMap)

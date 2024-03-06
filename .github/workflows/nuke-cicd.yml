@@ -57,6 +57,7 @@ jobs:
     - uses: actions/checkout@v4
       if: ${{ matrix.id != 'skip' }}
     - uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
       with:
         path: ~/.nuget/packages
         key: ${{ matrix.runs_on }}-nuget-test-${{ hashFiles('**/*.csproj') }}
