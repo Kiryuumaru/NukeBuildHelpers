@@ -23,5 +23,5 @@ jobs:
   - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
     name: setup
     displayName: Run Nuke PipelinePreSetup
-  variables:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

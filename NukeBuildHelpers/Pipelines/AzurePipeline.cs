@@ -173,10 +173,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
-        AddJobOrStepEnvVar(preSetupJob, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         AddJobStepNukeBuildCache(preSetupJob, GetRunsOnGithub(RunsOnType.Ubuntu2204));
         var nukePreSetupStep = AddJobStep(preSetupJob, name: "setup", displayName: "Run Nuke PipelinePreSetup", script: $"{GetBuildScriptGithub(RunsOnType.Ubuntu2204)} PipelinePreSetup --args \"github\"");
+        AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
@@ -306,18 +306,18 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static void AddJobOrStepEnvVar(Dictionary<string, object> jobOrStep, string envVarName, string envVarValue)
+    private static void AddStepEnvVar(Dictionary<string, object> jobOrStep, string envVarName, string envVarValue)
     {
-        if (!jobOrStep.TryGetValue("variables", out object? value))
+        if (!jobOrStep.TryGetValue("env", out object? value))
         {
             value = new Dictionary<string, object>();
-            jobOrStep["variables"] = value;
+            jobOrStep["env"] = value;
         }
         ((Dictionary<string, object>)value)[envVarName] = envVarValue;
     }
 
-    private static void AddJobOrStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId, string outputName)
+    private static void AddStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId, string outputName)
     {
-        AddJobOrStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
+        AddStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{outputName} }}}}");
     }
 }
