@@ -41,7 +41,7 @@ jobs:
   steps:
   - checkout: self
     persistCredentials: true
-    condition: ${{ matrix.id != 'skip' }}
+    condition: neq(id, 'skip')
   - script: $(build_script) PipelineTest --args "$(ids_to_run)"
     name: Run Nuke PipelineTest
     condition: neq(id, 'skip')
