@@ -337,7 +337,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static void AddStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId)
     {
-        AddStepEnvVar(jobOrStep, envVarName, $"${{{{ needs.{needsId}.outputs.{envVarName} }}}}");
+        AddStepEnvVar(jobOrStep, envVarName, $"$[ dependencies.{needsId}.outputs['{envVarName}'] ]");
     }
 
     private static void AddStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
