@@ -38,33 +38,27 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     public PipelineInfo GetPipelineInfo()
     {
         TriggerType triggerType = TriggerType.Commit;
-        var branch = Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCHNAME");
-
+        var branch = Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCH");
         if (string.IsNullOrEmpty(branch))
         {
             branch = NukeBuild.Repository.Branch;
         }
         else
         {
-            if (Environment.GetEnvironmentVariable("BUILD_REASON") == "PullRequest")
+            if (branch.StartsWith("refs/pull", StringComparison.OrdinalIgnoreCase))
             {
-                var targetBranch = Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_TARGETBRANCHNAME");
-
-                while (true)
-                {
-                    var result = NukeBuild.Gh.Invoke($"pr view {targetBranch} --json baseRefName --jq .baseRefName").FirstOrDefault().Text;
-
-                    if (result == null)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        targetBranch = result;
-                        branch = targetBranch;
-                    }
-                }
+                triggerType = TriggerType.PullRequest;
+                branch = Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_TARGETBRANCH")!;
             }
+            else
+            {
+                if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
+                {
+                    triggerType = TriggerType.Tag;
+                }
+                branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
+            }
+            branch = branch[(branch.IndexOf('/') + 1)..];
         }
         return new()
         {
