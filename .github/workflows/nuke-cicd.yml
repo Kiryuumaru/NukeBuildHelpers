@@ -123,9 +123,6 @@ jobs:
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - id: PUBLISH_OUTPUT_SUCCESS
-      name: Output PUBLISH_OUTPUT_SUCCESS
-      run: echo "PUBLISH_OUTPUT_SUCCESS=$(cat ./.nuke/temp/publish_success.txt)" >> $GITHUB_OUTPUT
     needs:
     - pre_setup
     - test
@@ -136,8 +133,6 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
-    outputs:
-      PUBLISH_OUTPUT_SUCCESS: ${{ steps.PUBLISH_OUTPUT_SUCCESS.outputs.PUBLISH_OUTPUT_SUCCESS }}
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
