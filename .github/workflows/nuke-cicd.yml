@@ -137,15 +137,9 @@ jobs:
     name: Post Setup
     runs-on: ubuntu-22.04
     steps:
-    - id: PUBLISH_SUCCESS_GITHUB
-      name: Output PUBLISH_SUCCESS_GITHUB
-      run: echo "$PUBLISH_SUCCESS_GITHUB"
-    - id: PUBLISH_SUCCESS2
+    - id: PUBLISH_SUCCESS
       name: Resolve PUBLISH_SUCCESS
       run: echo "PUBLISH_SUCCESS=${PUBLISH_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
-    - id: PUBLISH_SUCCESS3
-      name: Output PUBLISH_SUCCESS3
-      run: echo "$PUBLISH_SUCCESS"
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
@@ -159,6 +153,7 @@ jobs:
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
+        PUBLISH_SUCCESS: ${{ steps.PUBLISH_SUCCESS.outputs.PUBLISH_SUCCESS }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
