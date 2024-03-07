@@ -95,7 +95,7 @@ jobs:
     env:
       NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
       GITHUB_TOKEN: $(GITHUB_TOKEN)
-  - script: echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]$(cat ./.nuke/temp/publish_success.txt)" && echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]$(cat ./.nuke/temp/publish_success.txt)"
+  - script: echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]success" && echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]success"
     name: PUBLISH_OUTPUT_SUCCESS
     displayName: Output PUBLISH_OUTPUT_SUCCESS
   dependsOn:
