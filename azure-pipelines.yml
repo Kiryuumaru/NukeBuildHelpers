@@ -60,6 +60,9 @@ jobs:
     persistCredentials: true
   - script: $(build_script) PipelineBuild --args "$(ids_to_run)"
     displayName: Run Nuke PipelineBuild
+    env:
+      NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
   - task: PublishPipelineArtifact@1
     displayName: Upload artifacts
     inputs:
@@ -73,8 +76,6 @@ jobs:
     matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_BUILD_MATRIX.PRE_SETUP_OUTPUT_BUILD_MATRIX'] ]
   variables:
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
-    NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
-    GITHUB_TOKEN: $(GITHUB_TOKEN)
 - job: publish
   displayName: Publish
   pool:
@@ -89,6 +90,9 @@ jobs:
       path: ./.nuke/temp/output
   - script: $(build_script) PipelinePublish --args "$(ids_to_run)"
     displayName: Run Nuke PipelinePublish
+    env:
+      NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
   - script: echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]$(cat ./.nuke/temp/publish_success.txt)" && echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]$(cat ./.nuke/temp/publish_success.txt)"
     name: PUBLISH_OUTPUT_SUCCESS
     displayName: Output PUBLISH_OUTPUT_SUCCESS
@@ -99,7 +103,5 @@ jobs:
   condition: eq(dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'], 'true')
   variables:
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
-    NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
-    GITHUB_TOKEN: $(GITHUB_TOKEN)
   strategy:
     matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_PUBLISH_MATRIX.PRE_SETUP_OUTPUT_PUBLISH_MATRIX'] ]

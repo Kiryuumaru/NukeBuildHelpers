@@ -165,9 +165,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
-        AddJobEnvVar(preSetupJob, "GITHUB_TOKEN", "$(GITHUB_PAT)");
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "azure");
+        AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_PAT)");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
@@ -183,10 +183,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs]);
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobEnvVarFromSecretMap(testJob, appTestEntrySecretMap);
             AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
             var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
+            AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
             needs.Add("test");
         }
@@ -197,9 +197,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "eq(dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'], 'true')");
         AddJobMatrixIncludeFromPreSetup(buildJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup");
-        AddJobEnvVarFromSecretMap(buildJob, appEntrySecretMap);
         AddJobStepCheckout(buildJob);
-        AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)");
+        var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)");
+        AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1");
         AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output/*");
@@ -211,13 +211,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "eq(dependencies.pre_setup.outputs['PRE_SETUP_HAS_RELEASE.PRE_SETUP_HAS_RELEASE'], 'true')");
         AddJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup");
-        AddJobEnvVarFromSecretMap(publishJob, appEntrySecretMap);
         AddJobMatrixIncludeFromPreSetup(publishJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob);
         var downloadBuildStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadBuildStep, "artifact", "$(id)");
         AddJobStepInputs(downloadBuildStep, "path", "./.nuke/temp/output");
-        AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
+        var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
+        AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobOutputFromFile(publishJob, "PUBLISH_OUTPUT_SUCCESS", "./.nuke/temp/publish_success.txt");
 
         // ██████████████████████████████████████
@@ -378,18 +378,28 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)value)[envVarName] = envVarValue;
     }
 
+    private static void AddStepEnvVar(Dictionary<string, object> step, string envVarName, string envVarValue)
+    {
+        if (!step.TryGetValue("env", out object? value))
+        {
+            value = new Dictionary<string, object>();
+            step["env"] = value;
+        }
+        ((Dictionary<string, object>)value)[envVarName] = envVarValue;
+    }
+
     private static void AddJobEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId)
     {
         AddJobEnvVar(jobOrStep, envVarName, $"$[ dependencies.{needsId}.outputs['{envVarName}.{envVarName}'] ]");
     }
 
-    private static void AddJobEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
+    private static void AddStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
     {
         foreach (var map in secretMap)
         {
             foreach (var secrets in map.Value.SecretHelpers)
             {
-                AddJobEnvVar(jobOrStep, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
+                AddStepEnvVar(jobOrStep, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
             }
         }
     }
