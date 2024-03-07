@@ -234,7 +234,7 @@ partial class BaseNukeBuildHelpers
 
             if (preSetupOutput.HasRelease)
             {
-                if (Environment.GetEnvironmentVariable("PUBLISH_OUTPUT_SUCCESS") == "success")
+                if (Environment.GetEnvironmentVariable("PUBLISH_SUCCESS") == "ok")
                 {
                     foreach (var release in OutputPath.GetDirectories())
                     {
