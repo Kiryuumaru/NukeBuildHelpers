@@ -117,7 +117,6 @@ jobs:
   - task: DownloadPipelineArtifact@2
     displayName: Download artifacts
     inputs:
-      artifact: $(id)
       path: ./.nuke/temp/output
   - script: $(build_script) PipelinePostSetup
     displayName: Run Nuke PipelinePostSetup
