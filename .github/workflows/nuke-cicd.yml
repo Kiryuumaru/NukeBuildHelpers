@@ -168,4 +168,4 @@ jobs:
     if: success() || failure() || always()
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-      PUBLISH_SUCCESS: ${{ needs.publish.status }}
+      PUBLISH_SUCCESS: ${{ needs.publish.result }}
