@@ -243,7 +243,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepNukeBuildCache(postSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
-        AddJobStepNukeRun(postSetupJob, RunsOnType.Ubuntu2204, "PipelinePostSetup", "${{ matrix.ids_to_run }}");
+        AddJobStepNukeRun(postSetupJob, RunsOnType.Ubuntu2204, "PipelinePostSetup");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████

@@ -203,7 +203,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1");
         AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
-        AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output/*");
+        AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output");
 
         needs.Add("build");
 
@@ -214,12 +214,27 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob);
-        var downloadBuildStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-        AddJobStepInputs(downloadBuildStep, "artifact", "$(id)");
-        AddJobStepInputs(downloadBuildStep, "path", "./.nuke/temp/output");
+        var downloadPublishStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
+        AddJobStepInputs(downloadPublishStep, "artifact", "$(id)");
+        AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/output");
         var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobOutputFromFile(publishJob, "PUBLISH_OUTPUT_SUCCESS", "./.nuke/temp/publish_success.txt");
+
+        needs.Add("publish");
+
+        // ██████████████████████████████████████
+        // █████████████ Post Setup █████████████
+        // ██████████████████████████████████████
+        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "success() || failure() || always()");
+        AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup");
+        AddJobEnvVarFromNeeds(postSetupJob, "PUBLISH_OUTPUT_SUCCESS", "publish");
+        AddJobStepCheckout(postSetupJob);
+        var downloadPostSetupStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
+        AddJobStepInputs(downloadPostSetupStep, "artifact", "$(id)");
+        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/output");
+        var nukePostSetupStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePostSetup");
+        AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
