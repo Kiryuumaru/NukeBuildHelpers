@@ -236,13 +236,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], _if: "success() || failure() || always()");
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup");
-        AddJobOrStepEnvVar(postSetupJob, "PUBLISH_SUCCESS", "${{ needs.publish.result }}");
+        AddJobOrStepEnvVar(postSetupJob, "PUBLISH_SUCCESS_GITHUB", "${{ needs.publish.result }}");
 
-        AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS1", name: $"Output PUBLISH_SUCCESS1",
-            run: $"echo \"$PUBLISH_SUCCESS\"");
+        AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS_GITHUB", name: $"Output PUBLISH_SUCCESS_GITHUB",
+            run: $"echo \"$PUBLISH_SUCCESS_GITHUB\"");
 
         AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS2", name: $"Resolve PUBLISH_SUCCESS",
-            run: $"PUBLISH_SUCCESS=\"${{PUBLISH_SUCCESS/success/ok}}\" && echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS\"");
+            run: $"PUBLISH_SUCCESS=\"${{PUBLISH_SUCCESS_GITHUB/success/ok}}\" && echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS\"");
 
         AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS3", name: $"Output PUBLISH_SUCCESS3",
             run: $"echo \"$PUBLISH_SUCCESS\"");

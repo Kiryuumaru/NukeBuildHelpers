@@ -137,12 +137,12 @@ jobs:
     name: Post Setup
     runs-on: ubuntu-22.04
     steps:
-    - id: PUBLISH_SUCCESS1
-      name: Output PUBLISH_SUCCESS1
-      run: echo "$PUBLISH_SUCCESS"
+    - id: PUBLISH_SUCCESS_GITHUB
+      name: Output PUBLISH_SUCCESS_GITHUB
+      run: echo "$PUBLISH_SUCCESS_GITHUB"
     - id: PUBLISH_SUCCESS2
       name: Resolve PUBLISH_SUCCESS
-      run: PUBLISH_SUCCESS="${PUBLISH_SUCCESS/success/ok}" && echo "##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS"
+      run: PUBLISH_SUCCESS="${PUBLISH_SUCCESS_GITHUB/success/ok}" && echo "##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS"
     - id: PUBLISH_SUCCESS3
       name: Output PUBLISH_SUCCESS3
       run: echo "$PUBLISH_SUCCESS"
@@ -168,4 +168,4 @@ jobs:
     if: success() || failure() || always()
     env:
       PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.PRE_SETUP_OUTPUT }}
-      PUBLISH_SUCCESS: ${{ needs.publish.result }}
+      PUBLISH_SUCCESS_GITHUB: ${{ needs.publish.result }}
