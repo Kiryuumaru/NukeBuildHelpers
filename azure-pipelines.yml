@@ -78,8 +78,8 @@ jobs:
     matrix: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT_BUILD_MATRIX.PRE_SETUP_OUTPUT_BUILD_MATRIX'] ]
   variables:
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
-- job: publish
-  displayName: Publish
+- job: awdawd
+  displayName: awdawd
   pool:
     vmImage: $(runs_on)
   steps:
@@ -130,9 +130,9 @@ jobs:
   - pre_setup
   - test
   - build
-  - publish
+  - awdawd
   condition: always()
   variables:
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
-    PUBLISH_OUTPUT_SUCCESS: $[ dependencies.publish.outputs['PUBLISH_OUTPUT_SUCCESS.PUBLISH_OUTPUT_SUCCESS'] ]
-    TEST11: $[ dependencies.publish.outputs['TEST11.TEST11'] ]
+    PUBLISH_OUTPUT_SUCCESS: $[ dependencies.awdawd.outputs['PUBLISH_OUTPUT_SUCCESS.PUBLISH_OUTPUT_SUCCESS'] ]
+    TEST11: $[ dependencies.awdawd.outputs['TEST11.TEST11'] ]
