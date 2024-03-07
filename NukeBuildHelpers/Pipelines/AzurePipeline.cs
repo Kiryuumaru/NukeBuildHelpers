@@ -220,6 +220,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobOutputFromFile(publishJob, "PUBLISH_OUTPUT_SUCCESS", "./.nuke/temp/publish_success.txt");
+        AddJobStep(publishJob, displayName: "awddwd daw", script: "echo \"$PUBLISH_OUTPUT_SUCCESS\"");
+        AddJobStep(publishJob, displayName: "dwdaw awd", script: "echo \"$(cat ./.nuke/temp/publish_success.txt)\"");
 
         needs.Add("publish");
 
