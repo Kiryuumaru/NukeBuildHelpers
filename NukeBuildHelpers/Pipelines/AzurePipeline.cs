@@ -406,18 +406,18 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)value)[envVarName] = envVarValue;
     }
 
-    private static void AddJobEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envVarName, string needsId)
+    private static void AddJobEnvVarFromNeeds(Dictionary<string, object> job, string envVarName, string needsId)
     {
-        AddJobEnvVar(jobOrStep, envVarName, $"$[ dependencies.{needsId}.outputs['{envVarName}.{envVarName}'] ]");
+        AddJobEnvVar(job, envVarName, $"$[ dependencies.{needsId}.outputs['{envVarName}.{envVarName}'] ]");
     }
 
-    private static void AddStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
+    private static void AddStepEnvVarFromSecretMap(Dictionary<string, object> step, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
     {
         foreach (var map in secretMap)
         {
             foreach (var secrets in map.Value.SecretHelpers)
             {
-                AddStepEnvVar(jobOrStep, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
+                AddStepEnvVar(step, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
             }
         }
     }
