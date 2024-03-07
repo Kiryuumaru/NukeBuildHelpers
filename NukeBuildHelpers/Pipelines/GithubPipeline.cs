@@ -236,14 +236,24 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // █████████████ Post Setup █████████████
         // ██████████████████████████████████████
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], _if: "success() || failure() || always()");
-        AddJobOrStepEnvVar(postSetupJob, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup");
-        AddJobOrStepEnvVarFromNeeds(postSetupJob, "PUBLISH_OUTPUT_SUCCESS", "publish");
+        AddJobOrStepEnvVar(postSetupJob, "PUBLISH_SUCCESS", "${{ needs.publish.status }}");
+
+        AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS1", name: $"Output PUBLISH_SUCCESS1",
+            run: $"echo \"$PUBLISH_SUCCESS\"");
+
+        AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS2", name: $"Resolve PUBLISH_SUCCESS",
+            run: $"PUBLISH_SUCCESS=\"${{PUBLISH_SUCCESS/success/ok}}\" && echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS\"");
+
+        AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS3", name: $"Output PUBLISH_SUCCESS3",
+            run: $"echo \"$PUBLISH_SUCCESS\"");
+
         AddJobStepCheckout(postSetupJob);
         AddJobStepNukeBuildCache(postSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
-        AddJobStepNukeRun(postSetupJob, RunsOnType.Ubuntu2204, "PipelinePostSetup");
+        var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunsOnType.Ubuntu2204, "PipelinePostSetup");
+        AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
