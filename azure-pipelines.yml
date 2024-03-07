@@ -98,10 +98,6 @@ jobs:
   - script: echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]$(cat ./.nuke/temp/publish_success.txt)" && echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]$(cat ./.nuke/temp/publish_success.txt)"
     name: PUBLISH_OUTPUT_SUCCESS
     displayName: Output PUBLISH_OUTPUT_SUCCESS
-  - script: echo "$PUBLISH_OUTPUT_SUCCESS"
-    displayName: awddwd daw
-  - script: echo "$(cat ./.nuke/temp/publish_success.txt)"
-    displayName: dwdaw awd
   dependsOn:
   - pre_setup
   - test
