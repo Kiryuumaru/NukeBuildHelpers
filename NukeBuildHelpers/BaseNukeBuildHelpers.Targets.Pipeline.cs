@@ -79,8 +79,6 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetEntries<AppEntry>(), out var appEntries);
             GetOrFail(() => GetEntries<AppTestEntry>(), out var appTestEntries);
 
-            Log.Information("GITHUB_TOKEN: {tok}", Environment.GetEnvironmentVariable("GITHUB_TOKEN"));
-
             IPipeline pipeline = (Args?.ToLowerInvariant()) switch
             {
                 "github" => new GithubPipeline(this),

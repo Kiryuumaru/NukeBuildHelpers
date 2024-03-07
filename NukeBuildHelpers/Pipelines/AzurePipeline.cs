@@ -230,10 +230,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobEnvVarFromNeeds(postSetupJob, "PUBLISH_OUTPUT_SUCCESS", "publish");
         AddJobStepCheckout(postSetupJob);
-        var downloadPostSetupStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
+        var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPostSetupStep, "artifact", "$(id)");
         AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/output");
-        var nukePostSetupStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePostSetup");
+        var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, "$(build_script)", "PipelinePostSetup");
         AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
 
         // ██████████████████████████████████████

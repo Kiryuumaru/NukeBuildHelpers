@@ -98,15 +98,6 @@ jobs:
   - script: echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]$(cat ./.nuke/temp/publish_success.txt)" && echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]$(cat ./.nuke/temp/publish_success.txt)"
     name: PUBLISH_OUTPUT_SUCCESS
     displayName: Output PUBLISH_OUTPUT_SUCCESS
-  - task: DownloadPipelineArtifact@2
-    displayName: Download artifacts
-    inputs:
-      artifact: $(id)
-      path: ./.nuke/temp/output
-  - script: $(build_script) PipelinePostSetup
-    displayName: Run Nuke PipelinePostSetup
-    env:
-      GITHUB_TOKEN: $(GITHUB_TOKEN)
   dependsOn:
   - pre_setup
   - test
@@ -123,6 +114,15 @@ jobs:
   steps:
   - checkout: self
     persistCredentials: true
+  - task: DownloadPipelineArtifact@2
+    displayName: Download artifacts
+    inputs:
+      artifact: $(id)
+      path: ./.nuke/temp/output
+  - script: $(build_script) PipelinePostSetup
+    displayName: Run Nuke PipelinePostSetup
+    env:
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
   dependsOn:
   - pre_setup
   - test
