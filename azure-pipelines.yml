@@ -127,5 +127,5 @@ jobs:
   - publish
   condition: always()
   variables:
-    PUBLISH_OUTPUT_SUCCESS: $(publish.Outcome)
+    PUBLISH_OUTPUT_SUCCESS: $[ dependencies.publish.result ]
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
