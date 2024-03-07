@@ -128,7 +128,7 @@ jobs:
   - test
   - build
   - publish
-  condition: success() || failure() || always()
+  condition: always()
   variables:
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
     PUBLISH_OUTPUT_SUCCESS: $[ dependencies.publish.outputs['PUBLISH_OUTPUT_SUCCESS.PUBLISH_OUTPUT_SUCCESS'] ]
