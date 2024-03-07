@@ -13,6 +13,8 @@ internal class AllVersions
 {
     public required List<SemVersion> VersionList { get; init; }
 
+    public required List<long> BuildIdList { get; init; }
+
     public required Dictionary<string, List<SemVersion>> VersionGrouped { get; init; }
 
     public required Dictionary<string, SemVersion> LatestVersions { get; init; }

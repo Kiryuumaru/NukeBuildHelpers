@@ -109,7 +109,7 @@ partial class BaseNukeBuildHelpers
 
                 if (allVersions.LatestBuildIds.Count > 0)
                 {
-                    var maxBuildId = allVersions.LatestBuildIds.Values.Max();
+                    var maxBuildId = allVersions.BuildIdList.Max();
                     lastBuildId = maxBuildId > lastBuildId ? maxBuildId : lastBuildId;
                 }
 

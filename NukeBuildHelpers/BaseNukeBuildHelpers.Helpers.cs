@@ -401,6 +401,7 @@ partial class BaseNukeBuildHelpers
             .Select(i => KeyValuePair.Create(i.Value.Env, (i.Value.BuildIds.Max(), i.Value.Versions.Max()!))).ToDictionary();
 
         List<SemVersion> allVersionList = pairedTags.SelectMany(i => i.Value.Versions).ToList();
+        List<long> allBuildIdList = pairedTags.SelectMany(i => i.Value.BuildIds).ToList();
         Dictionary<string, List<SemVersion>> allVersionGroupDict = pairedEnvGroup.ToDictionary(i => i.Key, i => i.Value.Versions);
         Dictionary<string, SemVersion> allLatestVersions = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
         Dictionary<string, long> allLatestIds = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
@@ -422,6 +423,7 @@ partial class BaseNukeBuildHelpers
         return new()
         {
             VersionList = allVersionList,
+            BuildIdList = allBuildIdList,
             VersionGrouped = allVersionGroupDict,
             LatestVersions = allLatestVersions,
             LatestBuildIds = allLatestIds,
