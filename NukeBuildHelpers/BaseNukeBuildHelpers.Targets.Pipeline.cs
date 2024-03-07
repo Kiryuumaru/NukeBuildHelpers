@@ -66,7 +66,7 @@ partial class BaseNukeBuildHelpers
                 throw publishTask.Exception;
             }
 
-            File.WriteAllText(TempPath / "publish_success.txt", "ok");
+            File.WriteAllText(TempPath / "publish_success.txt", "success");
         });
 
     public Target PipelinePreSetup => _ => _
@@ -243,7 +243,7 @@ partial class BaseNukeBuildHelpers
 
             if (preSetupOutput.HasRelease)
             {
-                if (Environment.GetEnvironmentVariable("PUBLISH_OUTPUT_SUCCESS") == "ok")
+                if (Environment.GetEnvironmentVariable("PUBLISH_OUTPUT_SUCCESS") == "success")
                 {
                     foreach (var release in OutputPath.GetDirectories())
                     {
