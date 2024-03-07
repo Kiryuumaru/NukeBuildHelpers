@@ -61,7 +61,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    public void Prepare(List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
+    public void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
     {
         var outputTestMatrix = new List<PreSetupOutputAppTestEntryMatrix>();
         var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
@@ -107,7 +107,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(Entry.BuildRunsOn),
                     BuildScript = GetBuildScript(Entry.BuildRunsOn),
                     IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
+                    Version = release.Version.ToString() + "+" + preSetupOutput.BuildTag
                 });
                 outputPublishMatrix.Add(new()
                 {
@@ -116,7 +116,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(Entry.PublishRunsOn),
                     BuildScript = GetBuildScript(Entry.PublishRunsOn),
                     IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
+                    Version = release.Version.ToString() + "+" + preSetupOutput.BuildTag
                 });
             }
         }

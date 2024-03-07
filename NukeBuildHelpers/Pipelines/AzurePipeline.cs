@@ -64,7 +64,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    public void Prepare(List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
+    public void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
     {
         var outputTestMatrix = new Dictionary<string, PreSetupOutputAppTestEntryMatrix>();
         var outputBuildMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
@@ -110,7 +110,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(Entry.BuildRunsOn),
                     BuildScript = GetBuildScript(Entry.BuildRunsOn),
                     IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
+                    Version = release.Version.ToString() + "+" + preSetupOutput.BuildTag
                 });
                 outputPublishMatrix.Add(Entry.Id, new()
                 {
@@ -119,7 +119,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(Entry.PublishRunsOn),
                     BuildScript = GetBuildScript(Entry.PublishRunsOn),
                     IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + GitHubActions.Instance.RunId,
+                    Version = release.Version.ToString() + "+" + preSetupOutput.BuildTag
                 });
             }
         }

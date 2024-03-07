@@ -230,7 +230,7 @@ partial class BaseNukeBuildHelpers
 
             Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
-            pipeline.Prepare(appTestEntries, appEntryConfigs, toRelease);
+            pipeline.Prepare(output, appTestEntries, appEntryConfigs, toRelease);
         });
 
     public Target PipelinePostSetup => _ => _
