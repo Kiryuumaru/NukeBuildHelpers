@@ -137,9 +137,15 @@ jobs:
     name: Post Setup
     runs-on: ubuntu-22.04
     steps:
+    - id: PUBLISH_SUCCESS1
+      name: Output PUBLISH_SUCCESS1
+      run: echo "$PUBLISH_SUCCESS"
     - id: PUBLISH_SUCCESS2
       name: Resolve PUBLISH_SUCCESS
       run: PUBLISH_SUCCESS="${PUBLISH_SUCCESS/success/ok}" && echo "##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS"
+    - id: PUBLISH_SUCCESS3
+      name: Output PUBLISH_SUCCESS3
+      run: echo "$PUBLISH_SUCCESS"
     - uses: actions/checkout@v4
     - uses: actions/cache@v4
       with:
