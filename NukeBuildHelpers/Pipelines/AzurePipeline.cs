@@ -223,6 +223,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStep(publishJob, name: "PUBLISH_OUTPUT_SUCCESS", displayName: $"Output PUBLISH_OUTPUT_SUCCESS",
             script: $"echo \"##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]{{\"ascas\": \"scc\"}}\" && echo \"##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]{{\"ascas\": \"scc\"}}\"");
 
+        AddJobStep(publishJob, name: "TEST11", displayName: $"Output TEST11",
+            script: $"echo \"##vso[task.setvariable variable=TEST11]'cscscsc'\" && echo \"##vso[task.setvariable variable=TEST11;isOutput=true]'cscscsc'\"");
+
         needs.Add("publish");
 
         // ██████████████████████████████████████
@@ -231,6 +234,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobEnvVarFromNeeds(postSetupJob, "PUBLISH_OUTPUT_SUCCESS", "publish");
+        AddJobEnvVarFromNeeds(postSetupJob, "TEST11", "publish");
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/output");

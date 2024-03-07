@@ -95,9 +95,12 @@ jobs:
     env:
       NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
       GITHUB_TOKEN: $(GITHUB_TOKEN)
-  - script: echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]success" && echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]success"
+  - script: 'echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]{"ascas": "scc"}" && echo "##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]{"ascas": "scc"}"'
     name: PUBLISH_OUTPUT_SUCCESS
     displayName: Output PUBLISH_OUTPUT_SUCCESS
+  - script: echo "##vso[task.setvariable variable=TEST11]'cscscsc'" && echo "##vso[task.setvariable variable=TEST11;isOutput=true]'cscscsc'"
+    name: TEST11
+    displayName: Output TEST11
   dependsOn:
   - pre_setup
   - test
@@ -132,3 +135,4 @@ jobs:
   variables:
     PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['PRE_SETUP_OUTPUT.PRE_SETUP_OUTPUT'] ]
     PUBLISH_OUTPUT_SUCCESS: $[ dependencies.publish.outputs['PUBLISH_OUTPUT_SUCCESS.PUBLISH_OUTPUT_SUCCESS'] ]
+    TEST11: $[ dependencies.publish.outputs['TEST11.TEST11'] ]
