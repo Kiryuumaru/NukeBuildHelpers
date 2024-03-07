@@ -118,7 +118,8 @@ jobs:
     displayName: Download artifacts
     inputs:
       path: ./.nuke/temp/output
-  - script: $(build_script) PipelinePostSetup
+      patterns: '**'
+  - script: chmod +x ./build.sh && ./build.sh PipelinePostSetup
     displayName: Run Nuke PipelinePostSetup
     env:
       GITHUB_TOKEN: $(GITHUB_TOKEN)

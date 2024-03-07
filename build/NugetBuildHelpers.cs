@@ -53,6 +53,8 @@ public class NugetBuildHelpers : AppEntry<Build>
     public override void Publish()
     {
         Log.Information("Publish Release notes: {scs}", NewVersion.ReleaseNotes);
+        Log.Information("GithubToken: {scs}", GithubToken);
+        Log.Information("NuGetAuthToken: {scs}", NuGetAuthToken);
         foreach (var file in OutputPath.GetFiles(depth: 5))
         {
             Log.Information($"{file}");
