@@ -219,7 +219,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/output");
         var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
-        //AddJobOutputFromFile(publishJob, "PUBLISH_OUTPUT_SUCCESS", "./.nuke/temp/publish_success.txt");
 
         needs.Add("publish");
 
@@ -228,8 +227,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup");
-        //AddJobEnvVarFromNeeds(postSetupJob, "PUBLISH_OUTPUT_SUCCESS", "publish");
-        AddJobEnvVar(postSetupJob, "PUBLISH_OUTPUT_SUCCESS", "$(publish.Outcome)");
+        AddJobEnvVar(postSetupJob, "PUBLISH_SUCCESS", "$[ dependencies.publish.result ]");
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/output");
