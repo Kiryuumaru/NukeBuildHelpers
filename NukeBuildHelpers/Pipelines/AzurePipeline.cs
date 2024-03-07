@@ -230,7 +230,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVar(postSetupJob, "PUBLISH_SUCCESS", "$[ dependencies.publish.result ]");
         AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS1", displayName: $"Resolve PUBLISH_SUCCESS",
             script: $"PUBLISH_SUCCESS=\"${{PUBLISH_SUCCESS/Succeeded/ok}}\" && echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS\"");
-        AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS2", displayName: $"Output PUBLISH_SUCCESS1",
+        AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS3", displayName: $"Output PUBLISH_SUCCESS1",
             script: $"echo \"$PUBLISH_SUCCESS\"");
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
