@@ -6,6 +6,8 @@ trigger:
   tags:
     include:
     - '**'
+    exclude:
+    - build.*
 jobs:
 - job: pre_setup
   displayName: Pre Setup

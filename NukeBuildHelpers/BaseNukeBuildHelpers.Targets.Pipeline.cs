@@ -212,7 +212,7 @@ partial class BaseNukeBuildHelpers
                 }
                 releaseNotes = releaseNotesFromProp;
             }
-
+                
             PreSetupOutput output = new()
             {
                 Branch = pipelineInfo.Branch,
