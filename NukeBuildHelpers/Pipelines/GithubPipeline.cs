@@ -242,7 +242,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             run: $"echo \"$PUBLISH_SUCCESS_GITHUB\"");
 
         AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS2", name: $"Resolve PUBLISH_SUCCESS",
-            run: $"PUBLISH_SUCCESS=\"${{PUBLISH_SUCCESS_GITHUB/success/ok}}\" && echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS\"");
+            run: $"echo \"PUBLISH_SUCCESS=${{PUBLISH_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
 
         AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS3", name: $"Output PUBLISH_SUCCESS3",
             run: $"echo \"$PUBLISH_SUCCESS\"");

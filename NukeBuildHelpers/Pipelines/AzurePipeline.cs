@@ -233,7 +233,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             script: $"echo \"$PUBLISH_SUCCESS_AZURE\"");
 
         AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS2", displayName: $"Resolve PUBLISH_SUCCESS",
-            script: $"PUBLISH_SUCCESS=\"${{PUBLISH_SUCCESS_AZURE/Succeeded/ok}}\" && echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS\"");
+            script: $"echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]${{PUBLISH_SUCCESS_AZURE/Succeeded/ok}}\"");
 
         AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS3", displayName: $"Output PUBLISH_SUCCESS3",
             script: $"echo \"$PUBLISH_SUCCESS\"");
