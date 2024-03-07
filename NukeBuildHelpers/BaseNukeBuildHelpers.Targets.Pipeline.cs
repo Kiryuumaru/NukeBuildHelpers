@@ -57,16 +57,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            var publishTask = PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
-
-            await publishTask;
-
-            if (publishTask.Exception != null)
-            {
-                throw publishTask.Exception;
-            }
-
-            File.WriteAllText(TempPath / "publish_success.txt", "success");
+            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelinePreSetup => _ => _
