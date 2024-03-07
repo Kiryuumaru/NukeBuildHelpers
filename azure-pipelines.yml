@@ -33,7 +33,7 @@ jobs:
     name: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
     displayName: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
   variables:
-    GITHUB_TOKEN: $(GITHUB_PAT)
+    GITHUB_TOKEN: $[ variables['GITHUB_PAT'] ]
 - job: test
   displayName: Test
   pool:
