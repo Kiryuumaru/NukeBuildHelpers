@@ -221,7 +221,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         //AddJobOutputFromFile(publishJob, "PUBLISH_OUTPUT_SUCCESS", "./.nuke/temp/publish_success.txt");
         AddJobStep(publishJob, name: "PUBLISH_OUTPUT_SUCCESS", displayName: $"Output PUBLISH_OUTPUT_SUCCESS",
-            script: $"echo \"##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]success\" && echo \"##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]success\"");
+            script: $"echo \"##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS]{{\"ascas\": \"scc\"}}\" && echo \"##vso[task.setvariable variable=PUBLISH_OUTPUT_SUCCESS;isOutput=true]{{\"ascas\": \"scc\"}}\"");
 
         needs.Add("publish");
 
