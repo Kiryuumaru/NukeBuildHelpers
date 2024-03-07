@@ -110,10 +110,10 @@ jobs:
     vmImage: ubuntu-22.04
   steps:
   - script: PUBLISH_SUCCESS="${PUBLISH_SUCCESS/Succeeded/ok}" && echo "##vso[task.setvariable variable=PUBLISH_SUCCESS]$PUBLISH_SUCCESS"
-    name: PUBLISH_SUCCESS
+    name: PUBLISH_SUCCESS1
     displayName: Resolve PUBLISH_SUCCESS
   - script: echo "$PUBLISH_SUCCESS"
-    name: PUBLISH_SUCCESS
+    name: PUBLISH_SUCCESS2
     displayName: Output PUBLISH_SUCCESS1
   - checkout: self
     persistCredentials: true
