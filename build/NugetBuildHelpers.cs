@@ -52,14 +52,6 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish()
     {
-        Log.Information("Publish Release notes: {scs}", NewVersion.ReleaseNotes);
-        Log.Information("GithubToken: {scs}", GithubToken);
-        Log.Information("NuGetAuthToken: {scs}", NuGetAuthToken);
-        throw new Exception("lalalal");
-        foreach (var file in OutputPath.GetFiles(depth: 5))
-        {
-            Log.Information($"{file}");
-        }
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)

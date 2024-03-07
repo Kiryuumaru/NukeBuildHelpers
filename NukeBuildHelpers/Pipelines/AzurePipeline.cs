@@ -153,7 +153,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     { "tags", new Dictionary<string, object>()
                         {
                             { "include", new List<string> { "**" } },
-                            { "exclude", new List<string> { "build.*" } },
+                            { "exclude", new List<string> { "build.*", "latest*", "*/latest*" } }
                         }
                     }
                 },
@@ -228,16 +228,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobEnvVar(postSetupJob, "PUBLISH_SUCCESS_AZURE", "$[ dependencies.publish.result ]");
-
-        AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS_AZURE", displayName: $"Output PUBLISH_SUCCESS_AZURE",
-            script: $"echo \"$PUBLISH_SUCCESS_AZURE\"");
-
-        AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS2", displayName: $"Resolve PUBLISH_SUCCESS",
+        AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS", displayName: $"Resolve PUBLISH_SUCCESS",
             script: $"echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]${{PUBLISH_SUCCESS_AZURE/Succeeded/ok}}\"");
-
-        AddJobStep(postSetupJob, name: "PUBLISH_SUCCESS3", displayName: $"Output PUBLISH_SUCCESS3",
-            script: $"echo \"$PUBLISH_SUCCESS\"");
-
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/output");
