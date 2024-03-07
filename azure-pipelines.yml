@@ -17,6 +17,8 @@ jobs:
     fetchDepth: 0
   - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "azure"
     displayName: Run Nuke PipelinePreSetup
+    env:
+      GITHUB_TOKEN: $(GITHUB_PAT)
   - script: echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE]$(cat ./.nuke/temp/pre_setup_has_release.txt)" && echo "##vso[task.setvariable variable=PRE_SETUP_HAS_RELEASE;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_release.txt)"
     name: PRE_SETUP_HAS_RELEASE
     displayName: Output PRE_SETUP_HAS_RELEASE
@@ -32,8 +34,6 @@ jobs:
   - script: echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" && echo "##vso[task.setvariable variable=PRE_SETUP_OUTPUT_PUBLISH_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)"
     name: PRE_SETUP_OUTPUT_PUBLISH_MATRIX
     displayName: Output PRE_SETUP_OUTPUT_PUBLISH_MATRIX
-  variables:
-    GITHUB_TOKEN: $[ variables['GITHUB_PAT'] ]
 - job: test
   displayName: Test
   pool:
