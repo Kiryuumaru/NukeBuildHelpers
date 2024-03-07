@@ -30,11 +30,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
     public BaseNukeBuildHelpers NukeBuild { get; set; } = nukeBuild;
 
-    public long GetBuildId()
-    {
-        return AzurePipelines.Instance.BuildId;
-    }
-
     public PipelineInfo GetPipelineInfo()
     {
         TriggerType triggerType = TriggerType.Commit;
@@ -50,15 +45,17 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_TARGETBRANCH")!;
             }
-            else
+            else if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
             {
-                if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
-                {
-                    triggerType = TriggerType.Tag;
-                }
+                triggerType = TriggerType.Tag;
                 branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
+                branch = branch[(branch.IndexOf('/') + 1)..];
             }
-            branch = branch[(branch.IndexOf('/') + 1)..];
+            else if (branch.StartsWith("refs/heads", StringComparison.OrdinalIgnoreCase))
+            {
+                triggerType = TriggerType.Commit;
+                branch = branch[11..];
+            }
         }
         return new()
         {
@@ -169,7 +166,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobEnvVar(preSetupJob, "GITHUB_TOKEN", "$(GITHUB_PAT)");
-        AddJobEnvVar(preSetupJob, "GH_TOKEN", "$(GITHUB_PAT)");
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "azure");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");

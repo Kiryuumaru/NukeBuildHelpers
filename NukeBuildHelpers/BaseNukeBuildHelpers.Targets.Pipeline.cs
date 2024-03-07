@@ -97,6 +97,7 @@ partial class BaseNukeBuildHelpers
 
             List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = [];
 
+            long targetBuildId = 0;
             long lastBuildId = 0;
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
@@ -106,7 +107,13 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
-                if (allVersions.GroupKeySorted.Count != 0 && pipelineInfo.TriggerType == TriggerType.Tag)
+                if (allVersions.LatestBuildIds.Count > 0)
+                {
+                    var maxBuildId = allVersions.LatestBuildIds.Values.Max();
+                    lastBuildId = maxBuildId > lastBuildId ? maxBuildId : lastBuildId;
+                }
+
+                if (allVersions.GroupKeySorted.Count != 0)
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {
@@ -131,22 +138,27 @@ partial class BaseNukeBuildHelpers
                         }
                         if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != allVersions.VersionGrouped[groupKey].Last())
                         {
-                            toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
                             var allVersionLastId = allVersions.LatestBuildIds[groupKey];
-                            if (lastBuildId == 0)
+                            if (targetBuildId == 0)
                             {
-                                lastBuildId = allVersionLastId;
+                                targetBuildId = allVersionLastId;
                             }
                             else
                             {
-                                lastBuildId = allVersionLastId < lastBuildId ? allVersionLastId : lastBuildId;
-
+                                targetBuildId = allVersionLastId < targetBuildId ? allVersionLastId : targetBuildId;
                             }
-                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
+                            if (pipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
+                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
+                            }
                         }
                         else
                         {
-                            Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
+                            if (pipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
+                            }
                         }
                     }
                 }
@@ -166,10 +178,10 @@ partial class BaseNukeBuildHelpers
             });
 
             var releaseNotes = "";
-            var buildId = pipeline.GetBuildId();
+            var buildId = lastBuildId + 1;
             var buildTag = $"build.{buildId}";
-            var lastBuildTag = $"build.{lastBuildId}";
-            var isFirstRelease = lastBuildId == 0;
+            var targetBuildTag = $"build.{targetBuildId}";
+            var isFirstRelease = targetBuildId == 0;
             var hasRelease = toRelease.Count != 0;
 
             if (hasRelease)
@@ -185,7 +197,7 @@ partial class BaseNukeBuildHelpers
 
                 if (!isFirstRelease)
                 {
-                    ghReleaseCreateArgs += $" --notes-start-tag {lastBuildTag}";
+                    ghReleaseCreateArgs += $" --notes-start-tag {targetBuildTag}";
                 }
 
                 Gh.Invoke(ghReleaseCreateArgs, logInvocation: false, logOutput: false);
@@ -209,7 +221,7 @@ partial class BaseNukeBuildHelpers
                 ReleaseNotes = releaseNotes,
                 IsFirstRelease = isFirstRelease,
                 BuildTag = buildTag,
-                LastBuildTag = lastBuildTag,
+                LastBuildTag = targetBuildTag,
                 Releases = releases
             };
 
