@@ -19,5 +19,7 @@ public class NewVersion
 
     public required SemVersion Version { get; init; }
 
+    public required long BuildId { get; init; }
+
     public required string ReleaseNotes { get; init; }
 }

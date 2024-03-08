@@ -75,6 +75,7 @@ partial class BaseNukeBuildHelpers
                         {
                             Environment = release.Value.Environment,
                             Version = SemVersion.Parse(release.Value.Version, SemVersionStyles.Strict),
+                            BuildId = preSetupOutput.BuildId,
                             ReleaseNotes = preSetupOutput.ReleaseNotes
                         };
                     }

@@ -42,7 +42,7 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
         {
             if (splitArgs == null)
             {
-                Dictionary<string, string?> targetParams = new();
+                Dictionary<string, string?> targetParams = [];
                 if ((this as INukeBuildHelpers).Args != null)
                 {
                     foreach (var targetParam in (this as INukeBuildHelpers).Args.Split(';'))
