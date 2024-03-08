@@ -21,7 +21,6 @@ public class NugetBuildHelpersTest3 : AppTestEntry<Build>
     public override bool RunParallel => false;
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers2)];
-    //public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers), typeof(NugetBuildHelpers2)];
 
     public override void Run()
     {
