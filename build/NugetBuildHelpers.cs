@@ -32,7 +32,7 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Build()
     {
-        OutputPath.DeleteDirectory();
+        OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
         DotNetTasks.DotNetBuild(_ => _
@@ -46,8 +46,8 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
             .SetVersion(NewVersion?.Version?.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes(NewVersion.ReleaseNotes)
-            .SetOutputDirectory(OutputPath));
+            .SetPackageReleaseNotes(NewVersion?.ReleaseNotes)
+            .SetOutputDirectory(OutputDirectory));
     }
 
     public override void Publish()
@@ -55,10 +55,10 @@ public class NugetBuildHelpers : AppEntry<Build>
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)
-            .SetTargetPath(OutputPath / "**"));
+            .SetTargetPath(OutputDirectory / "**"));
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://api.nuget.org/v3/index.json")
             .SetApiKey(NuGetAuthToken)
-            .SetTargetPath(OutputPath / "**"));
+            .SetTargetPath(OutputDirectory / "**"));
     }
 }

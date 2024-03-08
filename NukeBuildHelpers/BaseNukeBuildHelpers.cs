@@ -18,9 +18,7 @@ namespace NukeBuildHelpers;
 
 public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
-    public static AbsolutePath TempPath => RootDirectory / ".nuke" / "temp";
-
-    public static AbsolutePath OutputPath => TempPath / "output";
+    public static AbsolutePath OutputDirectory => RootDirectory / ".nuke" / "output";
 
     public virtual string[] EnvironmentBranches { get; } = [
         "alpha",

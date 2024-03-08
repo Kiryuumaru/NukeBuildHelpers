@@ -21,8 +21,6 @@ public abstract class AppEntry : BaseEntry
 
     public virtual bool MainRelease { get; } = true;
 
-    public AbsolutePath OutputPath { get; internal set; } = null!;
-
     public BaseNukeBuildHelpers NukeBuild { get; internal set; } = null!;
 
     public NewVersion? NewVersion { get; internal set; }

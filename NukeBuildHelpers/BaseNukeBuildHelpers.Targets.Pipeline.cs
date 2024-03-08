@@ -214,8 +214,8 @@ partial class BaseNukeBuildHelpers
                 Releases = releases
             };
 
-            File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOption));
-            File.WriteAllText(TempPath / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
+            File.WriteAllText(TemporaryDirectory / "pre_setup_output.json", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOption));
+            File.WriteAllText(TemporaryDirectory / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
 
             Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
@@ -236,18 +236,18 @@ partial class BaseNukeBuildHelpers
             {
                 if (Environment.GetEnvironmentVariable("PUBLISH_SUCCESS") == "ok")
                 {
-                    foreach (var release in OutputPath.GetDirectories())
+                    foreach (var release in OutputDirectory.GetDirectories())
                     {
                         if (!preSetupOutput.Releases.TryGetValue(release.Name, out var preSetupOutputVersion))
                         {
                             continue;
                         }
-                        var outPath = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}";
-                        var outPathZip = OutputPath / $"{release.Name}-{preSetupOutputVersion.Version}.zip";
+                        var outPath = OutputDirectory / $"{release.Name}-{preSetupOutputVersion.Version}";
+                        var outPathZip = OutputDirectory / $"{release.Name}-{preSetupOutputVersion.Version}.zip";
                         release.CopyFilesRecursively(outPath);
                         outPath.ZipTo(outPathZip);
                     }
-                    foreach (var release in OutputPath.GetFiles())
+                    foreach (var release in OutputDirectory.GetFiles())
                     {
                         Log.Information("Publish: {name}", release.Name);
                     }
@@ -275,7 +275,7 @@ partial class BaseNukeBuildHelpers
                     }
                     Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                    Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputPath.GetFiles("*.zip").Select(i => i.ToString()))}");
+                    Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString()))}");
 
                     Gh.Invoke($"release edit {preSetupOutput.BuildTag} --draft=false");
                 }

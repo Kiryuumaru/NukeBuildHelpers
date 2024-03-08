@@ -24,7 +24,7 @@ public class NugetBuildHelpers2 : AppEntry<Build>
 
     public override void Build()
     {
-        OutputPath.DeleteDirectory();
+        OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
         DotNetTasks.DotNetBuild(_ => _
@@ -39,12 +39,12 @@ public class NugetBuildHelpers2 : AppEntry<Build>
             .SetSymbolPackageFormat("snupkg")
             .SetVersion(NewVersion?.Version.ToString() ?? "0.0.0")
             .SetPackageReleaseNotes("* Initial prerelease")
-            .SetOutputDirectory(OutputPath));
+            .SetOutputDirectory(OutputDirectory));
     }
 
     public override void Publish()
     {
-        foreach (var ss in OutputPath.GetFiles())
+        foreach (var ss in OutputDirectory.GetFiles())
         {
             Log.Information("Publish: {name}", ss.Name);
         }

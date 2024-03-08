@@ -123,9 +123,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 });
             }
         }
-        File.WriteAllText(BaseNukeBuildHelpers.TempPath / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
-        File.WriteAllText(BaseNukeBuildHelpers.TempPath / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));
-        File.WriteAllText(BaseNukeBuildHelpers.TempPath / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption));
+        File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
+        File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));
+        File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption));
         Log.Information("PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
         Log.Information("PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
         Log.Information("PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
@@ -211,7 +211,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1");
         AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
-        AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output");
+        AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
 
         needs.Add("build");
 
@@ -224,7 +224,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(publishJob);
         var downloadPublishStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPublishStep, "artifact", "$(id)");
-        AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/output");
+        AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
         var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
 
@@ -240,7 +240,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             script: $"echo \"##vso[task.setvariable variable=PUBLISH_SUCCESS]${{PUBLISH_SUCCESS_AZURE/Succeeded/ok}}\"");
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/output");
+        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
         var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, GetBuildScript(RunsOnType.Ubuntu2204), "PipelinePostSetup");
         AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");

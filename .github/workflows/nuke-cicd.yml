@@ -75,7 +75,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.id }}
-        path: ./.nuke/temp/output/*
+        path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -95,7 +95,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/output
+        path: ./.nuke/output
         pattern: ${{ matrix.id }}
         merge-multiple: true
     - name: Run Nuke PipelinePublish
@@ -124,7 +124,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/output
+        path: ./.nuke/output
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
