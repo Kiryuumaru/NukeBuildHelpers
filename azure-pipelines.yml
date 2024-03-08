@@ -9,9 +9,6 @@ trigger:
     - build.*
     - latest*
     - '*/latest*'
-pr:
-  branches:
-    include: '*'
 jobs:
 - job: pre_setup
   displayName: Pre Setup
