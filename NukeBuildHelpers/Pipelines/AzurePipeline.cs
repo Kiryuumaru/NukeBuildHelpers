@@ -140,6 +140,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
         var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
 
+        var branches = new List<string>();
+
         Dictionary<string, object> workflow = new()
         {
             ["name"] = "Nuke CICD Pipeline",
@@ -147,13 +149,21 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     { "branches", new Dictionary<string, object>()
                         {
-                            { "include", new List<string> { "*" } },
+                            { "include", NukeBuild.EnvironmentBranches.ToArray() },
                         }
                     },
                     { "tags", new Dictionary<string, object>()
                         {
                             { "include", new List<string> { "**" } },
                             { "exclude", new List<string> { "build.*", "latest*", "*/latest*" } }
+                        }
+                    }
+                },
+            ["pr"] = new Dictionary<string, object>()
+                {
+                    { "branches", new Dictionary<string, object>()
+                        {
+                            { "include", NukeBuild.EnvironmentBranches.ToArray() },
                         }
                     }
                 },
