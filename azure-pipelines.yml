@@ -11,7 +11,7 @@ trigger:
     - '*/latest*'
 pr:
   branches:
-    include: '**'
+    include: '*'
 jobs:
 - job: pre_setup
   displayName: Pre Setup
