@@ -2,9 +2,7 @@ name: Nuke CICD Pipeline
 trigger:
   branches:
     include:
-    - alpha
-    - beta
-    - rc
+    - prerelease
     - main
   tags:
     include:
@@ -16,9 +14,7 @@ trigger:
 pr:
   branches:
     include:
-    - alpha
-    - beta
-    - rc
+    - prerelease
     - main
 jobs:
 - job: pre_setup
