@@ -158,7 +158,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                             { "exclude", new List<string> { "build.*", "latest*", "*/latest*" } }
                         }
                     }
-                }
+                },
             ["pr"] = new Dictionary<string, object>()
                 {
                     { "branches", new Dictionary<string, object>()
