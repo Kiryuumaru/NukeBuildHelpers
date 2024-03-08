@@ -25,9 +25,9 @@ internal class PreSetupOutput
 
     public required bool IsFirstRelease { get; init; }
 
-    public required string BuildTag { get; init; }
+    public required long BuildId { get; init; }
 
-    public required string LastBuildTag { get; init; }
+    public required long LastBuildId { get; init; }
 
     public required Dictionary<string, PreSetupOutputVersion> Releases { get; init; }
 }

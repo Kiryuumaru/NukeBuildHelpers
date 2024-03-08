@@ -110,7 +110,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(Entry.BuildRunsOn),
                     BuildScript = GetBuildScript(Entry.BuildRunsOn),
                     IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+" + preSetupOutput.BuildTag
+                    Version = release.Version.ToString() + "+build." + preSetupOutput.BuildId
                 });
                 outputPublishMatrix.Add(Entry.Id, new()
                 {
@@ -119,7 +119,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(Entry.PublishRunsOn),
                     BuildScript = GetBuildScript(Entry.PublishRunsOn),
                     IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+" + preSetupOutput.BuildTag
+                    Version = release.Version.ToString() + "+build." + preSetupOutput.BuildId
                 });
             }
         }

@@ -209,8 +209,8 @@ partial class BaseNukeBuildHelpers
                 HasRelease = hasRelease,
                 ReleaseNotes = releaseNotes,
                 IsFirstRelease = isFirstRelease,
-                BuildTag = buildTag,
-                LastBuildTag = targetBuildTag,
+                BuildId = buildId,
+                LastBuildId = targetBuildId,
                 Releases = releases
             };
 
@@ -275,13 +275,13 @@ partial class BaseNukeBuildHelpers
                     }
                     Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                    Gh.Invoke($"release upload {preSetupOutput.BuildTag} {string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString()))}");
+                    Gh.Invoke($"release upload build.{preSetupOutput.BuildId} {string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString()))}");
 
-                    Gh.Invoke($"release edit {preSetupOutput.BuildTag} --draft=false");
+                    Gh.Invoke($"release edit build.{preSetupOutput.BuildId} --draft=false");
                 }
                 else
                 {
-                    Gh.Invoke($"release delete {preSetupOutput.BuildTag} --cleanup-tag -y");
+                    Gh.Invoke($"release delete build.{preSetupOutput.BuildId} --cleanup-tag -y");
                 }
             }
         });
