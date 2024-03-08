@@ -1,4 +1,5 @@
-﻿using Microsoft.Build.Tasks;
+﻿using JetBrains.Annotations;
+using Microsoft.Build.Tasks;
 using Nuke.Common;
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
@@ -14,6 +15,8 @@ namespace NukeBuildHelpers;
 
 public abstract class AppEntry : BaseEntry
 {
+    public static AbsolutePath RootDirectory => Nuke.Common.NukeBuild.RootDirectory;
+
     public abstract RunsOnType BuildRunsOn { get; }
 
     public abstract RunsOnType PublishRunsOn { get; }
