@@ -52,7 +52,7 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish()
     {
-        Log.Information("Publish Release notes: {scs}", NewVersion.ReleaseNotes);
+        throw new NotImplementedException("c");
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
             .SetApiKey(GithubToken)

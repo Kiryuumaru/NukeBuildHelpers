@@ -13,6 +13,7 @@ using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Interfaces;
 using NukeBuildHelpers.Models;
 using Octokit;
 using Semver;
@@ -26,20 +27,6 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private static PreSetupOutput GetPreSetupOutput()
-    {
-        string? preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
-
-        if (string.IsNullOrEmpty(preSetupOutputValue))
-        {
-            throw new Exception("PRE_SETUP_OUTPUT is empty");
-        }
-
-        PreSetupOutput? preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue, _jsonSnakeCaseNamingOption);
-
-        return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
-    }
-
     public Target PipelineTest => _ => _
         .Unlisted()
         .Description("To be used by pipeline")
@@ -70,16 +57,7 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
 
-            var publishTask = PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
-
-            await publishTask;
-
-            if (publishTask.Exception != null)
-            {
-                throw publishTask.Exception;
-            }
-
-            File.WriteAllText(TempPath / "publish_success.txt", "ok");
+            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelinePreSetup => _ => _
@@ -92,22 +70,14 @@ partial class BaseNukeBuildHelpers
             GetOrFail(() => GetEntries<AppEntry>(), out var appEntries);
             GetOrFail(() => GetEntries<AppTestEntry>(), out var appTestEntries);
 
-            Func<PipelineInfo>? pipelineGetBranch = null;
-            Func<long>? pipelineGetBuildId = null;
-            Action<List<AppTestEntry>, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)>, List<(AppEntry AppEntry, string Env, SemVersion Version)>>? pipelinePrepare = null;
-
-            switch (Args?.ToLowerInvariant())
+            IPipeline pipeline = (Args?.ToLowerInvariant()) switch
             {
-                case "github":
-                    pipelineGetBranch = () => GithubPipelineGetBranch();
-                    pipelineGetBuildId = () => GithubPipelineGetBuildId();
-                    pipelinePrepare = (appTestEntries, appEntryConfigs, toRelease) => GithubPipelinePrepare(appTestEntries, appEntryConfigs, toRelease);
-                    break;
-                default:
-                    throw new Exception("No agent pipeline provided");
-            }
+                "github" => new GithubPipeline(this),
+                "azure" => new AzurePipeline(this),
+                _ => throw new Exception("No agent pipeline provided"),
+            };
 
-            var pipelineInfo = pipelineGetBranch();
+            var pipelineInfo = pipeline.GetPipelineInfo();
 
             Log.Information("Target branch: {branch}", pipelineInfo.Branch);
             Log.Information("Trigger type: {branch}", pipelineInfo.TriggerType);
@@ -116,6 +86,7 @@ partial class BaseNukeBuildHelpers
 
             List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = [];
 
+            long targetBuildId = 0;
             long lastBuildId = 0;
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
@@ -125,7 +96,13 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
-                if (allVersions.GroupKeySorted.Count != 0 && pipelineInfo.TriggerType == TriggerType.Tag)
+                if (allVersions.LatestBuildIds.Count > 0)
+                {
+                    var maxBuildId = allVersions.BuildIdList.Max();
+                    lastBuildId = maxBuildId > lastBuildId ? maxBuildId : lastBuildId;
+                }
+
+                if (allVersions.GroupKeySorted.Count != 0)
                 {
                     foreach (var groupKey in allVersions.GroupKeySorted)
                     {
@@ -150,22 +127,27 @@ partial class BaseNukeBuildHelpers
                         }
                         if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != allVersions.VersionGrouped[groupKey].Last())
                         {
-                            toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
                             var allVersionLastId = allVersions.LatestBuildIds[groupKey];
-                            if (lastBuildId == 0)
+                            if (targetBuildId == 0)
                             {
-                                lastBuildId = allVersionLastId;
+                                targetBuildId = allVersionLastId;
                             }
                             else
                             {
-                                lastBuildId = allVersionLastId < lastBuildId ? allVersionLastId : lastBuildId;
-
+                                targetBuildId = allVersionLastId < targetBuildId ? allVersionLastId : targetBuildId;
                             }
-                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
+                            if (pipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
+                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
+                            }
                         }
                         else
                         {
-                            Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
+                            if (pipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
+                            }
                         }
                     }
                 }
@@ -185,10 +167,10 @@ partial class BaseNukeBuildHelpers
             });
 
             var releaseNotes = "";
-            var buildId = pipelineGetBuildId.Invoke();
+            var buildId = lastBuildId + 1;
             var buildTag = $"build.{buildId}";
-            var lastBuildTag = $"build.{lastBuildId}";
-            var isFirstRelease = lastBuildId == 0;
+            var targetBuildTag = $"build.{targetBuildId}";
+            var isFirstRelease = targetBuildId == 0;
             var hasRelease = toRelease.Count != 0;
 
             if (hasRelease)
@@ -204,7 +186,7 @@ partial class BaseNukeBuildHelpers
 
                 if (!isFirstRelease)
                 {
-                    ghReleaseCreateArgs += $" --notes-start-tag {lastBuildTag}";
+                    ghReleaseCreateArgs += $" --notes-start-tag {targetBuildTag}";
                 }
 
                 Gh.Invoke(ghReleaseCreateArgs, logInvocation: false, logOutput: false);
@@ -219,7 +201,7 @@ partial class BaseNukeBuildHelpers
                 }
                 releaseNotes = releaseNotesFromProp;
             }
-
+                
             PreSetupOutput output = new()
             {
                 Branch = pipelineInfo.Branch,
@@ -228,16 +210,16 @@ partial class BaseNukeBuildHelpers
                 ReleaseNotes = releaseNotes,
                 IsFirstRelease = isFirstRelease,
                 BuildTag = buildTag,
-                LastBuildTag = lastBuildTag,
+                LastBuildTag = targetBuildTag,
                 Releases = releases
             };
 
-            File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOption));
+            File.WriteAllText(TempPath / "pre_setup_output.json", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOption));
             File.WriteAllText(TempPath / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
 
-            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, _jsonSnakeCaseNamingOptionIndented));
+            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
-            pipelinePrepare?.Invoke(appTestEntries, appEntryConfigs, toRelease);
+            pipeline.Prepare(output, appTestEntries, appEntryConfigs, toRelease);
         });
 
     public Target PipelinePostSetup => _ => _
@@ -252,7 +234,7 @@ partial class BaseNukeBuildHelpers
 
             if (preSetupOutput.HasRelease)
             {
-                if (Environment.GetEnvironmentVariable("PUBLISH_OUTPUT_SUCCESS") == "ok")
+                if (Environment.GetEnvironmentVariable("PUBLISH_SUCCESS") == "ok")
                 {
                     foreach (var release in OutputPath.GetDirectories())
                     {
@@ -303,4 +285,18 @@ partial class BaseNukeBuildHelpers
                 }
             }
         });
+
+    private static PreSetupOutput GetPreSetupOutput()
+    {
+        string? preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+
+        if (string.IsNullOrEmpty(preSetupOutputValue))
+        {
+            throw new Exception("PRE_SETUP_OUTPUT is empty");
+        }
+
+        PreSetupOutput? preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue, JsonExtension.SnakeCaseNamingOption);
+
+        return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
+    }
 }

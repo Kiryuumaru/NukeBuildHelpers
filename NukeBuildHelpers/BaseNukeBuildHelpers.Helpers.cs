@@ -19,21 +19,18 @@ using NukeBuildHelpers.Attributes;
 using System.Collections.Generic;
 using Nuke.Common.Utilities;
 using System.Net.Sockets;
+using YamlDotNet.Serialization;
+using NukeBuildHelpers.Interfaces;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private static readonly JsonSerializerOptions _jsonSnakeCaseNamingOption = new()
+    private void BuildWorkflow<T>()
+        where T : IPipeline
     {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-    };
-
-    private static readonly JsonSerializerOptions _jsonSnakeCaseNamingOptionIndented = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        WriteIndented = true
-    };
+        (Activator.CreateInstance(typeof(T), this) as IPipeline)!.BuildWorkflow();
+    }
 
     private void SetupAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
@@ -201,7 +198,7 @@ partial class BaseNukeBuildHelpers
         return Task.WhenAll(tasks);
     }
 
-    private static List<T> GetEntries<T>()
+    internal static List<T> GetEntries<T>()
         where T : BaseEntry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
@@ -218,7 +215,7 @@ partial class BaseNukeBuildHelpers
         return entry;
     }
 
-    private static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
+    internal static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
     {
         Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> configs = [];
 
@@ -292,7 +289,7 @@ partial class BaseNukeBuildHelpers
         return configs;
     }
 
-    private static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
+    internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
         where T : BaseEntry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
@@ -404,6 +401,7 @@ partial class BaseNukeBuildHelpers
             .Select(i => KeyValuePair.Create(i.Value.Env, (i.Value.BuildIds.Max(), i.Value.Versions.Max()!))).ToDictionary();
 
         List<SemVersion> allVersionList = pairedTags.SelectMany(i => i.Value.Versions).ToList();
+        List<long> allBuildIdList = pairedTags.SelectMany(i => i.Value.BuildIds).ToList();
         Dictionary<string, List<SemVersion>> allVersionGroupDict = pairedEnvGroup.ToDictionary(i => i.Key, i => i.Value.Versions);
         Dictionary<string, SemVersion> allLatestVersions = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
         Dictionary<string, long> allLatestIds = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
@@ -425,6 +423,7 @@ partial class BaseNukeBuildHelpers
         return new()
         {
             VersionList = allVersionList,
+            BuildIdList = allBuildIdList,
             VersionGrouped = allVersionGroupDict,
             LatestVersions = allLatestVersions,
             LatestBuildIds = allLatestIds,
@@ -432,7 +431,7 @@ partial class BaseNukeBuildHelpers
         };
     }
 
-    private static void GetOrFail<T>(Func<T> valFactory, out T valOut)
+    internal static void GetOrFail<T>(Func<T> valFactory, out T valOut)
     {
         try
         {
@@ -445,7 +444,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void GetOrFail(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, List<AppTestEntry> Tests) appEntryConfig)
+    internal static void GetOrFail(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, List<AppTestEntry> Tests) appEntryConfig)
     {
         try
         {
@@ -477,7 +476,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private static void GetOrFail(string? rawValue, out SemVersion valOut)
+    internal static void GetOrFail(string? rawValue, out SemVersion valOut)
     {
         try
         {
