@@ -2,7 +2,8 @@ name: Nuke CICD Pipeline
 trigger:
   branches:
     include:
-    - '**'
+    - prerelease
+    - main
   tags:
     include:
     - '**'
@@ -11,10 +12,8 @@ trigger:
     - latest*
     - '*/latest*'
 pr:
-  branches:
-    include:
-    - prerelease
-    - main
+- prerelease
+- main
 jobs:
 - job: pre_setup
   displayName: Pre Setup
