@@ -140,8 +140,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
         var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
 
-        var branches = new List<string>();
-
         Dictionary<string, object> workflow = new()
         {
             ["name"] = "Nuke CICD Pipeline",

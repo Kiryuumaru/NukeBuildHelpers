@@ -165,7 +165,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
         AddJobOrStepEnvVar(preSetupJob, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        AddJobStepNukeBuildCache(preSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
         AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "github");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
@@ -184,7 +183,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobOrStepEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup");
             AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
-            AddJobStepNukeBuildCache(testJob, "${{ matrix.runs_on }}", _if: "${{ matrix.id != 'skip' }}");
             var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", "${{ matrix.id != 'skip' }}");
             AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
@@ -198,7 +196,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOrStepEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(buildJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobStepCheckout(buildJob);
-        AddJobStepNukeBuildCache(buildJob, "${{ matrix.runs_on }}");
         var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}");
         AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
         var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
@@ -216,7 +213,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOrStepEnvVarFromNeeds(publishJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob);
-        AddJobStepNukeBuildCache(publishJob, "${{ matrix.runs_on }}");
         var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/output");
         AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
@@ -235,7 +231,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStep(postSetupJob, id: "PUBLISH_SUCCESS", name: $"Resolve PUBLISH_SUCCESS",
             run: $"echo \"PUBLISH_SUCCESS=${{PUBLISH_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
         AddJobStepCheckout(postSetupJob);
-        AddJobStepNukeBuildCache(postSetupJob, GetRunsOn(RunsOnType.Ubuntu2204));
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/output");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunsOnType.Ubuntu2204, "PipelinePostSetup");
@@ -353,15 +348,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunsOnType runsOnType, string targetName, string args = "", string _if = "")
     {
         return AddJobStepNukeRun(job, GetBuildScript(runsOnType), targetName, args, _if);
-    }
-
-    private static Dictionary<string, object> AddJobStepNukeBuildCache(Dictionary<string, object> job, string keyRoot, string _if = "")
-    {
-        var step = AddJobStep(job, uses: "actions/cache@v4", _if: _if);
-        AddJobStepWith(step, "path", "~/.nuget/packages");
-        AddJobStepWith(step, "key", $"{keyRoot}-nuget-${{{{ hashFiles('**/*.csproj') }}}}");
-        AddJobStepWith(step, "restore-keys", $"{keyRoot}-nuget-");
-        return step;
     }
 
     private static void AddJobStepWith(Dictionary<string, object> step, string name, string value)
