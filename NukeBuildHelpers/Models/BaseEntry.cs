@@ -16,6 +16,10 @@ public abstract class BaseEntry
 {
     public static AbsolutePath RootDirectory => NukeBuild.RootDirectory;
 
+    public static AbsolutePath TemporaryDirectory => NukeBuild.TemporaryDirectory;
+
+    public static AbsolutePath OutputDirectory => BaseNukeBuildHelpers.OutputDirectory;
+
     public virtual bool Enable { get; } = true;
 
     public virtual bool RunParallel { get; } = true;

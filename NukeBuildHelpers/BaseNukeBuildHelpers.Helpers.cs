@@ -50,7 +50,7 @@ partial class BaseNukeBuildHelpers
             }
 
             appEntry.Value.Entry.NukeBuild = this;
-            appEntry.Value.Entry.OutputPath = OutputPath;
+
             foreach (var appTestEntry in appEntry.Value.Tests)
             {
                 if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
