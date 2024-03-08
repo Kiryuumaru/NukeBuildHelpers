@@ -19,4 +19,6 @@ public partial class Build : BaseNukeBuildHelpers
 
     [Solution(GenerateProjects = true)]
     internal readonly Solution Solution;
+
+    public override string[] EnvironmentBranches { get; } = [ "prerelease", "main" ];
 }
