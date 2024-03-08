@@ -18,7 +18,8 @@ trigger:
 pr:
   branches:
     include:
-    - "**"
+    - prerelease
+    - main
 jobs:
 - job: pre_setup
   displayName: Pre Setup
