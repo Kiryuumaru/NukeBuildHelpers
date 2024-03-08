@@ -6,10 +6,9 @@ on:
     - main
     tags:
     - '**'
-    tags-ignore:
-    - build.*
-    - latest*
-    - '*/latest*'
+    - '!build.*'
+    - '!latest*'
+    - '!*/latest*'
   pull_request:
     branches:
     - prerelease

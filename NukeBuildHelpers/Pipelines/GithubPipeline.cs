@@ -145,8 +145,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     { "push", new Dictionary<string, object>()
                         {
                             { "branches", NukeBuild.EnvironmentBranches.ToArray() },
-                            { "tags", new List<string> { "**" } },
-                            { "tags-ignore", new List<string> { "build.*", "latest*", "*/latest*" } }
+                            { "tags", new List<string> { "**", "!build.*", "!latest*", "!*/latest*" } }
                         }
                     },
                     { "pull_request", new Dictionary<string, object>()
