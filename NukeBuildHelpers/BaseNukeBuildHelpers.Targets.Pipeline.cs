@@ -93,12 +93,8 @@ partial class BaseNukeBuildHelpers
             {
                 string appId = key;
 
-                Log.Information("Checking {appId} versions...", appId);
-
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
-
-                Log.Information("Checking {appId} releases...", appId);
 
                 if (allVersions.LatestBuildIds.Count > 0)
                 {
@@ -134,7 +130,7 @@ partial class BaseNukeBuildHelpers
                             var lastVersionGroup = versionGroup.Last();
                             if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != lastVersionGroup)
                             {
-                                var allVersionLastId = allVersions.LatestBuildIds[groupKey];
+                                allVersions.LatestBuildIds.TryGetValue(groupKey, out var allVersionLastId);
                                 if (targetBuildId == 0)
                                 {
                                     targetBuildId = allVersionLastId;
