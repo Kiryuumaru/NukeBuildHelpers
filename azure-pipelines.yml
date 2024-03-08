@@ -1,8 +1,12 @@
 name: Nuke CICD Pipeline
 trigger:
   branches:
-    include: 
-    - '**'
+    include:
+    - '*'
+    exclude:
+    - feat/**
+    - fix/**
+    - hotfix/**
   tags:
     include:
     - '**'
@@ -12,7 +16,7 @@ trigger:
     - '*/latest*'
 pr:
   branches:
-    include: 
+    include:
     - '**'
 jobs:
 - job: pre_setup

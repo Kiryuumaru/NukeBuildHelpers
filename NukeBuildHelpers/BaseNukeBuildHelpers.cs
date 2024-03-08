@@ -22,6 +22,19 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 
     public static AbsolutePath OutputPath => TempPath / "output";
 
+    public virtual string[] EnvironmentBranches { get; } = [
+        "alpha",
+        "beta",
+        "rc",
+        "main",
+        ];
+
+    public virtual string[] PullRequestBranches { get; } = [
+        "feat/**",
+        "fix/**",
+        "hotfix/**"
+        ];
+
     protected internal GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
     protected internal string Args => (this as INukeBuildHelpers).Args;

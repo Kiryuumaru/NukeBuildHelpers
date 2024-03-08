@@ -149,7 +149,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     { "branches", new Dictionary<string, object>()
                         {
-                            { "include", "*" },
+                            { "include", new List<string> { "*" } },
+                            { "exclude", NukeBuild.PullRequestBranches }, 
                         }
                     },
                     { "tags", new Dictionary<string, object>()
@@ -163,7 +164,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     { "branches", new Dictionary<string, object>()
                         {
-                            { "include", "**" },
+                            { "include", new List<string> { "**" } },
                         }
                     }
                 },
