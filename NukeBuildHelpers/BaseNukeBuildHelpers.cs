@@ -29,12 +29,6 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
         "main",
         ];
 
-    public virtual string[] PullRequestBranches { get; } = [
-        "feat/**",
-        "fix/**",
-        "hotfix/**"
-        ];
-
     protected internal GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
     protected internal string Args => (this as INukeBuildHelpers).Args;

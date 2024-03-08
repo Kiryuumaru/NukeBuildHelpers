@@ -137,10 +137,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
         var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
 
-        var pushBranches = NukeBuild.EnvironmentBranches.ToList();
-
-        pushBranches.AddRange(NukeBuild.PullRequestBranches);
-
         Dictionary<string, object> workflow = new()
         {
             ["name"] = "Nuke CICD Pipeline",
@@ -148,13 +144,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     { "push", new Dictionary<string, object>()
                         {
-                            { "branches", pushBranches },
+                            { "branches", NukeBuild.EnvironmentBranches.ToArray() },
                             { "tags", new List<string> { "**", "!build.*", "!latest*", "!*/latest*" } }
                         }
                     },
                     { "pull_request", new Dictionary<string, object>()
                         {
-                            { "branches", NukeBuild.PullRequestBranches.ToArray() }
+                            { "branches", new List<string> { "**" } }
                         }
                     }
                 },
