@@ -2,8 +2,7 @@ name: Nuke CICD Pipeline
 trigger:
   branches:
     include:
-    - prerelease
-    - main
+    - '**'
   tags:
     include:
     - '**'
