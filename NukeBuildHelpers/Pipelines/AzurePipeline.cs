@@ -150,7 +150,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     { "branches", new Dictionary<string, object>()
                         {
                             { "include", NukeBuild.EnvironmentBranches.ToArray() },
-                            { "exclude", NukeBuild.PullRequestBranches.ToArray() }, 
                         }
                     },
                     { "tags", new Dictionary<string, object>()

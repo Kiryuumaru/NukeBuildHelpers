@@ -4,10 +4,6 @@ trigger:
     include:
     - prerelease
     - main
-    exclude:
-    - feat/**
-    - fix/**
-    - hotfix/**
   tags:
     include:
     - '**'
