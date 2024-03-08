@@ -15,8 +15,6 @@ namespace NukeBuildHelpers;
 
 public abstract class AppEntry : BaseEntry
 {
-    public static AbsolutePath RootDirectory => Nuke.Common.NukeBuild.RootDirectory;
-
     public abstract RunsOnType BuildRunsOn { get; }
 
     public abstract RunsOnType PublishRunsOn { get; }

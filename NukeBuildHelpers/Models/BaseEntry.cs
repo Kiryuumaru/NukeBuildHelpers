@@ -14,6 +14,8 @@ namespace NukeBuildHelpers;
 
 public abstract class BaseEntry
 {
+    public static AbsolutePath RootDirectory => NukeBuild.RootDirectory;
+
     public virtual bool Enable { get; } = true;
 
     public virtual bool RunParallel { get; } = true;
