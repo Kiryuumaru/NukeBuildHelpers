@@ -159,7 +159,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                         }
                     }
                 },
-            ["pr"] = NukeBuild.EnvironmentBranches.ToArray(),
+            ["pr"] = new Dictionary<string, object>()
+                {
+                    { "branches", new Dictionary<string, object>()
+                        {
+                            { "include", NukeBuild.EnvironmentBranches.ToArray() },
+                        }
+                    }
+                },
             ["jobs"] = new List<object>()
         };
 
