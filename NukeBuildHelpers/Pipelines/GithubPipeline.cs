@@ -147,6 +147,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                             { "branches", '*' },
                             { "tags", new List<string> { "**", "!build.*", "!latest*", "!*/latest*" } }
                         }
+                    },
+                    { "pull_request", new Dictionary<string, object>()
+                        {
+                            { "branches", "**" }
+                        }
                     }
                 },
             ["jobs"] = new Dictionary<string, object>()
