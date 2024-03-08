@@ -149,7 +149,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     { "branches", new Dictionary<string, object>()
                         {
-                            { "include", NukeBuild.EnvironmentBranches.ToArray() },
+                            { "include", "*" },
                         }
                     },
                     { "tags", new Dictionary<string, object>()
@@ -158,15 +158,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                             { "exclude", new List<string> { "build.*", "latest*", "*/latest*" } }
                         }
                     }
-                },
-            ["pr"] = new Dictionary<string, object>()
-                {
-                    { "branches", new Dictionary<string, object>()
-                        {
-                            { "include", NukeBuild.EnvironmentBranches.ToArray() },
-                        }
-                    }
-                },
+                }
             ["jobs"] = new List<object>()
         };
 

@@ -1,19 +1,12 @@
 name: Nuke CICD Pipeline
 on:
   push:
-    branches:
-    - prerelease
-    - main
-    - '**'
+    branches: '*'
     tags:
     - '**'
     - '!build.*'
     - '!latest*'
     - '!*/latest*'
-  pull_request:
-    branches:
-    - prerelease
-    - main
 jobs:
   pre_setup:
     name: Pre Setup
