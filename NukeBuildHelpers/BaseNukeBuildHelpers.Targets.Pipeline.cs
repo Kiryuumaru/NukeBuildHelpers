@@ -93,8 +93,12 @@ partial class BaseNukeBuildHelpers
             {
                 string appId = key;
 
+                Log.Information("Checking {appId} versions...", appId);
+
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+
+                Log.Information("Checking {appId} releases...", appId);
 
                 if (allVersions.LatestBuildIds.Count > 0)
                 {
@@ -125,28 +129,32 @@ partial class BaseNukeBuildHelpers
                                 continue;
                             }
                         }
-                        if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != allVersions.VersionGrouped[groupKey].Last())
+                        if (allVersions.VersionGrouped.TryGetValue(groupKey, out var versionGroup) && versionGroup.Count > 0)
                         {
-                            var allVersionLastId = allVersions.LatestBuildIds[groupKey];
-                            if (targetBuildId == 0)
+                            var lastVersionGroup = versionGroup.Last();
+                            if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != lastVersionGroup)
                             {
-                                targetBuildId = allVersionLastId;
+                                var allVersionLastId = allVersions.LatestBuildIds[groupKey];
+                                if (targetBuildId == 0)
+                                {
+                                    targetBuildId = allVersionLastId;
+                                }
+                                else
+                                {
+                                    targetBuildId = allVersionLastId < targetBuildId ? allVersionLastId : targetBuildId;
+                                }
+                                if (pipelineInfo.TriggerType == TriggerType.Tag)
+                                {
+                                    toRelease.Add((appEntry.Entry, env, lastVersionGroup));
+                                    Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, lastVersionGroup.ToString(), value);
+                                }
                             }
                             else
                             {
-                                targetBuildId = allVersionLastId < targetBuildId ? allVersionLastId : targetBuildId;
-                            }
-                            if (pipelineInfo.TriggerType == TriggerType.Tag)
-                            {
-                                toRelease.Add((appEntry.Entry, env, allVersions.VersionGrouped[groupKey].Last()));
-                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, allVersions.VersionGrouped[groupKey].Last().ToString(), value);
-                            }
-                        }
-                        else
-                        {
-                            if (pipelineInfo.TriggerType == TriggerType.Tag)
-                            {
-                                Log.Information("{appId} Tag: {current}, already latest", appId, allVersions.VersionGrouped[groupKey].Last().ToString());
+                                if (pipelineInfo.TriggerType == TriggerType.Tag)
+                                {
+                                    Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
+                                }
                             }
                         }
                     }
