@@ -194,6 +194,7 @@ partial class BaseNukeBuildHelpers
 
         if (preSetupOutput != null)
         {
+            Directory.CreateDirectory(OutputDirectory);
             File.WriteAllText(OutputDirectory / "notes.md", preSetupOutput.ReleaseNotes);
         }
 
