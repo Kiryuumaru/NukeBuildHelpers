@@ -192,6 +192,11 @@ partial class BaseNukeBuildHelpers
 
         SetupWorkflowRun(workflowSteps, appEntries, preSetupOutput);
 
+        if (preSetupOutput != null)
+        {
+            File.WriteAllText(OutputDirectory / "notes.md", preSetupOutput.ReleaseNotes);
+        }
+
         foreach (var appEntry in appEntries)
         {
             if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
