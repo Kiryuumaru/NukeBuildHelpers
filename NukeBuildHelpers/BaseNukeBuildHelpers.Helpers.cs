@@ -21,6 +21,9 @@ using Nuke.Common.Utilities;
 using System.Net.Sockets;
 using YamlDotNet.Serialization;
 using NukeBuildHelpers.Interfaces;
+using Nuke.Common.CI.AzurePipelines;
+using Nuke.Common.CI.GitHubActions;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace NukeBuildHelpers;
 
@@ -32,10 +35,40 @@ partial class BaseNukeBuildHelpers
         (Activator.CreateInstance(typeof(T), this) as IPipeline)!.BuildWorkflow();
     }
 
-    private void SetupAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
+    internal void SetupWorkflowBuilder(List<WorkflowBuilder> workflowBuilders, PipelineType pipelineType)
+    {
+        foreach (var workflowBuilder in workflowBuilders)
+        {
+            workflowBuilder.PipelineType = pipelineType;
+            workflowBuilder.NukeBuild = this;
+        }
+    }
+
+    private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
     {
         var appEntrySecretMap = GetEntrySecretMap<AppEntry>();
         var appTestEntrySecretMap = GetEntrySecretMap<AppTestEntry>();
+
+        PipelineType pipelineType;
+
+        if (Host is AzurePipelines)
+        {
+            pipelineType = PipelineType.Azure;
+        }
+        else if (Host is GitHubActions)
+        {
+            pipelineType = PipelineType.Github;
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
+
+        foreach (var workflowStep in workflowSteps)
+        {
+            workflowStep.PipelineType = pipelineType;
+            workflowStep.NukeBuild = this;
+        }
 
         foreach (var appEntry in appEntries)
         {
@@ -44,11 +77,13 @@ partial class BaseNukeBuildHelpers
             {
                 foreach (var secret in appSecretMap.SecretHelpers)
                 {
-                    var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                    var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? secret.SecretHelper.SecretVariableName : secret.SecretHelper.EnvironmentVariableName;
+                    var secretValue = Environment.GetEnvironmentVariable(envVarName);
                     secret.MemberInfo.SetValue(appEntry.Value.Entry, secretValue);
                 }
             }
 
+            appEntry.Value.Entry.PipelineType = pipelineType;
             appEntry.Value.Entry.NukeBuild = this;
 
             foreach (var appTestEntry in appEntry.Value.Tests)
@@ -58,11 +93,12 @@ partial class BaseNukeBuildHelpers
                 {
                     foreach (var secret in testSecretMap.SecretHelpers)
                     {
-                        var secretValue = Environment.GetEnvironmentVariable(secret.SecretHelper.Name);
+                        var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? $"NUKE_{secret.SecretHelper.SecretVariableName}" : secret.SecretHelper.EnvironmentVariableName;
+                        var secretValue = Environment.GetEnvironmentVariable(envVarName);
                         secret.MemberInfo.SetValue(appTestEntry, secretValue);
                     }
                 }
-
+                appTestEntry.PipelineType = pipelineType;
                 appTestEntry.NukeBuild = this;
             }
             if (preSetupOutput != null && preSetupOutput.HasRelease)
@@ -90,7 +126,9 @@ partial class BaseNukeBuildHelpers
         List<Action> nonParallels = [];
         List<string> testAdded = [];
 
-        SetupAppEntries(appEntries, preSetupOutput);
+        List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+
+        SetupWorkflowRun(workflowSteps, appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {
@@ -109,13 +147,27 @@ partial class BaseNukeBuildHelpers
                     continue;
                 }
                 testAdded.Add(appEntryTest.Name);
-                if (appEntry.Value.Entry.RunParallel)
+                if (appEntryTest.RunParallel)
                 {
-                    tasks.Add(Task.Run(() => appEntryTest.Run()));
+                    tasks.Add(Task.Run(() =>
+                    {
+                        foreach (var workflowStep in workflowSteps)
+                        {
+                            workflowStep.TestRun(appEntryTest);
+                        }
+                        appEntryTest.Run();
+                    }));
                 }
                 else
                 {
-                    nonParallels.Add(() => appEntryTest.Run());
+                    nonParallels.Add(() =>
+                    {
+                        foreach (var workflowStep in workflowSteps)
+                        {
+                            workflowStep.TestRun(appEntryTest);
+                        }
+                        appEntryTest.Run();
+                    });
                 }
             }
         }
@@ -136,7 +188,9 @@ partial class BaseNukeBuildHelpers
         List<Task> tasks = [];
         List<Action> nonParallels = [];
 
-        SetupAppEntries(appEntries, preSetupOutput);
+        List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+
+        SetupWorkflowRun(workflowSteps, appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {
@@ -146,11 +200,25 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                tasks.Add(Task.Run(() => appEntry.Value.Entry.Build()));
+                tasks.Add(Task.Run(() =>
+                {
+                    foreach (var workflowStep in workflowSteps)
+                    {
+                        workflowStep.AppBuild(appEntry.Value.Entry);
+                    }
+                    appEntry.Value.Entry.Build();
+                }));
             }
             else
             {
-                nonParallels.Add(() => appEntry.Value.Entry.Build());
+                nonParallels.Add(() =>
+                {
+                    foreach (var workflowStep in workflowSteps)
+                    {
+                        workflowStep.AppBuild(appEntry.Value.Entry);
+                    }
+                    appEntry.Value.Entry.Build();
+                });
             }
         }
 
@@ -170,7 +238,9 @@ partial class BaseNukeBuildHelpers
         List<Task> tasks = [];
         List<Action> nonParallels = [];
 
-        SetupAppEntries(appEntries, preSetupOutput);
+        List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+
+        SetupWorkflowRun(workflowSteps, appEntries, preSetupOutput);
 
         foreach (var appEntry in appEntries)
         {
@@ -180,11 +250,25 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.Entry.RunParallel)
             {
-                tasks.Add(Task.Run(() => appEntry.Value.Entry.Publish()));
+                tasks.Add(Task.Run(() =>
+                {
+                    foreach (var workflowStep in workflowSteps)
+                    {
+                        workflowStep.AppPublish(appEntry.Value.Entry);
+                    }
+                    appEntry.Value.Entry.Publish();
+                }));
             }
             else
             {
-                nonParallels.Add(() => appEntry.Value.Entry.Publish());
+                nonParallels.Add(() =>
+                {
+                    foreach (var workflowStep in workflowSteps)
+                    {
+                        workflowStep.AppPublish(appEntry.Value.Entry);
+                    }
+                    appEntry.Value.Entry.Publish();
+                });
             }
         }
 
@@ -199,8 +283,7 @@ partial class BaseNukeBuildHelpers
         return Task.WhenAll(tasks);
     }
 
-    internal static List<T> GetEntries<T>()
-        where T : BaseEntry
+    internal static List<T> GetInstances<T>()
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
 
@@ -208,12 +291,12 @@ partial class BaseNukeBuildHelpers
             .SelectMany(t => t.GetTypes())
             .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.ContainsGenericParameters);
 
-        List<T> entry = [];
+        List<T> instances = [];
         foreach (Type type in allTypes)
         {
-            entry.Add((T)Activator.CreateInstance(type)!);
+            instances.Add((T)Activator.CreateInstance(type)!);
         }
-        return entry;
+        return instances;
     }
 
     internal static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
@@ -222,7 +305,7 @@ partial class BaseNukeBuildHelpers
 
         bool hasMainReleaseEntry = false;
         List<AppEntry> appEntries = [];
-        foreach (var appEntry in GetEntries<AppEntry>())
+        foreach (var appEntry in GetInstances<AppEntry>())
         {
             if (!appEntry.Enable)
             {
@@ -240,7 +323,7 @@ partial class BaseNukeBuildHelpers
         }
 
         List<(bool IsAdded, AppTestEntry AppTestEntry)> appTestEntries = [];
-        foreach (var appTestEntry in GetEntries<AppTestEntry>())
+        foreach (var appTestEntry in GetInstances<AppTestEntry>())
         {
             if (!appTestEntry.Enable)
             {
@@ -291,7 +374,7 @@ partial class BaseNukeBuildHelpers
     }
 
     internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
-        where T : BaseEntry
+        where T : Entry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
 

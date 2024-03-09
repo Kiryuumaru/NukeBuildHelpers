@@ -18,6 +18,7 @@ using Octokit;
 using Semver;
 using Serilog;
 using Serilog.Events;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 using YamlDotNet.Core.Tokens;
@@ -133,9 +134,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void BuildWorkflow()
     {
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetAppEntryConfigs(), out var appEntryConfigs);
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppEntry>(), out var appEntries);
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppTestEntry>(), out var appTestEntries);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetAppEntryConfigs, out var appEntryConfigs);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppEntry>, out var appEntries);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppTestEntry>, out var appTestEntries);
+
+        List<WorkflowBuilder> workflowBuilders = [.. BaseNukeBuildHelpers.GetInstances<WorkflowBuilder>().OrderByDescending(i => i.Priority)];
+
+        NukeBuild.SetupWorkflowBuilder(workflowBuilders, PipelineType.Azure);
 
         var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
         var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
@@ -194,7 +199,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup");
             AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
+            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
             var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
+            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
             AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
             needs.Add("test");
@@ -207,11 +214,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixIncludeFromPreSetup(buildJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobStepCheckout(buildJob);
+        AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
         var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)");
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
+        AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
         var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1");
         AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
+        AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
 
         needs.Add("build");
 
@@ -225,8 +235,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var downloadPublishStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPublishStep, "artifact", "$(id)");
         AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
+        AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
+        AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
         var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
+        AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
 
         needs.Add("publish");
 
@@ -242,6 +255,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
+        AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
         var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, GetBuildScript(RunsOnType.Ubuntu2204), "PipelinePostSetup");
         AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
 
@@ -352,6 +366,19 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
+    private static void AddJobStepsFromBuilder(Dictionary<string, object> job, List<WorkflowBuilder> workflowBuilders, Action<WorkflowBuilder, Dictionary<string, object>> toBuild)
+    {
+        foreach (var workflowBuilder in workflowBuilders)
+        {
+            Dictionary<string, object> step = [];
+            toBuild.Invoke(workflowBuilder, step);
+            if (step.Count > 0)
+            {
+                ((List<object>)job["steps"]).Add(step);
+            }
+        }
+    }
+
     private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
     {
         Dictionary<string, object> step = AddJobStep(job);
@@ -422,9 +449,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         foreach (var map in secretMap)
         {
-            foreach (var secrets in map.Value.SecretHelpers)
+            foreach (var secret in map.Value.SecretHelpers)
             {
-                AddStepEnvVar(step, secrets.SecretHelper.Name, $"$({secrets.SecretHelper.Name})");
+                var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? $"NUKE_{secret.SecretHelper.SecretVariableName}" : secret.SecretHelper.EnvironmentVariableName;
+                AddStepEnvVar(step, envVarName, $"$({secret.SecretHelper.SecretVariableName})");
             }
         }
     }

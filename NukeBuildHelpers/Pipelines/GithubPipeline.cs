@@ -17,6 +17,7 @@ using Octokit;
 using Semver;
 using Serilog;
 using Serilog.Events;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 using YamlDotNet.Core.Tokens;
@@ -130,9 +131,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void BuildWorkflow()
     {
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetAppEntryConfigs(), out var appEntryConfigs);
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppEntry>(), out var appEntries);
-        BaseNukeBuildHelpers.GetOrFail(() => BaseNukeBuildHelpers.GetEntries<AppTestEntry>(), out var appTestEntries);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetAppEntryConfigs, out var appEntryConfigs);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppEntry>, out var appEntries);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppTestEntry>, out var appTestEntries);
+
+        List<WorkflowBuilder> workflowBuilders = [.. BaseNukeBuildHelpers.GetInstances<WorkflowBuilder>().OrderByDescending(i => i.Priority)];
+
+        NukeBuild.SetupWorkflowBuilder(workflowBuilders, PipelineType.Github);
 
         var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
         var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
@@ -183,7 +188,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobOrStepEnvVarFromNeeds(testJob, "PRE_SETUP_OUTPUT", "pre_setup");
             AddJobMatrixIncludeFromPreSetup(testJob, "PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
+            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
             var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", "${{ matrix.id != 'skip' }}");
+            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
             AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
             needs.Add("test");
@@ -196,8 +203,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOrStepEnvVarFromNeeds(buildJob, "PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(buildJob, "PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobStepCheckout(buildJob);
+        AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
         var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}");
         AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
+        AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
         var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
         AddJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
         AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
@@ -217,8 +226,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(downloadBuildStep, "path", "./.nuke/output");
         AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
         AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
+        AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
         var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}");
         AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
+        AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
 
         needs.Add("publish");
 
@@ -325,6 +336,19 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
+    private static void AddJobStepsFromBuilder(Dictionary<string, object> job, List<WorkflowBuilder> workflowBuilders, Action<WorkflowBuilder, Dictionary<string, object>> toBuild)
+    {
+        foreach (var workflowBuilder in workflowBuilders)
+        {
+            Dictionary<string, object> step = [];
+            toBuild.Invoke(workflowBuilder, step);
+            if (step.Count > 0)
+            {
+                ((List<object>)job["steps"]).Add(step);
+            }
+        }
+    }
+
     private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string _if = "", int? fetchDepth = null)
     {
         var step = AddJobStep(job, uses: "actions/checkout@v4", _if: _if);
@@ -403,9 +427,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         foreach (var map in secretMap)
         {
-            foreach (var secrets in map.Value.SecretHelpers)
+            foreach (var secret in map.Value.SecretHelpers)
             {
-                AddJobOrStepEnvVar(jobOrStep, secrets.SecretHelper.Name, $"${{{{ secrets.{secrets.SecretHelper.Name} }}}}");
+                var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? $"NUKE_{secret.SecretHelper.SecretVariableName}" : secret.SecretHelper.EnvironmentVariableName;
+                AddJobOrStepEnvVar(jobOrStep, envVarName, $"${{{{ secrets.{secret.SecretHelper.SecretVariableName} }}}}");
             }
         }
     }

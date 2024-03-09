@@ -13,15 +13,13 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public abstract class AppEntry : BaseEntry
+public abstract class AppEntry : Entry
 {
     public abstract RunsOnType BuildRunsOn { get; }
 
     public abstract RunsOnType PublishRunsOn { get; }
 
     public virtual bool MainRelease { get; } = true;
-
-    public BaseNukeBuildHelpers NukeBuild { get; internal set; } = null!;
 
     public NewVersion? NewVersion { get; internal set; }
 

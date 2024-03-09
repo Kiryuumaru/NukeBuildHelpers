@@ -67,8 +67,8 @@ partial class BaseNukeBuildHelpers
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
-            GetOrFail(() => GetEntries<AppEntry>(), out var appEntries);
-            GetOrFail(() => GetEntries<AppTestEntry>(), out var appTestEntries);
+            GetOrFail(() => GetInstances<AppEntry>(), out var appEntries);
+            GetOrFail(() => GetInstances<AppTestEntry>(), out var appTestEntries);
 
             IPipeline pipeline = (Args?.ToLowerInvariant()) switch
             {
