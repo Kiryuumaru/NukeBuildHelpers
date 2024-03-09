@@ -221,7 +221,7 @@ partial class BaseNukeBuildHelpers
             File.WriteAllText(TemporaryDirectory / "pre_setup_output.json", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOption));
             File.WriteAllText(TemporaryDirectory / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
 
-            Log.Information("PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
+            Log.Information("NUKE_PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
             pipeline.Prepare(output, appTestEntries, appEntryConfigs, toRelease);
         });
@@ -238,7 +238,7 @@ partial class BaseNukeBuildHelpers
 
             if (preSetupOutput.HasRelease)
             {
-                if (Environment.GetEnvironmentVariable("PUBLISH_SUCCESS") == "ok")
+                if (Environment.GetEnvironmentVariable("NUKE_PUBLISH_SUCCESS") == "ok")
                 {
                     foreach (var release in OutputDirectory.GetDirectories())
                     {
@@ -292,15 +292,15 @@ partial class BaseNukeBuildHelpers
 
     private static PreSetupOutput GetPreSetupOutput()
     {
-        string? preSetupOutputValue = Environment.GetEnvironmentVariable("PRE_SETUP_OUTPUT");
+        string? preSetupOutputValue = Environment.GetEnvironmentVariable("NUKE_PRE_SETUP_OUTPUT");
 
         if (string.IsNullOrEmpty(preSetupOutputValue))
         {
-            throw new Exception("PRE_SETUP_OUTPUT is empty");
+            throw new Exception("NUKE_PRE_SETUP_OUTPUT is empty");
         }
 
         PreSetupOutput? preSetupOutput = JsonSerializer.Deserialize<PreSetupOutput>(preSetupOutputValue, JsonExtension.SnakeCaseNamingOption);
 
-        return preSetupOutput ?? throw new Exception("PRE_SETUP_OUTPUT is empty");
+        return preSetupOutput ?? throw new Exception("NUKE_PRE_SETUP_OUTPUT is empty");
     }
 }

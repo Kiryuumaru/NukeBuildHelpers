@@ -77,7 +77,7 @@ partial class BaseNukeBuildHelpers
             {
                 foreach (var secret in appSecretMap.SecretHelpers)
                 {
-                    var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? secret.SecretHelper.SecretVariableName : secret.SecretHelper.EnvironmentVariableName;
+                    var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? $"NUKE_{secret.SecretHelper.SecretVariableName}" : secret.SecretHelper.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
                     secret.MemberInfo.SetValue(appEntry.Value.Entry, secretValue);
                 }
