@@ -179,11 +179,14 @@ partial class BaseNukeBuildHelpers
                 Git.Invoke($"tag {tag}", logInvocation: false, logOutput: false);
             }
 
+            Git.Invoke($"tag bump-{Repository.Branch.ToLowerInvariant()}", logInvocation: false, logOutput: false);
+
             // ---------- Apply bump ----------
 
             Log.Information("Pushing bump...");
             Git.Invoke("push origin HEAD", logInvocation: false, logOutput: false);
-            Git.Invoke("push origin " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
+            Git.Invoke($"push origin {tagsToPush.Select(t => "refs/tags/" + t).Join(" ")}", logInvocation: false, logOutput: false);
+            Git.Invoke($"push origin bump-{Repository.Branch.ToLowerInvariant()}", logInvocation: false, logOutput: false);
             Log.Information("Bump done");
         });
 

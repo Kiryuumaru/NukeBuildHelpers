@@ -5,10 +5,7 @@ on:
     - prerelease
     - main
     tags:
-    - '**'
-    - '!build.*'
-    - '!latest*'
-    - '!*/latest*'
+    - bump-*
   pull_request:
     branches:
     - '**'

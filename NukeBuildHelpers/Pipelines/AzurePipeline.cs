@@ -157,8 +157,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     },
                     { "tags", new Dictionary<string, object>()
                         {
-                            { "include", new List<string> { "**" } },
-                            { "exclude", new List<string> { "build.*", "latest*", "*/latest*" } }
+                            { "include", new List<string> { "bump-*" } }
                         }
                     }
                 },
