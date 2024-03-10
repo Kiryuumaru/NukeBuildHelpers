@@ -26,7 +26,7 @@ partial class BaseNukeBuildHelpers
         .Executes(() =>
         {
             Log.Information("Fetching...");
-            Git.Invoke($"fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
+            Git.Invoke("fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
         });
 
     public Target Version => _ => _
@@ -191,7 +191,7 @@ partial class BaseNukeBuildHelpers
             Git.Invoke("push origin HEAD", logInvocation: false, logOutput: false);
             Git.Invoke("push origin " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
 
-            var bumpTag = $"bump-{Repository.Branch.ToLowerInvariant()}";
+            var bumpTag = "bump-" + Repository.Branch.ToLowerInvariant();
             try
             {
                 Git.Invoke("push origin :refs/tags/" + bumpTag, logInvocation: false, logOutput: false);

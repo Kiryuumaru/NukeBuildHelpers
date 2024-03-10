@@ -172,15 +172,15 @@ partial class BaseNukeBuildHelpers
 
             var releaseNotes = "";
             var buildId = lastBuildId + 1;
-            var buildTag = $"build.{buildId}";
-            var targetBuildTag = $"build.{targetBuildId}";
+            var buildTag = "build." + buildId;
+            var targetBuildTag = "build." + targetBuildId;
             var isFirstRelease = targetBuildId == 0;
             var hasRelease = toRelease.Count != 0;
 
             if (hasRelease)
             {
-                Git.Invoke($"tag -f {buildTag}");
-                Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
+                Git.Invoke("tag -f " + buildTag);
+                Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
                 string ghReleaseCreateArgs = $"release create {buildTag} " +
                     $"--title {buildTag} " +
@@ -190,7 +190,7 @@ partial class BaseNukeBuildHelpers
 
                 if (!isFirstRelease)
                 {
-                    ghReleaseCreateArgs += $" --notes-start-tag {targetBuildTag}";
+                    ghReleaseCreateArgs += " --notes-start-tag " + targetBuildTag;
                 }
 
                 Gh.Invoke(ghReleaseCreateArgs, logInvocation: false, logOutput: false);
@@ -246,8 +246,8 @@ partial class BaseNukeBuildHelpers
                         {
                             continue;
                         }
-                        var outPath = OutputDirectory / $"{release.Name}-{preSetupOutputVersion.Version}";
-                        var outPathZip = OutputDirectory / $"{release.Name}-{preSetupOutputVersion.Version}.zip";
+                        var outPath = OutputDirectory / release.Name + "-" + preSetupOutputVersion.Version;
+                        var outPathZip = OutputDirectory / release.Name + "-" + preSetupOutputVersion.Version + ".zip";
                         release.CopyFilesRecursively(outPath);
                         outPath.ZipTo(outPathZip);
                     }
@@ -269,13 +269,13 @@ partial class BaseNukeBuildHelpers
                         }
                         if (appEntry.Entry.MainRelease)
                         {
-                            Git.Invoke($"tag -f {release.Version}");
-                            Git.Invoke($"tag -f {latestTag}");
+                            Git.Invoke("tag -f " + release.Version);
+                            Git.Invoke("tag -f " + latestTag);
                         }
                         else
                         {
-                            Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{release.Version}");
-                            Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{latestTag}");
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version);
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + latestTag);
                         }
                     }
 
@@ -287,7 +287,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    Gh.Invoke($"release delete --cleanup-tag -y build." + preSetupOutput.BuildId);
+                    Gh.Invoke("release delete --cleanup-tag -y build." + preSetupOutput.BuildId);
                 }
             }
         });
