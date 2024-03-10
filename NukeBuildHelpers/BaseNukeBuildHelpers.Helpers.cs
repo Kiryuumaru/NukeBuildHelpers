@@ -489,7 +489,7 @@ partial class BaseNukeBuildHelpers
             .Where(i =>
             {
                 string latestIndicator = i.Value.Env == "" ? "latest" : "latest-" + i.Value.Env;
-                return i.Value.LatestTags.Any(j => j.Equals(latestIndicator, StringComparison.OrdinalIgnoreCase));
+                return i.Value.LatestTags.Any(j => j.Equals(latestIndicator, StringComparison.InvariantCultureIgnoreCase));
             })
             .Select(i => KeyValuePair.Create(i.Value.Env, (i.Value.BuildIds.Max(), i.Value.Versions.Max()!))).ToDictionary();
 

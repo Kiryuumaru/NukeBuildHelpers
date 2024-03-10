@@ -40,14 +40,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
         else
         {
-            if (branch.StartsWith("refs/pull", StringComparison.OrdinalIgnoreCase))
+            if (branch.StartsWith("refs/pull", StringComparison.InvariantCultureIgnoreCase))
             {
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF")!;
             }
             else
             {
-                if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
+                if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
                 {
                     triggerType = TriggerType.Tag;
                 }

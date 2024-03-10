@@ -41,18 +41,18 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
         else
         {
-            if (branch.StartsWith("refs/pull", StringComparison.OrdinalIgnoreCase))
+            if (branch.StartsWith("refs/pull", StringComparison.InvariantCultureIgnoreCase))
             {
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_TARGETBRANCH")!;
             }
-            else if (branch.StartsWith("refs/tags", StringComparison.OrdinalIgnoreCase))
+            else if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
             {
                 triggerType = TriggerType.Tag;
                 branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
                 branch = branch[(branch.IndexOf('/') + 1)..];
             }
-            else if (branch.StartsWith("refs/heads", StringComparison.OrdinalIgnoreCase))
+            else if (branch.StartsWith("refs/heads", StringComparison.InvariantCultureIgnoreCase))
             {
                 triggerType = TriggerType.Commit;
                 branch = branch[11..];

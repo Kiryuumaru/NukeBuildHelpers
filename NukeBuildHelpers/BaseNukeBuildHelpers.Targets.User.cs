@@ -94,6 +94,11 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Fetch)
         .Executes(() =>
         {
+            if (!EnvironmentBranches.Any(i => i.Equals(Repository.Branch, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                Assert.Fail($"{Repository.Branch} is not on environment branches");
+            }
+
             GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
@@ -179,14 +184,23 @@ partial class BaseNukeBuildHelpers
                 Git.Invoke($"tag {tag}", logInvocation: false, logOutput: false);
             }
 
-            Git.Invoke($"tag bump-{Repository.Branch.ToLowerInvariant()}", logInvocation: false, logOutput: false);
 
             // ---------- Apply bump ----------
 
             Log.Information("Pushing bump...");
+
             Git.Invoke("push origin HEAD", logInvocation: false, logOutput: false);
             Git.Invoke($"push origin {tagsToPush.Select(t => "refs/tags/" + t).Join(" ")}", logInvocation: false, logOutput: false);
-            Git.Invoke($"push origin bump-{Repository.Branch.ToLowerInvariant()}", logInvocation: false, logOutput: false);
+
+            var bumpTag = $"bump-{Repository.Branch.ToLowerInvariant()}";
+            try
+            {
+                Git.Invoke($"push origin :refs/tags/{bumpTag}", logInvocation: false, logOutput: false);
+            }
+            catch { }
+            Git.Invoke($"tag {bumpTag} --force", logInvocation: false, logOutput: false);
+            Git.Invoke($"push origin {bumpTag} --force", logInvocation: false, logOutput: false);
+
             Log.Information("Bump done");
         });
 

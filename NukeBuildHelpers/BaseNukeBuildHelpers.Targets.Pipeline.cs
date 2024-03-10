@@ -110,9 +110,9 @@ partial class BaseNukeBuildHelpers
                         if (string.IsNullOrEmpty(groupKey))
                         {
                             env = "main";
-                            if (!pipelineInfo.Branch.Equals("master", StringComparison.OrdinalIgnoreCase) &&
-                                !pipelineInfo.Branch.Equals("main", StringComparison.OrdinalIgnoreCase) &&
-                                !pipelineInfo.Branch.Equals("prod", StringComparison.OrdinalIgnoreCase))
+                            if (!pipelineInfo.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) &&
+                                !pipelineInfo.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) &&
+                                !pipelineInfo.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 continue;
                             }
@@ -120,7 +120,7 @@ partial class BaseNukeBuildHelpers
                         else
                         {
                             env = groupKey;
-                            if (!pipelineInfo.Branch.Equals(env, StringComparison.OrdinalIgnoreCase))
+                            if (!pipelineInfo.Branch.Equals(env, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 continue;
                             }
@@ -263,7 +263,7 @@ partial class BaseNukeBuildHelpers
                             continue;
                         }
                         string latestTag = "latest";
-                        if (!release.Environment.Equals("main", StringComparison.OrdinalIgnoreCase))
+                        if (!release.Environment.Equals("main", StringComparison.InvariantCultureIgnoreCase))
                         {
                             latestTag += "-" + release.Environment.ToLowerInvariant();
                         }
