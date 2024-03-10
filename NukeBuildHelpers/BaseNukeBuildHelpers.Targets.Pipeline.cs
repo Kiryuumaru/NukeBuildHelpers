@@ -267,13 +267,14 @@ partial class BaseNukeBuildHelpers
                         {
                             latestTag += "-" + release.Environment.ToLowerInvariant();
                         }
-                        Git.Invoke($"tag -f {release.Version}");
                         if (appEntry.Entry.MainRelease)
                         {
+                            Git.Invoke($"tag -f {release.Version}");
                             Git.Invoke($"tag -f {latestTag}");
                         }
                         else
                         {
+                            Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{release.Version}");
                             Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{latestTag}");
                         }
                     }

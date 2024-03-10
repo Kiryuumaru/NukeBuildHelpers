@@ -482,7 +482,7 @@ partial class BaseNukeBuildHelpers
                     i.SelectMany(j => j.BuildIds).ToList(),
                     i.SelectMany(j => j.Versions).ToList(),
                     i.SelectMany(j => j.LatestTags).ToList()));
-        Dictionary<string, (long BuildId, SemVersion Version) > pairedLatests = pairedTags
+        Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = pairedTags
             .Where(i =>
             {
                 string latestIndicator = i.Value.Env == "" ? "latest" : "latest-" + i.Value.Env;
