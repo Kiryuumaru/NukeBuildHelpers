@@ -295,7 +295,7 @@ partial class BaseNukeBuildHelpers
 
         var allTypes = asmNames.Select(Assembly.Load)
             .SelectMany(t => t.GetTypes())
-            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.ContainsGenericParameters);
+            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.IsAbstract);
 
         List<T> instances = [];
         foreach (Type type in allTypes)
