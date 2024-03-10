@@ -194,7 +194,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         if (appTestEntries.Count > 0)
         {
-            var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs]);
+            var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
             AddJobEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
             AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
@@ -209,7 +209,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
-        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_RELEASE.NUKE_PRE_SETUP_HAS_RELEASE'], 'true')");
+        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_RELEASE.NUKE_PRE_SETUP_HAS_RELEASE'], 'true'))");
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobStepCheckout(buildJob);
@@ -227,7 +227,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
         // ██████████████████████████████████████
-        var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_RELEASE.NUKE_PRE_SETUP_HAS_RELEASE'], 'true')");
+        var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_RELEASE.NUKE_PRE_SETUP_HAS_RELEASE'], 'true'))");
         AddJobEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob);
