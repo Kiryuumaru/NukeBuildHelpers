@@ -190,16 +190,16 @@ partial class BaseNukeBuildHelpers
             Log.Information("Pushing bump...");
 
             Git.Invoke("push origin HEAD", logInvocation: false, logOutput: false);
-            Git.Invoke($"push origin {tagsToPush.Select(t => "refs/tags/" + t).Join(" ")}", logInvocation: false, logOutput: false);
+            Git.Invoke("push origin " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
 
             var bumpTag = $"bump-{Repository.Branch.ToLowerInvariant()}";
             try
             {
-                Git.Invoke($"push origin :refs/tags/{bumpTag}", logInvocation: false, logOutput: false);
+                Git.Invoke("push origin :refs/tags/" + bumpTag, logInvocation: false, logOutput: false);
             }
             catch { }
-            Git.Invoke($"tag {bumpTag} --force", logInvocation: false, logOutput: false);
-            Git.Invoke($"push origin {bumpTag} --force", logInvocation: false, logOutput: false);
+            Git.Invoke("tag --force " + bumpTag, logInvocation: false, logOutput: false);
+            Git.Invoke("push origin --force " + bumpTag, logInvocation: false, logOutput: false);
 
             Log.Information("Bump done");
         });
