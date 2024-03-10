@@ -184,7 +184,6 @@ partial class BaseNukeBuildHelpers
                 Git.Invoke($"tag {tag}", logInvocation: false, logOutput: false);
             }
 
-
             // ---------- Apply bump ----------
 
             Log.Information("Pushing bump...");

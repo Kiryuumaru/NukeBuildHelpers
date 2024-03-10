@@ -278,15 +278,16 @@ partial class BaseNukeBuildHelpers
                             Git.Invoke($"tag -f {appEntry.Entry.Id.ToLowerInvariant()}/{latestTag}");
                         }
                     }
-                    Git.Invoke($"push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                    Gh.Invoke($"release upload build.{preSetupOutput.BuildId} {string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString()))}");
+                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                    Gh.Invoke($"release edit build.{preSetupOutput.BuildId} --draft=false");
+                    Gh.Invoke("release upload build." + preSetupOutput.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
+
+                    Gh.Invoke("release edit --draft=false build." + preSetupOutput.BuildId);
                 }
                 else
                 {
-                    Gh.Invoke($"release delete build.{preSetupOutput.BuildId} --cleanup-tag -y");
+                    Gh.Invoke($"release delete --cleanup-tag -y build." + preSetupOutput.BuildId);
                 }
             }
         });
