@@ -129,7 +129,9 @@ partial class BaseNukeBuildHelpers
 
             while (true)
             {
-                var appEntryVersion = Prompt.Select("App id to bump", appEntryVersions, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
+                var appEntryVersion = Prompt.Select("App id to bump",
+                    appEntryVersions.Where(i => !appEntryVersionsToBump.Any(j => j.AppEntry.Id == i.AppEntry?.Id)),
+                    textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
 
                 if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
                 {
