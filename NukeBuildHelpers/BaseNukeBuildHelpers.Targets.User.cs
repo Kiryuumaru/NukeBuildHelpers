@@ -13,6 +13,8 @@ using Octokit;
 using Semver;
 using Serilog;
 using Serilog.Events;
+using Sharprompt;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text.Json;
 using YamlDotNet.Core.Tokens;
@@ -90,92 +92,149 @@ partial class BaseNukeBuildHelpers
         });
 
     public Target Bump => _ => _
-        .Description("Bumps the version by tagging and validating tags, with --args \"{appid}={semver}\"")
+        .Description("Bumps the version by tagging and validating tags")
         .DependsOn(Fetch)
         .Executes(() =>
         {
+            Prompt.ColorSchema.Answer = ConsoleColor.Green;
+            Prompt.ColorSchema.Select = ConsoleColor.DarkMagenta;
+            Prompt.Symbols.Prompt = new Symbol("?", "?");
+            Prompt.Symbols.Done = new Symbol("✓", "✓");
+            Prompt.Symbols.Error = new Symbol("x", "x");
+
             if (!EnvironmentBranches.Any(i => i.Equals(Repository.Branch, StringComparison.InvariantCultureIgnoreCase)))
             {
                 Assert.Fail($"{Repository.Branch} is not on environment branches");
             }
 
-            GetOrFail(() => SplitArgs, out var splitArgs);
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
-            if (!splitArgs.Any())
+            IReadOnlyCollection<Output>? lsRemote = null;
+
+            List<(AppEntry? AppEntry, AllVersions? AllVersions)> appEntryVersions = [];
+
+            foreach (var pair in appEntryConfigs)
             {
-                Assert.Fail("Args is empty");
+                string appId = pair.Key;
+
+                GetOrFail(appId, appEntryConfigs, out appId, out var appEntryConfig);
+                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+
+                appEntryVersions.Add((pair.Value.Entry, allVersions));
+            }
+
+            appEntryVersions.Add((null, null));
+
+            List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)> appEntryVersionsToBump = [];
+
+            while (true)
+            {
+                var appEntryVersion = Prompt.Select("App id to bump", appEntryVersions, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
+
+                if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
+                {
+                    if (appEntryVersionsToBump.Count != 0)
+                    {
+                        var answer = Prompt.Confirm("Are you sure to bump selected version(s)?", defaultValue: true);
+                        if (answer)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    continue;
+                }
+
+                string currentEnvIdentifier;
+                if (Repository.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) ||
+                    Repository.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) ||
+                    Repository.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    currentEnvIdentifier = "";
+                }
+                else
+                {
+                    currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
+                }
+                appEntryVersion.AllVersions.LatestVersions.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
+                var currColor = Console.ForegroundColor;
+                Console.Write("  Current latest version: ");
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.Write(currentEnvLatestVersion?.ToString() ?? "null");
+                Console.ForegroundColor = currColor;
+                Console.WriteLine("");
+                var bumpVersionStr = Prompt.Input<string>("New Version", validators: [Validators.Required(),
+                    (input => {
+                        if (!SemVersion.TryParse(input.ToString(), SemVersionStyles.Strict, out var inputVersion))
+                        {
+                            return new ValidationResult("Invalid semver version");
+                        }
+                        
+                        // Fail if current branch is not on the proper bump branch
+                        string envIdentifier;
+                        string env;
+                        if (inputVersion.IsPrerelease)
+                        {
+                            if (!Repository.Branch.Equals(inputVersion.PrereleaseIdentifiers[0], StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                return new ValidationResult($"{inputVersion} should bump on {inputVersion.PrereleaseIdentifiers[0]} branch");
+                            }
+                            envIdentifier = inputVersion.PrereleaseIdentifiers[0];
+                            env = inputVersion.PrereleaseIdentifiers[0];
+                        }
+                        else
+                        {
+                            if (!Repository.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) &&
+                                !Repository.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) &&
+                                !Repository.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                return new ValidationResult($"{inputVersion} should bump on main branch");
+                            }
+                            envIdentifier = "";
+                            env = "main";
+                        }
+
+                        if (appEntryVersion.AllVersions.VersionGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
+                        {
+                            var lastVersion = value.Last();
+                            // Fail if the version is already released
+                            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) == 0)
+                            {
+                                return new ValidationResult($"The latest version in the {env} releases is already {inputVersion}");
+                            }
+                            // Fail if the version is behind the latest release
+                            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) > 0)
+                            {
+                                return new ValidationResult($"{inputVersion} is behind the latest version {lastVersion} in the {env} releases");
+                            }
+                        }
+
+                        return ValidationResult.Success;
+                    })]);
+                var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
+                appEntryVersionsToBump.Add((appEntryVersion.AppEntry, appEntryVersion.AllVersions, bumpVersion));
+            }
+
+            if (appEntryVersionsToBump.Count == 0)
+            {
+                Log.Information("No version selected to bump.");
                 return;
             }
 
             List<string> tagsToPush = [];
 
-            IReadOnlyCollection<Output>? lsRemote = null;
-
-            foreach (var pair in splitArgs.Count > 1 || !string.IsNullOrEmpty(splitArgs.Values.First()) ? [.. splitArgs] : new List<KeyValuePair<string, string?>>() { KeyValuePair.Create<string, string?>("", Args) })
+            foreach (var appEntryVersionToBump in appEntryVersionsToBump)
             {
-                string appId = pair.Key;
-                string? versionRaw = pair.Value;
-
-                // ---------- Args validation ----------
-
-                GetOrFail(appId, appEntryConfigs, out appId, out var appEntryConfig);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
-
-                Log.Information("Validating {appId} bump version {version}...", appId, versionRaw);
-
-                GetOrFail(versionRaw, out SemVersion version);
-
-                // Fail if current branch is not on the proper bump branch
-                string envIdentifier;
-                string env;
-                if (version.IsPrerelease)
+                if (appEntryVersionToBump.AppEntry.MainRelease)
                 {
-                    if (!Repository.Branch.Equals(version.PrereleaseIdentifiers[0], StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        Assert.Fail($"{version} should bump on {version.PrereleaseIdentifiers[0]} branch");
-                        return;
-                    }
-                    envIdentifier = version.PrereleaseIdentifiers[0];
-                    env = version.PrereleaseIdentifiers[0];
+                    tagsToPush.Add(appEntryVersionToBump.BumpVersion.ToString());
                 }
                 else
                 {
-                    if (!Repository.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) &&
-                        !Repository.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) &&
-                        !Repository.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        Assert.Fail($"{version} should bump on main branch");
-                        return;
-                    }
-                    envIdentifier = "";
-                    env = "main";
-                }
-
-                if (allVersions.VersionGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
-                {
-                    var lastVersion = value.Last();
-                    // Fail if the version is already released
-                    if (SemVersion.ComparePrecedence(lastVersion, version) == 0)
-                    {
-                        Assert.Fail($"The latest version in the {env} releases is already {version}");
-                        return;
-                    }
-                    // Fail if the version is behind the latest release
-                    if (SemVersion.ComparePrecedence(lastVersion, version) > 0)
-                    {
-                        Assert.Fail($"{version} is behind the latest version {lastVersion} in the {env} releases");
-                        return;
-                    }
-                }
-
-                if (appEntryConfig.Entry.MainRelease)
-                {
-                    tagsToPush.Add(version.ToString());
-                }
-                else
-                {
-                    tagsToPush.Add(appId + "/" + version.ToString());
+                    tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString());
                 }
             }
 
