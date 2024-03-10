@@ -441,36 +441,39 @@ partial class BaseNukeBuildHelpers
             string tag;
             string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
 
-            if (appEntry.Entry.MainRelease)
-            {
-                tag = rawTag;
-            }
-            else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
-            {
-                tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
-            }
-            else
-            {
-                continue;
-            }
             if (!pairedTags.TryGetValue(commitId, out var vals))
             {
                 vals = (null!, [], [], []);
                 pairedTags.Add(commitId, vals);
             }
-            if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
+            if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
             {
-                vals.LatestTags.Add(tag);
+                vals.BuildIds.Add(long.Parse(rawTag.Replace("build.", "")));
             }
-            if (tag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
+            else
             {
-                vals.BuildIds.Add(long.Parse(tag.Replace("build.", "")));
-            }
-            if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
-            {
-                vals.Versions.Add(tagSemver);
-                string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
-                pairedTags[commitId] = (env, vals.BuildIds, vals.Versions, vals.LatestTags);
+                if (appEntry.Entry.MainRelease)
+                {
+                    tag = rawTag;
+                }
+                else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
+                }
+                else
+                {
+                    continue;
+                }
+                if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    vals.LatestTags.Add(tag);
+                }
+                else if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
+                {
+                    vals.Versions.Add(tagSemver);
+                    string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
+                    pairedTags[commitId] = (env, vals.BuildIds, vals.Versions, vals.LatestTags);
+                }
             }
         }
         pairedTags = pairedTags.Where(i => i.Value.Env != null).ToDictionary();
