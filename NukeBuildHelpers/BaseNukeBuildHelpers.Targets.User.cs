@@ -33,6 +33,7 @@ partial class BaseNukeBuildHelpers
 
     public Target Version => _ => _
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
+        .DependsOn(Fetch)
         .Executes(() =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
@@ -93,7 +94,7 @@ partial class BaseNukeBuildHelpers
 
     public Target Bump => _ => _
         .Description("Bumps the version by tagging and validating tags")
-        .DependsOn(Fetch)
+        .DependsOn(Version)
         .Executes(() =>
         {
             Prompt.ColorSchema.Answer = ConsoleColor.Green;
