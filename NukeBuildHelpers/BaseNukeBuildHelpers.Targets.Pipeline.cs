@@ -281,7 +281,7 @@ partial class BaseNukeBuildHelpers
 
                     Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                    Gh.Invoke("release upload build." + preSetupOutput.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
+                    Gh.Invoke("release upload --clobber build." + preSetupOutput.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
 
                     Gh.Invoke("release edit --draft=false build." + preSetupOutput.BuildId);
                 }
