@@ -488,6 +488,10 @@ partial class BaseNukeBuildHelpers
         Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = pairedTags
             .Where(i =>
             {
+                if (i.Value.BuildIds.Count == 0)
+                {
+                    return false;
+                }
                 string latestIndicator = i.Value.Env == "" ? "latest" : "latest-" + i.Value.Env;
                 return i.Value.LatestTags.Any(j => j.Equals(latestIndicator, StringComparison.InvariantCultureIgnoreCase));
             })
