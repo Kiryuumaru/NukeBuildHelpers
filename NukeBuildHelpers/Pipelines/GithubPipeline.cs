@@ -45,15 +45,24 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF")!;
             }
-            else
+            else if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
+                triggerType = TriggerType.Tag;
+                if (branch.StartsWith("refs/tags/bump-"))
                 {
-                    triggerType = TriggerType.Tag;
+                    branch = branch[15..];
                 }
-                branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
+                else
+                {
+                    branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
+                    branch = branch[(branch.IndexOf('/') + 1)..];
+                }
             }
-            branch = branch[(branch.IndexOf('/') + 1)..];
+            else if (branch.StartsWith("refs/heads", StringComparison.InvariantCultureIgnoreCase))
+            {
+                triggerType = TriggerType.Commit;
+                branch = branch[11..];
+            }
         }
         return new()
         {

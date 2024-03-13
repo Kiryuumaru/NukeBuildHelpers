@@ -49,8 +49,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             else if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
             {
                 triggerType = TriggerType.Tag;
-                branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
-                branch = branch[(branch.IndexOf('/') + 1)..];
+                if (branch.StartsWith("refs/tags/bump-"))
+                {
+                    branch = branch[15..];
+                }
+                else
+                {
+                    branch = NukeBuild.Git.Invoke($"branch -r --contains {branch}").FirstOrDefault().Text;
+                    branch = branch[(branch.IndexOf('/') + 1)..];
+                }
             }
             else if (branch.StartsWith("refs/heads", StringComparison.InvariantCultureIgnoreCase))
             {
