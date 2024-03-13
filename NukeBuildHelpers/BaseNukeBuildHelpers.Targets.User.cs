@@ -171,11 +171,11 @@ partial class BaseNukeBuildHelpers
                 {
                     currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
                 }
-                appEntryVersion.AllVersions.LatestVersions.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
+                appEntryVersion.AllVersions.VersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
                 var currColor = Console.ForegroundColor;
                 Console.Write("  Current latest version: ");
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write(currentEnvLatestVersion?.ToString() ?? "null");
+                Console.Write(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null");
                 Console.ForegroundColor = currColor;
                 Console.WriteLine("");
                 var bumpVersionStr = Prompt.Input<string>("New Version", validators: [Validators.Required(),
