@@ -47,7 +47,7 @@ partial class BaseNukeBuildHelpers
                     ("App Id", HorizontalAlignment.Right),
                     ("Environment", HorizontalAlignment.Center),
                     ("Bumped Version", HorizontalAlignment.Right),
-                    ("Released Version", HorizontalAlignment.Right)
+                    ("Published", HorizontalAlignment.Center)
                 ];
             List<List<string?>> rows = [];
 
@@ -77,13 +77,18 @@ partial class BaseNukeBuildHelpers
                         }
                         var bumpedVersion = allVersions.VersionGrouped[groupKey].Last();
                         allVersions.LatestVersions.TryGetValue(groupKey, out var releasedVersion);
-                        rows.Add([firstEntryRow ? appId : "", env, bumpedVersion.ToString(), releasedVersion?.ToString()]);
+                        var published = "yes";
+                        if (bumpedVersion != releasedVersion)
+                        {
+                            published = "no, current " + releasedVersion;
+                        }
+                        rows.Add([firstEntryRow ? appId : "", env, bumpedVersion.ToString(), published]);
                         firstEntryRow = false;
                     }
                 }
                 else
                 {
-                    rows.Add([appId, null, null, null]);
+                    rows.Add([appId, null, null, "no"]);
                 }
                 rows.Add(["-", "-", "-", "-"]);
             }
