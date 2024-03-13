@@ -434,21 +434,23 @@ partial class BaseNukeBuildHelpers
         string basePeel = "refs/tags/";
         lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
 
-        Dictionary<string, (string Env, List<long> BuildIds, List<SemVersion> Versions, List<string> LatestTags)> pairedTags = [];
+        Dictionary<string, List<long>> pairedBuildIds = [];
+        Dictionary<string, List<SemVersion>> pairedVersions = [];
+        Dictionary<string, List<string>> pairedLatestTags = [];
         foreach (var refs in lsRemoteOutput)
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
             string tag;
             string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
 
-            if (!pairedTags.TryGetValue(commitId, out var vals))
-            {
-                vals = (null!, [], [], []);
-                pairedTags.Add(commitId, vals);
-            }
             if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
             {
-                vals.BuildIds.Add(long.Parse(rawTag.Replace("build.", "")));
+                if (!pairedBuildIds.TryGetValue(commitId, out var pairedBuildId))
+                {
+                    pairedBuildId = [];
+                    pairedBuildIds.Add(commitId, pairedBuildId);
+                }
+                pairedBuildId.Add(long.Parse(rawTag.Replace("build.", "")));
             }
             else
             {
@@ -466,43 +468,69 @@ partial class BaseNukeBuildHelpers
                 }
                 if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    vals.LatestTags.Add(tag);
+                    if (!pairedLatestTags.TryGetValue(commitId, out var pairedLatestTag))
+                    {
+                        pairedLatestTag = [];
+                        pairedLatestTags.Add(commitId, pairedLatestTag);
+                    }
+                    pairedLatestTag.Add(tag);
                 }
                 else if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
                 {
-                    vals.Versions.Add(tagSemver);
-                    string env = tagSemver.IsPrerelease ? tagSemver.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "";
-                    pairedTags[commitId] = (env, vals.BuildIds, vals.Versions, vals.LatestTags);
+                    if (!pairedVersions.TryGetValue(commitId, out var pairedVersion))
+                    {
+                        pairedVersion = [];
+                        pairedVersions.Add(commitId, pairedVersion);
+                    }
+                    pairedVersion.Add(tagSemver);
                 }
             }
         }
-        pairedTags = pairedTags.Where(i => i.Value.Env != null).ToDictionary();
 
-        Dictionary<string, (List<long> BuildIds, List<SemVersion> Versions, List<string> LatestTags)> pairedEnvGroup =
-            pairedTags.Values.GroupBy(i => i.Env).ToDictionary(
-                i => i.Key,
-                i => (
-                    i.SelectMany(j => j.BuildIds).ToList(),
-                    i.SelectMany(j => j.Versions).ToList(),
-                    i.SelectMany(j => j.LatestTags).ToList()));
-        Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = pairedTags
-            .Where(i =>
+        List<SemVersion> allVersionList = pairedVersions.SelectMany(i => i.Value).ToList();
+        List<long> allBuildIdList = pairedBuildIds.SelectMany(i => i.Value).ToList();
+        Dictionary<string, List<SemVersion>> allVersionGroupDict = allVersionList
+            .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "")
+            .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
+
+        Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = [];
+        foreach (var pairedLatestTag in pairedLatestTags)
+        {
+            string commitId = pairedLatestTag.Key;
+            foreach (var latestTag in pairedLatestTag.Value)
             {
-                if (i.Value.BuildIds.Count == 0)
+                if (!pairedBuildIds.TryGetValue(commitId, out var buildIds) || buildIds.Count == 0)
                 {
-                    return false;
+                    continue;
                 }
-                string latestIndicator = i.Value.Env == "" ? "latest" : "latest-" + i.Value.Env;
-                return i.Value.LatestTags.Any(j => j.Equals(latestIndicator, StringComparison.InvariantCultureIgnoreCase));
-            })
-            .Select(i => KeyValuePair.Create(i.Value.Env, (i.Value.BuildIds.Max(), i.Value.Versions.Max()!))).ToDictionary();
+                if (!pairedVersions.TryGetValue(commitId, out var versions) || versions.Count == 0)
+                {
+                    continue;
+                }
+                var maxBuild = buildIds.Max();
+                if (latestTag.Equals("latest", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var latestVersion = versions.Where(i => !i.IsPrerelease).LastOrDefault();
+                    if (latestVersion != null)
+                    {
+                        pairedLatests.Add("", (maxBuild, latestVersion));
+                    }
+                }
+                else if (latestTag.StartsWith("latest-", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var env = latestTag[(latestTag.IndexOf('-') + 1)..];
+                    var latestVersion = versions.Where(i => i.IsPrerelease && i.PrereleaseIdentifiers[0].ToString().Equals(env, StringComparison.InvariantCultureIgnoreCase)).LastOrDefault();
+                    if (latestVersion != null)
+                    {
+                        pairedLatests.Add(env, (maxBuild, latestVersion));
+                    }
+                }
+            }
+        }
 
-        List<SemVersion> allVersionList = pairedTags.SelectMany(i => i.Value.Versions).ToList();
-        List<long> allBuildIdList = pairedTags.SelectMany(i => i.Value.BuildIds).ToList();
-        Dictionary<string, List<SemVersion>> allVersionGroupDict = pairedEnvGroup.ToDictionary(i => i.Key, i => i.Value.Versions);
         Dictionary<string, SemVersion> allLatestVersions = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
         Dictionary<string, long> allLatestIds = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
-        List<string> groupKeySorted = pairedEnvGroup.Select(i => i.Key).ToList();
+        List<string> groupKeySorted = allVersionGroupDict.Select(i => i.Key).ToList();
 
         groupKeySorted.Sort();
         if (groupKeySorted.Count > 0 && groupKeySorted.First() == "")
