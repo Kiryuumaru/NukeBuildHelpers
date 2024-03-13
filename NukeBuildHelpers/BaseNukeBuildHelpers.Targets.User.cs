@@ -80,7 +80,7 @@ partial class BaseNukeBuildHelpers
                         var published = "yes";
                         if (bumpedVersion != releasedVersion)
                         {
-                            published = "no, current " + releasedVersion;
+                            published = releasedVersion + "*";
                         }
                         rows.Add([firstEntryRow ? appId : "", env, bumpedVersion.ToString(), published]);
                         firstEntryRow = false;
