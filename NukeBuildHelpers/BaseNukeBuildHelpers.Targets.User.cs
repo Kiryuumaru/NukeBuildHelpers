@@ -78,7 +78,11 @@ partial class BaseNukeBuildHelpers
                         var bumpedVersion = allVersions.VersionGrouped[groupKey].Last();
                         allVersions.LatestVersions.TryGetValue(groupKey, out var releasedVersion);
                         var published = "yes";
-                        if (bumpedVersion != releasedVersion)
+                        if (releasedVersion == null)
+                        {
+                            published = "no";
+                        }
+                        else if (bumpedVersion != releasedVersion)
                         {
                             published = releasedVersion + "*";
                         }
