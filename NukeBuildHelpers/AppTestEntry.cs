@@ -9,7 +9,7 @@ using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 
-namespace NukeBuildHelpers.Models;
+namespace NukeBuildHelpers;
 
 public abstract class AppTestEntry : Entry
 {
