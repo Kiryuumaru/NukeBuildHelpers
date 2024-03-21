@@ -883,6 +883,7 @@ partial class BaseNukeBuildHelpers
                                 (bumpedVersion.ToString(), ConsoleColor.Magenta),
                                 (published, statusColor)
                             ]);
+                        firstEntryRow = false;
                     }
                 }
                 else
@@ -894,7 +895,6 @@ partial class BaseNukeBuildHelpers
                             (null, ConsoleColor.Magenta),
                             ("Not published", statusColor)
                         ]);
-                    firstEntryRow = false;
                 }
                 rows.Add(
                     [
