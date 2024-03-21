@@ -802,7 +802,6 @@ partial class BaseNukeBuildHelpers
         };
 
         int lines = 0;
-        int width = 0;
 
         while (!cts.IsCancellationRequested)
         {
@@ -898,7 +897,7 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
             Console.WriteLine("Time: " + DateTime.Now);
-            (lines, width) = LogInfoTableWatch(headers, [.. rows], lines, width);
+            lines = LogInfoTableWatch(headers, [.. rows]);
             lines += 2;
 
             await Task.Delay(1000, cts.Token);
