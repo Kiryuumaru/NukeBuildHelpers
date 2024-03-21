@@ -767,9 +767,9 @@ partial class BaseNukeBuildHelpers
                 lines++;
             }
         }
-        if (lastWidth > Console.CursorLeft)
+        if (lastWidth > width)
         {
-            Console.Write(Enumerable.Range(0, lastWidth - Console.CursorLeft - 1).Select(i => " ").Join(""));
+            Console.Write(Enumerable.Range(0, lastWidth - width).Select(i => " ").Join(""));
         }
         Console.WriteLine(headerSeparator);
         lines++;
