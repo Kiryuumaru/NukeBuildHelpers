@@ -917,7 +917,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (hasFailed)
                 {
-                    throw new Exception("Pipeline run has failed.");
+                    Assert.Fail("Pipeline run has failed.");
                 }
                 break;
             }
