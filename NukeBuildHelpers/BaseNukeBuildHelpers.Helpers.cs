@@ -830,10 +830,11 @@ partial class BaseNukeBuildHelpers
                         }
                         else if (bumpedVersion != releasedVersion)
                         {
-                            allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var latestBuildId);
-                            allVersions.BuildIdCommitPaired.TryGetValue(latestBuildId, out var buildIdCommitId);
-                            allVersions.VersionCommitPaired.TryGetValue(bumpedVersion, out var bumpedCommitId);
-                            if (buildIdCommitId == bumpedCommitId)
+                            var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
+                            var bumpedBuildIds = allVersions.CommitBuildIdGrouped[bumpedCommitId];
+                            if (bumpedBuildIds.Count != 0 &&
+                                allVersions.BuildIdCommitPaired.TryGetValue(bumpedBuildIds.Max(), out var buildIdCommitId) &&
+                                bumpedCommitId == buildIdCommitId)
                             {
                                 published = "Publishing";
                                 statusColor = ConsoleColor.Yellow;
