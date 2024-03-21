@@ -440,6 +440,8 @@ partial class BaseNukeBuildHelpers
         Dictionary<string, List<string>> commitLatestTagGrouped = [];
         Dictionary<long, string> buildIdCommitPaired = [];
         Dictionary<SemVersion, string> versionCommitPaired = [];
+        List<long> buildIdPassed = [];
+        List<long> buildIdFailed = [];
         foreach (var refs in lsRemoteOutput)
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
@@ -448,14 +450,27 @@ partial class BaseNukeBuildHelpers
 
             if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedBuildId))
+                if (rawTag.EndsWith("-passed", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    pairedBuildId = [];
-                    commitBuildIdGrouped.Add(commitId, pairedBuildId);
+                    var parsedBuildId = long.Parse(rawTag.Replace("build.", "").Replace("-passed", ""));
+                    buildIdPassed.Add(parsedBuildId);
                 }
-                var parsedBuildId = long.Parse(rawTag.Replace("build.", ""));
-                buildIdCommitPaired[parsedBuildId] = commitId;
-                pairedBuildId.Add(parsedBuildId);
+                else if (rawTag.EndsWith("-failed", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var parsedBuildId = long.Parse(rawTag.Replace("build.", "").Replace("-failed", ""));
+                    buildIdFailed.Add(parsedBuildId);
+                }
+                else
+                {
+                    if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedBuildId))
+                    {
+                        pairedBuildId = [];
+                        commitBuildIdGrouped.Add(commitId, pairedBuildId);
+                    }
+                    var parsedBuildId = long.Parse(rawTag.Replace("build.", ""));
+                    buildIdCommitPaired[parsedBuildId] = commitId;
+                    pairedBuildId.Add(parsedBuildId);
+                }
             }
             else
             {
@@ -562,6 +577,8 @@ partial class BaseNukeBuildHelpers
             EnvLatestVersionPaired = envLatestVersionPaired,
             EnvLatestBuildIdPaired = envLatestBuildIdPaired,
             EnvSorted = envSorted,
+            BuildIdPassed = buildIdPassed,
+            BuildIdFailed = buildIdFailed,
         };
     }
 
@@ -764,7 +781,7 @@ partial class BaseNukeBuildHelpers
         return lines;
     }
 
-    public async Task StartStatusWatch(bool cancelOnPublished)
+    public async Task StartStatusWatch(bool cancelOnDone)
     {
         GetOrFail(GetAppEntryConfigs, out var appEntryConfigs);
 
@@ -789,7 +806,7 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            bool allPublished = true;
+            bool allDone = true;
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -822,7 +839,7 @@ partial class BaseNukeBuildHelpers
                         {
                             published = "Not published";
                             statusColor = ConsoleColor.DarkGray;
-                            allPublished = false;
+                            allDone = false;
                         }
                         else if (bumpedVersion != releasedVersion)
                         {
@@ -832,15 +849,25 @@ partial class BaseNukeBuildHelpers
                                 allVersions.BuildIdCommitPaired.TryGetValue(bumpedBuildIds.Max(), out var buildIdCommitId) &&
                                 bumpedCommitId == buildIdCommitId)
                             {
-                                published = "Publishing";
-                                statusColor = ConsoleColor.Yellow;
+                                var buildIdmax = bumpedBuildIds.Max();
+                                if (allVersions.BuildIdFailed.Contains(buildIdmax))
+                                {
+                                    published = "Run Failed";
+                                    statusColor = ConsoleColor.Red;
+                                }
+                                else
+                                {
+                                    published = "Publishing";
+                                    statusColor = ConsoleColor.Yellow;
+                                    allDone = false;
+                                }
                             }
                             else
                             {
                                 published = "Waiting for queue";
                                 statusColor = ConsoleColor.Yellow;
+                                allDone = false;
                             }
-                            allPublished = false;
                         }
                         else
                         {
@@ -884,7 +911,7 @@ partial class BaseNukeBuildHelpers
             lines = LogInfoTableWatch(headers, [.. rows]);
             lines += 2;
 
-            if (cancelOnPublished && allPublished)
+            if (cancelOnDone && allDone)
             {
                 break;
             }

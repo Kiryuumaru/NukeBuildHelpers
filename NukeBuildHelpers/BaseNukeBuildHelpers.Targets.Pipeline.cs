@@ -279,6 +279,8 @@ partial class BaseNukeBuildHelpers
                         }
                     }
 
+                    Git.Invoke("tag -f build." + preSetupOutput.BuildId + "-passed", logger: (s, e) => Log.Debug(e));
+
                     Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
                     Gh.Invoke("release upload --clobber build." + preSetupOutput.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
@@ -287,7 +289,11 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    Gh.Invoke("release delete --cleanup-tag -y build." + preSetupOutput.BuildId);
+                    Gh.Invoke("release delete -y build." + preSetupOutput.BuildId);
+
+                    Git.Invoke("tag -f build." + preSetupOutput.BuildId + "-failed", logger: (s, e) => Log.Debug(e));
+
+                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
                 }
             }
         });
