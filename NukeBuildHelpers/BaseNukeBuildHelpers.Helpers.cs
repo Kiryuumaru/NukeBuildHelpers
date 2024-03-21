@@ -778,9 +778,9 @@ partial class BaseNukeBuildHelpers
         List<(string Text, HorizontalAlignment Alignment)> headers =
             [
                 ("App Id", HorizontalAlignment.Right),
-                    ("Environment", HorizontalAlignment.Center),
-                    ("Version", HorizontalAlignment.Right),
-                    ("Status", HorizontalAlignment.Center)
+                ("Environment", HorizontalAlignment.Center),
+                ("Version", HorizontalAlignment.Right),
+                ("Status", HorizontalAlignment.Center)
             ];
 
         CancellationTokenSource cts = new();
@@ -830,35 +830,52 @@ partial class BaseNukeBuildHelpers
                         }
                         else if (bumpedVersion != releasedVersion)
                         {
-                            published = "Publishing";
-                            statusColor = ConsoleColor.Yellow;
+                            allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var latestBuildId);
+                            allVersions.BuildIdCommitPaired.TryGetValue(latestBuildId, out var buildIdCommitId);
+                            allVersions.VersionCommitPaired.TryGetValue(releasedVersion, out var releaseCommitId);
+                            if (buildIdCommitId == releaseCommitId)
+                            {
+                                published = "Publishing";
+                                statusColor = ConsoleColor.Yellow;
+                            }
+                            else
+                            {
+                                published = "Waiting for queue";
+                                statusColor = ConsoleColor.Yellow;
+                            }
                         }
                         else
                         {
                             published = "Published";
                             statusColor = ConsoleColor.Green;
                         }
-                        rows.Add([
-                            (firstEntryRow ? appId : "", ConsoleColor.Magenta),
+                        rows.Add(
+                            [
+                                (firstEntryRow ? appId : "", ConsoleColor.Magenta),
                                 (env, ConsoleColor.Magenta),
                                 (bumpedVersion.ToString(), ConsoleColor.Magenta),
-                                (published, statusColor)]);
+                                (published, statusColor)
+                            ]);
                         firstEntryRow = false;
                     }
                 }
                 else
                 {
-                    rows.Add([
-                        (appId, ConsoleColor.Magenta),
+                    rows.Add(
+                        [
+                            (appId, ConsoleColor.Magenta),
                             (null, ConsoleColor.Magenta),
                             (null, ConsoleColor.Magenta),
-                            ("Not published", statusColor)]);
+                            ("Not published", statusColor)
+                        ]);
                 }
                 rows.Add(
-                    [("-", ConsoleColor.Magenta),
+                    [
                         ("-", ConsoleColor.Magenta),
                         ("-", ConsoleColor.Magenta),
-                        ("-", ConsoleColor.Magenta)]);
+                        ("-", ConsoleColor.Magenta),
+                        ("-", ConsoleColor.Magenta)
+                    ]);
             }
             rows.RemoveAt(rows.Count - 1);
 
@@ -869,7 +886,7 @@ partial class BaseNukeBuildHelpers
             lines = LogInfoTableWatch(headers, [.. rows]);
             lines += 2;
 
-            await Task.Delay(5000, cts.Token);
+            await Task.Delay(1000, cts.Token);
         }
     }
 }
