@@ -807,6 +807,7 @@ partial class BaseNukeBuildHelpers
             IReadOnlyCollection<Output>? lsRemote = null;
 
             bool allDone = true;
+            bool hasFailed = false;
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -854,6 +855,7 @@ partial class BaseNukeBuildHelpers
                                 {
                                     published = "Run Failed";
                                     statusColor = ConsoleColor.Red;
+                                    hasFailed = true;
                                 }
                                 else
                                 {
@@ -913,6 +915,10 @@ partial class BaseNukeBuildHelpers
 
             if (cancelOnDone && allDone)
             {
+                if (hasFailed)
+                {
+                    throw new Exception("Pipeline run has failed.");
+                }
                 break;
             }
 
