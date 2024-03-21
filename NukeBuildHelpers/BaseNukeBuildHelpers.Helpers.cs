@@ -831,8 +831,8 @@ partial class BaseNukeBuildHelpers
                         else if (bumpedVersion != releasedVersion)
                         {
                             var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
-                            var bumpedBuildIds = allVersions.CommitBuildIdGrouped[bumpedCommitId];
-                            if (bumpedBuildIds.Count != 0 &&
+                            if (allVersions.CommitBuildIdGrouped.TryGetValue(bumpedCommitId, out var bumpedBuildIds) &&
+                                bumpedBuildIds.Count != 0 &&
                                 allVersions.BuildIdCommitPaired.TryGetValue(bumpedBuildIds.Max(), out var buildIdCommitId) &&
                                 bumpedCommitId == buildIdCommitId)
                             {
