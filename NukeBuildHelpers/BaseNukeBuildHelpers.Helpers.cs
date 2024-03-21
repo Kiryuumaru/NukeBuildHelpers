@@ -688,10 +688,9 @@ partial class BaseNukeBuildHelpers
         Log.Information(headerSeparator);
     }
 
-    private static (int Lines, int Width) LogInfoTableWatch(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, IEnumerable<(string? Text, ConsoleColor TextColor)>[] rows, int lastLines, int lastWidth)
+    private static int LogInfoTableWatch(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, IEnumerable<(string? Text, ConsoleColor TextColor)>[] rows)
     {
         int lines = 0;
-        int width = 0;
 
         List<(int Length, string Text, HorizontalAlignment Alignment)> columns = [];
 
@@ -721,18 +720,18 @@ partial class BaseNukeBuildHelpers
             textHeader += Text.PadCenter(Length + 2) + '║';
         }
 
+        ClearCurrentConsoleLine();
         Console.WriteLine(headerSeparator);
+        ClearCurrentConsoleLine();
         Console.WriteLine(textHeader);
+        ClearCurrentConsoleLine();
         Console.WriteLine(headerSeparator);
         lines++;
         lines++;
         lines++;
         foreach (var row in rows)
         {
-            int currentLineCursor = Console.CursorTop;
-            Console.SetCursorPosition(0, Console.CursorTop);
-            Console.Write(new string(' ', Console.WindowWidth));
-            Console.SetCursorPosition(0, currentLineCursor);
+            ClearCurrentConsoleLine();
             if (row.All(i => i.Text == "-"))
             {
                 Console.WriteLine(rowSeparator);
@@ -766,19 +765,23 @@ partial class BaseNukeBuildHelpers
                     Console.ForegroundColor = consoleColor;
                     Console.Write(" ║ ");
                 }
-                width = width < Console.CursorLeft ? Console.CursorLeft : width;
                 Console.WriteLine();
                 lines++;
             }
         }
-        if (lastWidth > width)
-        {
-            Console.Write(Enumerable.Range(0, lastWidth - width).Select(i => " ").Join(""));
-        }
+        ClearCurrentConsoleLine();
         Console.WriteLine(headerSeparator);
         lines++;
 
-        return (lines, width);
+        return lines;
+    }
+
+    public static void ClearCurrentConsoleLine()
+    {
+        int currentLineCursor = Console.CursorTop;
+        Console.SetCursorPosition(0, Console.CursorTop);
+        Console.Write(new string(' ', Console.WindowWidth));
+        Console.SetCursorPosition(0, currentLineCursor);
     }
 
     public async Task StartStatusWatch()
