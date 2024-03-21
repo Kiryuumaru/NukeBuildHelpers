@@ -435,9 +435,11 @@ partial class BaseNukeBuildHelpers
         string basePeel = "refs/tags/";
         lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
 
-        Dictionary<string, List<long>> pairedBuildIds = [];
-        Dictionary<string, List<SemVersion>> pairedVersions = [];
-        Dictionary<string, List<string>> pairedLatestTags = [];
+        Dictionary<string, List<long>> commitBuildIdGrouped = [];
+        Dictionary<string, List<SemVersion>> commitVersionGrouped = [];
+        Dictionary<string, List<string>> commitLatestTagGrouped = [];
+        Dictionary<long, string> buildIdCommitPaired = [];
+        Dictionary<SemVersion, string> versionCommitPaired = [];
         foreach (var refs in lsRemoteOutput)
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
@@ -446,12 +448,14 @@ partial class BaseNukeBuildHelpers
 
             if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!pairedBuildIds.TryGetValue(commitId, out var pairedBuildId))
+                if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedBuildId))
                 {
                     pairedBuildId = [];
-                    pairedBuildIds.Add(commitId, pairedBuildId);
+                    commitBuildIdGrouped.Add(commitId, pairedBuildId);
                 }
-                pairedBuildId.Add(long.Parse(rawTag.Replace("build.", "")));
+                var parsedBuildId = long.Parse(rawTag.Replace("build.", ""));
+                buildIdCommitPaired[parsedBuildId] = commitId;
+                pairedBuildId.Add(parsedBuildId);
             }
             else
             {
@@ -469,42 +473,43 @@ partial class BaseNukeBuildHelpers
                 }
                 if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    if (!pairedLatestTags.TryGetValue(commitId, out var pairedLatestTag))
+                    if (!commitLatestTagGrouped.TryGetValue(commitId, out var pairedLatestTag))
                     {
                         pairedLatestTag = [];
-                        pairedLatestTags.Add(commitId, pairedLatestTag);
+                        commitLatestTagGrouped.Add(commitId, pairedLatestTag);
                     }
                     pairedLatestTag.Add(tag);
                 }
                 else if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
                 {
-                    if (!pairedVersions.TryGetValue(commitId, out var pairedVersion))
+                    if (!commitVersionGrouped.TryGetValue(commitId, out var pairedVersion))
                     {
                         pairedVersion = [];
-                        pairedVersions.Add(commitId, pairedVersion);
+                        commitVersionGrouped.Add(commitId, pairedVersion);
                     }
+                    versionCommitPaired[tagSemver] = commitId;
                     pairedVersion.Add(tagSemver);
                 }
             }
         }
 
-        List<SemVersion> allVersionList = pairedVersions.SelectMany(i => i.Value).ToList();
-        List<long> allBuildIdList = pairedBuildIds.SelectMany(i => i.Value).ToList();
-        Dictionary<string, List<SemVersion>> allVersionGroupDict = allVersionList
+        List<SemVersion> allVersionList = commitVersionGrouped.SelectMany(i => i.Value).ToList();
+        List<long> allBuildIdList = commitBuildIdGrouped.SelectMany(i => i.Value).ToList();
+        Dictionary<string, List<SemVersion>> versionEnvGrouped = allVersionList
             .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "")
             .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
 
         Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = [];
-        foreach (var pairedLatestTag in pairedLatestTags)
+        foreach (var pairedLatestTag in commitLatestTagGrouped)
         {
             string commitId = pairedLatestTag.Key;
             foreach (var latestTag in pairedLatestTag.Value)
             {
-                if (!pairedBuildIds.TryGetValue(commitId, out var buildIds) || buildIds.Count == 0)
+                if (!commitBuildIdGrouped.TryGetValue(commitId, out var buildIds) || buildIds.Count == 0)
                 {
                     continue;
                 }
-                if (!pairedVersions.TryGetValue(commitId, out var versions) || versions.Count == 0)
+                if (!commitVersionGrouped.TryGetValue(commitId, out var versions) || versions.Count == 0)
                 {
                     continue;
                 }
@@ -529,31 +534,34 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        Dictionary<string, SemVersion> allLatestVersions = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
-        Dictionary<string, long> allLatestIds = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
-        List<string> groupKeySorted = allVersionGroupDict.Select(i => i.Key).ToList();
+        Dictionary<string, SemVersion> envLatestVersionPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
+        Dictionary<string, long> envLatestBuildIdPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
+        List<string> envSorted = versionEnvGrouped.Select(i => i.Key).ToList();
 
-        groupKeySorted.Sort();
-        if (groupKeySorted.Count > 0 && groupKeySorted.First() == "")
+        envSorted.Sort();
+        if (envSorted.Count > 0 && envSorted.First() == "")
         {
-            var toMove = groupKeySorted.First();
-            groupKeySorted.Remove(toMove);
-            groupKeySorted.Add(toMove);
+            var toMove = envSorted.First();
+            envSorted.Remove(toMove);
+            envSorted.Add(toMove);
         }
-        foreach (var groupKey in groupKeySorted)
+        foreach (var groupKey in envSorted)
         {
-            var allVersion = allVersionGroupDict[groupKey];
+            var allVersion = versionEnvGrouped[groupKey];
             allVersion.Sort(SemVersion.PrecedenceComparer);
         }
 
         return new()
         {
-            VersionList = allVersionList,
-            BuildIdList = allBuildIdList,
-            VersionGrouped = allVersionGroupDict,
-            LatestVersions = allLatestVersions,
-            LatestBuildIds = allLatestIds,
-            GroupKeySorted = groupKeySorted,
+            CommitBuildIdGrouped = commitBuildIdGrouped,
+            CommitLatestTagGrouped = commitLatestTagGrouped,
+            CommitVersionGrouped = commitVersionGrouped,
+            BuildIdCommitPaired = buildIdCommitPaired,
+            VersionCommitPaired = versionCommitPaired,
+            VersionEnvGrouped = versionEnvGrouped,
+            EnvLatestVersionPaired = envLatestVersionPaired,
+            EnvLatestBuildIdPaired = envLatestBuildIdPaired,
+            EnvSorted = envSorted,
         };
     }
 
@@ -767,9 +775,6 @@ partial class BaseNukeBuildHelpers
     {
         GetOrFail(GetAppEntryConfigs, out var appEntryConfigs);
 
-        Log.Information("Commit: {Value}", Repository.Commit);
-        Log.Information("Branch: {Value}", Repository.Branch);
-
         List<(string Text, HorizontalAlignment Alignment)> headers =
             [
                 ("App Id", HorizontalAlignment.Right),
@@ -802,9 +807,9 @@ partial class BaseNukeBuildHelpers
 
                 ConsoleColor statusColor = ConsoleColor.DarkGray;
 
-                if (allVersions.GroupKeySorted.Count != 0)
+                if (allVersions.EnvSorted.Count != 0)
                 {
-                    foreach (var groupKey in allVersions.GroupKeySorted)
+                    foreach (var groupKey in allVersions.EnvSorted)
                     {
                         string env;
                         if (string.IsNullOrEmpty(groupKey))
@@ -815,8 +820,8 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        var bumpedVersion = allVersions.VersionGrouped[groupKey].Last();
-                        allVersions.LatestVersions.TryGetValue(groupKey, out var releasedVersion);
+                        var bumpedVersion = allVersions.VersionEnvGrouped[groupKey].Last();
+                        allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
                         string published;
                         if (releasedVersion == null)
                         {

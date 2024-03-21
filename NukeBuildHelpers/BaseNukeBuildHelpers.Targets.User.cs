@@ -62,9 +62,9 @@ partial class BaseNukeBuildHelpers
 
                 bool firstEntryRow = true;
 
-                if (allVersions.GroupKeySorted.Count != 0)
+                if (allVersions.EnvSorted.Count != 0)
                 {
-                    foreach (var groupKey in allVersions.GroupKeySorted)
+                    foreach (var groupKey in allVersions.EnvSorted)
                     {
                         string env;
                         if (string.IsNullOrEmpty(groupKey))
@@ -75,8 +75,8 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        var bumpedVersion = allVersions.VersionGrouped[groupKey].Last();
-                        allVersions.LatestVersions.TryGetValue(groupKey, out var releasedVersion);
+                        var bumpedVersion = allVersions.VersionEnvGrouped[groupKey].Last();
+                        allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
                         var published = "yes";
                         if (releasedVersion == null)
                         {
@@ -171,7 +171,7 @@ partial class BaseNukeBuildHelpers
                 {
                     currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
                 }
-                appEntryVersion.AllVersions.VersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
+                appEntryVersion.AllVersions.VersionEnvGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
                 var currColor = Console.ForegroundColor;
                 Console.Write("  Current latest version: ");
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -209,7 +209,7 @@ partial class BaseNukeBuildHelpers
                             env = "main";
                         }
 
-                        if (appEntryVersion.AllVersions.VersionGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
+                        if (appEntryVersion.AllVersions.VersionEnvGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
                         {
                             var lastVersion = value.Last();
                             // Fail if the version is already released
@@ -278,7 +278,13 @@ partial class BaseNukeBuildHelpers
 
     public Target StatusWatch => _ => _
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
-        .Executes(StartStatusWatch);
+        .Executes(async () =>
+        {
+            Log.Information("Commit: {Value}", Repository.Commit);
+            Log.Information("Branch: {Value}", Repository.Branch);
+
+            await StartStatusWatch();
+        });
 
     public Target Test => _ => _
         .Description("Test, with --args \"{appid}\"")

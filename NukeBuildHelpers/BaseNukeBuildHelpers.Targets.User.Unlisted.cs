@@ -52,11 +52,11 @@ partial class BaseNukeBuildHelpers
 
                     if (appEntry.Entry.MainRelease)
                     {
-                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => i.ToString()));
+                        tagsToDelete.AddRange(allVersions.VersionCommitPaired.Select(i => i.Key.ToString()));
                     }
                     else
                     {
-                        tagsToDelete.AddRange(allVersions.VersionList.Select(i => appId + "/" + i.ToString()));
+                        tagsToDelete.AddRange(allVersions.VersionCommitPaired.Select(i => appId + "/" + i.Key.ToString()));
                     }
                 }
             }

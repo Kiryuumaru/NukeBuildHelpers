@@ -96,15 +96,15 @@ partial class BaseNukeBuildHelpers
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
                 GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
 
-                if (allVersions.BuildIdList.Count > 0)
+                if (allVersions.BuildIdCommitPaired.Count > 0)
                 {
-                    var maxBuildId = allVersions.BuildIdList.Max();
+                    var maxBuildId = allVersions.BuildIdCommitPaired.Select(i => i.Key).Max();
                     lastBuildId = maxBuildId > lastBuildId ? maxBuildId : lastBuildId;
                 }
 
-                if (allVersions.GroupKeySorted.Count != 0)
+                if (allVersions.EnvSorted.Count != 0)
                 {
-                    foreach (var groupKey in allVersions.GroupKeySorted)
+                    foreach (var groupKey in allVersions.EnvSorted)
                     {
                         string env;
                         if (string.IsNullOrEmpty(groupKey))
@@ -125,12 +125,12 @@ partial class BaseNukeBuildHelpers
                                 continue;
                             }
                         }
-                        if (allVersions.VersionGrouped.TryGetValue(groupKey, out var versionGroup) && versionGroup.Count > 0)
+                        if (allVersions.VersionEnvGrouped.TryGetValue(groupKey, out var versionGroup) && versionGroup.Count > 0)
                         {
                             var lastVersionGroup = versionGroup.Last();
-                            if (!allVersions.LatestVersions.TryGetValue(groupKey, out SemVersion? value) || value != lastVersionGroup)
+                            if (!allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out SemVersion? value) || value != lastVersionGroup)
                             {
-                                allVersions.LatestBuildIds.TryGetValue(groupKey, out var allVersionLastId);
+                                allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var allVersionLastId);
                                 if (targetBuildId == 0)
                                 {
                                     targetBuildId = allVersionLastId;
