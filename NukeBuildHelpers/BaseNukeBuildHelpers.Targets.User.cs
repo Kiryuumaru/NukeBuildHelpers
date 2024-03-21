@@ -51,6 +51,8 @@ partial class BaseNukeBuildHelpers
                 ];
             List<List<string?>> rows = [];
 
+            Console.WriteLine();
+
             IReadOnlyCollection<Output>? lsRemote = null;
 
             foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))

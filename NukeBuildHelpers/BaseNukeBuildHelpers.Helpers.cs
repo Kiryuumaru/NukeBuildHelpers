@@ -656,36 +656,37 @@ partial class BaseNukeBuildHelpers
             textHeader += Text.PadCenter(Length + 2) + '║';
         }
 
-        Log.Information(headerSeparator);
-        Log.Information(textHeader);
-        Log.Information(headerSeparator);
+        Console.WriteLine(headerSeparator);
+        Console.WriteLine(textHeader);
+        Console.WriteLine(headerSeparator);
         foreach (var row in rows)
         {
+            var cells = row.Select(i => i?.ToString() ?? "null")?.ToArray() ?? [];
             if (row.All(i => i == "-"))
             {
-                Log.Information(rowSeparator);
+                Console.WriteLine(rowSeparator);
             }
             else
             {
                 int rowCount = row.Count();
-                string textRow = "║ ";
+                Console.Write("║ ");
                 for (int i = 0; i < rowCount; i++)
                 {
-                    string rowTemplate = "{" + i.ToString() + "}";
-                    string? rowElement = row?.ElementAt(i);
-                    int rowWidth = rowElement == null ? 4 : rowElement.Length;
-                    textRow += columns[i].Alignment switch
+                    string rowText = cells[i];
+                    var textRow = columns[i].Alignment switch
                     {
-                        HorizontalAlignment.Left => rowTemplate.PadLeft(columns[i].Length, rowWidth) + " ║ ",
-                        HorizontalAlignment.Center => rowTemplate.PadCenter(columns[i].Length, rowWidth) + " ║ ",
-                        HorizontalAlignment.Right => rowTemplate.PadRight(columns[i].Length, rowWidth) + " ║ ",
+                        HorizontalAlignment.Left => rowText.PadLeft(columns[i].Length, rowText.Length),
+                        HorizontalAlignment.Center => rowText.PadCenter(columns[i].Length, rowText.Length),
+                        HorizontalAlignment.Right => rowText.PadRight(columns[i].Length, rowText.Length),
                         _ => throw new NotImplementedException()
                     };
+                    ConsoleHelpers.WriteWithColor(textRow, ConsoleColor.Magenta);
+                    Console.Write(" ║ ");
                 }
-                Log.Information(textRow, row?.Select(i => i as object)?.ToArray());
+                Console.WriteLine();
             }
         }
-        Log.Information(headerSeparator);
+        Console.WriteLine(headerSeparator);
     }
 
     private static int LogInfoTableWatch(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, IEnumerable<(string? Text, ConsoleColor TextColor)>[] rows)
