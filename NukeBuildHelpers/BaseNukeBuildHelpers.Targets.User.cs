@@ -98,13 +98,13 @@ partial class BaseNukeBuildHelpers
             }
             rows.RemoveAt(rows.Count - 1);
 
-            LogInfoTable(headers, rows.ToArray());
+            LogInfoTable(headers, [.. rows]);
         });
 
     public Target Bump => _ => _
         .Description("Bumps the version by tagging and validating tags")
         .DependsOn(Version)
-        .Executes(() =>
+        .Executes(async () =>
         {
             Prompt.ColorSchema.Answer = ConsoleColor.Green;
             Prompt.ColorSchema.Select = ConsoleColor.DarkMagenta;
@@ -272,7 +272,13 @@ partial class BaseNukeBuildHelpers
             Git.Invoke("push origin --force " + bumpTag, logInvocation: false, logOutput: false);
 
             Log.Information("Bump done");
+
+            await StartStatusWatch();
         });
+
+    public Target StatusWatch => _ => _
+        .Description("Shows the current version from all releases, with --args \"{appid}\"")
+        .Executes(StartStatusWatch);
 
     public Target Test => _ => _
         .Description("Test, with --args \"{appid}\"")

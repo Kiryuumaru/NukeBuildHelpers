@@ -24,6 +24,7 @@ using NukeBuildHelpers.Interfaces;
 using Nuke.Common.CI.AzurePipelines;
 using Nuke.Common.CI.GitHubActions;
 using ICSharpCode.SharpZipLib.Zip;
+using System;
 
 namespace NukeBuildHelpers;
 
@@ -677,5 +678,193 @@ partial class BaseNukeBuildHelpers
             }
         }
         Log.Information(headerSeparator);
+    }
+
+    private static int LogInfoTableWatch(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, IEnumerable<(string? Text, ConsoleColor TextColor)>[] rows)
+    {
+        int lines = 0;
+
+        List<(int Length, string Text, HorizontalAlignment Alignment)> columns = [];
+
+        foreach (var (Text, AlignRight) in headers)
+        {
+            columns.Add((Text.Length, Text, AlignRight));
+        }
+
+        foreach (var row in rows)
+        {
+            int rowCount = row.Count();
+            for (int i = 0; i < rowCount; i++)
+            {
+                var (Text, TextColor) = row.ElementAt(i);
+                int rowWidth = Text?.Length ?? 0;
+                columns[i] = (MathExtensions.Max(rowCount, columns[i].Length, rowWidth), columns[i].Text, columns[i].Alignment);
+            }
+        }
+
+        string headerSeparator = "╬";
+        string rowSeparator = "║";
+        string textHeader = "║";
+        foreach (var (Length, Text, AlignRight) in columns)
+        {
+            headerSeparator += new string('═', Length + 2) + '╬';
+            rowSeparator += new string('-', Length + 2) + '║';
+            textHeader += Text.PadCenter(Length + 2) + '║';
+        }
+
+        Console.WriteLine(headerSeparator);
+        Console.WriteLine(textHeader);
+        Console.WriteLine(headerSeparator);
+        lines++;
+        lines++;
+        lines++;
+        foreach (var row in rows)
+        {
+            if (row.All(i => i.Text == "-"))
+            {
+                Console.WriteLine(rowSeparator);
+                lines++;
+            }
+            else
+            {
+                var cells = row.Select(i => i.Text?.ToString() ?? "null")?.ToArray() ?? [];
+                int rowCount = row.Count();
+                Console.Write("║ ");
+                for (int i = 0; i < rowCount; i++)
+                {
+                    var (rowText, rowTextColor) = row.ElementAt(i);
+                    int rowWidth = rowText == null ? 4 : rowText.Length;
+                    var consoleColor = Console.ForegroundColor;
+                    Console.ForegroundColor = rowTextColor;
+                    switch (columns[i].Alignment)
+                    {
+                        case HorizontalAlignment.Left:
+                            Console.Write(cells[i].PadLeft(columns[i].Length, rowWidth));
+                            break;
+                        case HorizontalAlignment.Center:
+                            Console.Write(cells[i].PadCenter(columns[i].Length, rowWidth));
+                            break;
+                        case HorizontalAlignment.Right:
+                            Console.Write(cells[i].PadRight(columns[i].Length, rowWidth));
+                            break;
+                        default:
+                            throw new NotImplementedException();
+                    }
+                    Console.ForegroundColor = consoleColor;
+                    Console.Write(" ║ ");
+                }
+                Console.WriteLine();
+                lines++;
+            }
+        }
+        Console.WriteLine(headerSeparator);
+        lines++;
+
+        return lines;
+    }
+
+    public async Task StartStatusWatch()
+    {
+        GetOrFail(GetAppEntryConfigs, out var appEntryConfigs);
+
+        Log.Information("Commit: {Value}", Repository.Commit);
+        Log.Information("Branch: {Value}", Repository.Branch);
+
+        List<(string Text, HorizontalAlignment Alignment)> headers =
+            [
+                ("App Id", HorizontalAlignment.Right),
+                    ("Environment", HorizontalAlignment.Center),
+                    ("Version", HorizontalAlignment.Right),
+                    ("Status", HorizontalAlignment.Center)
+            ];
+
+        CancellationTokenSource cts = new();
+        Console.CancelKeyPress += delegate {
+            cts.Cancel();
+        };
+
+        int lines = 0;
+
+        while (!cts.IsCancellationRequested)
+        {
+            List<List<(string? Text, ConsoleColor TextColor)>> rows = [];
+
+            IReadOnlyCollection<Output>? lsRemote = null;
+
+            foreach (var key in appEntryConfigs.Select(i => i.Key))
+            {
+                string appId = key;
+
+                GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
+                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+
+                bool firstEntryRow = true;
+
+                ConsoleColor statusColor = ConsoleColor.DarkGray;
+
+                if (allVersions.GroupKeySorted.Count != 0)
+                {
+                    foreach (var groupKey in allVersions.GroupKeySorted)
+                    {
+                        string env;
+                        if (string.IsNullOrEmpty(groupKey))
+                        {
+                            env = "main";
+                        }
+                        else
+                        {
+                            env = groupKey;
+                        }
+                        var bumpedVersion = allVersions.VersionGrouped[groupKey].Last();
+                        allVersions.LatestVersions.TryGetValue(groupKey, out var releasedVersion);
+                        string published;
+                        if (releasedVersion == null)
+                        {
+                            published = "Not published";
+                            statusColor = ConsoleColor.DarkGray;
+                        }
+                        else if (bumpedVersion != releasedVersion)
+                        {
+                            published = "Publishing";
+                            statusColor = ConsoleColor.Yellow;
+                        }
+                        else
+                        {
+                            published = "Published";
+                            statusColor = ConsoleColor.Green;
+                        }
+                        rows.Add([
+                            (firstEntryRow ? appId : "", ConsoleColor.Magenta),
+                                (env, ConsoleColor.Magenta),
+                                (bumpedVersion.ToString(), ConsoleColor.Magenta),
+                                (published, statusColor)]);
+                        firstEntryRow = false;
+                    }
+                }
+                else
+                {
+                    rows.Add([
+                        (appId, ConsoleColor.Magenta),
+                            (null, ConsoleColor.Magenta),
+                            (null, ConsoleColor.Magenta),
+                            ("Not published", statusColor)]);
+                }
+                rows.Add(
+                    [("-", ConsoleColor.Magenta),
+                        ("-", ConsoleColor.Magenta),
+                        ("-", ConsoleColor.Magenta),
+                        ("-", ConsoleColor.Magenta)]);
+            }
+            rows.RemoveAt(rows.Count - 1);
+
+            Console.SetCursorPosition(0, Console.CursorTop - lines);
+
+            Console.WriteLine();
+            Console.WriteLine("Time: " + DateTime.Now);
+            lines = LogInfoTableWatch(headers, [.. rows]);
+            lines += 2;
+
+            await Task.Delay(5000, cts.Token);
+        }
     }
 }
