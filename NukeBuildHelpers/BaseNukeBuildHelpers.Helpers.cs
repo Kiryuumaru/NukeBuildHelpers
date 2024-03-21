@@ -764,7 +764,7 @@ partial class BaseNukeBuildHelpers
         return lines;
     }
 
-    public async Task StartStatusWatch()
+    public async Task StartStatusWatch(bool cancelOnPublished)
     {
         GetOrFail(GetAppEntryConfigs, out var appEntryConfigs);
 
@@ -788,6 +788,8 @@ partial class BaseNukeBuildHelpers
             List<List<(string? Text, ConsoleColor TextColor)>> rows = [];
 
             IReadOnlyCollection<Output>? lsRemote = null;
+
+            bool allPublished = true;
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -820,6 +822,7 @@ partial class BaseNukeBuildHelpers
                         {
                             published = "Not published";
                             statusColor = ConsoleColor.DarkGray;
+                            allPublished = false;
                         }
                         else if (bumpedVersion != releasedVersion)
                         {
@@ -837,6 +840,7 @@ partial class BaseNukeBuildHelpers
                                 published = "Waiting for queue";
                                 statusColor = ConsoleColor.Yellow;
                             }
+                            allPublished = false;
                         }
                         else
                         {
@@ -850,7 +854,6 @@ partial class BaseNukeBuildHelpers
                                 (bumpedVersion.ToString(), ConsoleColor.Magenta),
                                 (published, statusColor)
                             ]);
-                        firstEntryRow = false;
                     }
                 }
                 else
@@ -862,6 +865,7 @@ partial class BaseNukeBuildHelpers
                             (null, ConsoleColor.Magenta),
                             ("Not published", statusColor)
                         ]);
+                    firstEntryRow = false;
                 }
                 rows.Add(
                     [
@@ -879,6 +883,11 @@ partial class BaseNukeBuildHelpers
             Console.WriteLine("Time: " + DateTime.Now);
             lines = LogInfoTableWatch(headers, [.. rows]);
             lines += 2;
+
+            if (cancelOnPublished && allPublished)
+            {
+                break;
+            }
 
             await Task.Delay(1000, cts.Token);
         }

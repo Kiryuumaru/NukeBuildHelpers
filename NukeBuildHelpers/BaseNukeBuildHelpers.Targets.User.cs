@@ -271,7 +271,7 @@ partial class BaseNukeBuildHelpers
             Git.Invoke("tag --force " + bumpTag, logInvocation: false, logOutput: false);
             Git.Invoke("push origin --force " + bumpTag, logInvocation: false, logOutput: false);
 
-            await StartStatusWatch();
+            await StartStatusWatch(true);
         });
 
     public Target StatusWatch => _ => _
@@ -281,7 +281,9 @@ partial class BaseNukeBuildHelpers
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
 
-            await StartStatusWatch();
+            Console.WriteLine();
+
+            await StartStatusWatch(false);
         });
 
     public Target Test => _ => _
