@@ -729,6 +729,10 @@ partial class BaseNukeBuildHelpers
         lines++;
         foreach (var row in rows)
         {
+            int currentLineCursor = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, currentLineCursor);
             if (row.All(i => i.Text == "-"))
             {
                 Console.WriteLine(rowSeparator);
