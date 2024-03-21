@@ -906,7 +906,7 @@ partial class BaseNukeBuildHelpers
             }
             rows.RemoveAt(rows.Count - 1);
 
-            Console.SetCursorPosition(0, Console.CursorTop - lines);
+            Console.SetCursorPosition(0, int.Max(Console.CursorTop - lines, 0));
 
             Console.WriteLine();
             Console.WriteLine("Time: " + DateTime.Now);
