@@ -769,7 +769,7 @@ partial class BaseNukeBuildHelpers
         }
         if (lastWidth > Console.CursorLeft)
         {
-            Console.Write(Enumerable.Range(0, lastWidth - Console.CursorLeft).Select(i => " ").Join(""));
+            Console.Write(Enumerable.Range(0, lastWidth - Console.CursorLeft - 1).Select(i => " ").Join(""));
         }
         Console.WriteLine(headerSeparator);
         lines++;
