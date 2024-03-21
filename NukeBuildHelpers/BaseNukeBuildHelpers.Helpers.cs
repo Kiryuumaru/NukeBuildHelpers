@@ -720,25 +720,22 @@ partial class BaseNukeBuildHelpers
             textHeader += Text.PadCenter(Length + 2) + '║';
         }
 
-        ClearCurrentConsoleLine();
-        Console.WriteLine(headerSeparator);
-        ClearCurrentConsoleLine();
-        Console.WriteLine(textHeader);
-        ClearCurrentConsoleLine();
-        Console.WriteLine(headerSeparator);
+        ConsoleHelpers.WriteLineClean(headerSeparator);
+        ConsoleHelpers.WriteLineClean(textHeader);
+        ConsoleHelpers.WriteLineClean(headerSeparator);
         lines++;
         lines++;
         lines++;
         foreach (var row in rows)
         {
-            ClearCurrentConsoleLine();
             if (row.All(i => i.Text == "-"))
             {
-                Console.WriteLine(rowSeparator);
+                ConsoleHelpers.WriteLineClean(rowSeparator);
                 lines++;
             }
             else
             {
+                ConsoleHelpers.ClearCurrentConsoleLine();
                 var cells = row.Select(i => i.Text?.ToString() ?? "null")?.ToArray() ?? [];
                 int rowCount = row.Count();
                 Console.Write("║ ");
@@ -746,42 +743,24 @@ partial class BaseNukeBuildHelpers
                 {
                     var (rowText, rowTextColor) = row.ElementAt(i);
                     int rowWidth = rowText == null ? 4 : rowText.Length;
-                    var consoleColor = Console.ForegroundColor;
-                    Console.ForegroundColor = rowTextColor;
-                    switch (columns[i].Alignment)
+                    var cellText = columns[i].Alignment switch
                     {
-                        case HorizontalAlignment.Left:
-                            Console.Write(cells[i].PadLeft(columns[i].Length, rowWidth));
-                            break;
-                        case HorizontalAlignment.Center:
-                            Console.Write(cells[i].PadCenter(columns[i].Length, rowWidth));
-                            break;
-                        case HorizontalAlignment.Right:
-                            Console.Write(cells[i].PadRight(columns[i].Length, rowWidth));
-                            break;
-                        default:
-                            throw new NotImplementedException();
-                    }
-                    Console.ForegroundColor = consoleColor;
+                        HorizontalAlignment.Left => cells[i].PadLeft(columns[i].Length, rowWidth),
+                        HorizontalAlignment.Center => cells[i].PadCenter(columns[i].Length, rowWidth),
+                        HorizontalAlignment.Right => cells[i].PadRight(columns[i].Length, rowWidth),
+                        _ => throw new NotImplementedException()
+                    };
+                    ConsoleHelpers.WriteWithColor(cellText, rowTextColor);
                     Console.Write(" ║ ");
                 }
                 Console.WriteLine();
                 lines++;
             }
         }
-        ClearCurrentConsoleLine();
-        Console.WriteLine(headerSeparator);
+        ConsoleHelpers.WriteLineClean(headerSeparator);
         lines++;
 
         return lines;
-    }
-
-    public static void ClearCurrentConsoleLine()
-    {
-        int currentLineCursor = Console.CursorTop;
-        Console.SetCursorPosition(0, Console.CursorTop);
-        Console.Write(new string(' ', Console.WindowWidth));
-        Console.SetCursorPosition(0, currentLineCursor);
     }
 
     public async Task StartStatusWatch()
