@@ -688,9 +688,10 @@ partial class BaseNukeBuildHelpers
         Log.Information(headerSeparator);
     }
 
-    private static int LogInfoTableWatch(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, IEnumerable<(string? Text, ConsoleColor TextColor)>[] rows)
+    private static (int Lines, int Width) LogInfoTableWatch(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, IEnumerable<(string? Text, ConsoleColor TextColor)>[] rows, int lastLines, int lastWidth)
     {
         int lines = 0;
+        int width = 0;
 
         List<(int Length, string Text, HorizontalAlignment Alignment)> columns = [];
 
@@ -761,14 +762,19 @@ partial class BaseNukeBuildHelpers
                     Console.ForegroundColor = consoleColor;
                     Console.Write(" ║ ");
                 }
+                width = width < Console.CursorLeft ? Console.CursorLeft : width;
                 Console.WriteLine();
                 lines++;
             }
         }
+        if (lastWidth > Console.CursorLeft)
+        {
+            Console.Write(Enumerable.Range(0, lastWidth).Select(i => " "));
+        }
         Console.WriteLine(headerSeparator);
         lines++;
 
-        return lines;
+        return (lines, width);
     }
 
     public async Task StartStatusWatch()
@@ -789,6 +795,7 @@ partial class BaseNukeBuildHelpers
         };
 
         int lines = 0;
+        int width = 0;
 
         while (!cts.IsCancellationRequested)
         {
@@ -884,7 +891,7 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
             Console.WriteLine("Time: " + DateTime.Now);
-            lines = LogInfoTableWatch(headers, [.. rows]);
+            (lines, width) = LogInfoTableWatch(headers, [.. rows], lines, width);
             lines += 2;
 
             await Task.Delay(1000, cts.Token);
