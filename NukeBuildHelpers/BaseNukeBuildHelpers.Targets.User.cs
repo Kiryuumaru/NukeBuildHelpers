@@ -271,6 +271,8 @@ partial class BaseNukeBuildHelpers
             Git.Invoke("tag --force " + bumpTag, logInvocation: false, logOutput: false);
             Git.Invoke("push origin --force " + bumpTag, logInvocation: false, logOutput: false);
 
+            Console.WriteLine();
+
             await StartStatusWatch(true);
         });
 

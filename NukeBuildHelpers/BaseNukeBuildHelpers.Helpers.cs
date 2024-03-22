@@ -808,13 +808,23 @@ partial class BaseNukeBuildHelpers
 
             bool allDone = true;
             bool hasFailed = false;
+            bool pullFailed = false;
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
 
                 GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+                AllVersions allVersions;
+                try
+                {
+                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out allVersions);
+                }
+                catch
+                {
+                    pullFailed = true;
+                    break;
+                }
 
                 bool firstEntryRow = true;
 
@@ -904,14 +914,28 @@ partial class BaseNukeBuildHelpers
                         ("-", ConsoleColor.Magenta)
                     ]);
             }
-            rows.RemoveAt(rows.Count - 1);
+            if (rows.Count != 0)
+            {
+                rows.RemoveAt(rows.Count - 1);
+            }
 
             Console.SetCursorPosition(0, int.Max(Console.CursorTop - lines, 0));
 
-            Console.WriteLine();
-            Console.WriteLine("Time: " + DateTime.Now);
-            lines = LogInfoTableWatch(headers, [.. rows]);
-            lines += 2;
+            if (pullFailed)
+            {
+                ConsoleHelpers.ClearCurrentConsoleLine();
+                Console.Write("Time: " + DateTime.Now);
+                Console.Write(", ");
+                ConsoleHelpers.WriteWithColor("Error: Connection problems", ConsoleColor.Red);
+                Console.WriteLine();
+                lines = 0;
+            }
+            else
+            {
+                ConsoleHelpers.WriteLineClean("Time: " + DateTime.Now);
+                lines = LogInfoTableWatch(headers, [.. rows]);
+            }
+            lines += 1;
 
             if (cancelOnDone && allDone)
             {
