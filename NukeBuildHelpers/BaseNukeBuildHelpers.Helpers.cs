@@ -823,6 +823,7 @@ partial class BaseNukeBuildHelpers
                 catch
                 {
                     pullFailed = true;
+                    allDone = false;
                     break;
                 }
 
