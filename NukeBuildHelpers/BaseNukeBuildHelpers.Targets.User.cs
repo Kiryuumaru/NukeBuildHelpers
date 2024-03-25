@@ -163,9 +163,7 @@ partial class BaseNukeBuildHelpers
                 }
 
                 string currentEnvIdentifier;
-                if (Repository.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) ||
-                    Repository.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) ||
-                    Repository.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
+                if (Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
                 {
                     currentEnvIdentifier = "";
                 }
@@ -201,9 +199,7 @@ partial class BaseNukeBuildHelpers
                         }
                         else
                         {
-                            if (!Repository.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) &&
-                                !Repository.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) &&
-                                !Repository.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
+                            if (!Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 return new ValidationResult($"{inputVersion} should bump on main branch");
                             }

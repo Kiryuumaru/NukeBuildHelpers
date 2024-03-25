@@ -21,11 +21,14 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
     public static AbsolutePath OutputDirectory => RootDirectory / ".nuke" / "output";
 
     public virtual string[] EnvironmentBranches { get; } = [
+        "prerelease",
         "alpha",
         "beta",
         "rc",
         "main",
         ];
+
+    public virtual string MainEnvironmentBranch { get; } = "main";
 
     protected internal GitRepository Repository => (this as INukeBuildHelpers).Repository;
 
