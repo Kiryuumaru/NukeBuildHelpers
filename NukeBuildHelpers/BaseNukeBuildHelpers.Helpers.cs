@@ -805,7 +805,7 @@ partial class BaseNukeBuildHelpers
         return lines;
     }
 
-    public async Task StartStatusWatch(bool cancelOnDone)
+    public async Task StartStatusWatch(bool cancelOnDone = false, params string[] appIds)
     {
         GetOrFail(GetAppEntryConfigs, out var appEntryConfigs);
 
@@ -833,6 +833,8 @@ partial class BaseNukeBuildHelpers
             bool allDone = true;
             bool hasFailed = false;
             bool pullFailed = false;
+
+            List<string> appIdsDone = [];
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -871,38 +873,41 @@ partial class BaseNukeBuildHelpers
                         var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].Last();
                         allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
                         string published;
-                        if (releasedVersion == null)
+                        if (bumpedVersion != releasedVersion)
                         {
-                            published = "Not published";
-                            statusColor = ConsoleColor.DarkGray;
-                            allDone = false;
-                        }
-                        else if (bumpedVersion != releasedVersion)
-                        {
-                            var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
-                            if (allVersions.CommitBuildIdGrouped.TryGetValue(bumpedCommitId, out var bumpedBuildIds) &&
-                                bumpedBuildIds.Count != 0 &&
-                                allVersions.BuildIdCommitPaired.TryGetValue(bumpedBuildIds.Max(), out var buildIdCommitId) &&
-                                bumpedCommitId == buildIdCommitId)
+                            if (bumpedVersion != null)
                             {
-                                var buildIdmax = bumpedBuildIds.Max();
-                                if (allVersions.BuildIdFailed.Contains(buildIdmax))
+                                var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
+                                if (allVersions.CommitBuildIdGrouped.TryGetValue(bumpedCommitId, out var bumpedBuildIds) &&
+                                    bumpedBuildIds.Count != 0 &&
+                                    allVersions.BuildIdCommitPaired.TryGetValue(bumpedBuildIds.Max(), out var buildIdCommitId) &&
+                                    bumpedCommitId == buildIdCommitId)
                                 {
-                                    published = "Run Failed";
-                                    statusColor = ConsoleColor.Red;
-                                    hasFailed = true;
+                                    var buildIdmax = bumpedBuildIds.Max();
+                                    if (allVersions.BuildIdFailed.Contains(buildIdmax))
+                                    {
+                                        published = "Run Failed";
+                                        statusColor = ConsoleColor.Red;
+                                        hasFailed = true;
+                                    }
+                                    else
+                                    {
+                                        published = "Publishing";
+                                        statusColor = ConsoleColor.Yellow;
+                                        allDone = false;
+                                    }
                                 }
                                 else
                                 {
-                                    published = "Publishing";
+                                    published = "Waiting for queue";
                                     statusColor = ConsoleColor.Yellow;
                                     allDone = false;
                                 }
                             }
                             else
                             {
-                                published = "Waiting for queue";
-                                statusColor = ConsoleColor.Yellow;
+                                published = "Not published";
+                                statusColor = ConsoleColor.DarkGray;
                                 allDone = false;
                             }
                         }
@@ -910,12 +915,13 @@ partial class BaseNukeBuildHelpers
                         {
                             published = "Published";
                             statusColor = ConsoleColor.Green;
+                            appIdsDone.Add(appId);
                         }
                         rows.Add(
                             [
                                 (firstEntryRow ? appId : "", ConsoleColor.Magenta),
                                 (env, ConsoleColor.Magenta),
-                                (bumpedVersion.ToString(), ConsoleColor.Magenta),
+                                (bumpedVersion?.ToString(), ConsoleColor.Magenta),
                                 (published, statusColor)
                             ]);
                         firstEntryRow = false;
@@ -968,7 +974,10 @@ partial class BaseNukeBuildHelpers
                 {
                     Assert.Fail("Pipeline run has failed.");
                 }
-                break;
+                if (appIds.Length == 0 || appIds.All(i => appIdsDone.Contains(i)))
+                {
+                    break;
+                }
             }
 
             await Task.Delay(1000, cts.Token);

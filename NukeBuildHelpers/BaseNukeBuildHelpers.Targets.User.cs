@@ -269,7 +269,7 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
 
-            await StartStatusWatch(true);
+            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => i.AppEntry.Id).ToArray());
         });
 
     public Target StatusWatch => _ => _
