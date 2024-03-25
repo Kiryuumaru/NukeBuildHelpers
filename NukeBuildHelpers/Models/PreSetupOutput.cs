@@ -29,5 +29,7 @@ internal class PreSetupOutput
 
     public required long LastBuildId { get; init; }
 
+    public required string Environment { get; init; }
+
     public required Dictionary<string, PreSetupOutputVersion> Releases { get; init; }
 }

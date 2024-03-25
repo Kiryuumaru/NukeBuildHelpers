@@ -21,6 +21,8 @@ internal class PreSetupOutputMatrix
 
     public required string IdsToRun { get; init; }
 
+    public required string Environment { get; init; }
+
     public required string RunsOn { get; init; }
 
     public required string BuildScript { get; init; }

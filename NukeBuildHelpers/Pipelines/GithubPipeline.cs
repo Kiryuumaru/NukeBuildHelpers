@@ -86,6 +86,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = appTestEntry.Id,
                     Name = appTestEntry.Name,
+                    Environment = preSetupOutput.Environment,
                     RunsOn = GetRunsOn(appTestEntry.RunsOn),
                     BuildScript = GetBuildScript(appTestEntry.RunsOn),
                     IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
@@ -99,6 +100,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 Id = "skip",
                 Name = "Skip",
+                Environment = preSetupOutput.Environment,
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = ""
@@ -114,6 +116,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
+                    Environment = preSetupOutput.Environment,
                     RunsOn = GetRunsOn(Entry.BuildRunsOn),
                     BuildScript = GetBuildScript(Entry.BuildRunsOn),
                     IdsToRun = Entry.Id,
@@ -123,6 +126,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     Id = Entry.Id,
                     Name = Entry.Name,
+                    Environment = preSetupOutput.Environment,
                     RunsOn = GetRunsOn(Entry.PublishRunsOn),
                     BuildScript = GetBuildScript(Entry.PublishRunsOn),
                     IdsToRun = Entry.Id,

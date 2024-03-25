@@ -25,6 +25,7 @@ using Nuke.Common.CI.AzurePipelines;
 using Nuke.Common.CI.GitHubActions;
 using ICSharpCode.SharpZipLib.Zip;
 using System;
+using System.Linq;
 
 namespace NukeBuildHelpers;
 
@@ -440,6 +441,7 @@ partial class BaseNukeBuildHelpers
         Dictionary<string, List<string>> commitLatestTagGrouped = [];
         Dictionary<long, string> buildIdCommitPaired = [];
         Dictionary<SemVersion, string> versionCommitPaired = [];
+        Dictionary<string, List<long>> envBuildIdGrouped = [];
         List<long> buildIdPassed = [];
         List<long> buildIdFailed = [];
         foreach (var refs in lsRemoteOutput)
@@ -450,26 +452,41 @@ partial class BaseNukeBuildHelpers
 
             if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (rawTag.EndsWith("-passed", StringComparison.InvariantCultureIgnoreCase))
+                var buildSplit = rawTag.Split('-');
+                if (buildSplit.Length == 2)
                 {
-                    var parsedBuildId = long.Parse(rawTag.Replace("build.", "").Replace("-passed", ""));
-                    buildIdPassed.Add(parsedBuildId);
-                }
-                else if (rawTag.EndsWith("-failed", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    var parsedBuildId = long.Parse(rawTag.Replace("build.", "").Replace("-failed", ""));
-                    buildIdFailed.Add(parsedBuildId);
-                }
-                else
-                {
-                    if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedBuildId))
+                    var parsedBuildId = long.Parse(buildSplit[0].Split('.')[1]);
+                    var buildIdEnv = buildSplit[1].ToLowerInvariant();
+                    if (!EnvironmentBranches.Any(i => i.Equals(buildIdEnv, StringComparison.InvariantCultureIgnoreCase)))
                     {
-                        pairedBuildId = [];
-                        commitBuildIdGrouped.Add(commitId, pairedBuildId);
+                        continue;
                     }
-                    var parsedBuildId = long.Parse(rawTag.Replace("build.", ""));
+                    if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedCommitBuildId))
+                    {
+                        pairedCommitBuildId = [];
+                        commitBuildIdGrouped.Add(commitId, pairedCommitBuildId);
+                    }
+                    if (!envBuildIdGrouped.TryGetValue(commitId, out var pairedEnvBuildId))
+                    {
+                        pairedEnvBuildId = [];
+                        envBuildIdGrouped.Add(buildIdEnv, pairedEnvBuildId);
+                    }
                     buildIdCommitPaired[parsedBuildId] = commitId;
-                    pairedBuildId.Add(parsedBuildId);
+                    pairedCommitBuildId.Add(parsedBuildId);
+                    pairedEnvBuildId.Add(parsedBuildId);
+                }
+                else if (buildSplit.Length == 3)
+                {
+                    var parsedBuildId = long.Parse(buildSplit[0].Split('.')[1]);
+                    var buildIdRunIndicator = buildSplit[2].ToLowerInvariant();
+                    if (buildIdRunIndicator.Equals("passed", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        buildIdPassed.Add(parsedBuildId);
+                    }
+                    else if (buildIdRunIndicator.Equals("failed", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        buildIdFailed.Add(parsedBuildId);
+                    }
                 }
             }
             else
@@ -510,7 +527,7 @@ partial class BaseNukeBuildHelpers
 
         List<SemVersion> allVersionList = commitVersionGrouped.SelectMany(i => i.Value).ToList();
         List<long> allBuildIdList = commitBuildIdGrouped.SelectMany(i => i.Value).ToList();
-        Dictionary<string, List<SemVersion>> versionEnvGrouped = allVersionList
+        Dictionary<string, List<SemVersion>> envVersionGrouped = allVersionList
             .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "")
             .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
 
@@ -520,30 +537,36 @@ partial class BaseNukeBuildHelpers
             string commitId = pairedLatestTag.Key;
             foreach (var latestTag in pairedLatestTag.Value)
             {
-                if (!commitBuildIdGrouped.TryGetValue(commitId, out var buildIds) || buildIds.Count == 0)
-                {
-                    continue;
-                }
                 if (!commitVersionGrouped.TryGetValue(commitId, out var versions) || versions.Count == 0)
                 {
                     continue;
                 }
-                var maxBuild = buildIds.Max();
-                if (latestTag.Equals("latest", StringComparison.InvariantCultureIgnoreCase))
+                string env;
+                var latestTagSplit = latestTag.Split('-');
+                if (latestTagSplit.Length == 2)
                 {
-                    var latestVersion = versions.Where(i => !i.IsPrerelease).LastOrDefault();
-                    if (latestVersion != null)
+                    env = latestTagSplit[1];
+                    if (!envBuildIdGrouped.TryGetValue(env, out var envBuildIds) || envBuildIds.Count == 0)
                     {
-                        pairedLatests.Add("", (maxBuild, latestVersion));
+                        continue;
                     }
-                }
-                else if (latestTag.StartsWith("latest-", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    var env = latestTag[(latestTag.IndexOf('-') + 1)..];
                     var latestVersion = versions.Where(i => i.IsPrerelease && i.PrereleaseIdentifiers[0].ToString().Equals(env, StringComparison.InvariantCultureIgnoreCase)).LastOrDefault();
                     if (latestVersion != null)
                     {
-                        pairedLatests.Add(env, (maxBuild, latestVersion));
+                        pairedLatests.Add(env, (envBuildIds.Max(), latestVersion));
+                    }
+                }
+                else
+                {
+                    env = "main";
+                    if (!envBuildIdGrouped.TryGetValue(env, out var envBuildIds) || envBuildIds.Count == 0)
+                    {
+                        continue;
+                    }
+                    var latestVersion = versions.Where(i => !i.IsPrerelease).LastOrDefault();
+                    if (latestVersion != null)
+                    {
+                        pairedLatests.Add("", (envBuildIds.Max(), latestVersion));
                     }
                 }
             }
@@ -551,7 +574,7 @@ partial class BaseNukeBuildHelpers
 
         Dictionary<string, SemVersion> envLatestVersionPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
         Dictionary<string, long> envLatestBuildIdPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
-        List<string> envSorted = versionEnvGrouped.Select(i => i.Key).ToList();
+        List<string> envSorted = envVersionGrouped.Select(i => i.Key).ToList();
 
         envSorted.Sort();
         if (envSorted.Count > 0 && envSorted.First() == "")
@@ -562,7 +585,7 @@ partial class BaseNukeBuildHelpers
         }
         foreach (var groupKey in envSorted)
         {
-            var allVersion = versionEnvGrouped[groupKey];
+            var allVersion = envVersionGrouped[groupKey];
             allVersion.Sort(SemVersion.PrecedenceComparer);
         }
 
@@ -573,7 +596,8 @@ partial class BaseNukeBuildHelpers
             CommitVersionGrouped = commitVersionGrouped,
             BuildIdCommitPaired = buildIdCommitPaired,
             VersionCommitPaired = versionCommitPaired,
-            VersionEnvGrouped = versionEnvGrouped,
+            EnvVersionGrouped = envVersionGrouped,
+            EnvBuildIdGrouped = envBuildIdGrouped,
             EnvLatestVersionPaired = envLatestVersionPaired,
             EnvLatestBuildIdPaired = envLatestBuildIdPaired,
             EnvSorted = envSorted,
@@ -844,7 +868,7 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        var bumpedVersion = allVersions.VersionEnvGrouped[groupKey].Last();
+                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].Last();
                         allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
                         string published;
                         if (releasedVersion == null)
