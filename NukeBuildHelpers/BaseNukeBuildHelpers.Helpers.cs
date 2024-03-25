@@ -466,7 +466,7 @@ partial class BaseNukeBuildHelpers
                         pairedCommitBuildId = [];
                         commitBuildIdGrouped.Add(commitId, pairedCommitBuildId);
                     }
-                    if (!envBuildIdGrouped.TryGetValue(commitId, out var pairedEnvBuildId))
+                    if (!envBuildIdGrouped.TryGetValue(buildIdEnv, out var pairedEnvBuildId))
                     {
                         pairedEnvBuildId = [];
                         envBuildIdGrouped.Add(buildIdEnv, pairedEnvBuildId);
