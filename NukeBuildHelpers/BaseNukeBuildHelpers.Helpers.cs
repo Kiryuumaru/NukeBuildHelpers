@@ -831,10 +831,10 @@ partial class BaseNukeBuildHelpers
             IReadOnlyCollection<Output>? lsRemote = null;
 
             bool allDone = true;
-            bool hasFailed = false;
             bool pullFailed = false;
 
-            List<string> appIdsDone = [];
+            List<string> appIdsPassed = [];
+            List<string> appIdsFailed = [];
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -888,7 +888,7 @@ partial class BaseNukeBuildHelpers
                                     {
                                         published = "Run Failed";
                                         statusColor = ConsoleColor.Red;
-                                        hasFailed = true;
+                                        appIdsFailed.Add(appId);
                                     }
                                     else
                                     {
@@ -915,7 +915,7 @@ partial class BaseNukeBuildHelpers
                         {
                             published = "Published";
                             statusColor = ConsoleColor.Green;
-                            appIdsDone.Add(appId);
+                            appIdsPassed.Add(appId);
                         }
                         rows.Add(
                             [
@@ -970,11 +970,16 @@ partial class BaseNukeBuildHelpers
 
             if (cancelOnDone)
             {
-                if (hasFailed)
+                if (allDone && appIds.Length == 0)
+                {
+                    break;
+                }
+                if (appIds.Any(i => appIdsFailed.Contains(i)))
                 {
                     Assert.Fail("Pipeline run has failed.");
+                    break;
                 }
-                if ((allDone && appIds.Length == 0) || appIds.All(i => appIdsDone.Contains(i)))
+                if (appIds.All(i => appIdsPassed.Contains(i)))
                 {
                     break;
                 }
