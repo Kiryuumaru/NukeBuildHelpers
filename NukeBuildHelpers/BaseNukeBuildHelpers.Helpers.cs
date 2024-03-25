@@ -968,13 +968,13 @@ partial class BaseNukeBuildHelpers
             }
             lines += 1;
 
-            if (cancelOnDone && allDone)
+            if (cancelOnDone)
             {
                 if (hasFailed)
                 {
                     Assert.Fail("Pipeline run has failed.");
                 }
-                if (appIds.Length == 0 || appIds.All(i => appIdsDone.Contains(i)))
+                if ((allDone && appIds.Length == 0) || appIds.All(i => appIdsDone.Contains(i)))
                 {
                     break;
                 }
