@@ -110,9 +110,7 @@ partial class BaseNukeBuildHelpers
                         if (string.IsNullOrEmpty(groupKey))
                         {
                             env = "main";
-                            if (!pipelineInfo.Branch.Equals("master", StringComparison.InvariantCultureIgnoreCase) &&
-                                !pipelineInfo.Branch.Equals("main", StringComparison.InvariantCultureIgnoreCase) &&
-                                !pipelineInfo.Branch.Equals("prod", StringComparison.InvariantCultureIgnoreCase))
+                            if (!pipelineInfo.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 continue;
                             }

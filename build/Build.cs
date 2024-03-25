@@ -21,4 +21,6 @@ public partial class Build : BaseNukeBuildHelpers
     internal readonly Solution Solution;
 
     public override string[] EnvironmentBranches { get; } = [ "prerelease", "main" ];
+
+    public override string MainEnvironmentBranch { get; } = "main";
 }
