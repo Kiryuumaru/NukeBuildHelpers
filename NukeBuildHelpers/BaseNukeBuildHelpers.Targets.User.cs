@@ -121,6 +121,16 @@ partial class BaseNukeBuildHelpers
 
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
+            string environment;
+            if (Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+            {
+                environment = "main";
+            }
+            else
+            {
+                environment = Repository.Branch;
+            }
+
             IReadOnlyCollection<Output>? lsRemote = null;
 
             List<(AppEntry? AppEntry, AllVersions? AllVersions)> appEntryVersions = [];
@@ -269,7 +279,7 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
 
-            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => i.AppEntry.Id).ToArray());
+            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, environment)).ToArray());
         });
 
     public Target StatusWatch => _ => _

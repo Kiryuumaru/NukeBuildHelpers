@@ -805,7 +805,7 @@ partial class BaseNukeBuildHelpers
         return lines;
     }
 
-    public async Task StartStatusWatch(bool cancelOnDone = false, params string[] appIds)
+    public async Task StartStatusWatch(bool cancelOnDone = false, params (string AppId, string Environment)[] appIds)
     {
         GetOrFail(GetAppEntryConfigs, out var appEntryConfigs);
 
@@ -833,8 +833,8 @@ partial class BaseNukeBuildHelpers
             bool allDone = true;
             bool pullFailed = false;
 
-            List<string> appIdsPassed = [];
-            List<string> appIdsFailed = [];
+            List<(string AppId, string Environment)> appIdsPassed = [];
+            List<(string AppId, string Environment)> appIdsFailed = [];
 
             foreach (var key in appEntryConfigs.Select(i => i.Key))
             {
@@ -888,7 +888,7 @@ partial class BaseNukeBuildHelpers
                                     {
                                         published = "Run Failed";
                                         statusColor = ConsoleColor.Red;
-                                        appIdsFailed.Add(appId);
+                                        appIdsFailed.Add((appId, env));
                                     }
                                     else
                                     {
@@ -915,7 +915,7 @@ partial class BaseNukeBuildHelpers
                         {
                             published = "Published";
                             statusColor = ConsoleColor.Green;
-                            appIdsPassed.Add(appId);
+                            appIdsPassed.Add((appId, env));
                         }
                         rows.Add(
                             [
