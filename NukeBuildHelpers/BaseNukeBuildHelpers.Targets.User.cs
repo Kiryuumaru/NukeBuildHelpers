@@ -77,7 +77,7 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        var bumpedVersion = allVersions.VersionEnvGrouped[groupKey].Last();
+                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].Last();
                         allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
                         var published = "yes";
                         if (releasedVersion == null)
@@ -171,7 +171,7 @@ partial class BaseNukeBuildHelpers
                 {
                     currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
                 }
-                appEntryVersion.AllVersions.VersionEnvGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
+                appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
                 var currColor = Console.ForegroundColor;
                 Console.Write("  Current latest version: ");
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -207,7 +207,7 @@ partial class BaseNukeBuildHelpers
                             env = "main";
                         }
 
-                        if (appEntryVersion.AllVersions.VersionEnvGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
+                        if (appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
                         {
                             var lastVersion = value.Last();
                             // Fail if the version is already released

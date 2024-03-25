@@ -21,7 +21,9 @@ internal class AllVersions
 
     public required Dictionary<long, string> BuildIdCommitPaired { get; init; }
 
-    public required Dictionary<string, List<SemVersion>> VersionEnvGrouped { get; init; }
+    public required Dictionary<string, List<SemVersion>> EnvVersionGrouped { get; init; }
+
+    public required Dictionary<string, List<long>> EnvBuildIdGrouped { get; init; }
 
     public required Dictionary<string, SemVersion> EnvLatestVersionPaired { get; init; }
 
