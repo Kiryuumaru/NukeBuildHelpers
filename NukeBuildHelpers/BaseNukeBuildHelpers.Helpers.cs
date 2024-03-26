@@ -487,20 +487,35 @@ partial class BaseNukeBuildHelpers
                         pairedEnvBuildId = [];
                         envBuildIdGrouped.Add(buildIdEnv, pairedEnvBuildId);
                     }
-                    buildIdCommitPaired[parsedBuildId] = commitId;
-                    pairedCommitBuildId.Add(parsedBuildId);
-                    pairedEnvBuildId.Add(parsedBuildId);
+                    if (!buildIdCommitPaired.ContainsKey(parsedBuildId))
+                    {
+                        buildIdCommitPaired[parsedBuildId] = commitId;
+                    }
+                    if (!pairedCommitBuildId.Contains(parsedBuildId))
+                    {
+                        pairedCommitBuildId.Add(parsedBuildId);
+                    }
+                    if (!pairedEnvBuildId.Contains(parsedBuildId))
+                    {
+                        pairedEnvBuildId.Add(parsedBuildId);
+                    }
                 }
                 else if (buildSplit.Length == 3)
                 {
                     var buildIdRunIndicator = buildSplit[2].ToLowerInvariant();
                     if (buildIdRunIndicator.Equals("passed", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        buildIdPassed.Add(parsedBuildId);
+                        if (!buildIdPassed.Contains(parsedBuildId))
+                        {
+                            buildIdPassed.Add(parsedBuildId);
+                        }
                     }
                     else if (buildIdRunIndicator.Equals("failed", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        buildIdFailed.Add(parsedBuildId);
+                        if (!buildIdFailed.Contains(parsedBuildId))
+                        {
+                            buildIdFailed.Add(parsedBuildId);
+                        }
                     }
                 }
             }
