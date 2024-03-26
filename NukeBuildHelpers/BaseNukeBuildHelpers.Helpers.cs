@@ -453,9 +453,25 @@ partial class BaseNukeBuildHelpers
             if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
             {
                 var buildSplit = rawTag.Split('-');
-                if (buildSplit.Length == 2)
+                var parsedBuildId = long.Parse(buildSplit[0].Split('.')[1]);
+                if (buildSplit.Length == 1)
                 {
-                    var parsedBuildId = long.Parse(buildSplit[0].Split('.')[1]);
+                    if (!buildIdCommitPaired.ContainsKey(parsedBuildId))
+                    {
+                        buildIdCommitPaired[parsedBuildId] = commitId;
+                    }
+                    if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedCommitBuildId))
+                    {
+                        pairedCommitBuildId = [];
+                        commitBuildIdGrouped.Add(commitId, pairedCommitBuildId);
+                    }
+                    if (!pairedCommitBuildId.Contains(parsedBuildId))
+                    {
+                        pairedCommitBuildId.Add(parsedBuildId);
+                    }
+                }
+                else if (buildSplit.Length == 2)
+                {
                     var buildIdEnv = buildSplit[1].ToLowerInvariant();
                     if (!EnvironmentBranches.Any(i => i.Equals(buildIdEnv, StringComparison.InvariantCultureIgnoreCase)))
                     {
@@ -477,7 +493,6 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (buildSplit.Length == 3)
                 {
-                    var parsedBuildId = long.Parse(buildSplit[0].Split('.')[1]);
                     var buildIdRunIndicator = buildSplit[2].ToLowerInvariant();
                     if (buildIdRunIndicator.Equals("passed", StringComparison.InvariantCultureIgnoreCase))
                     {
