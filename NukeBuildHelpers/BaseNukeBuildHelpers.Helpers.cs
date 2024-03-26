@@ -908,13 +908,11 @@ partial class BaseNukeBuildHelpers
                             if (bumpedVersion != null)
                             {
                                 var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
-                                if (allVersions.CommitBuildIdGrouped.TryGetValue(bumpedCommitId, out var bumpedBuildIds) &&
-                                    bumpedBuildIds.Count != 0 &&
-                                    allVersions.BuildIdCommitPaired.TryGetValue(bumpedBuildIds.Max(), out var buildIdCommitId) &&
+                                if (allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var releasedBuildId) &&
+                                    allVersions.BuildIdCommitPaired.TryGetValue(releasedBuildId, out var buildIdCommitId) &&
                                     bumpedCommitId == buildIdCommitId)
                                 {
-                                    var buildIdmax = bumpedBuildIds.Max();
-                                    if (allVersions.BuildIdFailed.Contains(buildIdmax))
+                                    if (allVersions.BuildIdFailed.Contains(releasedBuildId))
                                     {
                                         published = "Run Failed";
                                         statusColor = ConsoleColor.Red;
