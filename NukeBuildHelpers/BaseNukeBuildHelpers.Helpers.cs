@@ -916,20 +916,20 @@ partial class BaseNukeBuildHelpers
                                     {
                                         if (allVersions.BuildIdFailed.Contains(releasedBuildId))
                                         {
-                                            published = "Run Failed";
+                                            published = "Run Failed1";
                                             statusColor = ConsoleColor.Red;
                                             appIdsFailed.Add((appId, env));
                                         }
                                         else
                                         {
-                                            published = "Publishing";
+                                            published = "Publishing2";
                                             statusColor = ConsoleColor.Yellow;
                                             allDone = false;
                                         }
                                     }
                                     else
                                     {
-                                        published = "Waiting for queue";
+                                        published = "Waiting for queue3";
                                         statusColor = ConsoleColor.Yellow;
                                         allDone = false;
                                     }
@@ -942,13 +942,22 @@ partial class BaseNukeBuildHelpers
                                         allVersions.BuildIdCommitPaired.TryGetValue(envBuildIdGroupMax, out var buildIdCommitId) &&
                                         bumpedCommitId == buildIdCommitId)
                                     {
-                                        published = "Publishing";
-                                        statusColor = ConsoleColor.Yellow;
-                                        allDone = false;
+                                        if (allVersions.BuildIdFailed.Contains(envBuildIdGroupMax))
+                                        {
+                                            published = "Run Failed4";
+                                            statusColor = ConsoleColor.Red;
+                                            appIdsFailed.Add((appId, env));
+                                        }
+                                        else
+                                        {
+                                            published = "Publishing5";
+                                            statusColor = ConsoleColor.Yellow;
+                                            allDone = false;
+                                        }
                                     }
                                     else
                                     {
-                                        published = "Waiting for queue";
+                                        published = "Waiting for queue6";
                                         statusColor = ConsoleColor.Yellow;
                                         allDone = false;
                                     }
