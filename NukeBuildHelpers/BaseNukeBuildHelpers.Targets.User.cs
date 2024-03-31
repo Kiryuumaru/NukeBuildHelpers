@@ -159,7 +159,7 @@ partial class BaseNukeBuildHelpers
                 {
                     if (appEntryVersionsToBump.Count != 0)
                     {
-                        var answer = Prompt.Confirm("Are you sure to bump selected version(s)?", defaultValue: true);
+                        var answer = Prompt.Confirm("Are you sure to bump selected version(s)?", defaultValue: false);
                         if (answer)
                         {
                             break;
