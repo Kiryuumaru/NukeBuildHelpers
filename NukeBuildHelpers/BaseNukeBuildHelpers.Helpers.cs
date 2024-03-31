@@ -442,8 +442,10 @@ partial class BaseNukeBuildHelpers
         Dictionary<long, string> buildIdCommitPaired = [];
         Dictionary<SemVersion, string> versionCommitPaired = [];
         Dictionary<string, List<long>> envBuildIdGrouped = [];
-        List<long> buildIdPassed = [];
-        List<long> buildIdFailed = [];
+        List<SemVersion> versionBump = [];
+        List<SemVersion> versionQueue = [];
+        List<SemVersion> versionFailed = [];
+        List<SemVersion> versionPassed = [];
         foreach (var refs in lsRemoteOutput)
         {
             string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
@@ -500,24 +502,6 @@ partial class BaseNukeBuildHelpers
                         pairedEnvBuildId.Add(parsedBuildId);
                     }
                 }
-                else if (buildSplit.Length == 3)
-                {
-                    var buildIdRunIndicator = buildSplit[2].ToLowerInvariant();
-                    if (buildIdRunIndicator.Equals("passed", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (!buildIdPassed.Contains(parsedBuildId))
-                        {
-                            buildIdPassed.Add(parsedBuildId);
-                        }
-                    }
-                    else if (buildIdRunIndicator.Equals("failed", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (!buildIdFailed.Contains(parsedBuildId))
-                        {
-                            buildIdFailed.Add(parsedBuildId);
-                        }
-                    }
-                }
             }
             else
             {
@@ -542,15 +526,60 @@ partial class BaseNukeBuildHelpers
                     }
                     pairedLatestTag.Add(tag);
                 }
-                else if (SemVersion.TryParse(tag, SemVersionStyles.Strict, out SemVersion tagSemver))
+                else
                 {
-                    if (!commitVersionGrouped.TryGetValue(commitId, out var pairedVersion))
+                    string versionTag = tag;
+                    bool isBumpVersion = false;
+                    bool isQueueVersion = false;
+                    bool isFailedVersion = false;
+                    bool isPassedVersion = false;
+                    if (tag.EndsWith("-bump", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        pairedVersion = [];
-                        commitVersionGrouped.Add(commitId, pairedVersion);
+                        versionTag = tag[..(tag.LastIndexOf("-bump"))];
+                        isBumpVersion = true;
                     }
-                    versionCommitPaired[tagSemver] = commitId;
-                    pairedVersion.Add(tagSemver);
+                    if (tag.EndsWith("-queue", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        versionTag = tag[..(tag.LastIndexOf("-queue"))];
+                        isQueueVersion = true;
+                    }
+                    if (tag.EndsWith("-failed", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        versionTag = tag[..(tag.LastIndexOf("-failed"))];
+                        isFailedVersion = true;
+                    }
+                    if (tag.EndsWith("-passed", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        versionTag = tag[..(tag.LastIndexOf("-passed"))];
+                        isPassedVersion = true;
+                    }
+
+                    if (SemVersion.TryParse(versionTag, SemVersionStyles.Strict, out SemVersion tagSemver))
+                    {
+                        if (!commitVersionGrouped.TryGetValue(commitId, out var pairedVersion))
+                        {
+                            pairedVersion = [];
+                            commitVersionGrouped.Add(commitId, pairedVersion);
+                        }
+                        versionCommitPaired[tagSemver] = commitId;
+                        pairedVersion.Add(tagSemver);
+                        if (isBumpVersion)
+                        {
+                            versionBump.Add(tagSemver);
+                        }
+                        if (isQueueVersion)
+                        {
+                            versionQueue.Add(tagSemver);
+                        }
+                        if (isFailedVersion)
+                        {
+                            versionFailed.Add(tagSemver);
+                        }
+                        if (isPassedVersion)
+                        {
+                            versionPassed.Add(tagSemver);
+                        }
+                    }
                 }
             }
         }
@@ -631,8 +660,10 @@ partial class BaseNukeBuildHelpers
             EnvLatestVersionPaired = envLatestVersionPaired,
             EnvLatestBuildIdPaired = envLatestBuildIdPaired,
             EnvSorted = envSorted,
-            BuildIdPassed = buildIdPassed,
-            BuildIdFailed = buildIdFailed,
+            VersionBump = versionBump,
+            VersionQueue = versionQueue,
+            VersionFailed = versionFailed,
+            VersionPassed = versionPassed,
         };
     }
 
@@ -901,79 +932,39 @@ partial class BaseNukeBuildHelpers
                             env = groupKey;
                         }
                         var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].LastOrDefault();
-                        allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
                         string published;
-                        if (bumpedVersion != releasedVersion)
+                        if (bumpedVersion != null)
                         {
-                            if (bumpedVersion != null)
+                            if (allVersions.VersionFailed.Contains(bumpedVersion))
                             {
-                                var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
-                                long envBuildIdRelease = -1;
-                                bool isReleasing = false;
-                                if (releasedVersion != null)
-                                {
-                                    if (allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var releasedBuildId) &&
-                                        allVersions.BuildIdCommitPaired.TryGetValue(releasedBuildId, out var buildIdCommitId) &&
-                                        bumpedCommitId == buildIdCommitId)
-                                    {
-                                        envBuildIdRelease = releasedBuildId;
-                                        isReleasing = true;
-                                    }
-                                    else
-                                    {
-                                        isReleasing = false;
-                                    }
-                                }
-                                else
-                                {
-                                    if (allVersions.EnvBuildIdGrouped.TryGetValue(groupKey, out var envBuildIdGroup) &&
-                                        envBuildIdGroup.Count != 0 &&
-                                        envBuildIdGroup.Max() is long envBuildIdGroupMax &&
-                                        allVersions.BuildIdCommitPaired.TryGetValue(envBuildIdGroupMax, out var buildIdCommitId) &&
-                                        bumpedCommitId == buildIdCommitId)
-                                    {
-                                        envBuildIdRelease = envBuildIdGroupMax;
-                                        isReleasing = true;
-                                    }
-                                    else
-                                    {
-                                        isReleasing = false;
-                                    }
-                                }
-                                if (isReleasing)
-                                {
-                                    if (allVersions.BuildIdFailed.Contains(envBuildIdRelease))
-                                    {
-                                        published = "Run Failed";
-                                        statusColor = ConsoleColor.Red;
-                                        appIdsFailed.Add((appId, env));
-                                    }
-                                    else
-                                    {
-                                        published = "Publishing";
-                                        statusColor = ConsoleColor.Yellow;
-                                        allDone = false;
-                                    }
-                                }
-                                else
-                                {
-                                    published = "Waiting for queue";
-                                    statusColor = ConsoleColor.Yellow;
-                                    allDone = false;
-                                }
+                                published = "Run Failed";
+                                statusColor = ConsoleColor.Red;
+                                appIdsFailed.Add((appId, env));
+                            }
+                            else if (allVersions.VersionPassed.Contains(bumpedVersion))
+                            {
+                                published = "Published";
+                                statusColor = ConsoleColor.Green;
+                                appIdsPassed.Add((appId, env));
+                            }
+                            else if (allVersions.VersionQueue.Contains(bumpedVersion))
+                            {
+                                published = "Publishing";
+                                statusColor = ConsoleColor.Yellow;
+                                allDone = false;
                             }
                             else
                             {
-                                published = "Not published";
-                                statusColor = ConsoleColor.DarkGray;
+                                published = "Waiting for queue";
+                                statusColor = ConsoleColor.DarkYellow;
                                 allDone = false;
                             }
                         }
                         else
                         {
-                            published = "Published";
-                            statusColor = ConsoleColor.Green;
-                            appIdsPassed.Add((appId, env));
+                            published = "Not published";
+                            statusColor = ConsoleColor.DarkGray;
+                            allDone = false;
                         }
                         rows.Add(
                             [

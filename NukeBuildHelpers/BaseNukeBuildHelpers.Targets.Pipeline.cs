@@ -82,17 +82,17 @@ partial class BaseNukeBuildHelpers
             Log.Information("Target branch: {branch}", pipelineInfo.Branch);
             Log.Information("Trigger type: {branch}", pipelineInfo.TriggerType);
 
-            string groupKey;
-            string environment;
+            string envGroupKey;
+            string env;
             if (pipelineInfo.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
             {
-                groupKey = "";
-                environment = "main";
+                envGroupKey = "";
+                env = "main";
             }
             else
             {
-                groupKey = pipelineInfo.Branch;
-                environment = pipelineInfo.Branch;
+                envGroupKey = pipelineInfo.Branch;
+                env = pipelineInfo.Branch;
             }
 
             IReadOnlyCollection<Output>? lsRemote = null;
@@ -112,38 +112,30 @@ partial class BaseNukeBuildHelpers
                 if (allVersions.BuildIdCommitPaired.Count > 0)
                 {
                     var maxBuildId = allVersions.BuildIdCommitPaired.Select(i => i.Key).Max();
-                    lastBuildId = maxBuildId > lastBuildId ? maxBuildId : lastBuildId;
+                    lastBuildId = Math.Max(maxBuildId, lastBuildId);
                 }
 
-                if (allVersions.EnvSorted.Count != 0)
+                if (pipelineInfo.TriggerType == TriggerType.Tag &&
+                    allVersions.EnvSorted.Count != 0 &&
+                    allVersions.EnvVersionGrouped.TryGetValue(envGroupKey, out var versionGroup) && versionGroup.Count > 0)
                 {
-                    if (allVersions.EnvVersionGrouped.TryGetValue(groupKey, out var versionGroup) && versionGroup.Count > 0)
+                    var lastVersionGroup = versionGroup.Last();
+                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(envGroupKey, out var value) || value != lastVersionGroup)
                     {
-                        var lastVersionGroup = versionGroup.Last();
-                        if (!allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out SemVersion? value) || value != lastVersionGroup)
+                        if (allVersions.VersionBump.Contains(lastVersionGroup) &&
+                            !allVersions.VersionQueue.Contains(lastVersionGroup) &&
+                            !allVersions.VersionFailed.Contains(lastVersionGroup) &&
+                            !allVersions.VersionPassed.Contains(lastVersionGroup))
                         {
-                            allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var allVersionLastId);
-                            if (targetBuildId == 0)
-                            {
-                                targetBuildId = allVersionLastId;
-                            }
-                            else
-                            {
-                                targetBuildId = allVersionLastId < targetBuildId ? allVersionLastId : targetBuildId;
-                            }
-                            if (pipelineInfo.TriggerType == TriggerType.Tag)
-                            {
-                                toRelease.Add((appEntry.Entry, environment, lastVersionGroup));
-                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, lastVersionGroup.ToString(), value);
-                            }
+                            allVersions.EnvLatestBuildIdPaired.TryGetValue(envGroupKey, out var allVersionLastId);
+                            targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
+                            toRelease.Add((appEntry.Entry, env, lastVersionGroup));
+                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, lastVersionGroup.ToString());
                         }
-                        else
-                        {
-                            if (pipelineInfo.TriggerType == TriggerType.Tag)
-                            {
-                                Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
-                            }
-                        }
+                    }
+                    else
+                    {
+                        Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                     }
                 }
             }
@@ -170,8 +162,23 @@ partial class BaseNukeBuildHelpers
 
             if (hasRelease)
             {
-                Git.Invoke("tag -f " + buildTag);
-                Git.Invoke("tag -f " + buildTag + "-" + environment);
+                foreach (var release in toRelease)
+                {
+                    if (release.AppEntry.MainRelease)
+                    {
+                        Git.Invoke("tag -f " + release.Version + "-queue");
+                        Git.Invoke("tag -f " + release.Version);
+                    }
+                    else
+                    {
+                        Git.Invoke("tag -f " + release.AppEntry.Id.ToLowerInvariant() + "/" + release.Version + "-queue");
+                        Git.Invoke("tag -f " + release.AppEntry.Id.ToLowerInvariant() + "/" + release.Version);
+                    }
+                }
+
+                Git.Invoke("tag -f " + buildTag, logger: (s, e) => Log.Debug(e));
+                Git.Invoke("tag -f " + buildTag + "-" + env, logger: (s, e) => Log.Debug(e));
+
                 Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
                 string ghReleaseCreateArgs = $"release create {buildTag} " +
@@ -185,9 +192,9 @@ partial class BaseNukeBuildHelpers
                     ghReleaseCreateArgs += " --notes-start-tag " + targetBuildTag;
                 }
 
-                Gh.Invoke(ghReleaseCreateArgs, logInvocation: false, logOutput: false);
+                Gh.Invoke(ghReleaseCreateArgs, logger: (s, e) => Log.Debug(e));
 
-                var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body", logInvocation: false, logOutput: false).FirstOrDefault().Text;
+                var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
                 var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
                 if (releaseNotesJsonDocument == null ||
                     !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
@@ -202,7 +209,7 @@ partial class BaseNukeBuildHelpers
             {
                 Branch = pipelineInfo.Branch,
                 TriggerType = pipelineInfo.TriggerType,
-                Environment = environment,
+                Environment = env,
                 HasRelease = hasRelease,
                 ReleaseNotes = releaseNotes,
                 IsFirstRelease = isFirstRelease,
@@ -262,17 +269,17 @@ partial class BaseNukeBuildHelpers
                         }
                         if (appEntry.Entry.MainRelease)
                         {
+                            Git.Invoke("tag -f " + release.Version + "-passed");
                             Git.Invoke("tag -f " + release.Version);
                             Git.Invoke("tag -f " + latestTag);
                         }
                         else
                         {
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version + "-passed");
                             Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version);
                             Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + latestTag);
                         }
                     }
-
-                    Git.Invoke("tag -f build." + preSetupOutput.BuildId + "-" + preSetupOutput.Environment + "-passed", logger: (s, e) => Log.Debug(e));
 
                     Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
@@ -282,9 +289,30 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    Gh.Invoke("release delete -y build." + preSetupOutput.BuildId);
+                    foreach (var release in preSetupOutput.Releases.Values)
+                    {
+                        if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
+                        {
+                            continue;
+                        }
+                        string latestTag = "latest";
+                        if (!release.Environment.Equals("main", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            latestTag += "-" + release.Environment.ToLowerInvariant();
+                        }
+                        if (appEntry.Entry.MainRelease)
+                        {
+                            Git.Invoke("tag -f " + release.Version + "-failed");
+                            Git.Invoke("tag -f " + release.Version);
+                        }
+                        else
+                        {
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version + "-failed");
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version);
+                        }
+                    }
 
-                    Git.Invoke("tag -f build." + preSetupOutput.BuildId + "-" + preSetupOutput.Environment + "-failed", logger: (s, e) => Log.Debug(e));
+                    Gh.Invoke("release delete -y build." + preSetupOutput.BuildId);
 
                     Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
                 }

@@ -31,7 +31,11 @@ internal class AllVersions
 
     public required List<string> EnvSorted { get; init; }
 
-    public required List<long> BuildIdPassed { get; init; }
+    public required List<SemVersion> VersionBump { get; init; }
 
-    public required List<long> BuildIdFailed { get; init; }
+    public required List<SemVersion> VersionQueue { get; init; }
+
+    public required List<SemVersion> VersionFailed { get; init; }
+
+    public required List<SemVersion> VersionPassed { get; init; }
 }

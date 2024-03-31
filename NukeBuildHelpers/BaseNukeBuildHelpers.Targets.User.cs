@@ -268,11 +268,11 @@ partial class BaseNukeBuildHelpers
             {
                 if (appEntryVersionToBump.AppEntry.MainRelease)
                 {
-                    tagsToPush.Add(appEntryVersionToBump.BumpVersion.ToString());
+                    tagsToPush.Add(appEntryVersionToBump.BumpVersion.ToString() + "-bump");
                 }
                 else
                 {
-                    tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString());
+                    tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
                 }
             }
 
