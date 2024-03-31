@@ -957,7 +957,7 @@ partial class BaseNukeBuildHelpers
                                     }
                                     else
                                     {
-                                        published = "Waiting for queue6";
+                                        published = "Waiting for queue66";
                                         statusColor = ConsoleColor.Yellow;
                                         allDone = false;
                                     }
