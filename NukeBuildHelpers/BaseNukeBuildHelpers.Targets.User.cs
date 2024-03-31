@@ -7,6 +7,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
 using Octokit;
@@ -121,14 +122,14 @@ partial class BaseNukeBuildHelpers
 
             GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
 
-            string environment;
+            string currentEnvIdentifier;
             if (Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
             {
-                environment = "main";
+                currentEnvIdentifier = "";
             }
             else
             {
-                environment = Repository.Branch;
+                currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
             }
 
             IReadOnlyCollection<Output>? lsRemote = null;
@@ -145,15 +146,44 @@ partial class BaseNukeBuildHelpers
                 appEntryVersions.Add((pair.Value.Entry, allVersions));
             }
 
-            appEntryVersions.Add((null, null));
+            List<string> appEntryIdHasBump = [];
+            foreach (var appEntryVersion in appEntryVersions)
+            {
+                if (appEntryVersion.AppEntry != null &&
+                    appEntryVersion.AllVersions != null &&
+                    appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvVersions) &&
+                    currentEnvVersions.LastOrDefault() is SemVersion currentEnvLatestVersion &&
+                    appEntryVersion.AllVersions.VersionCommitPaired.TryGetValue(currentEnvLatestVersion, out var currentEnvLatestVersionCommitId) &&
+                    currentEnvLatestVersionCommitId == Repository.Commit)
+                {
+                    appEntryIdHasBump.Add(appEntryVersion.AppEntry.Id);
+                    Console.Write("Commit has already bumped ");
+                    ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry.Id, ConsoleColor.DarkMagenta);
+                    Console.WriteLine();
+                }
+            }
 
             List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)> appEntryVersionsToBump = [];
 
+            appEntryVersions.Add((null, null));
+
             while (true)
             {
-                var appEntryVersion = Prompt.Select("App id to bump",
-                    appEntryVersions.Where(i => !appEntryVersionsToBump.Any(j => j.AppEntry.Id == i.AppEntry?.Id)),
-                    textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
+                var availableBump = appEntryVersions
+                    .Where(i =>
+                    {
+                        if (appEntryVersionsToBump.Any(j => j.AppEntry.Id == i.AppEntry?.Id))
+                        {
+                            return false;
+                        }
+                        if (appEntryIdHasBump.Any(j => j == i.AppEntry?.Id))
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    });
+                var appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
 
                 if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
                 {
@@ -172,21 +202,9 @@ partial class BaseNukeBuildHelpers
                     continue;
                 }
 
-                string currentEnvIdentifier;
-                if (Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    currentEnvIdentifier = "";
-                }
-                else
-                {
-                    currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
-                }
                 appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
-                var currColor = Console.ForegroundColor;
                 Console.Write("  Current latest version: ");
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null");
-                Console.ForegroundColor = currColor;
+                ConsoleHelpers.WriteWithColor(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null", ConsoleColor.Green);
                 Console.WriteLine("");
                 var bumpVersionStr = Prompt.Input<string>("New Version", validators: [Validators.Required(),
                     (input => {
@@ -279,7 +297,7 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
 
-            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, environment)).ToArray());
+            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, currentEnvIdentifier)).ToArray());
         });
 
     public Target StatusWatch => _ => _
