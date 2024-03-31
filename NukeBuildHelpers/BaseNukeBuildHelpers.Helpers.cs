@@ -931,34 +931,31 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].LastOrDefault();
+                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].Last();
                         string published;
-                        if (bumpedVersion != null)
+                        if (allVersions.VersionFailed.Contains(bumpedVersion))
                         {
-                            if (allVersions.VersionFailed.Contains(bumpedVersion))
-                            {
-                                published = "Run Failed";
-                                statusColor = ConsoleColor.Red;
-                                appIdsFailed.Add((appId, env));
-                            }
-                            else if (allVersions.VersionPassed.Contains(bumpedVersion))
-                            {
-                                published = "Published";
-                                statusColor = ConsoleColor.Green;
-                                appIdsPassed.Add((appId, env));
-                            }
-                            else if (allVersions.VersionQueue.Contains(bumpedVersion))
-                            {
-                                published = "Publishing";
-                                statusColor = ConsoleColor.Yellow;
-                                allDone = false;
-                            }
-                            else
-                            {
-                                published = "Waiting for queue";
-                                statusColor = ConsoleColor.DarkYellow;
-                                allDone = false;
-                            }
+                            published = "Run Failed";
+                            statusColor = ConsoleColor.Red;
+                            appIdsFailed.Add((appId, env));
+                        }
+                        else if (allVersions.VersionPassed.Contains(bumpedVersion))
+                        {
+                            published = "Published";
+                            statusColor = ConsoleColor.Green;
+                            appIdsPassed.Add((appId, env));
+                        }
+                        else if (allVersions.VersionQueue.Contains(bumpedVersion))
+                        {
+                            published = "Publishing";
+                            statusColor = ConsoleColor.DarkYellow;
+                            allDone = false;
+                        }
+                        else if (allVersions.VersionBump.Contains(bumpedVersion))
+                        {
+                            published = "Waiting for queue";
+                            statusColor = ConsoleColor.DarkYellow;
+                            allDone = false;
                         }
                         else
                         {
