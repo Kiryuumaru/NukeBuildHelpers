@@ -562,7 +562,10 @@ partial class BaseNukeBuildHelpers
                             commitVersionGrouped.Add(commitId, pairedVersion);
                         }
                         versionCommitPaired[tagSemver] = commitId;
-                        pairedVersion.Add(tagSemver);
+                        if (!pairedVersion.Contains(tagSemver))
+                        {
+                            pairedVersion.Add(tagSemver);
+                        }
                         if (isBumpVersion)
                         {
                             versionBump.Add(tagSemver);
