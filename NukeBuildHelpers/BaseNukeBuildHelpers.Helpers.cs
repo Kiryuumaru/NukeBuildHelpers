@@ -908,28 +908,50 @@ partial class BaseNukeBuildHelpers
                             if (bumpedVersion != null)
                             {
                                 var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
-                                if (allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var releasedBuildId) &&
-                                    allVersions.BuildIdCommitPaired.TryGetValue(releasedBuildId, out var buildIdCommitId) &&
-                                    bumpedCommitId == buildIdCommitId)
+                                if (releasedVersion != null)
                                 {
-                                    if (allVersions.BuildIdFailed.Contains(releasedBuildId))
+                                    if (allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var releasedBuildId) &&
+                                        allVersions.BuildIdCommitPaired.TryGetValue(releasedBuildId, out var buildIdCommitId) &&
+                                        bumpedCommitId == buildIdCommitId)
                                     {
-                                        published = "Run Failed";
-                                        statusColor = ConsoleColor.Red;
-                                        appIdsFailed.Add((appId, env));
+                                        if (allVersions.BuildIdFailed.Contains(releasedBuildId))
+                                        {
+                                            published = "Run Failed";
+                                            statusColor = ConsoleColor.Red;
+                                            appIdsFailed.Add((appId, env));
+                                        }
+                                        else
+                                        {
+                                            published = "Publishing";
+                                            statusColor = ConsoleColor.Yellow;
+                                            allDone = false;
+                                        }
                                     }
                                     else
                                     {
-                                        published = "Publishing";
+                                        published = "Waiting for queue";
                                         statusColor = ConsoleColor.Yellow;
                                         allDone = false;
                                     }
                                 }
                                 else
                                 {
-                                    published = "Waiting for queue";
-                                    statusColor = ConsoleColor.Yellow;
-                                    allDone = false;
+                                    if (allVersions.EnvBuildIdGrouped.TryGetValue(groupKey, out var envBuildIdGroup) &&
+                                        envBuildIdGroup.Count != 0 &&
+                                        envBuildIdGroup.Max() is long envBuildIdGroupMax &&
+                                        allVersions.BuildIdCommitPaired.TryGetValue(envBuildIdGroupMax, out var buildIdCommitId) &&
+                                        bumpedCommitId == buildIdCommitId)
+                                    {
+                                        published = "Publishing";
+                                        statusColor = ConsoleColor.Yellow;
+                                        allDone = false;
+                                    }
+                                    else
+                                    {
+                                        published = "Waiting for queue";
+                                        statusColor = ConsoleColor.Yellow;
+                                        allDone = false;
+                                    }
                                 }
                             }
                             else
