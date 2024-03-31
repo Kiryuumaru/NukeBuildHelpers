@@ -900,7 +900,7 @@ partial class BaseNukeBuildHelpers
                         {
                             env = groupKey;
                         }
-                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].Last();
+                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].LastOrDefault();
                         allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
                         string published;
                         if (bumpedVersion != releasedVersion)
@@ -908,30 +908,20 @@ partial class BaseNukeBuildHelpers
                             if (bumpedVersion != null)
                             {
                                 var bumpedCommitId = allVersions.VersionCommitPaired[bumpedVersion];
+                                long envBuildIdRelease = -1;
+                                bool isReleasing = false;
                                 if (releasedVersion != null)
                                 {
                                     if (allVersions.EnvLatestBuildIdPaired.TryGetValue(groupKey, out var releasedBuildId) &&
                                         allVersions.BuildIdCommitPaired.TryGetValue(releasedBuildId, out var buildIdCommitId) &&
                                         bumpedCommitId == buildIdCommitId)
                                     {
-                                        if (allVersions.BuildIdFailed.Contains(releasedBuildId))
-                                        {
-                                            published = "Run Failed1";
-                                            statusColor = ConsoleColor.Red;
-                                            appIdsFailed.Add((appId, env));
-                                        }
-                                        else
-                                        {
-                                            published = "Publishing2";
-                                            statusColor = ConsoleColor.Yellow;
-                                            allDone = false;
-                                        }
+                                        envBuildIdRelease = releasedBuildId;
+                                        isReleasing = true;
                                     }
                                     else
                                     {
-                                        published = "Waiting for queue3";
-                                        statusColor = ConsoleColor.Yellow;
-                                        allDone = false;
+                                        isReleasing = false;
                                     }
                                 }
                                 else
@@ -942,25 +932,34 @@ partial class BaseNukeBuildHelpers
                                         allVersions.BuildIdCommitPaired.TryGetValue(envBuildIdGroupMax, out var buildIdCommitId) &&
                                         bumpedCommitId == buildIdCommitId)
                                     {
-                                        if (allVersions.BuildIdFailed.Contains(envBuildIdGroupMax))
-                                        {
-                                            published = "Run Failed4";
-                                            statusColor = ConsoleColor.Red;
-                                            appIdsFailed.Add((appId, env));
-                                        }
-                                        else
-                                        {
-                                            published = "Publishing5";
-                                            statusColor = ConsoleColor.Yellow;
-                                            allDone = false;
-                                        }
+                                        envBuildIdRelease = envBuildIdGroupMax;
+                                        isReleasing = true;
                                     }
                                     else
                                     {
-                                        published = "Waiting for queue66";
+                                        isReleasing = false;
+                                    }
+                                }
+                                if (isReleasing)
+                                {
+                                    if (allVersions.BuildIdFailed.Contains(envBuildIdRelease))
+                                    {
+                                        published = "Run Failed";
+                                        statusColor = ConsoleColor.Red;
+                                        appIdsFailed.Add((appId, env));
+                                    }
+                                    else
+                                    {
+                                        published = "Publishing";
                                         statusColor = ConsoleColor.Yellow;
                                         allDone = false;
                                     }
+                                }
+                                else
+                                {
+                                    published = "Waiting for queue";
+                                    statusColor = ConsoleColor.Yellow;
+                                    allDone = false;
                                 }
                             }
                             else
