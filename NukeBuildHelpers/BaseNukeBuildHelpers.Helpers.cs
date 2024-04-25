@@ -940,13 +940,13 @@ partial class BaseNukeBuildHelpers
                         {
                             published = "Run Failed";
                             statusColor = ConsoleColor.Red;
-                            appIdsFailed.Add((appId, env));
+                            appIdsFailed.Add((appId.ToLowerInvariant(), env.ToLowerInvariant()));
                         }
                         else if (allVersions.VersionPassed.Contains(bumpedVersion))
                         {
                             published = "Published";
                             statusColor = ConsoleColor.Green;
-                            appIdsPassed.Add((appId, env));
+                            appIdsPassed.Add((appId.ToLowerInvariant(), env.ToLowerInvariant()));
                         }
                         else if (allVersions.VersionQueue.Contains(bumpedVersion))
                         {
@@ -1023,12 +1023,12 @@ partial class BaseNukeBuildHelpers
                 {
                     break;
                 }
-                if (appIds.Any(i => appIdsFailed.Contains(i)))
+                if (appIds.Any(appIdsFailed.Contains))
                 {
                     Assert.Fail("Pipeline run has failed.");
                     break;
                 }
-                if (appIds.All(i => appIdsPassed.Contains(i)))
+                if (appIds.All(appIdsPassed.Contains))
                 {
                     break;
                 }

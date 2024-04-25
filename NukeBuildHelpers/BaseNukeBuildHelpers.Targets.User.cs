@@ -297,7 +297,8 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
 
-            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, Repository.Branch.ToLowerInvariant())).ToArray());
+            await StartStatusWatch(true, appEntryVersionsToBump.Select(i =>
+                (i.AppEntry.Id.ToLowerInvariant(), i.BumpVersion.IsPrerelease ? i.BumpVersion.PrereleaseIdentifiers[0] : "main")).ToArray());
         });
 
     public Target StatusWatch => _ => _
