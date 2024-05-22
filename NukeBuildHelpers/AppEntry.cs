@@ -27,7 +27,7 @@ public abstract class AppEntry : Entry
 
     public virtual void Publish(AppRunContext runContext) { }
 
-    internal AppRunContext? AppContext { get; set; }
+    internal AppRunContext? AppRunContext { get; set; }
 }
 
 public abstract class AppEntry<TBuild> : AppEntry

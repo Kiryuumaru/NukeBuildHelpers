@@ -44,9 +44,12 @@ public class NugetBuildHelpers3 : AppEntry<Build>
 
     public override void Publish(AppRunContext appRunContext)
     {
-        foreach (var ss in OutputDirectory.GetFiles())
+        if (appRunContext.RunType == RunType.Bump)
         {
-            Log.Information("Publish: {name}", ss.Name);
+            foreach (var ss in OutputDirectory.GetFiles())
+            {
+                Log.Information("Publish: {name}", ss.Name);
+            }
         }
     }
 }

@@ -52,13 +52,16 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish(AppRunContext appRunContext)
     {
-        DotNetTasks.DotNetNuGetPush(_ => _
-            .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-            .SetApiKey(GithubToken)
-            .SetTargetPath(OutputDirectory / "**"));
-        DotNetTasks.DotNetNuGetPush(_ => _
-            .SetSource("https://api.nuget.org/v3/index.json")
-            .SetApiKey(NuGetAuthToken)
-            .SetTargetPath(OutputDirectory / "**"));
+        if (appRunContext.RunType == RunType.Bump)
+        {
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+                .SetApiKey(GithubToken)
+                .SetTargetPath(OutputDirectory / "**"));
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://api.nuget.org/v3/index.json")
+                .SetApiKey(NuGetAuthToken)
+                .SetTargetPath(OutputDirectory / "**"));
+        }
     }
 }

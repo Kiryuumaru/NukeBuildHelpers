@@ -99,7 +99,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            appEntry.Value.Entry.AppContext = new AppRunContext(BaseHelper.OutputDirectory, runType);
+            appEntry.Value.Entry.AppRunContext = new AppRunContext(BaseHelper.OutputDirectory, runType);
 
             if (appEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var appSecretMap) &&
                 appSecretMap.EntryType == appEntry.Value.Entry.GetType())
@@ -137,7 +137,7 @@ partial class BaseNukeBuildHelpers
                 {
                     if (appEntry.Value.Entry.Id == release.Key)
                     {
-                        appEntry.Value.Entry.AppContext.NewVersion = new NewVersion()
+                        appEntry.Value.Entry.AppRunContext.NewVersion = new NewVersion()
                         {
                             AppId = appEntry.Value.Entry.Id,
                             Environment = release.Value.Environment,
@@ -243,7 +243,7 @@ partial class BaseNukeBuildHelpers
                     {
                         workflowStep.AppBuild(appEntry.Value.Entry);
                     }
-                    appEntry.Value.Entry.Build(appEntry.Value.Entry.AppContext!);
+                    appEntry.Value.Entry.Build(appEntry.Value.Entry.AppRunContext!);
                 }));
             }
             else
@@ -254,7 +254,7 @@ partial class BaseNukeBuildHelpers
                     {
                         workflowStep.AppBuild(appEntry.Value.Entry);
                     }
-                    appEntry.Value.Entry.Build(appEntry.Value.Entry.AppContext!);
+                    appEntry.Value.Entry.Build(appEntry.Value.Entry.AppRunContext!);
                 });
             }
         }
@@ -293,7 +293,7 @@ partial class BaseNukeBuildHelpers
                     {
                         workflowStep.AppPublish(appEntry.Value.Entry);
                     }
-                    appEntry.Value.Entry.Publish(appEntry.Value.Entry.AppContext!);
+                    appEntry.Value.Entry.Publish(appEntry.Value.Entry.AppRunContext!);
                 }));
             }
             else
@@ -304,7 +304,7 @@ partial class BaseNukeBuildHelpers
                     {
                         workflowStep.AppPublish(appEntry.Value.Entry);
                     }
-                    appEntry.Value.Entry.Publish(appEntry.Value.Entry.AppContext!);
+                    appEntry.Value.Entry.Publish(appEntry.Value.Entry.AppRunContext!);
                 });
             }
         }
