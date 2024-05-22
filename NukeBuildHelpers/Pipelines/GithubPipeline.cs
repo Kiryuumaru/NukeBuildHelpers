@@ -34,6 +34,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         TriggerType triggerType = TriggerType.Commit;
         var branch = Environment.GetEnvironmentVariable("GITHUB_REF");
+        long prNumber = 0;
         if (string.IsNullOrEmpty(branch))
         {
             branch = NukeBuild.Repository.Branch;
@@ -44,6 +45,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF")!;
+                prNumber = long.Parse(Environment.GetEnvironmentVariable("GITHUB_REF_NAME")!.Split('/')[2]);
             }
             else if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -68,6 +70,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             Branch = branch,
             TriggerType = triggerType,
+            PrNumber = prNumber,
         };
     }
 

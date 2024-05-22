@@ -164,12 +164,25 @@ partial class BaseNukeBuildHelpers
             var hasEntries = toEntry.Count != 0;
             var hasRelease = toEntry.Any(i => i.Value.HasRelease);
 
+            string versionFactory(SemVersion version)
+            {
+                SemVersion newVersion = version.WithMetadata("build", buildId.ToString());
+                if (pipelineInfo.TriggerType == TriggerType.PullRequest)
+                {
+                    return version.WithMetadata("pr", pipelineInfo.PrNumber.ToString()).ToString();
+                }
+                else
+                {
+                    return newVersion.ToString();
+                }
+            }
+
             Dictionary<string, PreSetupOutputVersion> entries = toEntry.Values.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
             {
                 AppId = i.AppEntry.Id,
                 AppName = i.AppEntry.Name,
                 Environment = i.Env,
-                Version = i.Version.WithMetadata("build", buildId.ToString()).ToString(),
+                Version = versionFactory(i.Version),
                 HasRelease = i.HasRelease
             });
 

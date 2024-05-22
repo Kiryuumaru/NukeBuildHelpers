@@ -35,6 +35,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         TriggerType triggerType = TriggerType.Commit;
         var branch = Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCH");
+        long prNumber = 0;
         if (string.IsNullOrEmpty(branch))
         {
             branch = NukeBuild.Repository.Branch;
@@ -45,6 +46,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_TARGETBRANCH")!;
+                prNumber = long.Parse(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID")!);
             }
             else if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -69,6 +71,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             Branch = branch,
             TriggerType = triggerType,
+            PrNumber = prNumber
         };
     }
 
