@@ -11,9 +11,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace NukeBuildHelpers;
+namespace NukeBuildHelpers.Models.RunContext;
 
-public class RunContext
+public class AppBumpRunContext : AppPipelineRunContext
 {
-    public required AbsolutePath OutputDirectory { get; init; }
 }

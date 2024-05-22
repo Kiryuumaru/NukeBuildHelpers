@@ -26,6 +26,7 @@ using Nuke.Common.CI.GitHubActions;
 using ICSharpCode.SharpZipLib.Zip;
 using System;
 using System.Linq;
+using NukeBuildHelpers.Models.RunContext;
 
 namespace NukeBuildHelpers;
 
@@ -135,13 +136,6 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appConfig.AppEntries)
         {
-            appEntry.Value.AppRunContext = new()
-            {
-                OutputDirectory = BaseHelper.OutputDirectory,
-                RunType = runType,
-                PullRequestNumber = pipelineInfo.PullRequestNumber
-            };
-
             if (appEntrySecretMap.TryGetValue(appEntry.Value.Id, out var appSecretMap) &&
                 appSecretMap.EntryType == appEntry.Value.GetType())
             {
@@ -156,22 +150,56 @@ partial class BaseNukeBuildHelpers
             appEntry.Value.PipelineType = pipelineType;
             appEntry.Value.NukeBuild = this;
 
-            if (preSetupOutput != null)
+            AppVersion? appVersion = null;
+
+            if (preSetupOutput != null &&
+                preSetupOutput.Entries.TryGetValue(appEntry.Value.Id, out var preSetupOutputVersion))
             {
-                foreach (var entry in preSetupOutput.Entries)
+                appVersion = new AppVersion()
                 {
-                    if (appEntry.Value.Id == entry.Key)
-                    {
-                        appEntry.Value.AppRunContext.AppVersion = new AppVersion()
-                        {
-                            AppId = appEntry.Value.Id,
-                            Environment = entry.Value.Environment,
-                            Version = SemVersion.Parse(entry.Value.Version, SemVersionStyles.Strict),
-                            BuildId = preSetupOutput.BuildId,
-                            ReleaseNotes = preSetupOutput.ReleaseNotes
-                        };
-                    }
-                }
+                    AppId = appEntry.Value.Id,
+                    Environment = preSetupOutputVersion.Environment,
+                    Version = SemVersion.Parse(preSetupOutputVersion.Version, SemVersionStyles.Strict),
+                    BuildId = preSetupOutput.BuildId,
+                    ReleaseNotes = preSetupOutput.ReleaseNotes
+                };
+            }
+
+            if (appVersion == null)
+            {
+                appEntry.Value.AppRunContext = new AppLocalRunContext()
+                {
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                };
+            }
+            else if (runType == RunType.Bump)
+            {
+                appEntry.Value.AppRunContext = new AppBumpRunContext()
+                {
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                    AppVersion = appVersion
+                };
+            }
+            else if (runType == RunType.PullRequest)
+            {
+                appEntry.Value.AppRunContext = new AppPullRequestRunContext()
+                {
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                    AppVersion = appVersion,
+                    PullRequestNumber = pipelineInfo.PullRequestNumber
+                };
+            }
+            else
+            {
+                appEntry.Value.AppRunContext = new AppCommitRunContext()
+                {
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                    AppVersion = appVersion
+                };
             }
         }
     }

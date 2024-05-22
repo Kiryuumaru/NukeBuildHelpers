@@ -11,9 +11,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace NukeBuildHelpers;
+namespace NukeBuildHelpers.Models.RunContext;
 
-public class AppTestRunContext : RunContext
+public abstract class AppRunContext : RunContext
 {
-    public RunTestType RunTestType { get; internal set; }
+    public required RunType RunType { get; init; }
 }

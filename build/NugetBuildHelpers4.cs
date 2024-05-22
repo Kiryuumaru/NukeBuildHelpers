@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Models.RunContext;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,11 @@ public class NugetBuildHelpers4 : AppEntry<Build>
 
     public override void Build(AppRunContext appRunContext)
     {
+        AppVersion? appVersion = null;
+        if (appRunContext is AppPipelineRunContext appPipelineRunContext)
+        {
+            appVersion = appPipelineRunContext.AppVersion;
+        }
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
@@ -41,8 +47,8 @@ public class NugetBuildHelpers4 : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(appRunContext.AppVersion?.Version.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes("* Initial prerelease")
+            .SetVersion(appVersion?.ToString() ?? "0.0.0")
+            .SetPackageReleaseNotes(appVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
     }
 

@@ -6,6 +6,7 @@ using Nuke.Common.Tools.NuGet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Models.RunContext;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -27,15 +28,20 @@ public class NugetBuildHelpers : AppEntry<Build>
     public override RunType RunPublishOn =>  RunType.All;
 
     [SecretHelper("NUGET_AUTH_TOKEN")]
-    readonly string NuGetAuthToken;
+    readonly string? NuGetAuthToken;
 
     [SecretHelper("GITHUB_TOKEN")]
-    readonly string GithubToken;
+    readonly string? GithubToken;
 
     public override bool RunParallel => false;
 
     public override void Build(AppRunContext appRunContext)
     {
+        AppVersion? appVersion = null;
+        if (appRunContext is AppPipelineRunContext appPipelineRunContext)
+        {
+            appVersion = appPipelineRunContext.AppVersion;
+        }
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
@@ -49,8 +55,8 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(appRunContext.AppVersion?.Version?.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes(appRunContext.AppVersion?.ReleaseNotes)
+            .SetVersion(appVersion?.ToString() ?? "0.0.0")
+            .SetPackageReleaseNotes(appVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
     }
 

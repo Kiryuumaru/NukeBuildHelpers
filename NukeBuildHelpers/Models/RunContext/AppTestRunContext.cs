@@ -11,13 +11,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace NukeBuildHelpers;
+namespace NukeBuildHelpers.Models.RunContext;
 
-public class AppRunContext : RunContext
+public class AppTestRunContext : RunContext
 {
-    public AppVersion? AppVersion { get; internal set; }
-
-    public long? PullRequestNumber { get; internal set; }
-
-    public RunType RunType { get; internal set; }
+    public required RunTestType RunTestType { get; init; }
 }
