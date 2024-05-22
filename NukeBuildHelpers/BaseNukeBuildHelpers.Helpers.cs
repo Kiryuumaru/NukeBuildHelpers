@@ -148,7 +148,7 @@ partial class BaseNukeBuildHelpers
             appEntry.Value.PipelineType = pipelineType;
             appEntry.Value.NukeBuild = this;
 
-            if (preSetupOutput != null && preSetupOutput.HasRelease)
+            if (preSetupOutput != null)
             {
                 foreach (var release in preSetupOutput.Entries.Where(i => i.Value.HasRelease))
                 {
