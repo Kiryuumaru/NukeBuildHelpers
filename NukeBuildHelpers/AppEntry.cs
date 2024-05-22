@@ -19,13 +19,15 @@ public abstract class AppEntry : Entry
 
     public abstract RunsOnType PublishRunsOn { get; }
 
+    public virtual RunType RunType { get; } = RunType.Local | RunType.PullRequest | RunType.Bump | RunType.Commit;
+
     public virtual bool MainRelease { get; } = true;
 
-    public NewVersion? NewVersion { get; internal set; }
+    public virtual void Build(AppRunContext runContext) { }
 
-    public virtual void Build() { }
+    public virtual void Publish(AppRunContext runContext) { }
 
-    public virtual void Publish() { }
+    internal AppRunContext? AppContext { get; set; }
 }
 
 public abstract class AppEntry<TBuild> : AppEntry

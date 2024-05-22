@@ -19,7 +19,7 @@ internal interface IPipeline
 
     PipelineInfo GetPipelineInfo();
 
-    void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease);
+    void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, AppEntryConfig> appEntryConfigs, Dictionary<string, AppRunEntry> toEntry);
 
     void BuildWorkflow();
 }

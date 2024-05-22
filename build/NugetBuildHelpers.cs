@@ -30,7 +30,7 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override bool RunParallel => false;
 
-    public override void Build()
+    public override void Build(AppRunContext appRunContext)
     {
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
@@ -45,12 +45,12 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(NewVersion?.Version?.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes(NewVersion?.ReleaseNotes)
+            .SetVersion(appRunContext.NewVersion?.Version?.ToString() ?? "0.0.0")
+            .SetPackageReleaseNotes(appRunContext.NewVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
     }
 
-    public override void Publish()
+    public override void Publish(AppRunContext appRunContext)
     {
         DotNetTasks.DotNetNuGetPush(_ => _
             .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")

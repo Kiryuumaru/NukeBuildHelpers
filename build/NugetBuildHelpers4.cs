@@ -22,7 +22,7 @@ public class NugetBuildHelpers4 : AppEntry<Build>
 
     public override bool RunParallel => false;
 
-    public override void Build()
+    public override void Build(AppRunContext appRunContext)
     {
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
@@ -37,12 +37,12 @@ public class NugetBuildHelpers4 : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(NewVersion?.Version.ToString() ?? "0.0.0")
+            .SetVersion(appRunContext.NewVersion?.Version.ToString() ?? "0.0.0")
             .SetPackageReleaseNotes("* Initial prerelease")
             .SetOutputDirectory(OutputDirectory));
     }
 
-    public override void Publish()
+    public override void Publish(AppRunContext appRunContext)
     {
         foreach (var ss in OutputDirectory.GetFiles())
         {

@@ -97,7 +97,7 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease = [];
+            Dictionary<string, AppRunEntry> toEntry = [];
 
             long targetBuildId = 0;
             long lastBuildId = 0;
@@ -115,42 +115,60 @@ partial class BaseNukeBuildHelpers
                     lastBuildId = Math.Max(maxBuildId, lastBuildId);
                 }
 
-                if (pipelineInfo.TriggerType == TriggerType.Tag &&
-                    allVersions.EnvSorted.Count != 0 &&
+                if (allVersions.EnvSorted.Count != 0 &&
                     allVersions.EnvVersionGrouped.TryGetValue(envGroupKey, out var versionGroup) && versionGroup.Count > 0)
                 {
                     var lastVersionGroup = versionGroup.Last();
-                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(envGroupKey, out var value) || value != lastVersionGroup)
+
+                    bool hasBumped = false;
+
+                    if (pipelineInfo.TriggerType == TriggerType.Tag)
                     {
-                        if (allVersions.VersionBump.Contains(lastVersionGroup) &&
-                            !allVersions.VersionQueue.Contains(lastVersionGroup) &&
-                            !allVersions.VersionFailed.Contains(lastVersionGroup) &&
-                            !allVersions.VersionPassed.Contains(lastVersionGroup))
+                        if (!allVersions.EnvLatestVersionPaired.TryGetValue(envGroupKey, out var value) || value != lastVersionGroup)
                         {
-                            allVersions.EnvLatestBuildIdPaired.TryGetValue(envGroupKey, out var allVersionLastId);
-                            targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
-                            toRelease.Add((appEntry.Entry, env, lastVersionGroup));
-                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, lastVersionGroup.ToString());
+                            if (allVersions.VersionBump.Contains(lastVersionGroup) &&
+                                !allVersions.VersionQueue.Contains(lastVersionGroup) &&
+                                !allVersions.VersionFailed.Contains(lastVersionGroup) &&
+                                !allVersions.VersionPassed.Contains(lastVersionGroup))
+                            {
+                                allVersions.EnvLatestBuildIdPaired.TryGetValue(envGroupKey, out var allVersionLastId);
+                                targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
+                                hasBumped = true;
+                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, lastVersionGroup.ToString());
+                            }
+                        }
+                        else
+                        {
+                            Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                         }
                     }
-                    else
+
+                    if ((pipelineInfo.TriggerType == TriggerType.PullRequest && appEntry.Entry.RunType.HasFlag(RunType.PullRequest)) ||
+                        (pipelineInfo.TriggerType == TriggerType.Tag && appEntry.Entry.RunType.HasFlag(RunType.Bump)))
                     {
-                        Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
+                        toEntry.Add(appId, new()
+                        {
+                            AppEntry = appEntry.Entry,
+                            Env = env,
+                            Version = lastVersionGroup,
+                            HasRelease = hasBumped
+                        });
                     }
                 }
             }
 
-            foreach (var rel in toRelease)
+            foreach (var rel in toEntry.Values.Where(i => i.HasRelease))
             {
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppEntry.Id, rel.Env, rel.Version);
             }
 
-            Dictionary<string, PreSetupOutputVersion> releases = toRelease.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
+            Dictionary<string, PreSetupOutputVersion> entries = toEntry.Values.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
             {
                 AppId = i.AppEntry.Id,
                 AppName = i.AppEntry.Name,
                 Environment = i.Env,
-                Version = i.Version.ToString()
+                Version = i.Version.ToString(),
+                HasRelease = i.HasRelease
             });
 
             var releaseNotes = "";
@@ -158,11 +176,12 @@ partial class BaseNukeBuildHelpers
             var buildTag = "build." + buildId;
             var targetBuildTag = "build." + targetBuildId;
             var isFirstRelease = targetBuildId == 0;
-            var hasRelease = toRelease.Count != 0;
+            var hasEntries = entries.Count != 0;
+            var hasRelease = entries.Any(i => i.Value.HasRelease);
 
             if (hasRelease)
             {
-                foreach (var release in toRelease)
+                foreach (var release in toEntry.Values.Where(i => i.HasRelease))
                 {
                     if (release.AppEntry.MainRelease)
                     {
@@ -210,20 +229,22 @@ partial class BaseNukeBuildHelpers
                 Branch = pipelineInfo.Branch,
                 TriggerType = pipelineInfo.TriggerType,
                 Environment = env,
+                HasEntries = hasEntries,
                 HasRelease = hasRelease,
                 ReleaseNotes = releaseNotes,
                 IsFirstRelease = isFirstRelease,
                 BuildId = buildId,
                 LastBuildId = targetBuildId,
-                Releases = releases,
+                Entries = entries,
             };
 
             File.WriteAllText(TemporaryDirectory / "pre_setup_output.json", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOption));
+            File.WriteAllText(TemporaryDirectory / "pre_setup_has_entries.txt", hasEntries ? "true" : "false");
             File.WriteAllText(TemporaryDirectory / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
 
             Log.Information("NUKE_PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
-            pipeline.Prepare(output, appTestEntries, appEntryConfigs, toRelease);
+            pipeline.Prepare(output, appTestEntries, appEntryConfigs, toEntry);
         });
 
     public Target PipelinePostSetup => _ => _
@@ -242,7 +263,7 @@ partial class BaseNukeBuildHelpers
                 {
                     foreach (var release in OutputDirectory.GetDirectories())
                     {
-                        if (!preSetupOutput.Releases.TryGetValue(release.Name, out var preSetupOutputVersion))
+                        if (!preSetupOutput.Entries.TryGetValue(release.Name, out var preSetupOutputVersion))
                         {
                             continue;
                         }
@@ -256,7 +277,7 @@ partial class BaseNukeBuildHelpers
                         Log.Information("Publish: {name}", release.Name);
                     }
 
-                    foreach (var release in preSetupOutput.Releases.Values)
+                    foreach (var release in preSetupOutput.Entries.Values)
                     {
                         if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
                         {
@@ -289,7 +310,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    foreach (var release in preSetupOutput.Releases.Values)
+                    foreach (var release in preSetupOutput.Entries.Values)
                     {
                         if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
                         {

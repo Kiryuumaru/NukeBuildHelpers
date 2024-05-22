@@ -71,7 +71,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    public void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
+    public void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, AppEntryConfig> appEntryConfigs, Dictionary<string, AppRunEntry> toEntry)
     {
         var outputTestMatrix = new List<PreSetupOutputAppTestEntryMatrix>();
         var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
@@ -79,8 +79,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var appTestEntry in appTestEntries)
         {
             var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
-            var hasRelease = toRelease.Any(i => i.AppEntry.Id == appEntry.Id);
-            if (hasRelease || appTestEntry.RunType == TestRunType.Always)
+            var hasRelease = toEntry.ContainsKey(appEntry.Id);
+            if (hasRelease || appTestEntry.TestRunType == TestRunType.Always)
             {
                 PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
                 {
@@ -107,32 +107,32 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             };
             outputTestMatrix.Add(preSetupOutputMatrix);
         }
-        foreach (var (Entry, Tests) in appEntryConfigs.Values)
+        foreach (var appEntryConfig in appEntryConfigs.Values)
         {
-            var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);
-            if (release.AppEntry != null)
+            if (!toEntry.TryGetValue(appEntryConfig.Entry.Id, out var entry))
             {
-                outputBuildMatrix.Add(new()
-                {
-                    Id = Entry.Id,
-                    Name = Entry.Name,
-                    Environment = preSetupOutput.Environment,
-                    RunsOn = GetRunsOn(Entry.BuildRunsOn),
-                    BuildScript = GetBuildScript(Entry.BuildRunsOn),
-                    IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + preSetupOutput.BuildId
-                });
-                outputPublishMatrix.Add(new()
-                {
-                    Id = Entry.Id,
-                    Name = Entry.Name,
-                    Environment = preSetupOutput.Environment,
-                    RunsOn = GetRunsOn(Entry.PublishRunsOn),
-                    BuildScript = GetBuildScript(Entry.PublishRunsOn),
-                    IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + preSetupOutput.BuildId
-                });
+                continue;
             }
+            outputBuildMatrix.Add(new()
+            {
+                Id = appEntryConfig.Entry.Id,
+                Name = appEntryConfig.Entry.Name,
+                Environment = preSetupOutput.Environment,
+                RunsOn = GetRunsOn(appEntryConfig.Entry.BuildRunsOn),
+                BuildScript = GetBuildScript(appEntryConfig.Entry.BuildRunsOn),
+                IdsToRun = appEntryConfig.Entry.Id,
+                Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
+            });
+            outputPublishMatrix.Add(new()
+            {
+                Id = appEntryConfig.Entry.Id,
+                Name = appEntryConfig.Entry.Name,
+                Environment = preSetupOutput.Environment,
+                RunsOn = GetRunsOn(appEntryConfig.Entry.PublishRunsOn),
+                BuildScript = GetBuildScript(appEntryConfig.Entry.PublishRunsOn),
+                IdsToRun = appEntryConfig.Entry.Id,
+                Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
+            });
         }
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));

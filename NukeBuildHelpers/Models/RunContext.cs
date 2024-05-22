@@ -13,15 +13,15 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-internal class PreSetupOutputVersion
+public class RunContext
 {
-    public required string AppId { get; init; }
+    public AbsolutePath OutputDirectory { get; }
 
-    public required string AppName { get; init; }
+    public RunType RunType { get; }
 
-    public required string Environment { get; init; }
-
-    public required string Version { get; init; }
-
-    public required bool HasRelease { get; init; }
+    internal RunContext(AbsolutePath outputDirectory, RunType runType)
+    {
+        OutputDirectory = outputDirectory;
+        RunType = runType;
+    }
 }
