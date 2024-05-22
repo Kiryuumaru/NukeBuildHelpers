@@ -143,8 +143,8 @@ partial class BaseNukeBuildHelpers
                         }
                     }
 
-                    if ((pipelineInfo.TriggerType == TriggerType.PullRequest && appEntry.Entry.RunType.Has(RunType.PullRequest)) ||
-                        (pipelineInfo.TriggerType == TriggerType.Tag && appEntry.Entry.RunType.Has(RunType.Bump)))
+                    if ((pipelineInfo.TriggerType == TriggerType.PullRequest && appEntry.Entry.RunType.HasFlag(RunType.PullRequest)) ||
+                        (pipelineInfo.TriggerType == TriggerType.Tag && appEntry.Entry.RunType.HasFlag(RunType.Bump)))
                     {
                         toEntry.Add(appId, new()
                         {
