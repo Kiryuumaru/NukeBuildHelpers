@@ -166,14 +166,13 @@ partial class BaseNukeBuildHelpers
 
             string versionFactory(SemVersion version)
             {
-                SemVersion newVersion = version.WithMetadata("build", buildId.ToString());
                 if (pipelineInfo.TriggerType == TriggerType.PullRequest)
                 {
-                    return newVersion.WithMetadata("pr", pipelineInfo.PrNumber.ToString()).ToString();
+                    return $"{version}+build.{buildId}+pr.{pipelineInfo.PrNumber}";
                 }
                 else
                 {
-                    return newVersion.ToString();
+                    return $"{version}+build.{buildId}";
                 }
             }
 
