@@ -53,18 +53,25 @@ partial class BaseNukeBuildHelpers
 
         PipelineType pipelineType;
 
+        IPipeline pipeline;
+        PipelineInfo pipelineInfo;
+
         if (Host is AzurePipelines)
         {
             pipelineType = PipelineType.Azure;
+            pipeline = new AzurePipeline(this);
         }
         else if (Host is GitHubActions)
         {
             pipelineType = PipelineType.Github;
+            pipeline = new GithubPipeline(this);
         }
         else
         {
             throw new NotImplementedException();
         }
+
+        pipelineInfo = pipeline.GetPipelineInfo();
 
         foreach (var workflowStep in workflowSteps)
         {
@@ -132,6 +139,7 @@ partial class BaseNukeBuildHelpers
             {
                 OutputDirectory = BaseHelper.OutputDirectory,
                 RunType = runType,
+                PullRequestNumber = pipelineInfo.PullRequestNumber
             };
 
             if (appEntrySecretMap.TryGetValue(appEntry.Value.Id, out var appSecretMap) &&

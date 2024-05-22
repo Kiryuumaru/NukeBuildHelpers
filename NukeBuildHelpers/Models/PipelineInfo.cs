@@ -14,5 +14,5 @@ public class PipelineInfo
 
     public required TriggerType TriggerType { get; init; }
 
-    public required long PrNumber { get; init; }
+    public required long PullRequestNumber { get; init; }
 }

@@ -17,5 +17,7 @@ public class AppRunContext : RunContext
 {
     public AppVersion? AppVersion { get; internal set; }
 
+    public long? PullRequestNumber { get; internal set; }
+
     public RunType RunType { get; internal set; }
 }
