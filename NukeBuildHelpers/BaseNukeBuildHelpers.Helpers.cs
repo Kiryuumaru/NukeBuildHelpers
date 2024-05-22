@@ -150,7 +150,7 @@ partial class BaseNukeBuildHelpers
 
             if (preSetupOutput != null)
             {
-                foreach (var release in preSetupOutput.Entries.Where(i => i.Value.HasRelease))
+                foreach (var release in preSetupOutput.Entries)
                 {
                     if (appEntry.Value.Id == release.Key)
                     {
