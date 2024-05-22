@@ -19,9 +19,9 @@ public abstract class AppEntry : Entry
 
     public abstract RunsOnType PublishRunsOn { get; }
 
-    public virtual RunType RunBuildOn { get; } = RunType.All;
+    public virtual RunType RunBuildOn { get; } = RunType.Bump;
 
-    public virtual RunType RunPublishOn { get; } = RunType.All;
+    public virtual RunType RunPublishOn { get; } = RunType.Bump;
 
     public virtual bool MainRelease { get; } = true;
 
