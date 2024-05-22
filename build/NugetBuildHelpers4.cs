@@ -18,7 +18,9 @@ public class NugetBuildHelpers4 : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.UbuntuLatest;
 
-    public override RunType RunType => RunType.PullRequest;
+    public override RunType RunBuildOn => RunType.PullRequest;
+
+    public override RunType RunPublishOn => RunType.PullRequest;
 
     public override bool MainRelease => false;
 

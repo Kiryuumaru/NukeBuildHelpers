@@ -18,7 +18,9 @@ public class NugetBuildHelpers2 : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.WindowsLatest;
 
-    public override RunType RunType => RunType.Bump;
+    public override RunType RunBuildOn => RunType.Bump;
+
+    public override RunType RunPublishOn => RunType.Bump;
 
     public override bool MainRelease => false;
 

@@ -80,7 +80,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
             var hasRelease = toEntry.ContainsKey(appEntry.Id);
-            if (hasRelease || appTestEntry.TestRunType == TestRunType.Always)
+            if (hasRelease || appTestEntry.RunTestOn == TestRunType.Always)
             {
                 PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
                 {
@@ -113,26 +113,36 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 continue;
             }
-            outputBuildMatrix.Add(new()
+            if ((preSetupOutput.TriggerType == TriggerType.PullRequest && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.PullRequest)) ||
+                (preSetupOutput.TriggerType == TriggerType.Commit && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.Commit)) ||
+                (preSetupOutput.TriggerType == TriggerType.Tag && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.Bump)))
             {
-                Id = appEntryConfig.Entry.Id,
-                Name = appEntryConfig.Entry.Name,
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(appEntryConfig.Entry.BuildRunsOn),
-                BuildScript = GetBuildScript(appEntryConfig.Entry.BuildRunsOn),
-                IdsToRun = appEntryConfig.Entry.Id,
-                Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
-            });
-            outputPublishMatrix.Add(new()
+                outputBuildMatrix.Add(new()
+                {
+                    Id = appEntryConfig.Entry.Id,
+                    Name = appEntryConfig.Entry.Name,
+                    Environment = preSetupOutput.Environment,
+                    RunsOn = GetRunsOn(appEntryConfig.Entry.BuildRunsOn),
+                    BuildScript = GetBuildScript(appEntryConfig.Entry.BuildRunsOn),
+                    IdsToRun = appEntryConfig.Entry.Id,
+                    Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
+                });
+            }
+            if ((preSetupOutput.TriggerType == TriggerType.PullRequest && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.PullRequest)) ||
+                (preSetupOutput.TriggerType == TriggerType.Commit && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.Commit)) ||
+                (preSetupOutput.TriggerType == TriggerType.Tag && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.Bump)))
             {
-                Id = appEntryConfig.Entry.Id,
-                Name = appEntryConfig.Entry.Name,
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(appEntryConfig.Entry.PublishRunsOn),
-                BuildScript = GetBuildScript(appEntryConfig.Entry.PublishRunsOn),
-                IdsToRun = appEntryConfig.Entry.Id,
-                Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
-            });
+                outputPublishMatrix.Add(new()
+                {
+                    Id = appEntryConfig.Entry.Id,
+                    Name = appEntryConfig.Entry.Name,
+                    Environment = preSetupOutput.Environment,
+                    RunsOn = GetRunsOn(appEntryConfig.Entry.PublishRunsOn),
+                    BuildScript = GetBuildScript(appEntryConfig.Entry.PublishRunsOn),
+                    IdsToRun = appEntryConfig.Entry.Id,
+                    Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
+                });
+            }
         }
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));

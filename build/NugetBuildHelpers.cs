@@ -22,6 +22,8 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
+    public override RunType RunPublishOn =>  RunType.Bump;
+
     [SecretHelper("NUGET_AUTH_TOKEN")]
     readonly string NuGetAuthToken;
 
@@ -52,16 +54,13 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish(AppRunContext appRunContext)
     {
-        if (appRunContext.RunType == RunType.Bump)
-        {
-            DotNetTasks.DotNetNuGetPush(_ => _
-                .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-                .SetApiKey(GithubToken)
-                .SetTargetPath(OutputDirectory / "**"));
-            DotNetTasks.DotNetNuGetPush(_ => _
-                .SetSource("https://api.nuget.org/v3/index.json")
-                .SetApiKey(NuGetAuthToken)
-                .SetTargetPath(OutputDirectory / "**"));
-        }
+        DotNetTasks.DotNetNuGetPush(_ => _
+            .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+            .SetApiKey(GithubToken)
+            .SetTargetPath(OutputDirectory / "**"));
+        DotNetTasks.DotNetNuGetPush(_ => _
+            .SetSource("https://api.nuget.org/v3/index.json")
+            .SetApiKey(NuGetAuthToken)
+            .SetTargetPath(OutputDirectory / "**"));
     }
 }

@@ -19,7 +19,9 @@ public abstract class AppEntry : Entry
 
     public abstract RunsOnType PublishRunsOn { get; }
 
-    public virtual RunType RunType { get; } = RunType.Local | RunType.PullRequest | RunType.Bump | RunType.Commit;
+    public virtual RunType RunBuildOn { get; } = RunType.Local | RunType.PullRequest | RunType.Bump | RunType.Commit;
+
+    public virtual RunType RunPublishOn { get; } = RunType.Local | RunType.PullRequest | RunType.Bump | RunType.Commit;
 
     public virtual bool MainRelease { get; } = true;
 

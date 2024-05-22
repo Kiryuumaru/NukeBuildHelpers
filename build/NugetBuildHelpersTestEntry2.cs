@@ -16,7 +16,7 @@ public class NugetBuildHelpersTest2 : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.Windows2022;
 
-    public override TestRunType TestRunType => TestRunType.Bump;
+    public override TestRunType RunTestOn => TestRunType.Bump;
 
     public override bool RunParallel => false;
 
