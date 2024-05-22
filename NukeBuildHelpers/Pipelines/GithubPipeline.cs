@@ -122,7 +122,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 continue;
             }
-            if ((outputBuildMatrix.Any(i => i.Id == appEntry.Id) || outputPublishMatrix.Any(i => i.Id == appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target))
+            if (appTestEntry.RunTestOn == RunTestType.All ||
+                ((outputBuildMatrix.Any(i => i.Id == appEntry.Id) || outputPublishMatrix.Any(i => i.Id == appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target)))
             {
                 PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
                 {

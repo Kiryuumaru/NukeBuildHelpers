@@ -123,7 +123,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 continue;
             }
-            if ((outputBuildMatrix.ContainsKey(appEntry.Id) || outputPublishMatrix.ContainsKey(appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target))
+            if (appTestEntry.RunTestOn == RunTestType.All ||
+                ((outputBuildMatrix.ContainsKey(appEntry.Id) || outputPublishMatrix.ContainsKey(appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target)))
             {
                 PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
                 {
