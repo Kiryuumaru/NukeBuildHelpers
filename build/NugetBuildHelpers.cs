@@ -22,7 +22,9 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
-    public override RunType RunPublishOn =>  RunType.Bump;
+    public override RunType RunBuildOn =>  RunType.All;
+
+    public override RunType RunPublishOn =>  RunType.All;
 
     [SecretHelper("NUGET_AUTH_TOKEN")]
     readonly string NuGetAuthToken;
