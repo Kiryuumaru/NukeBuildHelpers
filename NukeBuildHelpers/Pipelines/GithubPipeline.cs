@@ -43,10 +43,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             if (branch.StartsWith("refs/pull", StringComparison.InvariantCultureIgnoreCase))
             {
+                prNumber = long.Parse(branch.Split('/')[2]);
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF")!;
-                Console.WriteLine(branch);
-                prNumber = long.Parse(branch.Split('/')[2]);
             }
             else if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
             {
