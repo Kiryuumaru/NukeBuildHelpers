@@ -150,15 +150,15 @@ partial class BaseNukeBuildHelpers
 
             if (preSetupOutput != null)
             {
-                foreach (var release in preSetupOutput.Entries)
+                foreach (var entry in preSetupOutput.Entries)
                 {
-                    if (appEntry.Value.Id == release.Key)
+                    if (appEntry.Value.Id == entry.Key)
                     {
                         appEntry.Value.AppRunContext.AppVersion = new AppVersion()
                         {
                             AppId = appEntry.Value.Id,
-                            Environment = release.Value.Environment,
-                            Version = SemVersion.Parse(release.Value.Version, SemVersionStyles.Strict),
+                            Environment = entry.Value.Environment,
+                            Version = SemVersion.Parse(entry.Value.Version, SemVersionStyles.Strict),
                             BuildId = preSetupOutput.BuildId,
                             ReleaseNotes = preSetupOutput.ReleaseNotes
                         };
@@ -613,6 +613,7 @@ partial class BaseNukeBuildHelpers
                             pairedVersion = [];
                             commitVersionGrouped.Add(commitId, pairedVersion);
                         }
+                        tagSemver = tagSemver.WithoutMetadata();
                         versionCommitPaired[tagSemver] = commitId;
                         if (!pairedVersion.Contains(tagSemver))
                         {
@@ -760,22 +761,6 @@ partial class BaseNukeBuildHelpers
             }
 
             appIdOut = appEntryConfig.Entry.Id;
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail(ex.Message, ex);
-            throw;
-        }
-    }
-
-    internal static void GetOrFail(string? rawValue, out SemVersion valOut)
-    {
-        try
-        {
-            if (!SemVersion.TryParse(rawValue, SemVersionStyles.Strict, out valOut))
-            {
-                throw new ArgumentException($"{rawValue} is not a valid semver version");
-            }
         }
         catch (Exception ex)
         {
