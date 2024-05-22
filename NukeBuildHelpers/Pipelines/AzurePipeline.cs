@@ -193,6 +193,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "azure");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
+        AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_ENTRIES", "./.nuke/temp/pre_setup_has_entries.txt");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX", "./.nuke/temp/pre_setup_output_build_matrix.json");
@@ -220,7 +221,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
-        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_RELEASE.NUKE_PRE_SETUP_HAS_RELEASE'], 'true'))");
+        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_ENTRIES.NUKE_PRE_SETUP_HAS_ENTRIES'], 'true'))");
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobStepCheckout(buildJob);
@@ -238,7 +239,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
         // ██████████████████████████████████████
-        var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_RELEASE.NUKE_PRE_SETUP_HAS_RELEASE'], 'true'))");
+        var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_ENTRIES.NUKE_PRE_SETUP_HAS_ENTRIES'], 'true'))");
         AddJobEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob);
