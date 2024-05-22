@@ -156,22 +156,22 @@ partial class BaseNukeBuildHelpers
                 Log.Information("{appId} on {env} has new version {newVersion}", rel.AppEntry.Id, rel.Env, rel.Version);
             }
 
-            Dictionary<string, PreSetupOutputVersion> entries = toEntry.Values.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
-            {
-                AppId = i.AppEntry.Id,
-                AppName = i.AppEntry.Name,
-                Environment = i.Env,
-                Version = i.Version.ToString(),
-                HasRelease = i.HasRelease
-            });
-
             var releaseNotes = "";
             var buildId = lastBuildId + 1;
             var buildTag = "build." + buildId;
             var targetBuildTag = "build." + targetBuildId;
             var isFirstRelease = targetBuildId == 0;
-            var hasEntries = entries.Count != 0;
-            var hasRelease = entries.Any(i => i.Value.HasRelease);
+            var hasEntries = toEntry.Count != 0;
+            var hasRelease = toEntry.Any(i => i.Value.HasRelease);
+
+            Dictionary<string, PreSetupOutputVersion> entries = toEntry.Values.ToDictionary(i => i.AppEntry.Id, i => new PreSetupOutputVersion()
+            {
+                AppId = i.AppEntry.Id,
+                AppName = i.AppEntry.Name,
+                Environment = i.Env,
+                Version = i.Version.WithMetadata("build." + buildId).ToString(),
+                HasRelease = i.HasRelease
+            });
 
             if (hasRelease)
             {

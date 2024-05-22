@@ -95,7 +95,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(appEntryConfig.Entry.BuildRunsOn),
                     BuildScript = GetBuildScript(appEntryConfig.Entry.BuildRunsOn),
                     IdsToRun = appEntryConfig.Entry.Id,
-                    Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
+                    Version = entry.Version.ToString()
                 });
             }
             if ((preSetupOutput.TriggerType == TriggerType.PullRequest && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.PullRequest)) ||
@@ -110,7 +110,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(appEntryConfig.Entry.PublishRunsOn),
                     BuildScript = GetBuildScript(appEntryConfig.Entry.PublishRunsOn),
                     IdsToRun = appEntryConfig.Entry.Id,
-                    Version = entry.Version.ToString() + "+build." + preSetupOutput.BuildId
+                    Version = entry.Version.ToString()
                 });
             }
         }
