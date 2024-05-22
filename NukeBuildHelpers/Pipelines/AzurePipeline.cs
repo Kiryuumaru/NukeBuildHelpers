@@ -118,6 +118,32 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 });
             }
         }
+        if (outputBuildMatrix.Count == 0)
+        {
+            outputBuildMatrix.Add("skip", new()
+            {
+                Id = "skip",
+                Name = "Skip",
+                Environment = preSetupOutput.Environment,
+                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
+                BuildScript = "",
+                IdsToRun = "",
+                Version = ""
+            });
+        }
+        if (outputPublishMatrix.Count == 0)
+        {
+            outputPublishMatrix.Add("skip", new()
+            {
+                Id = "skip",
+                Name = "Skip",
+                Environment = preSetupOutput.Environment,
+                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
+                BuildScript = "",
+                IdsToRun = "",
+                Version = ""
+            });
+        }
 
         foreach (var appTestEntry in appConfig.AppTestEntries.Values)
         {
@@ -129,7 +155,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             if (appTestEntry.RunTestOn == RunTestType.All ||
                 ((outputBuildMatrix.ContainsKey(appEntry.Id) || outputPublishMatrix.ContainsKey(appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target)))
             {
-                PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
+                outputTestMatrix.Add(appTestEntry.Id, new()
                 {
                     Id = appTestEntry.Id,
                     Name = appTestEntry.Name,
@@ -137,13 +163,12 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     RunsOn = GetRunsOn(appTestEntry.RunsOn),
                     BuildScript = GetBuildScript(appTestEntry.RunsOn),
                     IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
-                };
-                outputTestMatrix.Add(appTestEntry.Id, preSetupOutputMatrix);
+                });
             }
         }
-        if (outputTestMatrix.Count == 0 && !appConfig.AppTestEntries.Any(i => i.Value.Enable))
+        if (outputTestMatrix.Count == 0)
         {
-            PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
+            outputTestMatrix.Add("skip", new()
             {
                 Id = "skip",
                 Name = "Skip",
@@ -151,8 +176,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = ""
-            };
-            outputTestMatrix.Add("skip", preSetupOutputMatrix);
+            });
         }
 
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
@@ -222,19 +246,16 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ████████████████ Test ████████████████
         // ██████████████████████████████████████
-        if (appConfig.AppTestEntries.Count > 0)
-        {
-            var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
-            AddJobEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
-            AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
-            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
-            var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
-            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
-            AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
+        var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
+        AddJobEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
+        AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
+        AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
+        AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
+        var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
+        AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
+        AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
-            needs.Add("test");
-        }
+        needs.Add("test");
 
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
@@ -242,12 +263,12 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_ENTRIES.NUKE_PRE_SETUP_HAS_ENTRIES'], 'true'))");
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-        AddJobStepCheckout(buildJob);
+        AddJobStepCheckout(buildJob, condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
-        var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)");
+        var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
-        var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1");
+        var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1", condition: "ne(variables['id'], 'skip')");
         AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
         AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
@@ -260,13 +281,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_PRE_SETUP_HAS_ENTRIES.NUKE_PRE_SETUP_HAS_ENTRIES'], 'true'))");
         AddJobEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
-        AddJobStepCheckout(publishJob);
-        var downloadPublishStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
+        AddJobStepCheckout(publishJob, condition: "ne(variables['id'], 'skip')");
+        var downloadPublishStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2", condition: "ne(variables['id'], 'skip')");
         AddJobStepInputs(downloadPublishStep, "artifact", "$(id)");
         AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
-        var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)");
+        var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
 

@@ -117,6 +117,32 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 });
             }
         }
+        if (outputBuildMatrix.Count == 0)
+        {
+            outputBuildMatrix.Add(new()
+            {
+                Id = "skip",
+                Name = "Skip",
+                Environment = preSetupOutput.Environment,
+                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
+                BuildScript = "",
+                IdsToRun = "",
+                Version = ""
+            });
+        }
+        if (outputPublishMatrix.Count == 0)
+        {
+            outputPublishMatrix.Add(new()
+            {
+                Id = "skip",
+                Name = "Skip",
+                Environment = preSetupOutput.Environment,
+                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
+                BuildScript = "",
+                IdsToRun = "",
+                Version = ""
+            });
+        }
 
         foreach (var appTestEntry in appConfig.AppTestEntries.Values)
         {
@@ -140,9 +166,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 outputTestMatrix.Add(preSetupOutputMatrix);
             }
         }
-        if (outputTestMatrix.Count == 0 && appConfig.AppTestEntries.Count != 0)
+        if (outputTestMatrix.Count == 0)
         {
-            PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
+            outputTestMatrix.Add(new()
             {
                 Id = "skip",
                 Name = "Skip",
@@ -150,8 +176,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = ""
-            };
-            outputTestMatrix.Add(preSetupOutputMatrix);
+            });
         }
 
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
@@ -214,19 +239,16 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ████████████████ Test ████████████████
         // ██████████████████████████████████████
-        if (appConfig.AppTestEntries.Count > 0)
-        {
-            var testJob = AddJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs]);
-            AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
-            AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
-            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
-            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", "${{ matrix.id != 'skip' }}");
-            AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
-            AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
+        var testJob = AddJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs]);
+        AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
+        AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
+        AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
+        var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
+        AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
 
-            needs.Add("test");
-        }
+        needs.Add("test");
 
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
@@ -234,12 +256,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var buildJob = AddJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}");
         AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
-        AddJobStepCheckout(buildJob);
+        AddJobStepCheckout(buildJob, _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
-        var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}");
+        var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
-        var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4");
+        var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
         AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
         AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
@@ -253,13 +275,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var publishJob = AddJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}");
         AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
-        AddJobStepCheckout(publishJob);
-        var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
+        AddJobStepCheckout(publishJob, _if: "${{ matrix.id != 'skip' }}");
+        var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepWith(downloadBuildStep, "path", "./.nuke/output");
         AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
         AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
-        var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}");
+        var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
 
