@@ -70,7 +70,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             Branch = branch,
             TriggerType = triggerType,
-            PrNumber = prNumber,
+            PullRequestNumber = prNumber,
         };
     }
 

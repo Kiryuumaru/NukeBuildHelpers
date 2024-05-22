@@ -171,7 +171,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (pipelineInfo.TriggerType == TriggerType.PullRequest)
                 {
-                    return $"{version}+build.{buildId}-pr.{pipelineInfo.PrNumber}";
+                    return $"{version}+build.{buildId}-pr.{pipelineInfo.PullRequestNumber}";
                 }
                 else
                 {
