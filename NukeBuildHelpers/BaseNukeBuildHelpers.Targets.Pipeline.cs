@@ -120,22 +120,25 @@ partial class BaseNukeBuildHelpers
 
                     bool hasBumped = false;
 
-                    if (pipelineInfo.TriggerType == TriggerType.Tag)
+                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(envGroupKey, out var value) || value != lastVersionGroup)
                     {
-                        if (!allVersions.EnvLatestVersionPaired.TryGetValue(envGroupKey, out var value) || value != lastVersionGroup)
+                        if (allVersions.VersionBump.Contains(lastVersionGroup) &&
+                            !allVersions.VersionQueue.Contains(lastVersionGroup) &&
+                            !allVersions.VersionFailed.Contains(lastVersionGroup) &&
+                            !allVersions.VersionPassed.Contains(lastVersionGroup))
                         {
-                            if (allVersions.VersionBump.Contains(lastVersionGroup) &&
-                                !allVersions.VersionQueue.Contains(lastVersionGroup) &&
-                                !allVersions.VersionFailed.Contains(lastVersionGroup) &&
-                                !allVersions.VersionPassed.Contains(lastVersionGroup))
+                            allVersions.EnvLatestBuildIdPaired.TryGetValue(envGroupKey, out var allVersionLastId);
+                            targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
+                            if (pipelineInfo.TriggerType == TriggerType.Tag)
                             {
-                                allVersions.EnvLatestBuildIdPaired.TryGetValue(envGroupKey, out var allVersionLastId);
-                                targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
                                 hasBumped = true;
                                 Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, lastVersionGroup.ToString());
                             }
                         }
-                        else
+                    }
+                    else
+                    {
+                        if (pipelineInfo.TriggerType == TriggerType.Tag)
                         {
                             Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                         }
