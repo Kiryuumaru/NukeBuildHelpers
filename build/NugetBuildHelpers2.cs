@@ -47,7 +47,7 @@ public class NugetBuildHelpers2 : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(appVersion?.ToString() ?? "0.0.0")
+            .SetVersion(appVersion?.Version?.ToString() ?? "0.0.0")
             .SetPackageReleaseNotes(appVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
     }
