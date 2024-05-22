@@ -169,7 +169,7 @@ partial class BaseNukeBuildHelpers
                 AppId = i.AppEntry.Id,
                 AppName = i.AppEntry.Name,
                 Environment = i.Env,
-                Version = i.Version.WithMetadata("build." + buildId).ToString(),
+                Version = i.Version.WithMetadata("build", buildId.ToString()).ToString(),
                 HasRelease = i.HasRelease
             });
 
