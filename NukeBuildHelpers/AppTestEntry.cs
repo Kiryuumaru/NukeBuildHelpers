@@ -19,7 +19,7 @@ public abstract class AppTestEntry : Entry
 
     public virtual Type[] AppEntryTargets { get; } = [];
 
-    public virtual void Run(AppTestRunContext testContext) { }
+    public virtual void Run(AppTestRunContext appTestContext) { }
 
     internal AppTestRunContext? AppTestContext { get; set; }
 }
