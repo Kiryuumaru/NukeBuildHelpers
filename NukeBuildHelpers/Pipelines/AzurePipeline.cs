@@ -46,7 +46,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_TARGETBRANCH")!;
-                prNumber = long.Parse(Environment.GetEnvironmentVariable("SYSTEM_PULLREQUEST_PULLREQUESTID")!);
+                prNumber = long.Parse(branch.Split('/')[2]);
             }
             else if (branch.StartsWith("refs/tags", StringComparison.InvariantCultureIgnoreCase))
             {
