@@ -18,6 +18,8 @@ public class NugetBuildHelpers2 : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.WindowsLatest;
 
+    public override RunType RunType => RunType.Bump;
+
     public override bool MainRelease => false;
 
     public override bool RunParallel => false;

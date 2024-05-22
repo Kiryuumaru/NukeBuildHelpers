@@ -18,6 +18,8 @@ public class NugetBuildHelpers3 : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.UbuntuLatest;
 
+    public override RunType RunType => RunType.Commit;
+
     public override bool MainRelease => false;
 
     public override bool RunParallel => false;

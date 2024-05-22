@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.Enums;
 
-[Flags]
 public enum RunType
 {
     Local = 0b0001,
