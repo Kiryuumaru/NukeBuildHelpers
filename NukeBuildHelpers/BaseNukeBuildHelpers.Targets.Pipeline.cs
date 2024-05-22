@@ -169,7 +169,7 @@ partial class BaseNukeBuildHelpers
                 SemVersion newVersion = version.WithMetadata("build", buildId.ToString());
                 if (pipelineInfo.TriggerType == TriggerType.PullRequest)
                 {
-                    return version.WithMetadata("pr", pipelineInfo.PrNumber.ToString()).ToString();
+                    return newVersion.WithMetadata("pr", pipelineInfo.PrNumber.ToString()).ToString();
                 }
                 else
                 {
