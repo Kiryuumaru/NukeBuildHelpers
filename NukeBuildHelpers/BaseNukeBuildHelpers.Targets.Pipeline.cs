@@ -187,17 +187,18 @@ partial class BaseNukeBuildHelpers
 
             if (hasRelease)
             {
-                foreach (var release in toEntry.Values.Where(i => i.HasRelease))
+                foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
                 {
-                    if (release.AppEntry.MainRelease)
+                    var version = entry.Version.WithoutMetadata();
+                    if (entry.AppEntry.MainRelease)
                     {
-                        Git.Invoke("tag -f " + release.Version + "-queue");
-                        Git.Invoke("tag -f " + release.Version);
+                        Git.Invoke("tag -f " + version + "-queue");
+                        Git.Invoke("tag -f " + version);
                     }
                     else
                     {
-                        Git.Invoke("tag -f " + release.AppEntry.Id.ToLowerInvariant() + "/" + release.Version + "-queue");
-                        Git.Invoke("tag -f " + release.AppEntry.Id.ToLowerInvariant() + "/" + release.Version);
+                        Git.Invoke("tag -f " + entry.AppEntry.Id.ToLowerInvariant() + "/" + version + "-queue");
+                        Git.Invoke("tag -f " + entry.AppEntry.Id.ToLowerInvariant() + "/" + version);
                     }
                 }
 
@@ -289,6 +290,7 @@ partial class BaseNukeBuildHelpers
                         {
                             continue;
                         }
+                        var version = SemVersion.Parse(release.Version, SemVersionStyles.Strict).WithoutMetadata();
                         string latestTag = "latest";
                         if (!release.Environment.Equals("main", StringComparison.InvariantCultureIgnoreCase))
                         {
@@ -296,14 +298,14 @@ partial class BaseNukeBuildHelpers
                         }
                         if (appEntry.Entry.MainRelease)
                         {
-                            Git.Invoke("tag -f " + release.Version + "-passed");
-                            Git.Invoke("tag -f " + release.Version);
+                            Git.Invoke("tag -f " + version + "-passed");
+                            Git.Invoke("tag -f " + version);
                             Git.Invoke("tag -f " + latestTag);
                         }
                         else
                         {
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version + "-passed");
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version);
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version + "-passed");
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version);
                             Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + latestTag);
                         }
                     }
@@ -322,6 +324,7 @@ partial class BaseNukeBuildHelpers
                         {
                             continue;
                         }
+                        var version = SemVersion.Parse(release.Version, SemVersionStyles.Strict).WithoutMetadata();
                         string latestTag = "latest";
                         if (!release.Environment.Equals("main", StringComparison.InvariantCultureIgnoreCase))
                         {
@@ -329,13 +332,13 @@ partial class BaseNukeBuildHelpers
                         }
                         if (appEntry.Entry.MainRelease)
                         {
-                            Git.Invoke("tag -f " + release.Version + "-failed");
-                            Git.Invoke("tag -f " + release.Version);
+                            Git.Invoke("tag -f " + version + "-failed");
+                            Git.Invoke("tag -f " + version);
                         }
                         else
                         {
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version + "-failed");
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + release.Version);
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version + "-failed");
+                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version);
                         }
                     }
 
