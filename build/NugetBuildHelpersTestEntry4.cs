@@ -16,7 +16,7 @@ public class NugetBuildHelpersTest4 : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
 
-    public override TestRunType RunTestOn => TestRunType.Bump;
+    public override RunTestType RunTestOn => RunTestType.Target;
 
     public override bool RunParallel => false;
 

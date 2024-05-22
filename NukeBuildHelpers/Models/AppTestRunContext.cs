@@ -15,8 +15,5 @@ namespace NukeBuildHelpers;
 
 public class AppTestRunContext : RunContext
 {
-    internal AppTestRunContext(AbsolutePath outputDirectory, RunType runType)
-        : base(outputDirectory, runType)
-    {
-    }
+    public RunTestType RunTestType { get; internal set; }
 }

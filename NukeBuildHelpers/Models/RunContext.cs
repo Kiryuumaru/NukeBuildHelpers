@@ -15,13 +15,5 @@ namespace NukeBuildHelpers;
 
 public class RunContext
 {
-    public AbsolutePath OutputDirectory { get; }
-
-    public RunType RunType { get; }
-
-    internal RunContext(AbsolutePath outputDirectory, RunType runType)
-    {
-        OutputDirectory = outputDirectory;
-        RunType = runType;
-    }
+    public required AbsolutePath OutputDirectory { get; init; }
 }

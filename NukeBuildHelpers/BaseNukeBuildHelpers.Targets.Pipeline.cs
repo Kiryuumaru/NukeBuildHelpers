@@ -33,9 +33,9 @@ partial class BaseNukeBuildHelpers
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
-            await TestAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
+            await TestAppEntries(appConfig, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelineBuild => _ => _
@@ -44,9 +44,9 @@ partial class BaseNukeBuildHelpers
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
-            await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
+            await BuildAppEntries(appConfig, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelinePublish => _ => _
@@ -55,9 +55,9 @@ partial class BaseNukeBuildHelpers
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
-            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), GetPreSetupOutput());
+            await PublishAppEntries(appConfig, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
 
     public Target PipelinePreSetup => _ => _
@@ -66,9 +66,7 @@ partial class BaseNukeBuildHelpers
         .Executes(() =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
-            GetOrFail(() => GetInstances<AppEntry>(), out var appEntries);
-            GetOrFail(() => GetInstances<AppTestEntry>(), out var appTestEntries);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
             IPipeline pipeline = (Args?.ToLowerInvariant()) switch
             {
@@ -102,12 +100,12 @@ partial class BaseNukeBuildHelpers
             long targetBuildId = 0;
             long lastBuildId = 0;
 
-            foreach (var key in appEntryConfigs.Select(i => i.Key))
+            foreach (var key in appConfig.AppEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
 
-                GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
+                GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                 if (allVersions.BuildIdCommitPaired.Count > 0)
                 {
@@ -240,7 +238,7 @@ partial class BaseNukeBuildHelpers
 
             Log.Information("NUKE_PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
-            pipeline.Prepare(output, appTestEntries, appEntryConfigs, toEntry);
+            pipeline.Prepare(output, appConfig, toEntry);
         });
 
     public Target PipelinePostSetup => _ => _
@@ -249,7 +247,7 @@ partial class BaseNukeBuildHelpers
         .Executes(() =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
             var preSetupOutput = GetPreSetupOutput();
 
@@ -275,7 +273,7 @@ partial class BaseNukeBuildHelpers
 
                     foreach (var release in preSetupOutput.Entries.Values)
                     {
-                        if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
+                        if (!appConfig.AppEntryConfigs.TryGetValue(release.AppId, out var appEntry))
                         {
                             continue;
                         }
@@ -308,7 +306,7 @@ partial class BaseNukeBuildHelpers
                 {
                     foreach (var release in preSetupOutput.Entries.Values)
                     {
-                        if (!appEntryConfigs.TryGetValue(release.AppId, out var appEntry))
+                        if (!appConfig.AppEntryConfigs.TryGetValue(release.AppId, out var appEntry))
                         {
                             continue;
                         }

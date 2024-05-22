@@ -72,43 +72,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    public void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, AppEntryConfig> appEntryConfigs, Dictionary<string, AppRunEntry> toEntry)
+    public void Prepare(PreSetupOutput preSetupOutput, AppConfig appConfig, Dictionary<string, AppRunEntry> toEntry)
     {
         var outputTestMatrix = new Dictionary<string, PreSetupOutputAppTestEntryMatrix>();
         var outputBuildMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
         var outputPublishMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
-        foreach (var appTestEntry in appTestEntries)
-        {
-            var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
-            var hasRelease = toEntry.ContainsKey(appEntry.Id);
-            if (hasRelease || appTestEntry.RunTestOn == TestRunType.Always)
-            {
-                PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
-                {
-                    Id = appTestEntry.Id,
-                    Name = appTestEntry.Name,
-                    Environment = preSetupOutput.Environment,
-                    RunsOn = GetRunsOn(appTestEntry.RunsOn),
-                    BuildScript = GetBuildScript(appTestEntry.RunsOn),
-                    IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
-                };
-                outputTestMatrix.Add(appTestEntry.Id, preSetupOutputMatrix);
-            }
-        }
-        if (outputTestMatrix.Count == 0 && appTestEntries.Count != 0)
-        {
-            PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
-            {
-                Id = "skip",
-                Name = "Skip",
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
-                BuildScript = "",
-                IdsToRun = ""
-            };
-            outputTestMatrix.Add("skip", preSetupOutputMatrix);
-        }
-        foreach (var appEntryConfig in appEntryConfigs.Values)
+
+        foreach (var appEntryConfig in appConfig.AppEntryConfigs.Values)
         {
             if (!toEntry.TryGetValue(appEntryConfig.Entry.Id, out var entry))
             {
@@ -145,6 +115,42 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 });
             }
         }
+
+        foreach (var appTestEntry in appConfig.AppTestEntries.Values)
+        {
+            var appEntry = appConfig.AppEntries.Values.FirstOrDefault(i => appTestEntry.AppEntryTargets.Contains(i.GetType()));
+            if (appEntry == null)
+            {
+                continue;
+            }
+            if ((outputBuildMatrix.ContainsKey(appEntry.Id) || outputPublishMatrix.ContainsKey(appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target))
+            {
+                PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
+                {
+                    Id = appTestEntry.Id,
+                    Name = appTestEntry.Name,
+                    Environment = preSetupOutput.Environment,
+                    RunsOn = GetRunsOn(appTestEntry.RunsOn),
+                    BuildScript = GetBuildScript(appTestEntry.RunsOn),
+                    IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
+                };
+                outputTestMatrix.Add(appTestEntry.Id, preSetupOutputMatrix);
+            }
+        }
+        if (outputTestMatrix.Count == 0 && !appConfig.AppTestEntries.Any(i => i.Value.Enable))
+        {
+            PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
+            {
+                Id = "skip",
+                Name = "Skip",
+                Environment = preSetupOutput.Environment,
+                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
+                BuildScript = "",
+                IdsToRun = ""
+            };
+            outputTestMatrix.Add("skip", preSetupOutputMatrix);
+        }
+
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption));
@@ -155,9 +161,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void BuildWorkflow()
     {
-        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetAppEntryConfigs, out var appEntryConfigs);
-        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppEntry>, out var appEntries);
-        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppTestEntry>, out var appTestEntries);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetAppConfig, out var appConfig);
 
         List<WorkflowBuilder> workflowBuilders = [.. BaseNukeBuildHelpers.GetInstances<WorkflowBuilder>().OrderByDescending(i => i.Priority)];
 
@@ -214,7 +218,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ████████████████ Test ████████████████
         // ██████████████████████████████████████
-        if (appTestEntries.Count > 0)
+        if (appConfig.AppTestEntries.Count > 0)
         {
             var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
             AddJobEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");

@@ -15,9 +15,9 @@ public abstract class AppTestEntry : Entry
 {
     public abstract RunsOnType RunsOn { get; }
 
-    public virtual TestRunType RunTestOn { get; } = TestRunType.Always;
+    public virtual RunTestType RunTestOn { get; } = RunTestType.Local | RunTestType.Target;
 
-    public abstract Type[] AppEntryTargets { get; }
+    public virtual Type[] AppEntryTargets { get; } = [];
 
     public virtual void Run(AppTestRunContext testContext) { }
 
