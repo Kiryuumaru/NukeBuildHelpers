@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public class NewVersion
+public class AppVersion
 {
     public required string AppId { get; init; }
 

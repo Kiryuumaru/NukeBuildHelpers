@@ -15,7 +15,7 @@ namespace NukeBuildHelpers;
 
 public class AppRunContext : RunContext
 {
-    public NewVersion? NewVersion { get; internal set; }
+    public AppVersion? AppVersion { get; internal set; }
 
     public RunType RunType { get; internal set; }
 }

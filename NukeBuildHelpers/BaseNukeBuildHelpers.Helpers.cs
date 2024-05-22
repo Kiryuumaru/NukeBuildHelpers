@@ -154,7 +154,7 @@ partial class BaseNukeBuildHelpers
                 {
                     if (appEntry.Value.Id == release.Key)
                     {
-                        appEntry.Value.AppRunContext.NewVersion = new NewVersion()
+                        appEntry.Value.AppRunContext.AppVersion = new AppVersion()
                         {
                             AppId = appEntry.Value.Id,
                             Environment = release.Value.Environment,
