@@ -34,6 +34,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         TriggerType triggerType = TriggerType.Commit;
         var branch = Environment.GetEnvironmentVariable("GITHUB_REF");
+        long prNumber = 0;
         if (string.IsNullOrEmpty(branch))
         {
             branch = NukeBuild.Repository.Branch;
@@ -42,6 +43,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             if (branch.StartsWith("refs/pull", StringComparison.InvariantCultureIgnoreCase))
             {
+                prNumber = long.Parse(branch.Split('/')[2]);
                 triggerType = TriggerType.PullRequest;
                 branch = Environment.GetEnvironmentVariable("GITHUB_BASE_REF")!;
             }
@@ -68,19 +70,63 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             Branch = branch,
             TriggerType = triggerType,
+            PrNumber = prNumber,
         };
     }
 
-    public void Prepare(PreSetupOutput preSetupOutput, List<AppTestEntry> appTestEntries, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, List<(AppEntry AppEntry, string Env, SemVersion Version)> toRelease)
+    public void Prepare(PreSetupOutput preSetupOutput, AppConfig appConfig, Dictionary<string, AppRunEntry> toEntry)
     {
         var outputTestMatrix = new List<PreSetupOutputAppTestEntryMatrix>();
         var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
         var outputPublishMatrix = new List<PreSetupOutputAppEntryMatrix>();
-        foreach (var appTestEntry in appTestEntries)
+
+        foreach (var appEntryConfig in appConfig.AppEntryConfigs.Values)
         {
-            var appEntry = appEntryConfigs.First(i => i.Value.Tests.Any(j => j.Id == appTestEntry.Id)).Value.Entry;
-            var hasRelease = toRelease.Any(i => i.AppEntry.Id == appEntry.Id);
-            if (hasRelease || appTestEntry.RunType == TestRunType.Always)
+            if (!toEntry.TryGetValue(appEntryConfig.Entry.Id, out var entry))
+            {
+                continue;
+            }
+            if ((preSetupOutput.TriggerType == TriggerType.PullRequest && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.PullRequest)) ||
+                (preSetupOutput.TriggerType == TriggerType.Commit && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.Commit)) ||
+                (preSetupOutput.TriggerType == TriggerType.Tag && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.Bump)))
+            {
+                outputBuildMatrix.Add(new()
+                {
+                    Id = appEntryConfig.Entry.Id,
+                    Name = appEntryConfig.Entry.Name,
+                    Environment = preSetupOutput.Environment,
+                    RunsOn = GetRunsOn(appEntryConfig.Entry.BuildRunsOn),
+                    BuildScript = GetBuildScript(appEntryConfig.Entry.BuildRunsOn),
+                    IdsToRun = appEntryConfig.Entry.Id,
+                    Version = entry.Version.ToString()
+                });
+            }
+            if ((preSetupOutput.TriggerType == TriggerType.PullRequest && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.PullRequest)) ||
+                (preSetupOutput.TriggerType == TriggerType.Commit && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.Commit)) ||
+                (preSetupOutput.TriggerType == TriggerType.Tag && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.Bump)))
+            {
+                outputPublishMatrix.Add(new()
+                {
+                    Id = appEntryConfig.Entry.Id,
+                    Name = appEntryConfig.Entry.Name,
+                    Environment = preSetupOutput.Environment,
+                    RunsOn = GetRunsOn(appEntryConfig.Entry.PublishRunsOn),
+                    BuildScript = GetBuildScript(appEntryConfig.Entry.PublishRunsOn),
+                    IdsToRun = appEntryConfig.Entry.Id,
+                    Version = entry.Version.ToString()
+                });
+            }
+        }
+
+        foreach (var appTestEntry in appConfig.AppTestEntries.Values)
+        {
+            var appEntry = appConfig.AppEntries.Values.FirstOrDefault(i => appTestEntry.AppEntryTargets.Contains(i.GetType()));
+            if (appEntry == null)
+            {
+                continue;
+            }
+            if (appTestEntry.RunTestOn == RunTestType.All ||
+                ((outputBuildMatrix.Any(i => i.Id == appEntry.Id) || outputPublishMatrix.Any(i => i.Id == appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target)))
             {
                 PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
                 {
@@ -94,7 +140,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 outputTestMatrix.Add(preSetupOutputMatrix);
             }
         }
-        if (outputTestMatrix.Count == 0 && appTestEntries.Count != 0)
+        if (outputTestMatrix.Count == 0 && appConfig.AppTestEntries.Count != 0)
         {
             PreSetupOutputAppTestEntryMatrix preSetupOutputMatrix = new()
             {
@@ -107,33 +153,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             };
             outputTestMatrix.Add(preSetupOutputMatrix);
         }
-        foreach (var (Entry, Tests) in appEntryConfigs.Values)
-        {
-            var release = toRelease.FirstOrDefault(i => i.AppEntry.Id == Entry.Id);
-            if (release.AppEntry != null)
-            {
-                outputBuildMatrix.Add(new()
-                {
-                    Id = Entry.Id,
-                    Name = Entry.Name,
-                    Environment = preSetupOutput.Environment,
-                    RunsOn = GetRunsOn(Entry.BuildRunsOn),
-                    BuildScript = GetBuildScript(Entry.BuildRunsOn),
-                    IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + preSetupOutput.BuildId
-                });
-                outputPublishMatrix.Add(new()
-                {
-                    Id = Entry.Id,
-                    Name = Entry.Name,
-                    Environment = preSetupOutput.Environment,
-                    RunsOn = GetRunsOn(Entry.PublishRunsOn),
-                    BuildScript = GetBuildScript(Entry.PublishRunsOn),
-                    IdsToRun = Entry.Id,
-                    Version = release.Version.ToString() + "+build." + preSetupOutput.BuildId
-                });
-            }
-        }
+
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));
         File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption));
@@ -144,9 +164,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void BuildWorkflow()
     {
-        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetAppEntryConfigs, out var appEntryConfigs);
-        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppEntry>, out var appEntries);
-        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetInstances<AppTestEntry>, out var appTestEntries);
+        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetAppConfig, out var appConfig);
 
         List<WorkflowBuilder> workflowBuilders = [.. BaseNukeBuildHelpers.GetInstances<WorkflowBuilder>().OrderByDescending(i => i.Priority)];
 
@@ -185,6 +203,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
         AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "github");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
+        AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_ENTRIES", "./.nuke/temp/pre_setup_has_entries.txt");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX", "./.nuke/temp/pre_setup_output_build_matrix.json");
@@ -195,7 +214,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ████████████████ Test ████████████████
         // ██████████████████████████████████████
-        if (appTestEntries.Count > 0)
+        if (appConfig.AppTestEntries.Count > 0)
         {
             var testJob = AddJob(workflow, "test", "Test - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs]);
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
@@ -212,7 +231,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
-        var buildJob = AddJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_RELEASE == 'true' }}");
+        var buildJob = AddJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}");
         AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobStepCheckout(buildJob);
@@ -231,7 +250,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
         // ██████████████████████████████████████
-        var publishJob = AddJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_RELEASE == 'true' }}");
+        var publishJob = AddJob(workflow, "publish", "Publish - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}");
         AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob);

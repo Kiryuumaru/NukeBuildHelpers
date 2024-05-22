@@ -16,13 +16,13 @@ public class NugetBuildHelpersTest2 : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.Windows2022;
 
-    public override TestRunType RunType => TestRunType.OnAppEntryVersionBump;
+    public override RunTestType RunTestOn => RunTestType.Local;
 
     public override bool RunParallel => false;
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers2)];
 
-    public override void Run()
+    public override void Run(AppTestRunContext appTestRunContext)
     {
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers_UnitTest));

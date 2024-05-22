@@ -22,6 +22,8 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
+    public override RunType RunPublishOn =>  RunType.Bump;
+
     [SecretHelper("NUGET_AUTH_TOKEN")]
     readonly string NuGetAuthToken;
 
@@ -30,7 +32,7 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override bool RunParallel => false;
 
-    public override void Build()
+    public override void Build(AppRunContext appRunContext)
     {
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
@@ -45,20 +47,23 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(NewVersion?.Version?.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes(NewVersion?.ReleaseNotes)
+            .SetVersion(appRunContext.AppVersion?.Version?.ToString() ?? "0.0.0")
+            .SetPackageReleaseNotes(appRunContext.AppVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
     }
 
-    public override void Publish()
+    public override void Publish(AppRunContext appRunContext)
     {
-        DotNetTasks.DotNetNuGetPush(_ => _
-            .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-            .SetApiKey(GithubToken)
-            .SetTargetPath(OutputDirectory / "**"));
-        DotNetTasks.DotNetNuGetPush(_ => _
-            .SetSource("https://api.nuget.org/v3/index.json")
-            .SetApiKey(NuGetAuthToken)
-            .SetTargetPath(OutputDirectory / "**"));
+        if (appRunContext.RunType == RunType.Bump)
+        {
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+                .SetApiKey(GithubToken)
+                .SetTargetPath(OutputDirectory / "**"));
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://api.nuget.org/v3/index.json")
+                .SetApiKey(NuGetAuthToken)
+                .SetTargetPath(OutputDirectory / "**"));
+        }
     }
 }

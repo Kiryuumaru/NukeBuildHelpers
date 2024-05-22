@@ -13,13 +13,7 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers;
 
-public class NewVersion
+public class AppTestRunContext : RunContext
 {
-    public required string Environment { get; init; }
-
-    public required SemVersion Version { get; init; }
-
-    public required long BuildId { get; init; }
-
-    public required string ReleaseNotes { get; init; }
+    public RunTestType RunTestType { get; internal set; }
 }

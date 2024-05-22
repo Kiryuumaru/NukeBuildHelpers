@@ -16,13 +16,13 @@ public class NugetBuildHelpersTest4 : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
 
-    public override TestRunType RunType => TestRunType.OnAppEntryVersionBump;
+    public override RunTestType RunTestOn => RunTestType.Target;
 
     public override bool RunParallel => false;
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers3)];
 
-    public override void Run()
+    public override void Run(AppTestRunContext appTestRunContext)
     {
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers_UnitTest));

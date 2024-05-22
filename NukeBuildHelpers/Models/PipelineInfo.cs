@@ -13,4 +13,6 @@ public class PipelineInfo
     public required string Branch { get; init; }
 
     public required TriggerType TriggerType { get; init; }
+
+    public required long PrNumber { get; init; }
 }
