@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Models.RunContext;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -18,12 +19,21 @@ public class NugetBuildHelpers4 : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.UbuntuLatest;
 
+    public override RunType RunBuildOn => RunType.PullRequest;
+
+    public override RunType RunPublishOn => RunType.PullRequest;
+
     public override bool MainRelease => false;
 
     public override bool RunParallel => false;
 
-    public override void Build()
+    public override void Build(AppRunContext appRunContext)
     {
+        AppVersion? appVersion = null;
+        if (appRunContext is AppPipelineRunContext appPipelineRunContext)
+        {
+            appVersion = appPipelineRunContext.AppVersion;
+        }
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
@@ -37,16 +47,19 @@ public class NugetBuildHelpers4 : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(NewVersion?.Version.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes("* Initial prerelease")
+            .SetVersion(appVersion?.Version?.ToString() ?? "0.0.0")
+            .SetPackageReleaseNotes(appVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
     }
 
-    public override void Publish()
+    public override void Publish(AppRunContext appRunContext)
     {
-        foreach (var ss in OutputDirectory.GetFiles())
+        if (appRunContext.RunType == RunType.Bump)
         {
-            Log.Information("Publish: {name}", ss.Name);
+            foreach (var ss in OutputDirectory.GetFiles())
+            {
+                Log.Information("Publish: {name}", ss.Name);
+            }
         }
     }
 }

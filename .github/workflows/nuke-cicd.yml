@@ -22,6 +22,9 @@ jobs:
     - id: NUKE_PRE_SETUP_HAS_RELEASE
       name: Output NUKE_PRE_SETUP_HAS_RELEASE
       run: echo "NUKE_PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)" >> $GITHUB_OUTPUT
+    - id: NUKE_PRE_SETUP_HAS_ENTRIES
+      name: Output NUKE_PRE_SETUP_HAS_ENTRIES
+      run: echo "NUKE_PRE_SETUP_HAS_ENTRIES=$(cat ./.nuke/temp/pre_setup_has_entries.txt)" >> $GITHUB_OUTPUT
     - id: NUKE_PRE_SETUP_OUTPUT
       name: Output NUKE_PRE_SETUP_OUTPUT
       run: echo "NUKE_PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
@@ -38,6 +41,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       NUKE_PRE_SETUP_HAS_RELEASE: ${{ steps.NUKE_PRE_SETUP_HAS_RELEASE.outputs.NUKE_PRE_SETUP_HAS_RELEASE }}
+      NUKE_PRE_SETUP_HAS_ENTRIES: ${{ steps.NUKE_PRE_SETUP_HAS_ENTRIES.outputs.NUKE_PRE_SETUP_HAS_ENTRIES }}
       NUKE_PRE_SETUP_OUTPUT: ${{ steps.NUKE_PRE_SETUP_OUTPUT.outputs.NUKE_PRE_SETUP_OUTPUT }}
       NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
@@ -63,13 +67,16 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+      if: ${{ matrix.id != 'skip' }}
     - name: Run Nuke PipelineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
+      if: ${{ matrix.id != 'skip' }}
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
+      if: ${{ matrix.id != 'skip' }}
       with:
         name: ${{ matrix.id }}
         path: ./.nuke/output/*
@@ -78,7 +85,7 @@ jobs:
     needs:
     - pre_setup
     - test
-    if: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_RELEASE == 'true' }}
+    if: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
@@ -89,14 +96,17 @@ jobs:
     runs-on: ${{ matrix.runs_on }}
     steps:
     - uses: actions/checkout@v4
+      if: ${{ matrix.id != 'skip' }}
     - name: Download artifacts
       uses: actions/download-artifact@v4
+      if: ${{ matrix.id != 'skip' }}
       with:
         path: ./.nuke/output
         pattern: ${{ matrix.id }}
         merge-multiple: true
     - name: Run Nuke PipelinePublish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
+      if: ${{ matrix.id != 'skip' }}
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -104,7 +114,7 @@ jobs:
     - pre_setup
     - test
     - build
-    if: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_RELEASE == 'true' }}
+    if: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:

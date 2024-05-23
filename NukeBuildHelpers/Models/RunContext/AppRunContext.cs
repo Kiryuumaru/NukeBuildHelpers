@@ -11,15 +11,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace NukeBuildHelpers;
+namespace NukeBuildHelpers.Models.RunContext;
 
-public class NewVersion
+public abstract class AppRunContext : RunContext
 {
-    public required string Environment { get; init; }
-
-    public required SemVersion Version { get; init; }
-
-    public required long BuildId { get; init; }
-
-    public required string ReleaseNotes { get; init; }
+    public required RunType RunType { get; init; }
 }

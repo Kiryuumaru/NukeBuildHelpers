@@ -26,6 +26,7 @@ using Nuke.Common.CI.GitHubActions;
 using ICSharpCode.SharpZipLib.Zip;
 using System;
 using System.Linq;
+using NukeBuildHelpers.Models.RunContext;
 
 namespace NukeBuildHelpers;
 
@@ -46,25 +47,32 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, PreSetupOutput? preSetupOutput)
+    private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
     {
         var appEntrySecretMap = GetEntrySecretMap<AppEntry>();
         var appTestEntrySecretMap = GetEntrySecretMap<AppTestEntry>();
 
         PipelineType pipelineType;
 
+        IPipeline pipeline;
+        PipelineInfo pipelineInfo;
+
         if (Host is AzurePipelines)
         {
             pipelineType = PipelineType.Azure;
+            pipeline = new AzurePipeline(this);
         }
         else if (Host is GitHubActions)
         {
             pipelineType = PipelineType.Github;
+            pipeline = new GithubPipeline(this);
         }
         else
         {
             throw new NotImplementedException();
         }
+
+        pipelineInfo = pipeline.GetPipelineInfo();
 
         foreach (var workflowStep in workflowSteps)
         {
@@ -72,57 +80,131 @@ partial class BaseNukeBuildHelpers
             workflowStep.NukeBuild = this;
         }
 
-        foreach (var appEntry in appEntries)
+        foreach (var appTestEntry in appConfig.AppTestEntries.Values)
         {
-            if (appEntrySecretMap.TryGetValue(appEntry.Value.Entry.Id, out var appSecretMap) &&
-                appSecretMap.EntryType == appEntry.Value.Entry.GetType())
+            if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
+                testSecretMap.EntryType == appTestEntry.GetType())
+            {
+                foreach (var secret in testSecretMap.SecretHelpers)
+                {
+                    var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? "NUKE_" + secret.SecretHelper.SecretVariableName : secret.SecretHelper.EnvironmentVariableName;
+                    var secretValue = Environment.GetEnvironmentVariable(envVarName);
+                    secret.MemberInfo.SetValue(appTestEntry, secretValue);
+                }
+            }
+            appTestEntry.PipelineType = pipelineType;
+            appTestEntry.NukeBuild = this;
+            RunTestType runTestType = RunTestType.Local;
+            foreach (var appEntry in appConfig.AppEntries.Values)
+            {
+                if (appTestEntry.AppEntryTargets.Any(i => i == appEntry.GetType()))
+                {
+                    runTestType = RunTestType.Target;
+                    break;
+                }
+            }
+            appTestEntry.AppTestContext = new()
+            {
+                OutputDirectory = BaseHelper.OutputDirectory,
+                RunTestType = runTestType
+            };
+        }
+
+        RunType runType = RunType.Local;
+        if (preSetupOutput != null)
+        {
+            if (preSetupOutput.TriggerType == TriggerType.PullRequest)
+            {
+                runType = RunType.PullRequest;
+            }
+            else if (preSetupOutput.TriggerType == TriggerType.Commit)
+            {
+                runType = RunType.Commit;
+            }
+            else if (preSetupOutput.TriggerType == TriggerType.Tag)
+            {
+                if (preSetupOutput.HasRelease)
+                {
+                    runType = RunType.Bump;
+                }
+                else
+                {
+                    runType = RunType.Commit;
+                }
+            }
+        }
+
+        foreach (var appEntry in appConfig.AppEntries)
+        {
+            if (appEntrySecretMap.TryGetValue(appEntry.Value.Id, out var appSecretMap) &&
+                appSecretMap.EntryType == appEntry.Value.GetType())
             {
                 foreach (var secret in appSecretMap.SecretHelpers)
                 {
                     var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? "NUKE_" + secret.SecretHelper.SecretVariableName : secret.SecretHelper.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                    secret.MemberInfo.SetValue(appEntry.Value.Entry, secretValue);
+                    secret.MemberInfo.SetValue(appEntry.Value, secretValue);
                 }
             }
 
-            appEntry.Value.Entry.PipelineType = pipelineType;
-            appEntry.Value.Entry.NukeBuild = this;
+            appEntry.Value.PipelineType = pipelineType;
+            appEntry.Value.NukeBuild = this;
 
-            foreach (var appTestEntry in appEntry.Value.Tests)
+            AppVersion? appVersion = null;
+
+            if (preSetupOutput != null &&
+                preSetupOutput.Entries.TryGetValue(appEntry.Value.Id, out var preSetupOutputVersion))
             {
-                if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
-                    testSecretMap.EntryType == appTestEntry.GetType())
+                appVersion = new AppVersion()
                 {
-                    foreach (var secret in testSecretMap.SecretHelpers)
-                    {
-                        var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? "NUKE_" + secret.SecretHelper.SecretVariableName : secret.SecretHelper.EnvironmentVariableName;
-                        var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                        secret.MemberInfo.SetValue(appTestEntry, secretValue);
-                    }
-                }
-                appTestEntry.PipelineType = pipelineType;
-                appTestEntry.NukeBuild = this;
+                    AppId = appEntry.Value.Id,
+                    Environment = preSetupOutputVersion.Environment,
+                    Version = SemVersion.Parse(preSetupOutputVersion.Version, SemVersionStyles.Strict),
+                    BuildId = preSetupOutput.BuildId,
+                    ReleaseNotes = preSetupOutput.ReleaseNotes
+                };
             }
-            if (preSetupOutput != null && preSetupOutput.HasRelease)
+
+            if (appVersion == null)
             {
-                foreach (var release in preSetupOutput.Releases)
+                appEntry.Value.AppRunContext = new AppLocalRunContext()
                 {
-                    if (appEntry.Value.Entry.Id == release.Key)
-                    {
-                        appEntry.Value.Entry.NewVersion = new NewVersion()
-                        {
-                            Environment = release.Value.Environment,
-                            Version = SemVersion.Parse(release.Value.Version, SemVersionStyles.Strict),
-                            BuildId = preSetupOutput.BuildId,
-                            ReleaseNotes = preSetupOutput.ReleaseNotes
-                        };
-                    }
-                }
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                };
+            }
+            else if (runType == RunType.Bump)
+            {
+                appEntry.Value.AppRunContext = new AppBumpRunContext()
+                {
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                    AppVersion = appVersion
+                };
+            }
+            else if (runType == RunType.PullRequest)
+            {
+                appEntry.Value.AppRunContext = new AppPullRequestRunContext()
+                {
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                    AppVersion = appVersion,
+                    PullRequestNumber = pipelineInfo.PullRequestNumber
+                };
+            }
+            else
+            {
+                appEntry.Value.AppRunContext = new AppCommitRunContext()
+                {
+                    OutputDirectory = BaseHelper.OutputDirectory,
+                    RunType = runType,
+                    AppVersion = appVersion
+                };
             }
         }
     }
 
-    private Task TestAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private Task TestAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> tasks = [];
         List<Action> nonParallels = [];
@@ -130,15 +212,16 @@ partial class BaseNukeBuildHelpers
 
         List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
-        SetupWorkflowRun(workflowSteps, appEntries, preSetupOutput);
+        SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
-        foreach (var appEntry in appEntries)
+        foreach (var appEntry in appConfig.AppEntries)
         {
             if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
             {
                 continue;
             }
-            foreach (var appEntryTest in appEntry.Value.Tests)
+            var appEntryType = appEntry.Value.GetType();
+            foreach (var appEntryTest in appConfig.AppTestEntries.Values.Where(i => i.AppEntryTargets.Any(j => j == appEntryType)))
             {
                 if (idsToRun.Any() && !idsToRun.Any(i => i == appEntryTest.Id))
                 {
@@ -157,7 +240,7 @@ partial class BaseNukeBuildHelpers
                         {
                             workflowStep.TestRun(appEntryTest);
                         }
-                        appEntryTest.Run();
+                        appEntryTest.Run(appEntryTest.AppTestContext!);
                     }));
                 }
                 else
@@ -168,7 +251,7 @@ partial class BaseNukeBuildHelpers
                         {
                             workflowStep.TestRun(appEntryTest);
                         }
-                        appEntryTest.Run();
+                        appEntryTest.Run(appEntryTest.AppTestContext!);
                     });
                 }
             }
@@ -185,14 +268,14 @@ partial class BaseNukeBuildHelpers
         return Task.WhenAll(tasks);
     }
 
-    private Task BuildAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private Task BuildAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> tasks = [];
         List<Action> nonParallels = [];
 
         List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
-        SetupWorkflowRun(workflowSteps, appEntries, preSetupOutput);
+        SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
         if (preSetupOutput != null)
         {
@@ -200,21 +283,21 @@ partial class BaseNukeBuildHelpers
             File.WriteAllText(OutputDirectory / "notes.md", preSetupOutput.ReleaseNotes);
         }
 
-        foreach (var appEntry in appEntries)
+        foreach (var appEntry in appConfig.AppEntries)
         {
             if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
             {
                 continue;
             }
-            if (appEntry.Value.Entry.RunParallel)
+            if (appEntry.Value.RunParallel)
             {
                 tasks.Add(Task.Run(() =>
                 {
                     foreach (var workflowStep in workflowSteps)
                     {
-                        workflowStep.AppBuild(appEntry.Value.Entry);
+                        workflowStep.AppBuild(appEntry.Value);
                     }
-                    appEntry.Value.Entry.Build();
+                    appEntry.Value.Build(appEntry.Value.AppRunContext!);
                 }));
             }
             else
@@ -223,9 +306,9 @@ partial class BaseNukeBuildHelpers
                 {
                     foreach (var workflowStep in workflowSteps)
                     {
-                        workflowStep.AppBuild(appEntry.Value.Entry);
+                        workflowStep.AppBuild(appEntry.Value);
                     }
-                    appEntry.Value.Entry.Build();
+                    appEntry.Value.Build(appEntry.Value.AppRunContext!);
                 });
             }
         }
@@ -241,30 +324,30 @@ partial class BaseNukeBuildHelpers
         return Task.WhenAll(tasks);
     }
 
-    private Task PublishAppEntries(Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntries, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private Task PublishAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
         List<Task> tasks = [];
         List<Action> nonParallels = [];
 
         List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
-        SetupWorkflowRun(workflowSteps, appEntries, preSetupOutput);
+        SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
-        foreach (var appEntry in appEntries)
+        foreach (var appEntry in appConfig.AppEntries)
         {
             if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
             {
                 continue;
             }
-            if (appEntry.Value.Entry.RunParallel)
+            if (appEntry.Value.RunParallel)
             {
                 tasks.Add(Task.Run(() =>
                 {
                     foreach (var workflowStep in workflowSteps)
                     {
-                        workflowStep.AppPublish(appEntry.Value.Entry);
+                        workflowStep.AppPublish(appEntry.Value);
                     }
-                    appEntry.Value.Entry.Publish();
+                    appEntry.Value.Publish(appEntry.Value.AppRunContext!);
                 }));
             }
             else
@@ -273,9 +356,9 @@ partial class BaseNukeBuildHelpers
                 {
                     foreach (var workflowStep in workflowSteps)
                     {
-                        workflowStep.AppPublish(appEntry.Value.Entry);
+                        workflowStep.AppPublish(appEntry.Value);
                     }
-                    appEntry.Value.Entry.Publish();
+                    appEntry.Value.Publish(appEntry.Value.AppRunContext!);
                 });
             }
         }
@@ -307,9 +390,9 @@ partial class BaseNukeBuildHelpers
         return instances;
     }
 
-    internal static Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> GetAppEntryConfigs()
+    internal static AppConfig GetAppConfig()
     {
-        Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> configs = [];
+        Dictionary<string, AppEntryConfig> appEntryConfigs = [];
 
         bool hasMainReleaseEntry = false;
         List<AppEntry> appEntries = [];
@@ -346,7 +429,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntry in appEntries)
         {
-            if (configs.ContainsKey(appEntry.Id))
+            if (appEntryConfigs.ContainsKey(appEntry.Id))
             {
                 throw new Exception($"Contains multiple app entry id \"{appEntry.Id}\"");
             }
@@ -359,7 +442,7 @@ partial class BaseNukeBuildHelpers
                     appTestEntries[i] = (true, appTestEntries[i].AppTestEntry);
                 }
             }
-            configs.Add(appEntry.Id, (appEntry, appTestEntriesFound));
+            appEntryConfigs.Add(appEntry.Id, new() { Entry = appEntry, Tests = appTestEntriesFound });
         }
 
         var nonAdded = appTestEntries.Where(i => !i.IsAdded);
@@ -378,7 +461,12 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        return configs;
+        return new()
+        {
+            AppEntryConfigs = appEntryConfigs,
+            AppEntries = appEntries.ToDictionary(i => i.Id),
+            AppTestEntries = appTestEntries.ToDictionary(i => i.AppTestEntry.Id, i => i.AppTestEntry)
+        };
     }
 
     internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
@@ -429,7 +517,7 @@ partial class BaseNukeBuildHelpers
         return entry;
     }
 
-    private AllVersions GetAllVersions(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
+    private AllVersions GetAllVersions(string appId, Dictionary<string, AppEntryConfig> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
     {
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
 
@@ -561,6 +649,7 @@ partial class BaseNukeBuildHelpers
                             pairedVersion = [];
                             commitVersionGrouped.Add(commitId, pairedVersion);
                         }
+                        tagSemver = tagSemver.WithoutMetadata();
                         versionCommitPaired[tagSemver] = commitId;
                         if (!pairedVersion.Contains(tagSemver))
                         {
@@ -683,7 +772,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    internal static void GetOrFail(string appId, Dictionary<string, (AppEntry Entry, List<AppTestEntry> Tests)> appEntryConfigs, out string appIdOut, out (AppEntry Entry, List<AppTestEntry> Tests) appEntryConfig)
+    internal static void GetOrFail(string appId, Dictionary<string, AppEntryConfig> appEntryConfigs, out string appIdOut, out AppEntryConfig appEntryConfig)
     {
         try
         {
@@ -696,10 +785,11 @@ partial class BaseNukeBuildHelpers
             // Fail if appId does not exists in app entries
             if (!string.IsNullOrEmpty(appId))
             {
-                if (!appEntryConfigs.TryGetValue(appId.ToLowerInvariant(), out appEntryConfig))
+                if (!appEntryConfigs.TryGetValue(appId.ToLowerInvariant(), out var aec) || aec == null)
                 {
                     throw new InvalidOperationException($"App id \"{appId}\" does not exists");
                 }
+                appEntryConfig = aec;
             }
             else
             {
@@ -707,22 +797,6 @@ partial class BaseNukeBuildHelpers
             }
 
             appIdOut = appEntryConfig.Entry.Id;
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail(ex.Message, ex);
-            throw;
-        }
-    }
-
-    internal static void GetOrFail(string? rawValue, out SemVersion valOut)
-    {
-        try
-        {
-            if (!SemVersion.TryParse(rawValue, SemVersionStyles.Strict, out valOut))
-            {
-                throw new ArgumentException($"{rawValue} is not a valid semver version");
-            }
         }
         catch (Exception ex)
         {
@@ -871,7 +945,7 @@ partial class BaseNukeBuildHelpers
 
     public async Task StartStatusWatch(bool cancelOnDone = false, params (string AppId, string Environment)[] appIds)
     {
-        GetOrFail(GetAppEntryConfigs, out var appEntryConfigs);
+        GetOrFail(GetAppConfig, out var appConfig);
 
         List<(string Text, HorizontalAlignment Alignment)> headers =
             [
@@ -900,15 +974,15 @@ partial class BaseNukeBuildHelpers
             List<(string AppId, string Environment)> appIdsPassed = [];
             List<(string AppId, string Environment)> appIdsFailed = [];
 
-            foreach (var key in appEntryConfigs.Select(i => i.Key))
+            foreach (var key in appConfig.AppEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
 
-                GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
+                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
                 AllVersions allVersions;
                 try
                 {
-                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out allVersions);
+                    GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out allVersions);
                 }
                 catch
                 {

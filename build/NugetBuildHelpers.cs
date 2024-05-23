@@ -6,6 +6,7 @@ using Nuke.Common.Tools.NuGet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Models.RunContext;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -22,16 +23,25 @@ public class NugetBuildHelpers : AppEntry<Build>
 
     public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
+    public override RunType RunBuildOn =>  RunType.All;
+
+    public override RunType RunPublishOn =>  RunType.All;
+
     [SecretHelper("NUGET_AUTH_TOKEN")]
-    readonly string NuGetAuthToken;
+    readonly string? NuGetAuthToken;
 
     [SecretHelper("GITHUB_TOKEN")]
-    readonly string GithubToken;
+    readonly string? GithubToken;
 
     public override bool RunParallel => false;
 
-    public override void Build()
+    public override void Build(AppRunContext appRunContext)
     {
+        AppVersion? appVersion = null;
+        if (appRunContext is AppPipelineRunContext appPipelineRunContext)
+        {
+            appVersion = appPipelineRunContext.AppVersion;
+        }
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers));
@@ -45,20 +55,23 @@ public class NugetBuildHelpers : AppEntry<Build>
             .SetNoBuild(true)
             .SetIncludeSymbols(true)
             .SetSymbolPackageFormat("snupkg")
-            .SetVersion(NewVersion?.Version?.ToString() ?? "0.0.0")
-            .SetPackageReleaseNotes(NewVersion?.ReleaseNotes)
+            .SetVersion(appVersion?.Version?.ToString() ?? "0.0.0")
+            .SetPackageReleaseNotes(appVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
     }
 
-    public override void Publish()
+    public override void Publish(AppRunContext appRunContext)
     {
-        DotNetTasks.DotNetNuGetPush(_ => _
-            .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-            .SetApiKey(GithubToken)
-            .SetTargetPath(OutputDirectory / "**"));
-        DotNetTasks.DotNetNuGetPush(_ => _
-            .SetSource("https://api.nuget.org/v3/index.json")
-            .SetApiKey(NuGetAuthToken)
-            .SetTargetPath(OutputDirectory / "**"));
+        if (appRunContext.RunType == RunType.Bump)
+        {
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+                .SetApiKey(GithubToken)
+                .SetTargetPath(OutputDirectory / "**"));
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://api.nuget.org/v3/index.json")
+                .SetApiKey(NuGetAuthToken)
+                .SetTargetPath(OutputDirectory / "**"));
+        }
     }
 }

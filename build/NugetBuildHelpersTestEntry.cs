@@ -5,6 +5,7 @@ using NukeBuildHelpers;
 using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
+using NukeBuildHelpers.Models.RunContext;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ public class NugetBuildHelpersTest : AppTestEntry<Build>
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
-    public override void Run()
+    public override void Run(AppTestRunContext appTestRunContext)
     {
         DotNetTasks.DotNetClean(_ => _
             .SetProject(NukeBuild.Solution.NukeBuildHelpers_UnitTest));

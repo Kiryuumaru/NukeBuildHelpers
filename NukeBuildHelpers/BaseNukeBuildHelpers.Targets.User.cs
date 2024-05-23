@@ -38,7 +38,7 @@ partial class BaseNukeBuildHelpers
         .Executes(() =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
@@ -56,12 +56,12 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appEntryConfigs.Select(i => i.Key))
+            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appConfig.AppEntryConfigs.Select(i => i.Key))
             {
                 string appId = key;
 
-                GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
+                GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                 bool firstEntryRow = true;
 
@@ -120,7 +120,7 @@ partial class BaseNukeBuildHelpers
                 Assert.Fail($"{Repository.Branch} is not on environment branches");
             }
 
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
             string currentEnvIdentifier;
             if (Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
@@ -136,12 +136,12 @@ partial class BaseNukeBuildHelpers
 
             List<(AppEntry? AppEntry, AllVersions? AllVersions)> appEntryVersions = [];
 
-            foreach (var pair in appEntryConfigs)
+            foreach (var pair in appConfig.AppEntryConfigs)
             {
                 string appId = pair.Key;
 
-                GetOrFail(appId, appEntryConfigs, out appId, out var appEntryConfig);
-                GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntryConfig);
+                GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                 appEntryVersions.Add((pair.Value.Entry, allVersions));
             }
@@ -318,9 +318,9 @@ partial class BaseNukeBuildHelpers
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
-            await TestAppEntries(appEntries, splitArgs.Select(i => i.Key), null);
+            await TestAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
 
     public Target Build => _ => _
@@ -329,9 +329,9 @@ partial class BaseNukeBuildHelpers
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
-            await BuildAppEntries(appEntries, splitArgs.Select(i => i.Key), null);
+            await BuildAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
 
     public Target Publish => _ => _
@@ -340,9 +340,9 @@ partial class BaseNukeBuildHelpers
         .Executes(async () =>
         {
             GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppEntryConfigs(), out var appEntries);
+            GetOrFail(() => GetAppConfig(), out var appConfig);
 
-            await PublishAppEntries(appEntries, splitArgs.Select(i => i.Key), null);
+            await PublishAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
 
     public Target GithubWorkflow => _ => _

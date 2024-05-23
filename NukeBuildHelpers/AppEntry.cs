@@ -4,6 +4,7 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Models.RunContext;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,13 +20,17 @@ public abstract class AppEntry : Entry
 
     public abstract RunsOnType PublishRunsOn { get; }
 
+    public virtual RunType RunBuildOn { get; } = RunType.Bump;
+
+    public virtual RunType RunPublishOn { get; } = RunType.Bump;
+
     public virtual bool MainRelease { get; } = true;
 
-    public NewVersion? NewVersion { get; internal set; }
+    public virtual void Build(AppRunContext appRunContext) { }
 
-    public virtual void Build() { }
+    public virtual void Publish(AppRunContext appRunContext) { }
 
-    public virtual void Publish() { }
+    internal AppRunContext? AppRunContext { get; set; }
 }
 
 public abstract class AppEntry<TBuild> : AppEntry

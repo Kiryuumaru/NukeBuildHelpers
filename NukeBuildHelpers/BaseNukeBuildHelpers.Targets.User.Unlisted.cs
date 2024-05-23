@@ -39,7 +39,7 @@ partial class BaseNukeBuildHelpers
             else
             {
                 GetOrFail(() => SplitArgs, out var splitArgs);
-                GetOrFail(() => GetAppEntryConfigs(), out var appEntryConfigs);
+                GetOrFail(() => GetAppConfig(), out var appConfig);
 
                 IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -47,8 +47,8 @@ partial class BaseNukeBuildHelpers
                 {
                     string appId = key;
 
-                    GetOrFail(appId, appEntryConfigs, out appId, out var appEntry);
-                    GetOrFail(() => GetAllVersions(appId, appEntryConfigs, ref lsRemote), out var allVersions);
+                    GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
+                    GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                     if (appEntry.Entry.MainRelease)
                     {
