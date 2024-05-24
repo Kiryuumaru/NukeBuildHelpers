@@ -80,7 +80,8 @@ partial class BaseNukeBuildHelpers
                         {
                             published = releasedVersion + "*";
                         }
-                        rows.Add([firstEntryRow ? appId : "", env, bumpedVersion.ToString(), published]);
+                        var bumpedVersionStr = IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
+                        rows.Add([firstEntryRow ? appId : "", env, bumpedVersionStr, published]);
                         firstEntryRow = false;
                     }
                 }

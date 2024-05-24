@@ -39,6 +39,11 @@ partial class BaseNukeBuildHelpers
         (Activator.CreateInstance(typeof(T), this) as IPipeline)!.BuildWorkflow();
     }
 
+    private bool IsVersionEmpty(SemVersion? semVersion)
+    {
+        return semVersion == null || semVersion.Major == 0 && semVersion.Minor == 0 && semVersion.Patch == 0;
+    }
+
     internal void SetupWorkflowBuilder(List<WorkflowBuilder> workflowBuilders, PipelineType pipelineType)
     {
         foreach (var workflowBuilder in workflowBuilders)
@@ -678,6 +683,21 @@ partial class BaseNukeBuildHelpers
         }
 
         List<SemVersion> allVersionList = commitVersionGrouped.SelectMany(i => i.Value).ToList();
+
+        foreach (var env in EnvironmentBranches)
+        {
+            SemVersion semVersion;
+            if (env.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+            {
+                semVersion = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
+            }
+            else
+            {
+                semVersion = SemVersion.Parse($"0.0.0-{env.ToLowerInvariant()}.0", SemVersionStyles.Strict);
+            }
+            allVersionList.Add(semVersion);
+        }
+
         List<long> allBuildIdList = commitBuildIdGrouped.SelectMany(i => i.Value).ToList();
         Dictionary<string, List<SemVersion>> envVersionGrouped = allVersionList
             .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : MainEnvironmentBranch.ToLowerInvariant())
@@ -1213,11 +1233,12 @@ partial class BaseNukeBuildHelpers
                             statusColor = ConsoleColor.DarkGray;
                             allDone = false;
                         }
+                        var bumpedVersionStr = IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
                         rows.Add(
                             [
                                 (firstEntryRow ? appId : "", ConsoleColor.Magenta),
                                 (env, ConsoleColor.Magenta),
-                                (bumpedVersion?.ToString(), ConsoleColor.Magenta),
+                                (bumpedVersionStr, ConsoleColor.Magenta),
                                 (published, statusColor)
                             ]);
                         firstEntryRow = false;
