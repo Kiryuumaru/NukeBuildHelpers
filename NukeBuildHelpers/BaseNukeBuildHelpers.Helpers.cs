@@ -39,18 +39,9 @@ partial class BaseNukeBuildHelpers
         (Activator.CreateInstance(typeof(T), this) as IPipeline)!.BuildWorkflow();
     }
 
-    private string GetCurrentEnvIdentifier()
+    private bool IsVersionEmpty(SemVersion? semVersion)
     {
-        string currentEnvIdentifier;
-        if (Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-        {
-            currentEnvIdentifier = "";
-        }
-        else
-        {
-            currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
-        }
-        return currentEnvIdentifier;
+        return semVersion == null || semVersion.Major == 0 && semVersion.Minor == 0 && semVersion.Patch == 0;
     }
 
     internal void SetupWorkflowBuilder(List<WorkflowBuilder> workflowBuilders, PipelineType pipelineType)
@@ -692,9 +683,24 @@ partial class BaseNukeBuildHelpers
         }
 
         List<SemVersion> allVersionList = commitVersionGrouped.SelectMany(i => i.Value).ToList();
+
+        foreach (var env in EnvironmentBranches)
+        {
+            SemVersion semVersion;
+            if (env.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+            {
+                semVersion = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
+            }
+            else
+            {
+                semVersion = SemVersion.Parse($"0.0.0-{env.ToLowerInvariant()}.0", SemVersionStyles.Strict);
+            }
+            allVersionList.Add(semVersion);
+        }
+
         List<long> allBuildIdList = commitBuildIdGrouped.SelectMany(i => i.Value).ToList();
         Dictionary<string, List<SemVersion>> envVersionGrouped = allVersionList
-            .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : "")
+            .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : MainEnvironmentBranch.ToLowerInvariant())
             .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
 
         Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = [];
@@ -724,7 +730,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    env = "main";
+                    env = MainEnvironmentBranch.ToLowerInvariant();
                     if (!envBuildIdGrouped.TryGetValue(env, out var envBuildIds) || envBuildIds.Count == 0)
                     {
                         continue;
@@ -732,7 +738,7 @@ partial class BaseNukeBuildHelpers
                     var latestVersion = versions.Where(i => !i.IsPrerelease).LastOrDefault();
                     if (latestVersion != null)
                     {
-                        pairedLatests.Add("", (envBuildIds.Max(), latestVersion));
+                        pairedLatests.Add(env, (envBuildIds.Max(), latestVersion));
                     }
                 }
             }
@@ -743,15 +749,13 @@ partial class BaseNukeBuildHelpers
         List<string> envSorted = envVersionGrouped.Select(i => i.Key).ToList();
 
         envSorted.Sort();
-        if (envSorted.Count > 0 && envSorted.First() == "")
+        if (envSorted.Remove(MainEnvironmentBranch.ToLowerInvariant()))
         {
-            var toMove = envSorted.First();
-            envSorted.Remove(toMove);
-            envSorted.Add(toMove);
+            envSorted.Add(MainEnvironmentBranch.ToLowerInvariant());
         }
-        foreach (var groupKey in envSorted)
+        foreach (var env in envSorted)
         {
-            var allVersion = envVersionGrouped[groupKey];
+            var allVersion = envVersionGrouped[env];
             allVersion.Sort(SemVersion.PrecedenceComparer);
         }
 
@@ -975,7 +979,7 @@ partial class BaseNukeBuildHelpers
 
             GetOrFail(() => GetAppConfig(), out var appConfig);
 
-            string currentEnvIdentifier = GetCurrentEnvIdentifier();
+            string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -1059,7 +1063,6 @@ partial class BaseNukeBuildHelpers
                         }
                         
                         // Fail if current branch is not on the proper bump branch
-                        string envIdentifier;
                         string env;
                         if (inputVersion.IsPrerelease)
                         {
@@ -1067,20 +1070,18 @@ partial class BaseNukeBuildHelpers
                             {
                                 return new ValidationResult($"{inputVersion} should bump on {inputVersion.PrereleaseIdentifiers[0]} branch");
                             }
-                            envIdentifier = inputVersion.PrereleaseIdentifiers[0];
                             env = inputVersion.PrereleaseIdentifiers[0];
                         }
                         else
                         {
                             if (!Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                return new ValidationResult($"{inputVersion} should bump on main branch");
+                                return new ValidationResult($"{inputVersion} should bump on {MainEnvironmentBranch.ToLowerInvariant()} branch");
                             }
-                            envIdentifier = "";
-                            env = "main";
+                            env = MainEnvironmentBranch.ToLowerInvariant();
                         }
 
-                        if (appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(envIdentifier, out List<SemVersion>? value))
+                        if (appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(env, out List<SemVersion>? value))
                         {
                             var lastVersion = value.Last();
                             // Fail if the version is already released
@@ -1198,18 +1199,9 @@ partial class BaseNukeBuildHelpers
 
                 if (allVersions.EnvSorted.Count != 0)
                 {
-                    foreach (var groupKey in allVersions.EnvSorted)
+                    foreach (var env in allVersions.EnvSorted)
                     {
-                        string env;
-                        if (string.IsNullOrEmpty(groupKey))
-                        {
-                            env = "main";
-                        }
-                        else
-                        {
-                            env = groupKey;
-                        }
-                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].Last();
+                        var bumpedVersion = allVersions.EnvVersionGrouped[env].Last();
                         string published;
                         if (allVersions.VersionFailed.Contains(bumpedVersion))
                         {
@@ -1241,11 +1233,12 @@ partial class BaseNukeBuildHelpers
                             statusColor = ConsoleColor.DarkGray;
                             allDone = false;
                         }
+                        var bumpedVersionStr = IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
                         rows.Add(
                             [
                                 (firstEntryRow ? appId : "", ConsoleColor.Magenta),
                                 (env, ConsoleColor.Magenta),
-                                (bumpedVersion?.ToString(), ConsoleColor.Magenta),
+                                (bumpedVersionStr, ConsoleColor.Magenta),
                                 (published, statusColor)
                             ]);
                         firstEntryRow = false;

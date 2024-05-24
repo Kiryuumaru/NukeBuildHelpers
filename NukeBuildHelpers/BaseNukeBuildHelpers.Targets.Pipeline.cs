@@ -80,18 +80,7 @@ partial class BaseNukeBuildHelpers
             Log.Information("Target branch: {branch}", pipelineInfo.Branch);
             Log.Information("Trigger type: {branch}", pipelineInfo.TriggerType);
 
-            string envGroupKey;
-            string env;
-            if (pipelineInfo.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-            {
-                envGroupKey = "";
-                env = "main";
-            }
-            else
-            {
-                envGroupKey = pipelineInfo.Branch;
-                env = pipelineInfo.Branch;
-            }
+            string env = pipelineInfo.Branch.ToLowerInvariant();
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -114,20 +103,20 @@ partial class BaseNukeBuildHelpers
                 }
 
                 if (allVersions.EnvSorted.Count != 0 &&
-                    allVersions.EnvVersionGrouped.TryGetValue(envGroupKey, out var versionGroup) && versionGroup.Count > 0)
+                    allVersions.EnvVersionGrouped.TryGetValue(env, out var versionGroup) && versionGroup.Count > 0)
                 {
                     var lastVersionGroup = versionGroup.Last();
 
                     bool hasBumped = false;
 
-                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(envGroupKey, out var value) || value != lastVersionGroup)
+                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out var value) || value != lastVersionGroup)
                     {
                         if (allVersions.VersionBump.Contains(lastVersionGroup) &&
                             !allVersions.VersionQueue.Contains(lastVersionGroup) &&
                             !allVersions.VersionFailed.Contains(lastVersionGroup) &&
                             !allVersions.VersionPassed.Contains(lastVersionGroup))
                         {
-                            allVersions.EnvLatestBuildIdPaired.TryGetValue(envGroupKey, out var allVersionLastId);
+                            allVersions.EnvLatestBuildIdPaired.TryGetValue(env, out var allVersionLastId);
                             targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
                             if (pipelineInfo.TriggerType == TriggerType.Tag)
                             {
@@ -295,7 +284,7 @@ partial class BaseNukeBuildHelpers
                         }
                         var version = SemVersion.Parse(release.Version, SemVersionStyles.Strict).WithoutMetadata();
                         string latestTag = "latest";
-                        if (!release.Environment.Equals("main", StringComparison.InvariantCultureIgnoreCase))
+                        if (!release.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
                         {
                             latestTag += "-" + release.Environment.ToLowerInvariant();
                         }
@@ -329,7 +318,7 @@ partial class BaseNukeBuildHelpers
                         }
                         var version = SemVersion.Parse(release.Version, SemVersionStyles.Strict).WithoutMetadata();
                         string latestTag = "latest";
-                        if (!release.Environment.Equals("main", StringComparison.InvariantCultureIgnoreCase))
+                        if (!release.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
                         {
                             latestTag += "-" + release.Environment.ToLowerInvariant();
                         }
