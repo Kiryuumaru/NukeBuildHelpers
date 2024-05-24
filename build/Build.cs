@@ -17,9 +17,6 @@ public partial class Build : BaseNukeBuildHelpers
 {
     public static int Main () => Execute<Build>(x => x.Version);
 
-    [Solution(GenerateProjects = true)]
-    internal readonly Solution Solution;
-
     public override string[] EnvironmentBranches { get; } = [ "prerelease", "main" ];
 
     public override string MainEnvironmentBranch { get; } = "main";

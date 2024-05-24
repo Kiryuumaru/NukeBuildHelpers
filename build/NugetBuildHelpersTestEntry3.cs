@@ -26,8 +26,8 @@ public class NugetBuildHelpersTest3 : AppTestEntry<Build>
     public override void Run(AppTestRunContext appTestRunContext)
     {
         DotNetTasks.DotNetClean(_ => _
-            .SetProject(NukeBuild.Solution.NukeBuildHelpers_UnitTest));
+            .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
         DotNetTasks.DotNetTest(_ => _
-            .SetProjectFile(NukeBuild.Solution.NukeBuildHelpers_UnitTest));
+            .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
     }
 }

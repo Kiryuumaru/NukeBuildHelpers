@@ -71,6 +71,7 @@
               "AzureWorkflow",
               "Build",
               "Bump",
+              "BumpAndForget",
               "DeleteOriginTags",
               "Fetch",
               "GithubWorkflow",
@@ -86,10 +87,6 @@
             ]
           }
         },
-        "Solution": {
-          "type": "string",
-          "description": "Path to a solution file that is automatically loaded"
-        },
         "Target": {
           "type": "array",
           "description": "List of targets to be invoked. Default is '{default_target}'",
@@ -99,6 +96,7 @@
               "AzureWorkflow",
               "Build",
               "Bump",
+              "BumpAndForget",
               "DeleteOriginTags",
               "Fetch",
               "GithubWorkflow",
