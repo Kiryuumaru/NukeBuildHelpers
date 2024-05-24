@@ -67,19 +67,10 @@ partial class BaseNukeBuildHelpers
 
                 if (allVersions.EnvSorted.Count != 0)
                 {
-                    foreach (var groupKey in allVersions.EnvSorted)
+                    foreach (var env in allVersions.EnvSorted)
                     {
-                        string env;
-                        if (string.IsNullOrEmpty(groupKey))
-                        {
-                            env = "main";
-                        }
-                        else
-                        {
-                            env = groupKey;
-                        }
-                        var bumpedVersion = allVersions.EnvVersionGrouped[groupKey].Last();
-                        allVersions.EnvLatestVersionPaired.TryGetValue(groupKey, out var releasedVersion);
+                        var bumpedVersion = allVersions.EnvVersionGrouped[env].Last();
+                        allVersions.EnvLatestVersionPaired.TryGetValue(env, out var releasedVersion);
                         var published = "yes";
                         if (releasedVersion == null)
                         {
@@ -109,13 +100,11 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Version)
         .Executes(async () =>
         {
-            string currentEnvIdentifier = GetCurrentEnvIdentifier();
-
             var appEntryVersionsToBump = await StartBump();
 
             Console.WriteLine();
 
-            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, currentEnvIdentifier)).ToArray());
+            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, Repository.Branch.ToLowerInvariant())).ToArray());
         });
 
     public Target BumpAndForget => _ => _
