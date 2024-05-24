@@ -124,19 +124,21 @@ build bump
 ║                      ║    main     ║ 2.0.0              ║         yes         ║
 ║----------------------║-------------║--------------------║---------------------║
 ║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
+║                      ║    main     ║ -                  ║         no          ║
 ╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
 ```
 
 - The `StatusWatch` subcommand continuously monitors the version status. Example output from the subcommand:
 ```
-╬══════════════════════╬═════════════╬════════════════════╬════════════╬
-║        App Id        ║ Environment ║      Version       ║   Status   ║
-╬══════════════════════╬═════════════╬════════════════════╬════════════╬
-║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.2 ║  Published ║
-║                      ║    main     ║ 2.0.0              ║  Published ║
-║----------------------║-------------║--------------------║------------║
-║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║ Run Failed ║
-╬══════════════════════╬═════════════╬════════════════════╬════════════╬
+╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
+║        App Id        ║ Environment ║      Version       ║    Status     ║
+╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
+║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
+║                      ║    main     ║ 2.0.0              ║   Published   ║
+║----------------------║-------------║--------------------║---------------║
+║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
+║                      ║    main     ║ -                  ║ Not published ║
+╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
 ```
 
 Status types include:
