@@ -44,12 +44,12 @@ public class NugetBuildHelpers : AppEntry<Build>
         }
         OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
-            .SetProject(NukeBuild.Solution.NukeBuildHelpers));
+            .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
         DotNetTasks.DotNetBuild(_ => _
-            .SetProjectFile(NukeBuild.Solution.NukeBuildHelpers)
+            .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
             .SetConfiguration("Release"));
         DotNetTasks.DotNetPack(_ => _
-            .SetProject(NukeBuild.Solution.NukeBuildHelpers)
+            .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
             .SetConfiguration("Release")
             .SetNoRestore(true)
             .SetNoBuild(true)
