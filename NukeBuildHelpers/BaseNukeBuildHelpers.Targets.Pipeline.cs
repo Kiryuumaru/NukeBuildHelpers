@@ -102,8 +102,6 @@ partial class BaseNukeBuildHelpers
                     lastBuildId = Math.Max(maxBuildId, lastBuildId);
                 }
 
-                Log.Information("{appId} scsc: {current}", allVersions.EnvSorted.Count, allVersions.EnvVersionGrouped.Count);
-
                 if (allVersions.EnvSorted.Count != 0 &&
                     allVersions.EnvVersionGrouped.TryGetValue(env, out var versionGroup) && versionGroup.Count > 0)
                 {
