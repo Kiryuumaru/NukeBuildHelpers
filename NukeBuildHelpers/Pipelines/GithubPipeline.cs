@@ -189,7 +189,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void BuildWorkflow()
     {
-        BaseNukeBuildHelpers.GetOrFail(BaseNukeBuildHelpers.GetAppConfig, out var appConfig);
+        BaseNukeBuildHelpers.GetOrFail(NukeBuild.GetAppConfig, out var appConfig);
 
         List<WorkflowBuilder> workflowBuilders = [.. BaseNukeBuildHelpers.GetInstances<WorkflowBuilder>().OrderByDescending(i => i.Priority)];
 

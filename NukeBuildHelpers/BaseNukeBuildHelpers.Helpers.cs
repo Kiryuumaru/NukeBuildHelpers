@@ -28,20 +28,41 @@ using System.Linq;
 using Sharprompt;
 using NukeBuildHelpers.Models.RunContext;
 using System.ComponentModel.DataAnnotations;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    private static void CheckEnvironementBranches(BaseNukeBuildHelpers baseNukeBuildHelpers)
+    {
+        HashSet<string> set = [];
+
+        foreach (string env in baseNukeBuildHelpers.EnvironmentBranches.Select(i => i.ToLowerInvariant()))
+        {
+            if (!set.Add(env))
+            {
+                throw new Exception($"Duplicate environment branch \"{env}\"");
+            }
+        }
+
+        if (!set.Contains(baseNukeBuildHelpers.MainEnvironmentBranch.ToLowerInvariant()))
+        {
+            throw new Exception($"MainEnvironmentBranch \"{baseNukeBuildHelpers.MainEnvironmentBranch}\" does not exists in EnvironmentBranches");
+        }
+    }
+
+    private static bool IsVersionEmpty(SemVersion? semVersion)
+    {
+        return semVersion == null || semVersion.Major == 0 && semVersion.Minor == 0 && semVersion.Patch == 0;
+    }
+
+    private void CheckEnvironementBranches() => CheckEnvironementBranches(this);
+
     private void BuildWorkflow<T>()
         where T : IPipeline
     {
         (Activator.CreateInstance(typeof(T), this) as IPipeline)!.BuildWorkflow();
-    }
-
-    private bool IsVersionEmpty(SemVersion? semVersion)
-    {
-        return semVersion == null || semVersion.Major == 0 && semVersion.Minor == 0 && semVersion.Patch == 0;
     }
 
     internal void SetupWorkflowBuilder(List<WorkflowBuilder> workflowBuilders, PipelineType pipelineType)
@@ -396,8 +417,10 @@ partial class BaseNukeBuildHelpers
         return instances;
     }
 
-    internal static AppConfig GetAppConfig()
+    internal AppConfig GetAppConfig()
     {
+        CheckEnvironementBranches();
+
         Dictionary<string, AppEntryConfig> appEntryConfigs = [];
 
         bool hasMainReleaseEntry = false;
@@ -525,6 +548,8 @@ partial class BaseNukeBuildHelpers
 
     private AllVersions GetAllVersions(string appId, Dictionary<string, AppEntryConfig> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
     {
+        CheckEnvironementBranches();
+
         GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
 
         string basePeel = "refs/tags/";
