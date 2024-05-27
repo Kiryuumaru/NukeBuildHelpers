@@ -124,7 +124,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             });
         }
 
-        foreach (var toPublish in preSetupOutput.ToTest)
+        foreach (var toPublish in preSetupOutput.ToPublish)
         {
             if (!appConfig.AppEntries.TryGetValue(toPublish, out var appEntry))
             {
