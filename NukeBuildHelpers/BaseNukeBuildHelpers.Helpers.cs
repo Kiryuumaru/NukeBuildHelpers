@@ -1,34 +1,20 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
-using System.Text.Json;
-using NuGet.Packaging;
-using System.Text.Json.Nodes;
 using NukeBuildHelpers.Models;
 using Semver;
 using Serilog;
-using YamlDotNet.Core.Tokens;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Common;
-using System.Runtime.CompilerServices;
 using System.Reflection;
 using Microsoft.Extensions.DependencyModel;
 using Nuke.Common.Tooling;
-using Octokit;
-using NukeBuildHelpers.Attributes;
-using System.Collections.Generic;
 using Nuke.Common.Utilities;
-using System.Net.Sockets;
-using YamlDotNet.Serialization;
 using NukeBuildHelpers.Interfaces;
 using Nuke.Common.CI.AzurePipelines;
 using Nuke.Common.CI.GitHubActions;
-using ICSharpCode.SharpZipLib.Zip;
-using System;
-using System.Linq;
 using Sharprompt;
 using NukeBuildHelpers.Models.RunContext;
 using System.ComponentModel.DataAnnotations;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NukeBuildHelpers;
 
@@ -112,9 +98,9 @@ partial class BaseNukeBuildHelpers
             if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
                 testSecretMap.EntryType == appTestEntry.GetType())
             {
-                foreach (var secret in testSecretMap.SecretHelpers)
+                foreach (var secret in testSecretMap.Secrets)
                 {
-                    var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? "NUKE_" + secret.SecretHelper.SecretVariableName : secret.SecretHelper.EnvironmentVariableName;
+                    var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? "NUKE_" + secret.Secret.SecretVariableName : secret.Secret.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
                     secret.MemberInfo.SetValue(appTestEntry, secretValue);
                 }
@@ -166,9 +152,9 @@ partial class BaseNukeBuildHelpers
             if (appEntrySecretMap.TryGetValue(appEntry.Value.Id, out var appSecretMap) &&
                 appSecretMap.EntryType == appEntry.Value.GetType())
             {
-                foreach (var secret in appSecretMap.SecretHelpers)
+                foreach (var secret in appSecretMap.Secrets)
                 {
-                    var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? "NUKE_" + secret.SecretHelper.SecretVariableName : secret.SecretHelper.EnvironmentVariableName;
+                    var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? "NUKE_" + secret.Secret.SecretVariableName : secret.Secret.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
                     secret.MemberInfo.SetValue(appEntry.Value, secretValue);
                 }
@@ -498,7 +484,7 @@ partial class BaseNukeBuildHelpers
         };
     }
 
-    internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> GetEntrySecretMap<T>()
+    internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretAttribute Secret)> Secrets)> GetEntrySecretMap<T>()
         where T : Entry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
@@ -507,14 +493,14 @@ partial class BaseNukeBuildHelpers
             .SelectMany(t => t.GetTypes())
             .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.ContainsGenericParameters);
 
-        Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> entry = [];
+        Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretAttribute Secret)> Secrets)> entry = [];
         foreach (Type type in allTypes)
         {
             foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 foreach (object attr in prop.GetCustomAttributes(true))
                 {
-                    if (attr is SecretHelperAttribute secretHelperAttr)
+                    if (attr is Attributes.SecretAttribute SecretAttr)
                     {
                         var id = ((T)Activator.CreateInstance(type)!).Id;
                         if (!entry.TryGetValue(id, out var secrets))
@@ -522,7 +508,7 @@ partial class BaseNukeBuildHelpers
                             secrets = (type, []);
                             entry.Add(id, secrets);
                         }
-                        secrets.SecretHelpers.Add((prop, secretHelperAttr));
+                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretAttribute))(prop, SecretAttr));
                     }
                 }
             }
@@ -530,7 +516,7 @@ partial class BaseNukeBuildHelpers
             {
                 foreach (object attr in field.GetCustomAttributes(true))
                 {
-                    if (attr is SecretHelperAttribute secretHelperAttr)
+                    if (attr is Attributes.SecretAttribute SecretAttr)
                     {
                         var id = ((T)Activator.CreateInstance(type)!).Id;
                         if (!entry.TryGetValue(id, out var secrets))
@@ -538,7 +524,7 @@ partial class BaseNukeBuildHelpers
                             secrets = (type, []);
                             entry.Add(id, secrets);
                         }
-                        secrets.SecretHelpers.Add((field, secretHelperAttr));
+                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretAttribute))(field, SecretAttr));
                     }
                 }
             }

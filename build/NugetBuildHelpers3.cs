@@ -1,19 +1,13 @@
-﻿using Nuke.Common;
-using Nuke.Common.IO;
+﻿using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models.RunContext;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace _build;
 
-public class NugetBuildHelpers3 : AppEntry<Build>
+class NugetBuildHelpers3 : AppEntry<Build>
 {
     public override RunsOnType BuildRunsOn => RunsOnType.Windows2022;
 

@@ -1,28 +1,12 @@
-﻿using ICSharpCode.SharpZipLib.Zip;
-using Nuke.Common;
-using Nuke.Common.CI.GitHubActions;
-using Nuke.Common.Git;
+﻿using Nuke.Common;
 using Nuke.Common.IO;
-using Nuke.Common.Tooling;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Utilities;
-using Nuke.Common.Utilities.Collections;
-using Nuke.Utilities.Text.Yaml;
-using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Interfaces;
 using NukeBuildHelpers.Models;
-using Octokit;
-using Semver;
 using Serilog;
-using Serilog.Events;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
-using YamlDotNet.Core.Tokens;
-using YamlDotNet.RepresentationModel;
-using YamlDotNet.Serialization;
 
 namespace NukeBuildHelpers;
 
@@ -486,14 +470,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)value)[envVarName] = envVarValue;
     }
 
-    private static void AddJobOrStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretHelperAttribute SecretHelper)> SecretHelpers)> secretMap)
+    private static void AddJobOrStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretAttribute Secret)> Secrets)> secretMap)
     {
         foreach (var map in secretMap)
         {
-            foreach (var secret in map.Value.SecretHelpers)
+            foreach (var secret in map.Value.Secrets)
             {
-                var envVarName = string.IsNullOrEmpty(secret.SecretHelper.EnvironmentVariableName) ? $"NUKE_{secret.SecretHelper.SecretVariableName}" : secret.SecretHelper.EnvironmentVariableName;
-                AddJobOrStepEnvVar(jobOrStep, envVarName, $"${{{{ secrets.{secret.SecretHelper.SecretVariableName} }}}}");
+                var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? $"NUKE_{secret.Secret.SecretVariableName}" : secret.Secret.EnvironmentVariableName;
+                AddJobOrStepEnvVar(jobOrStep, envVarName, $"${{{{ secrets.{secret.Secret.SecretVariableName} }}}}");
             }
         }
     }

@@ -1,13 +1,6 @@
 ﻿using Nuke.Common;
-using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Git;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Utilities;
-using Octokit;
-using Semver;
-using Serilog;
-using System.Text.Json;
 
 namespace NukeBuildHelpers;
 
