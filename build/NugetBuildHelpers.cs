@@ -18,10 +18,10 @@ class NugetBuildHelpers : AppEntry<Build>
 
     public override RunType RunPublishOn =>  RunType.All;
 
-    [Secret("NUGET_AUTH_TOKEN")]
+    [SecretVariable("NUGET_AUTH_TOKEN")]
     readonly string? NuGetAuthToken;
 
-    [Secret("GITHUB_TOKEN")]
+    [SecretVariable("GITHUB_TOKEN")]
     readonly string? GithubToken;
 
     public override bool RunParallel => false;

@@ -484,7 +484,7 @@ partial class BaseNukeBuildHelpers
         };
     }
 
-    internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretAttribute Secret)> Secrets)> GetEntrySecretMap<T>()
+    internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretVariableAttribute Secret)> Secrets)> GetEntrySecretMap<T>()
         where T : Entry
     {
         var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
@@ -493,14 +493,14 @@ partial class BaseNukeBuildHelpers
             .SelectMany(t => t.GetTypes())
             .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.ContainsGenericParameters);
 
-        Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretAttribute Secret)> Secrets)> entry = [];
+        Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretVariableAttribute Secret)> Secrets)> entry = [];
         foreach (Type type in allTypes)
         {
             foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 foreach (object attr in prop.GetCustomAttributes(true))
                 {
-                    if (attr is Attributes.SecretAttribute SecretAttr)
+                    if (attr is Attributes.SecretVariableAttribute SecretAttr)
                     {
                         var id = ((T)Activator.CreateInstance(type)!).Id;
                         if (!entry.TryGetValue(id, out var secrets))
@@ -508,7 +508,7 @@ partial class BaseNukeBuildHelpers
                             secrets = (type, []);
                             entry.Add(id, secrets);
                         }
-                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretAttribute))(prop, SecretAttr));
+                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretVariableAttribute))(prop, SecretAttr));
                     }
                 }
             }
@@ -516,7 +516,7 @@ partial class BaseNukeBuildHelpers
             {
                 foreach (object attr in field.GetCustomAttributes(true))
                 {
-                    if (attr is Attributes.SecretAttribute SecretAttr)
+                    if (attr is Attributes.SecretVariableAttribute SecretAttr)
                     {
                         var id = ((T)Activator.CreateInstance(type)!).Id;
                         if (!entry.TryGetValue(id, out var secrets))
@@ -524,7 +524,7 @@ partial class BaseNukeBuildHelpers
                             secrets = (type, []);
                             entry.Add(id, secrets);
                         }
-                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretAttribute))(field, SecretAttr));
+                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretVariableAttribute))(field, SecretAttr));
                     }
                 }
             }
