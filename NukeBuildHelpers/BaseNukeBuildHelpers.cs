@@ -1,18 +1,7 @@
-﻿using ICSharpCode.SharpZipLib.Zip;
-using Nuke.Common;
-using Nuke.Common.CI.AzurePipelines;
-using Nuke.Common.CI.GitHubActions;
+﻿using Nuke.Common;
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Utilities;
-using Nuke.Common.Utilities.Collections;
-using NukeBuildHelpers.Models;
-using Octokit;
-using Semver;
-using Serilog;
-using System.Text.Json;
 
 namespace NukeBuildHelpers;
 

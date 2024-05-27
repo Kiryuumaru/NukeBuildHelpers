@@ -1,24 +1,7 @@
-﻿using ICSharpCode.SharpZipLib.Zip;
-using Microsoft.Extensions.DependencyModel;
-using Nuke.Common;
-using Nuke.Common.Git;
-using Nuke.Common.IO;
+﻿using Nuke.Common;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Utilities;
-using Nuke.Common.Utilities.Collections;
-using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Models;
-using Octokit;
-using Semver;
 using Serilog;
-using Serilog.Events;
-using Sharprompt;
-using System.ComponentModel.DataAnnotations;
-using System.Reflection;
-using System.Text.Json;
-using YamlDotNet.Core.Tokens;
 
 namespace NukeBuildHelpers;
 
