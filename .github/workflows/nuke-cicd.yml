@@ -25,6 +25,15 @@ jobs:
     - id: NUKE_PRE_SETUP_HAS_ENTRIES
       name: Output NUKE_PRE_SETUP_HAS_ENTRIES
       run: echo "NUKE_PRE_SETUP_HAS_ENTRIES=$(cat ./.nuke/temp/pre_setup_has_entries.txt)" >> $GITHUB_OUTPUT
+    - id: NUKE_PRE_SETUP_HAS_TEST
+      name: Output NUKE_PRE_SETUP_HAS_TEST
+      run: echo "NUKE_PRE_SETUP_HAS_TEST=$(cat ./.nuke/temp/pre_setup_has_test.txt)" >> $GITHUB_OUTPUT
+    - id: NUKE_PRE_SETUP_HAS_BUILD
+      name: Output NUKE_PRE_SETUP_HAS_BUILD
+      run: echo "NUKE_PRE_SETUP_HAS_BUILD=$(cat ./.nuke/temp/pre_setup_has_build.txt)" >> $GITHUB_OUTPUT
+    - id: NUKE_PRE_SETUP_HAS_PUBLISH
+      name: Output NUKE_PRE_SETUP_HAS_PUBLISH
+      run: echo "NUKE_PRE_SETUP_HAS_PUBLISH=$(cat ./.nuke/temp/pre_setup_has_publish.txt)" >> $GITHUB_OUTPUT
     - id: NUKE_PRE_SETUP_OUTPUT
       name: Output NUKE_PRE_SETUP_OUTPUT
       run: echo "NUKE_PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
@@ -42,6 +51,9 @@ jobs:
     outputs:
       NUKE_PRE_SETUP_HAS_RELEASE: ${{ steps.NUKE_PRE_SETUP_HAS_RELEASE.outputs.NUKE_PRE_SETUP_HAS_RELEASE }}
       NUKE_PRE_SETUP_HAS_ENTRIES: ${{ steps.NUKE_PRE_SETUP_HAS_ENTRIES.outputs.NUKE_PRE_SETUP_HAS_ENTRIES }}
+      NUKE_PRE_SETUP_HAS_TEST: ${{ steps.NUKE_PRE_SETUP_HAS_TEST.outputs.NUKE_PRE_SETUP_HAS_TEST }}
+      NUKE_PRE_SETUP_HAS_BUILD: ${{ steps.NUKE_PRE_SETUP_HAS_BUILD.outputs.NUKE_PRE_SETUP_HAS_BUILD }}
+      NUKE_PRE_SETUP_HAS_PUBLISH: ${{ steps.NUKE_PRE_SETUP_HAS_PUBLISH.outputs.NUKE_PRE_SETUP_HAS_PUBLISH }}
       NUKE_PRE_SETUP_OUTPUT: ${{ steps.NUKE_PRE_SETUP_OUTPUT.outputs.NUKE_PRE_SETUP_OUTPUT }}
       NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
