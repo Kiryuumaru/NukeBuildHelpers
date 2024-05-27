@@ -69,6 +69,7 @@ jobs:
       if: ${{ matrix.id != 'skip' }}
     needs:
     - pre_setup
+    if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
@@ -97,7 +98,7 @@ jobs:
     needs:
     - pre_setup
     - test
-    if: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}
+    if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
@@ -126,7 +127,7 @@ jobs:
     - pre_setup
     - test
     - build
-    if: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_HAS_ENTRIES == 'true' }}
+    if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
