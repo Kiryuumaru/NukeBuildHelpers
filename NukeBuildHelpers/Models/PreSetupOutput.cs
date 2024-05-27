@@ -19,9 +19,15 @@ internal class PreSetupOutput
 
     public required TriggerType TriggerType { get; init; }
 
+    public required bool HasRelease { get; init; }
+
     public required bool HasEntries { get; init; }
 
-    public required bool HasRelease { get; init; }
+    public required bool HasTest { get; init; }
+
+    public required bool HasBuild { get; init; }
+
+    public required bool HasPublish { get; init; }
 
     public required string ReleaseNotes { get; init; }
 
@@ -34,4 +40,10 @@ internal class PreSetupOutput
     public required string Environment { get; init; }
 
     public required Dictionary<string, PreSetupOutputVersion> Entries { get; init; }
+
+    public required List<string> ToTest { get; init; }
+
+    public required List<string> ToBuild { get; init; }
+
+    public required List<string> ToPublish { get; init; }
 }

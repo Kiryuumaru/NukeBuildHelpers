@@ -222,24 +222,78 @@ partial class BaseNukeBuildHelpers
                 }
                 releaseNotes = releaseNotesFromProp;
             }
-                
+
+            List<string> toTest = [];
+            List<string> toBuild = [];
+            List<string> toPublish = [];
+
+            bool hasTest = false;
+            bool hasBuild = false;
+            bool hasPublish = false;
+
+            foreach (var appEntryConfig in appConfig.AppEntryConfigs.Values)
+            {
+                if (!toEntry.TryGetValue(appEntryConfig.Entry.Id, out var entry))
+                {
+                    continue;
+                }
+                if ((pipelineInfo.TriggerType == TriggerType.PullRequest && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.PullRequest)) ||
+                    (pipelineInfo.TriggerType == TriggerType.Commit && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.Commit)) ||
+                    (pipelineInfo.TriggerType == TriggerType.Tag && appEntryConfig.Entry.RunBuildOn.HasFlag(RunType.Bump) && entry.HasRelease))
+                {
+                    toBuild.Add(appEntryConfig.Entry.Id);
+                    hasBuild = true;
+                }
+                if ((pipelineInfo.TriggerType == TriggerType.PullRequest && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.PullRequest)) ||
+                    (pipelineInfo.TriggerType == TriggerType.Commit && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.Commit)) ||
+                    (pipelineInfo.TriggerType == TriggerType.Tag && appEntryConfig.Entry.RunPublishOn.HasFlag(RunType.Bump) && entry.HasRelease))
+                {
+                    toPublish.Add(appEntryConfig.Entry.Id);
+                    hasPublish = true;
+                }
+            }
+
+            foreach (var appTestEntry in appConfig.AppTestEntries.Values)
+            {
+                var appEntry = appConfig.AppEntries.Values.FirstOrDefault(i => appTestEntry.AppEntryTargets.Contains(i.GetType()));
+                if (appEntry == null)
+                {
+                    continue;
+                }
+                if (appTestEntry.RunTestOn == RunTestType.All ||
+                    ((toBuild.Any(i => i == appEntry.Id) || toBuild.Any(i => i == appEntry.Id)) && appTestEntry.RunTestOn.HasFlag(RunTestType.Target)))
+                {
+                    toTest.Add(appTestEntry.Id);
+                    hasTest = true;
+                }
+            }
+
             PreSetupOutput output = new()
             {
                 Branch = pipelineInfo.Branch,
                 TriggerType = pipelineInfo.TriggerType,
                 Environment = env,
-                HasEntries = hasEntries,
                 HasRelease = hasRelease,
+                HasEntries = hasEntries,
+                HasTest = hasTest,
+                HasBuild = hasBuild,
+                HasPublish = hasPublish,
                 ReleaseNotes = releaseNotes,
                 IsFirstRelease = isFirstRelease,
                 BuildId = buildId,
                 LastBuildId = targetBuildId,
                 Entries = entries,
+                ToTest = toTest,
+                ToBuild = toBuild,
+                ToPublish = toPublish,
             };
 
             File.WriteAllText(TemporaryDirectory / "pre_setup_output.json", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOption));
-            File.WriteAllText(TemporaryDirectory / "pre_setup_has_entries.txt", hasEntries ? "true" : "false");
             File.WriteAllText(TemporaryDirectory / "pre_setup_has_release.txt", hasRelease ? "true" : "false");
+            File.WriteAllText(TemporaryDirectory / "pre_setup_has_entries.txt", hasEntries ? "true" : "false");
+            File.WriteAllText(TemporaryDirectory / "pre_setup_has_test.txt", hasTest ? "true" : "false");
+            File.WriteAllText(TemporaryDirectory / "pre_setup_has_build.txt", hasBuild ? "true" : "false");
+            File.WriteAllText(TemporaryDirectory / "pre_setup_has_publish.txt", hasPublish ? "true" : "false");
 
             Log.Information("NUKE_PRE_SETUP_OUTPUT: {output}", JsonSerializer.Serialize(output, JsonExtension.SnakeCaseNamingOptionIndented));
 
