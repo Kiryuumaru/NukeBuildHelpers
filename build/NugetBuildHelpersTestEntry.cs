@@ -10,8 +10,6 @@ class NugetBuildHelpersTest : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.WindowsLatest;
 
-    public override bool RunParallel => false;
-
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
     public override void Run(AppTestRunContext appTestRunContext)

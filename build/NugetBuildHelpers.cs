@@ -24,7 +24,7 @@ class NugetBuildHelpers : AppEntry<Build>
     [SecretVariable("GITHUB_TOKEN")]
     readonly string? GithubToken;
 
-    public override bool RunParallel => false;
+    public override bool MainRelease => true;
 
     public override void Build(AppRunContext appRunContext)
     {

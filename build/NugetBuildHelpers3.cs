@@ -17,10 +17,6 @@ class NugetBuildHelpers3 : AppEntry<Build>
 
     public override RunType RunPublishOn => RunType.Commit;
 
-    public override bool MainRelease => false;
-
-    public override bool RunParallel => false;
-
     public override void Build(AppRunContext appRunContext)
     {
         AppVersion? appVersion = null;
