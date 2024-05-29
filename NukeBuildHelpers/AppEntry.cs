@@ -13,7 +13,7 @@ public abstract class AppEntry : Entry
 
     public virtual RunType RunPublishOn { get; } = RunType.Bump;
 
-    public virtual bool MainRelease { get; } = true;
+    public virtual bool MainRelease { get; } = false;
 
     public virtual void Build(AppRunContext appRunContext) { }
 
