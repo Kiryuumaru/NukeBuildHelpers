@@ -290,10 +290,12 @@ partial class BaseNukeBuildHelpers
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
+        OutputDirectory.DeleteDirectory();
+        OutputDirectory.CreateDirectory();
+
         if (preSetupOutput != null)
         {
-            Directory.CreateDirectory(OutputDirectory);
-            File.WriteAllText(OutputDirectory / "notes.md", preSetupOutput.ReleaseNotes);
+            (OutputDirectory / "notes.md").WriteAllText(preSetupOutput.ReleaseNotes);
         }
 
         foreach (var appEntry in appConfig.AppEntries)
