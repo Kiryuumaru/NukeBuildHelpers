@@ -12,8 +12,6 @@ class NugetBuildHelpersTest4 : AppTestEntry<Build>
 
     public override RunTestType RunTestOn => RunTestType.Target;
 
-    public override bool RunParallel => false;
-
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers3)];
 
     public override void Run(AppTestRunContext appTestRunContext)

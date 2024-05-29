@@ -17,10 +17,6 @@ class NugetBuildHelpers2 : AppEntry<Build>
 
     public override RunType RunPublishOn => RunType.None;
 
-    public override bool MainRelease => false;
-
-    public override bool RunParallel => false;
-
     public override void Build(AppRunContext appRunContext)
     {
         AppVersion? appVersion = null;
