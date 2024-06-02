@@ -1,6 +1,6 @@
 ﻿using NukeBuildHelpers.Models;
 
-namespace NukeBuildHelpers.Interfaces;
+namespace NukeBuildHelpers.Pipelines.Interfaces;
 
 internal interface IPipeline
 {

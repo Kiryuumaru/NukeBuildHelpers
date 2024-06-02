@@ -1,4 +1,4 @@
-﻿namespace NukeBuildHelpers.Common;
+﻿namespace NukeBuildHelpers.ConsoleInterface;
 
 public static class ConsoleHelpers
 {
