@@ -42,10 +42,10 @@ public class NugetBuildHelpers : AppEntry<Build>
     public override RunsOnType BuildRunsOn => RunsOnType.Ubuntu2204;
     public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
 
-    [Secret("NUGET_AUTH_TOKEN")]
+    [SecretVariable("NUGET_AUTH_TOKEN")]
     readonly string? NuGetAuthToken;
 
-    [Secret("GITHUB_TOKEN")]
+    [SecretVariable("GITHUB_TOKEN")]
     readonly string? GithubToken;
 
     public override void Build(AppRunContext appRunContext)
