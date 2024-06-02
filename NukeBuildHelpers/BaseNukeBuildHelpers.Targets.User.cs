@@ -79,6 +79,18 @@ partial class BaseNukeBuildHelpers
             LogInfoTable(headers, [.. rows]);
         });
 
+    public Target Release => _ => _
+        .Description("Release the version by validating and create a release pull request")
+        .DependsOn(Version)
+        .Executes(async () =>
+        {
+            var appEntryVersionsToBump = await StartBump();
+
+            Console.WriteLine();
+
+            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, Repository.Branch.ToLowerInvariant())).ToArray());
+        });
+
     public Target Bump => _ => _
         .Description("Bumps the version by validating and tagging")
         .DependsOn(Version)
