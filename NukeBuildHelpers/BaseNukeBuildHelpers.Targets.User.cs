@@ -1,6 +1,10 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Tooling;
+using NukeBuildHelpers.Common;
+using NukeBuildHelpers.ConsoleInterface;
+using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Pipelines.Common;
 using Serilog;
 
 namespace NukeBuildHelpers;
@@ -11,6 +15,8 @@ partial class BaseNukeBuildHelpers
         .Description("Fetch git commits and tags")
         .Executes(() =>
         {
+            CheckEnvironementBranches();
+
             Log.Information("Fetching...");
             Git.Invoke("fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
         });
@@ -20,22 +26,22 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Fetch)
         .Executes(() =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
 
-            List<(string Text, HorizontalAlignment Alignment)> headers =
+            ConsoleTableHeader[] headers =
                 [
                     ("App Id", HorizontalAlignment.Right),
                     ("Environment", HorizontalAlignment.Center),
                     ("Bumped Version", HorizontalAlignment.Right),
                     ("Published", HorizontalAlignment.Center)
                 ];
-            List<List<string?>> rows = [];
-
-            Console.WriteLine();
+            List<ConsoleTableRow> rows = [];
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -43,8 +49,8 @@ partial class BaseNukeBuildHelpers
             {
                 string appId = key;
 
-                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
-                GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+                ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
+                ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                 bool firstEntryRow = true;
 
@@ -63,20 +69,22 @@ partial class BaseNukeBuildHelpers
                         {
                             published = releasedVersion + "*";
                         }
-                        var bumpedVersionStr = IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
-                        rows.Add([firstEntryRow ? appId : "", env, bumpedVersionStr, published]);
+                        var bumpedVersionStr = SemverHelpers.IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
+                        rows.Add(ConsoleTableRow.FromValue([firstEntryRow ? appId : "", env, bumpedVersionStr, published]));
                         firstEntryRow = false;
                     }
                 }
                 else
                 {
-                    rows.Add([appId, null, null, "no"]);
+                    rows.Add(ConsoleTableRow.FromValue([appId, default(string), default(string), "no"]));
                 }
-                rows.Add(["-", "-", "-", "-"]);
+                rows.Add(ConsoleTableRow.Separator);
             }
             rows.RemoveAt(rows.Count - 1);
 
-            LogInfoTable(headers, [.. rows]);
+            Console.WriteLine();
+
+            ConsoleTableHelpers.LogInfoTable(headers, [.. rows]);
         });
 
     public Target Release => _ => _
@@ -96,6 +104,8 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Version)
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             var appEntryVersionsToBump = await StartBump();
 
             Console.WriteLine();
@@ -108,6 +118,8 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Version)
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             await StartBump();
         });
 
@@ -115,6 +127,8 @@ partial class BaseNukeBuildHelpers
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
 
@@ -127,8 +141,10 @@ partial class BaseNukeBuildHelpers
         .Description("Test, with --args \"{appid}\"")
         .Executes(async () =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await TestAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
@@ -138,8 +154,10 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Test)
         .Executes(async () =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await BuildAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
@@ -149,17 +167,29 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Build)
         .Executes(async () =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await PublishAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
 
     public Target GithubWorkflow => _ => _
         .Description("Builds the cicd workflow for github")
-        .Executes(BuildWorkflow<GithubPipeline>);
+        .Executes(() =>
+        {
+            CheckEnvironementBranches();
+
+            PipelineHelpers.BuildWorkflow<GithubPipeline>(this);
+        });
 
     public Target AzureWorkflow => _ => _
         .Description("Builds the cicd workflow for azure")
-        .Executes(BuildWorkflow<AzurePipeline>);
+        .Executes(() =>
+        {
+            CheckEnvironementBranches();
+
+            PipelineHelpers.BuildWorkflow<AzurePipeline>(this);
+        });
 }

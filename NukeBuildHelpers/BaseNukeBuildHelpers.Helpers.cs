@@ -9,22 +9,24 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Utilities;
-using NukeBuildHelpers.Interfaces;
 using Nuke.Common.CI.AzurePipelines;
 using Nuke.Common.CI.GitHubActions;
 using Sharprompt;
 using NukeBuildHelpers.Models.RunContext;
 using System.ComponentModel.DataAnnotations;
+using NukeBuildHelpers.ConsoleInterface;
+using NukeBuildHelpers.ConsoleInterface.Models;
+using NukeBuildHelpers.Pipelines.Interfaces;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private static void CheckEnvironementBranches(BaseNukeBuildHelpers baseNukeBuildHelpers)
+    internal void CheckEnvironementBranches()
     {
         HashSet<string> set = [];
 
-        foreach (string env in baseNukeBuildHelpers.EnvironmentBranches.Select(i => i.ToLowerInvariant()))
+        foreach (string env in EnvironmentBranches.Select(i => i.ToLowerInvariant()))
         {
             if (!set.Add(env))
             {
@@ -32,23 +34,10 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        if (!set.Contains(baseNukeBuildHelpers.MainEnvironmentBranch.ToLowerInvariant()))
+        if (!set.Contains(MainEnvironmentBranch.ToLowerInvariant()))
         {
-            throw new Exception($"MainEnvironmentBranch \"{baseNukeBuildHelpers.MainEnvironmentBranch}\" does not exists in EnvironmentBranches");
+            throw new Exception($"MainEnvironmentBranch \"{MainEnvironmentBranch}\" does not exists in EnvironmentBranches");
         }
-    }
-
-    private static bool IsVersionEmpty(SemVersion? semVersion)
-    {
-        return semVersion == null || semVersion.Major == 0 && semVersion.Minor == 0 && semVersion.Patch == 0;
-    }
-
-    private void CheckEnvironementBranches() => CheckEnvironementBranches(this);
-
-    private void BuildWorkflow<T>()
-        where T : IPipeline
-    {
-        (Activator.CreateInstance(typeof(T), this) as IPipeline)!.BuildWorkflow();
     }
 
     internal void SetupWorkflowBuilder(List<WorkflowBuilder> workflowBuilders, PipelineType pipelineType)
@@ -62,8 +51,8 @@ partial class BaseNukeBuildHelpers
 
     private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
     {
-        var appEntrySecretMap = GetEntrySecretMap<AppEntry>();
-        var appTestEntrySecretMap = GetEntrySecretMap<AppTestEntry>();
+        var appEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppEntry>();
+        var appTestEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppTestEntry>();
 
         PipelineType pipelineType;
 
@@ -223,7 +212,7 @@ partial class BaseNukeBuildHelpers
         List<Action> nonParallels = [];
         List<string> testAdded = [];
 
-        List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+        List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
@@ -286,7 +275,7 @@ partial class BaseNukeBuildHelpers
         List<Task> tasks = [];
         List<Action> nonParallels = [];
 
-        List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+        List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
@@ -344,7 +333,7 @@ partial class BaseNukeBuildHelpers
         List<Task> tasks = [];
         List<Action> nonParallels = [];
 
-        List<WorkflowStep> workflowSteps = [.. GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+        List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
@@ -389,686 +378,98 @@ partial class BaseNukeBuildHelpers
         return Task.WhenAll(tasks);
     }
 
-    internal static List<T> GetInstances<T>()
+    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartBump()
     {
-        var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
+        Prompt.ColorSchema.Answer = ConsoleColor.Green;
+        Prompt.ColorSchema.Select = ConsoleColor.DarkMagenta;
+        Prompt.Symbols.Prompt = new Symbol("?", "?");
+        Prompt.Symbols.Done = new Symbol("✓", "✓");
+        Prompt.Symbols.Error = new Symbol("x", "x");
 
-        var allTypes = asmNames.Select(Assembly.Load)
-            .SelectMany(t => t.GetTypes())
-            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.IsAbstract);
-
-        List<T> instances = [];
-        foreach (Type type in allTypes)
+        if (!EnvironmentBranches.Any(i => i.Equals(Repository.Branch, StringComparison.InvariantCultureIgnoreCase)))
         {
-            instances.Add((T)Activator.CreateInstance(type)!);
-        }
-        return instances;
-    }
-
-    internal AppConfig GetAppConfig()
-    {
-        CheckEnvironementBranches();
-
-        Dictionary<string, AppEntryConfig> appEntryConfigs = [];
-
-        bool hasMainReleaseEntry = false;
-        List<AppEntry> appEntries = [];
-        foreach (var appEntry in GetInstances<AppEntry>())
-        {
-            if (!appEntry.Enable)
-            {
-                continue;
-            }
-            if (appEntry.MainRelease)
-            {
-                if (hasMainReleaseEntry)
-                {
-                    throw new Exception("Contains multiple main release app entry");
-                }
-                hasMainReleaseEntry = true;
-            }
-            appEntries.Add(appEntry);
+            Assert.Fail($"{Repository.Branch} is not on environment branches");
         }
 
-        List<(bool IsAdded, AppTestEntry AppTestEntry)> appTestEntries = [];
-        foreach (var appTestEntry in GetInstances<AppTestEntry>())
+        ValueHelpers.GetOrFail(AppEntryHelpers.GetAppConfig, out var appConfig);
+
+        string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
+
+        IReadOnlyCollection<Output>? lsRemote = null;
+
+        List<(AppEntry? AppEntry, AllVersions? AllVersions)> appEntryVersions = [];
+
+        foreach (var pair in appConfig.AppEntryConfigs)
         {
-            if (!appTestEntry.Enable)
-            {
-                continue;
-            }
-            if (appTestEntry.AppEntryTargets == null || appTestEntry.AppEntryTargets.Length == 0)
-            {
-                throw new Exception($"App test entry contains null or empty app entry id \"{appTestEntry.Name}\"");
-            }
-            appTestEntries.Add((false, appTestEntry));
+            string appId = pair.Key;
+
+            ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntryConfig);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+
+            appEntryVersions.Add((pair.Value.Entry, allVersions));
         }
 
-        foreach (var appEntry in appEntries)
+        List<string> appEntryIdHasBump = [];
+        foreach (var appEntryVersion in appEntryVersions)
         {
-            if (appEntryConfigs.ContainsKey(appEntry.Id))
+            if (appEntryVersion.AppEntry != null &&
+                appEntryVersion.AllVersions != null &&
+                appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvVersions) &&
+                currentEnvVersions.LastOrDefault() is SemVersion currentEnvLatestVersion &&
+                appEntryVersion.AllVersions.VersionCommitPaired.TryGetValue(currentEnvLatestVersion, out var currentEnvLatestVersionCommitId) &&
+                currentEnvLatestVersionCommitId == Repository.Commit)
             {
-                throw new Exception($"Contains multiple app entry id \"{appEntry.Id}\"");
-            }
-            List<AppTestEntry> appTestEntriesFound = [];
-            for (int i = 0; appTestEntries.Count > i; i++)
-            {
-                if (appTestEntries[i].AppTestEntry.AppEntryTargets.Any(i => i == appEntry.GetType()))
-                {
-                    appTestEntriesFound.Add(appTestEntries[i].AppTestEntry);
-                    appTestEntries[i] = (true, appTestEntries[i].AppTestEntry);
-                }
-            }
-            appEntryConfigs.Add(appEntry.Id, new() { Entry = appEntry, Tests = appTestEntriesFound });
-        }
-
-        var nonAdded = appTestEntries.Where(i => !i.IsAdded);
-
-        if (nonAdded.Any())
-        {
-            foreach (var (IsAdded, AppTestEntry) in nonAdded)
-            {
-                foreach (var appEntryTarget in AppTestEntry.AppEntryTargets)
-                {
-                    if (!appEntries.Any(i => string.Equals(i.Id, appEntryTarget.Name, StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        throw new Exception($"App entry id \"{appEntryTarget.Name}\" does not exist, from app test entry \"{AppTestEntry.Name}\"");
-                    }
-                }
-            }
-        }
-
-        return new()
-        {
-            AppEntryConfigs = appEntryConfigs,
-            AppEntries = appEntries.ToDictionary(i => i.Id),
-            AppTestEntries = appTestEntries.ToDictionary(i => i.AppTestEntry.Id, i => i.AppTestEntry)
-        };
-    }
-
-    internal static Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretVariableAttribute Secret)> Secrets)> GetEntrySecretMap<T>()
-        where T : Entry
-    {
-        var asmNames = DependencyContext.Default!.GetDefaultAssemblyNames();
-
-        var allTypes = asmNames.Select(Assembly.Load)
-            .SelectMany(t => t.GetTypes())
-            .Where(p => p.GetTypeInfo().IsSubclassOf(typeof(T)) && !p.ContainsGenericParameters);
-
-        Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, Attributes.SecretVariableAttribute Secret)> Secrets)> entry = [];
-        foreach (Type type in allTypes)
-        {
-            foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                foreach (object attr in prop.GetCustomAttributes(true))
-                {
-                    if (attr is Attributes.SecretVariableAttribute SecretAttr)
-                    {
-                        var id = ((T)Activator.CreateInstance(type)!).Id;
-                        if (!entry.TryGetValue(id, out var secrets))
-                        {
-                            secrets = (type, []);
-                            entry.Add(id, secrets);
-                        }
-                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretVariableAttribute))(prop, SecretAttr));
-                    }
-                }
-            }
-            foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            {
-                foreach (object attr in field.GetCustomAttributes(true))
-                {
-                    if (attr is Attributes.SecretVariableAttribute SecretAttr)
-                    {
-                        var id = ((T)Activator.CreateInstance(type)!).Id;
-                        if (!entry.TryGetValue(id, out var secrets))
-                        {
-                            secrets = (type, []);
-                            entry.Add(id, secrets);
-                        }
-                        secrets.Secrets.Add(((MemberInfo MemberInfo, Attributes.SecretVariableAttribute))(field, SecretAttr));
-                    }
-                }
-            }
-        }
-        return entry;
-    }
-
-    private AllVersions GetAllVersions(string appId, Dictionary<string, AppEntryConfig> appEntryConfigs, ref IReadOnlyCollection<Output>? lsRemoteOutput)
-    {
-        CheckEnvironementBranches();
-
-        GetOrFail(appId, appEntryConfigs, out _, out var appEntry);
-
-        string basePeel = "refs/tags/";
-        lsRemoteOutput ??= Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
-
-        Dictionary<string, List<long>> commitBuildIdGrouped = [];
-        Dictionary<string, List<SemVersion>> commitVersionGrouped = [];
-        Dictionary<string, List<string>> commitLatestTagGrouped = [];
-        Dictionary<long, string> buildIdCommitPaired = [];
-        Dictionary<SemVersion, string> versionCommitPaired = [];
-        Dictionary<string, List<long>> envBuildIdGrouped = [];
-        List<SemVersion> versionBump = [];
-        List<SemVersion> versionQueue = [];
-        List<SemVersion> versionFailed = [];
-        List<SemVersion> versionPassed = [];
-        foreach (var refs in lsRemoteOutput)
-        {
-            string rawTag = refs.Text[(refs.Text.IndexOf(basePeel) + basePeel.Length)..];
-            string tag;
-            string commitId = refs.Text[0..refs.Text.IndexOf(basePeel)].Trim();
-
-            if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
-            {
-                var buildSplit = rawTag.Split('-');
-                var parsedBuildId = long.Parse(buildSplit[0].Split('.')[1]);
-                if (buildSplit.Length == 1)
-                {
-                    if (!buildIdCommitPaired.ContainsKey(parsedBuildId))
-                    {
-                        buildIdCommitPaired[parsedBuildId] = commitId;
-                    }
-                    if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedCommitBuildId))
-                    {
-                        pairedCommitBuildId = [];
-                        commitBuildIdGrouped.Add(commitId, pairedCommitBuildId);
-                    }
-                    if (!pairedCommitBuildId.Contains(parsedBuildId))
-                    {
-                        pairedCommitBuildId.Add(parsedBuildId);
-                    }
-                }
-                else if (buildSplit.Length == 2)
-                {
-                    var buildIdEnv = buildSplit[1].ToLowerInvariant();
-                    if (!EnvironmentBranches.Any(i => i.Equals(buildIdEnv, StringComparison.InvariantCultureIgnoreCase)))
-                    {
-                        continue;
-                    }
-                    if (!commitBuildIdGrouped.TryGetValue(commitId, out var pairedCommitBuildId))
-                    {
-                        pairedCommitBuildId = [];
-                        commitBuildIdGrouped.Add(commitId, pairedCommitBuildId);
-                    }
-                    if (!envBuildIdGrouped.TryGetValue(buildIdEnv, out var pairedEnvBuildId))
-                    {
-                        pairedEnvBuildId = [];
-                        envBuildIdGrouped.Add(buildIdEnv, pairedEnvBuildId);
-                    }
-                    if (!buildIdCommitPaired.ContainsKey(parsedBuildId))
-                    {
-                        buildIdCommitPaired[parsedBuildId] = commitId;
-                    }
-                    if (!pairedCommitBuildId.Contains(parsedBuildId))
-                    {
-                        pairedCommitBuildId.Add(parsedBuildId);
-                    }
-                    if (!pairedEnvBuildId.Contains(parsedBuildId))
-                    {
-                        pairedEnvBuildId.Add(parsedBuildId);
-                    }
-                }
-            }
-            else
-            {
-                if (appEntry.Entry.MainRelease)
-                {
-                    tag = rawTag;
-                }
-                else if (rawTag.StartsWith(appId, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    tag = rawTag[(rawTag.IndexOf(appId, StringComparison.InvariantCultureIgnoreCase) + appId.Length + 1)..];
-                }
-                else
-                {
-                    continue;
-                }
-                if (tag.StartsWith("latest", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    if (!commitLatestTagGrouped.TryGetValue(commitId, out var pairedLatestTag))
-                    {
-                        pairedLatestTag = [];
-                        commitLatestTagGrouped.Add(commitId, pairedLatestTag);
-                    }
-                    pairedLatestTag.Add(tag);
-                }
-                else
-                {
-                    string versionTag = tag;
-                    bool isBumpVersion = false;
-                    bool isQueueVersion = false;
-                    bool isFailedVersion = false;
-                    bool isPassedVersion = false;
-                    if (tag.EndsWith("-bump", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        versionTag = tag[..(tag.LastIndexOf("-bump"))];
-                        isBumpVersion = true;
-                    }
-                    if (tag.EndsWith("-queue", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        versionTag = tag[..(tag.LastIndexOf("-queue"))];
-                        isQueueVersion = true;
-                    }
-                    if (tag.EndsWith("-failed", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        versionTag = tag[..(tag.LastIndexOf("-failed"))];
-                        isFailedVersion = true;
-                    }
-                    if (tag.EndsWith("-passed", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        versionTag = tag[..(tag.LastIndexOf("-passed"))];
-                        isPassedVersion = true;
-                    }
-
-                    if (SemVersion.TryParse(versionTag, SemVersionStyles.Strict, out SemVersion tagSemver))
-                    {
-                        if (!commitVersionGrouped.TryGetValue(commitId, out var pairedVersion))
-                        {
-                            pairedVersion = [];
-                            commitVersionGrouped.Add(commitId, pairedVersion);
-                        }
-                        tagSemver = tagSemver.WithoutMetadata();
-                        versionCommitPaired[tagSemver] = commitId;
-                        if (!pairedVersion.Contains(tagSemver))
-                        {
-                            pairedVersion.Add(tagSemver);
-                        }
-                        if (isBumpVersion)
-                        {
-                            versionBump.Add(tagSemver);
-                        }
-                        if (isQueueVersion)
-                        {
-                            versionQueue.Add(tagSemver);
-                        }
-                        if (isFailedVersion)
-                        {
-                            versionFailed.Add(tagSemver);
-                        }
-                        if (isPassedVersion)
-                        {
-                            versionPassed.Add(tagSemver);
-                        }
-                    }
-                }
-            }
-        }
-
-        List<SemVersion> allVersionList = commitVersionGrouped.SelectMany(i => i.Value).ToList();
-
-        foreach (var env in EnvironmentBranches)
-        {
-            SemVersion semVersion;
-            if (env.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-            {
-                semVersion = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
-            }
-            else
-            {
-                semVersion = SemVersion.Parse($"0.0.0-{env.ToLowerInvariant()}.0", SemVersionStyles.Strict);
-            }
-            allVersionList.Add(semVersion);
-        }
-
-        List<long> allBuildIdList = commitBuildIdGrouped.SelectMany(i => i.Value).ToList();
-        Dictionary<string, List<SemVersion>> envVersionGrouped = allVersionList
-            .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : MainEnvironmentBranch.ToLowerInvariant())
-            .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
-
-        Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = [];
-        foreach (var pairedLatestTag in commitLatestTagGrouped)
-        {
-            string commitId = pairedLatestTag.Key;
-            foreach (var latestTag in pairedLatestTag.Value)
-            {
-                if (!commitVersionGrouped.TryGetValue(commitId, out var versions) || versions.Count == 0)
-                {
-                    continue;
-                }
-                string env;
-                var latestTagSplit = latestTag.Split('-');
-                if (latestTagSplit.Length == 2)
-                {
-                    env = latestTagSplit[1];
-                    if (!envBuildIdGrouped.TryGetValue(env, out var envBuildIds) || envBuildIds.Count == 0)
-                    {
-                        continue;
-                    }
-                    var latestVersion = versions.Where(i => i.IsPrerelease && i.PrereleaseIdentifiers[0].ToString().Equals(env, StringComparison.InvariantCultureIgnoreCase)).LastOrDefault();
-                    if (latestVersion != null)
-                    {
-                        pairedLatests.Add(env, (envBuildIds.Max(), latestVersion));
-                    }
-                }
-                else
-                {
-                    env = MainEnvironmentBranch.ToLowerInvariant();
-                    if (!envBuildIdGrouped.TryGetValue(env, out var envBuildIds) || envBuildIds.Count == 0)
-                    {
-                        continue;
-                    }
-                    var latestVersion = versions.Where(i => !i.IsPrerelease).LastOrDefault();
-                    if (latestVersion != null)
-                    {
-                        pairedLatests.Add(env, (envBuildIds.Max(), latestVersion));
-                    }
-                }
-            }
-        }
-
-        Dictionary<string, SemVersion> envLatestVersionPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
-        Dictionary<string, long> envLatestBuildIdPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
-        List<string> envSorted = envVersionGrouped.Select(i => i.Key).ToList();
-
-        envSorted.Sort();
-        if (envSorted.Remove(MainEnvironmentBranch.ToLowerInvariant()))
-        {
-            envSorted.Add(MainEnvironmentBranch.ToLowerInvariant());
-        }
-        foreach (var env in envSorted)
-        {
-            var allVersion = envVersionGrouped[env];
-            allVersion.Sort(SemVersion.PrecedenceComparer);
-        }
-
-        return new()
-        {
-            CommitBuildIdGrouped = commitBuildIdGrouped,
-            CommitLatestTagGrouped = commitLatestTagGrouped,
-            CommitVersionGrouped = commitVersionGrouped,
-            BuildIdCommitPaired = buildIdCommitPaired,
-            VersionCommitPaired = versionCommitPaired,
-            EnvVersionGrouped = envVersionGrouped,
-            EnvBuildIdGrouped = envBuildIdGrouped,
-            EnvLatestVersionPaired = envLatestVersionPaired,
-            EnvLatestBuildIdPaired = envLatestBuildIdPaired,
-            EnvSorted = envSorted,
-            VersionBump = versionBump,
-            VersionQueue = versionQueue,
-            VersionFailed = versionFailed,
-            VersionPassed = versionPassed,
-        };
-    }
-
-    internal static void GetOrFail<T>(Func<T> valFactory, out T valOut)
-    {
-        try
-        {
-            valOut = valFactory();
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail(ex.Message, ex);
-            throw;
-        }
-    }
-
-    internal static void GetOrFail(string appId, Dictionary<string, AppEntryConfig> appEntryConfigs, out string appIdOut, out AppEntryConfig appEntryConfig)
-    {
-        try
-        {
-            // Fail if appId is null and solution has multiple app entries
-            if (string.IsNullOrEmpty(appId) && !appEntryConfigs.Any(ae => ae.Value.Entry.MainRelease))
-            {
-                throw new InvalidOperationException($"App entries has no main release, appId should not be empty");
-            }
-
-            // Fail if appId does not exists in app entries
-            if (!string.IsNullOrEmpty(appId))
-            {
-                if (!appEntryConfigs.TryGetValue(appId.ToLowerInvariant(), out var aec) || aec == null)
-                {
-                    throw new InvalidOperationException($"App id \"{appId}\" does not exists");
-                }
-                appEntryConfig = aec;
-            }
-            else
-            {
-                appEntryConfig = appEntryConfigs.Where(ae => ae.Value.Entry.MainRelease).First().Value;
-            }
-
-            appIdOut = appEntryConfig.Entry.Id;
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail(ex.Message, ex);
-            throw;
-        }
-    }
-
-    private static void LogInfoTable(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, params IEnumerable<string?>[] rows)
-    {
-        List<(int Length, string Text, HorizontalAlignment Alignment)> columns = [];
-
-        foreach (var (Text, AlignRight) in headers)
-        {
-            columns.Add((Text.Length, Text, AlignRight));
-        }
-
-        foreach (var row in rows)
-        {
-            int rowCount = row.Count();
-            for (int i = 0; i < rowCount; i++)
-            {
-                var rowElement = row.ElementAt(i);
-                int rowWidth = rowElement?.Length ?? 0;
-                columns[i] = (MathExtensions.Max(rowCount, columns[i].Length, rowWidth), columns[i].Text, columns[i].Alignment);
-            }
-        }
-
-        string headerSeparator = "╬";
-        string rowSeparator = "║";
-        string textHeader = "║";
-        foreach (var (Length, Text, AlignRight) in columns)
-        {
-            headerSeparator += new string('═', Length + 2) + '╬';
-            rowSeparator += new string('-', Length + 2) + '║';
-            textHeader += Text.PadCenter(Length + 2) + '║';
-        }
-
-        Console.WriteLine(headerSeparator);
-        Console.WriteLine(textHeader);
-        Console.WriteLine(headerSeparator);
-        foreach (var row in rows)
-        {
-            var cells = row.Select(i => i?.ToString() ?? "null")?.ToArray() ?? [];
-            if (row.All(i => i == "-"))
-            {
-                Console.WriteLine(rowSeparator);
-            }
-            else
-            {
-                int rowCount = row.Count();
-                Console.Write("║ ");
-                for (int i = 0; i < rowCount; i++)
-                {
-                    string rowText = cells[i];
-                    var textRow = columns[i].Alignment switch
-                    {
-                        HorizontalAlignment.Left => rowText.PadLeft(columns[i].Length, rowText.Length),
-                        HorizontalAlignment.Center => rowText.PadCenter(columns[i].Length, rowText.Length),
-                        HorizontalAlignment.Right => rowText.PadRight(columns[i].Length, rowText.Length),
-                        _ => throw new NotImplementedException()
-                    };
-                    ConsoleHelpers.WriteWithColor(textRow, ConsoleColor.Magenta);
-                    Console.Write(" ║ ");
-                }
+                appEntryIdHasBump.Add(appEntryVersion.AppEntry.Id);
+                Console.Write("Commit has already bumped ");
+                ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry.Id, ConsoleColor.DarkMagenta);
                 Console.WriteLine();
             }
         }
-        Console.WriteLine(headerSeparator);
-    }
 
-    private static int LogInfoTableWatch(IEnumerable<(string Text, HorizontalAlignment Alignment)> headers, IEnumerable<(string? Text, ConsoleColor TextColor)>[] rows)
-    {
-        int lines = 0;
+        List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)> appEntryVersionsToBump = [];
 
-        List<(int Length, string Text, HorizontalAlignment Alignment)> columns = [];
+        appEntryVersions.Add((null, null));
 
-        foreach (var (Text, AlignRight) in headers)
+        while (true)
         {
-            columns.Add((Text.Length, Text, AlignRight));
-        }
-
-        foreach (var row in rows)
-        {
-            int rowCount = row.Count();
-            for (int i = 0; i < rowCount; i++)
-            {
-                var (Text, TextColor) = row.ElementAt(i);
-                int rowWidth = Text?.Length ?? 0;
-                columns[i] = (MathExtensions.Max(rowCount, columns[i].Length, rowWidth), columns[i].Text, columns[i].Alignment);
-            }
-        }
-
-        string headerSeparator = "╬";
-        string rowSeparator = "║";
-        string textHeader = "║";
-        foreach (var (Length, Text, AlignRight) in columns)
-        {
-            headerSeparator += new string('═', Length + 2) + '╬';
-            rowSeparator += new string('-', Length + 2) + '║';
-            textHeader += Text.PadCenter(Length + 2) + '║';
-        }
-
-        ConsoleHelpers.WriteLineClean(headerSeparator);
-        ConsoleHelpers.WriteLineClean(textHeader);
-        ConsoleHelpers.WriteLineClean(headerSeparator);
-        lines++;
-        lines++;
-        lines++;
-        foreach (var row in rows)
-        {
-            if (row.All(i => i.Text == "-"))
-            {
-                ConsoleHelpers.WriteLineClean(rowSeparator);
-                lines++;
-            }
-            else
-            {
-                ConsoleHelpers.ClearCurrentConsoleLine();
-                var cells = row.Select(i => i.Text?.ToString() ?? "null")?.ToArray() ?? [];
-                int rowCount = row.Count();
-                Console.Write("║ ");
-                for (int i = 0; i < rowCount; i++)
+            var availableBump = appEntryVersions
+                .Where(i =>
                 {
-                    var (rowText, rowTextColor) = row.ElementAt(i);
-                    int rowWidth = rowText == null ? 4 : rowText.Length;
-                    var cellText = columns[i].Alignment switch
+                    if (appEntryVersionsToBump.Any(j => j.AppEntry.Id == i.AppEntry?.Id))
                     {
-                        HorizontalAlignment.Left => cells[i].PadLeft(columns[i].Length, rowWidth),
-                        HorizontalAlignment.Center => cells[i].PadCenter(columns[i].Length, rowWidth),
-                        HorizontalAlignment.Right => cells[i].PadRight(columns[i].Length, rowWidth),
-                        _ => throw new NotImplementedException()
-                    };
-                    ConsoleHelpers.WriteWithColor(cellText, rowTextColor);
-                    Console.Write(" ║ ");
-                }
-                Console.WriteLine();
-                lines++;
-            }
-        }
-        ConsoleHelpers.WriteLineClean(headerSeparator);
-        lines++;
-
-        return lines;
-    }
-
-    private Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartBump()
-    {
-        return Task.Run(() =>
-        {
-            Prompt.ColorSchema.Answer = ConsoleColor.Green;
-            Prompt.ColorSchema.Select = ConsoleColor.DarkMagenta;
-            Prompt.Symbols.Prompt = new Symbol("?", "?");
-            Prompt.Symbols.Done = new Symbol("✓", "✓");
-            Prompt.Symbols.Error = new Symbol("x", "x");
-
-            if (!EnvironmentBranches.Any(i => i.Equals(Repository.Branch, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                Assert.Fail($"{Repository.Branch} is not on environment branches");
-            }
-
-            GetOrFail(() => GetAppConfig(), out var appConfig);
-
-            string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
-
-            IReadOnlyCollection<Output>? lsRemote = null;
-
-            List<(AppEntry? AppEntry, AllVersions? AllVersions)> appEntryVersions = [];
-
-            foreach (var pair in appConfig.AppEntryConfigs)
-            {
-                string appId = pair.Key;
-
-                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntryConfig);
-                GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
-
-                appEntryVersions.Add((pair.Value.Entry, allVersions));
-            }
-
-            List<string> appEntryIdHasBump = [];
-            foreach (var appEntryVersion in appEntryVersions)
-            {
-                if (appEntryVersion.AppEntry != null &&
-                    appEntryVersion.AllVersions != null &&
-                    appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvVersions) &&
-                    currentEnvVersions.LastOrDefault() is SemVersion currentEnvLatestVersion &&
-                    appEntryVersion.AllVersions.VersionCommitPaired.TryGetValue(currentEnvLatestVersion, out var currentEnvLatestVersionCommitId) &&
-                    currentEnvLatestVersionCommitId == Repository.Commit)
-                {
-                    appEntryIdHasBump.Add(appEntryVersion.AppEntry.Id);
-                    Console.Write("Commit has already bumped ");
-                    ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry.Id, ConsoleColor.DarkMagenta);
-                    Console.WriteLine();
-                }
-            }
-
-            List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)> appEntryVersionsToBump = [];
-
-            appEntryVersions.Add((null, null));
-
-            while (true)
-            {
-                var availableBump = appEntryVersions
-                    .Where(i =>
-                    {
-                        if (appEntryVersionsToBump.Any(j => j.AppEntry.Id == i.AppEntry?.Id))
-                        {
-                            return false;
-                        }
-                        if (appEntryIdHasBump.Any(j => j == i.AppEntry?.Id))
-                        {
-                            return false;
-                        }
-
-                        return true;
-                    });
-                var appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
-
-                if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
-                {
-                    if (appEntryVersionsToBump.Count != 0)
-                    {
-                        var answer = Prompt.Confirm("Are you sure to bump selected version(s)?", defaultValue: false);
-                        if (answer)
-                        {
-                            break;
-                        }
+                        return false;
                     }
-                    else
+                    if (appEntryIdHasBump.Any(j => j == i.AppEntry?.Id))
+                    {
+                        return false;
+                    }
+
+                    return true;
+                });
+            var appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
+
+            if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
+            {
+                if (appEntryVersionsToBump.Count != 0)
+                {
+                    var answer = Prompt.Confirm("Are you sure to bump selected version(s)?", defaultValue: false);
+                    if (answer)
                     {
                         break;
                     }
-                    continue;
                 }
+                else
+                {
+                    break;
+                }
+                continue;
+            }
 
-                appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
-                Console.Write("  Current latest version: ");
-                ConsoleHelpers.WriteWithColor(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null", ConsoleColor.Green);
-                Console.WriteLine("");
-                var bumpVersionStr = Prompt.Input<string>("New Version", validators: [Validators.Required(),
+            appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
+            Console.Write("  Current latest version: ");
+            ConsoleHelpers.WriteWithColor(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null", ConsoleColor.Green);
+            Console.WriteLine("");
+            var bumpVersionStr = Prompt.Input<string>("New Version", validators: [Validators.Required(),
                     (input => {
                         if (!SemVersion.TryParse(input.ToString(), SemVersionStyles.Strict, out var inputVersion))
                         {
@@ -1111,37 +512,39 @@ partial class BaseNukeBuildHelpers
 
                         return ValidationResult.Success;
                     })]);
-                var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
-                appEntryVersionsToBump.Add((appEntryVersion.AppEntry, appEntryVersion.AllVersions, bumpVersion));
-            }
+            var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
+            appEntryVersionsToBump.Add((appEntryVersion.AppEntry, appEntryVersion.AllVersions, bumpVersion));
+        }
 
-            if (appEntryVersionsToBump.Count == 0)
+        if (appEntryVersionsToBump.Count == 0)
+        {
+            Log.Information("No version selected to bump.");
+            return appEntryVersionsToBump;
+        }
+
+        List<string> tagsToPush = [];
+
+        foreach (var appEntryVersionToBump in appEntryVersionsToBump)
+        {
+            if (appEntryVersionToBump.AppEntry.MainRelease)
             {
-                Log.Information("No version selected to bump.");
-                return appEntryVersionsToBump;
+                tagsToPush.Add(appEntryVersionToBump.BumpVersion.ToString() + "-bump");
             }
-
-            List<string> tagsToPush = [];
-
-            foreach (var appEntryVersionToBump in appEntryVersionsToBump)
+            else
             {
-                if (appEntryVersionToBump.AppEntry.MainRelease)
-                {
-                    tagsToPush.Add(appEntryVersionToBump.BumpVersion.ToString() + "-bump");
-                }
-                else
-                {
-                    tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
-                }
+                tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
             }
+        }
 
-            foreach (var tag in tagsToPush)
-            {
-                Git.Invoke($"tag {tag}", logInvocation: false, logOutput: false);
-            }
+        foreach (var tag in tagsToPush)
+        {
+            Git.Invoke($"tag {tag}", logInvocation: false, logOutput: false);
+        }
 
-            // ---------- Apply bump ----------
+        // ---------- Apply bump ----------
 
+        await Task.Run(() =>
+        {
             Git.Invoke("push origin HEAD", logInvocation: false, logOutput: false);
             Git.Invoke("push origin " + tagsToPush.Select(t => "refs/tags/" + t).Join(" "), logInvocation: false, logOutput: false);
 
@@ -1153,16 +556,16 @@ partial class BaseNukeBuildHelpers
             catch { }
             Git.Invoke("tag --force " + bumpTag, logInvocation: false, logOutput: false);
             Git.Invoke("push origin --force " + bumpTag, logInvocation: false, logOutput: false);
-
-            return appEntryVersionsToBump;
         });
+
+        return appEntryVersionsToBump;
     }
 
     private async Task StartStatusWatch(bool cancelOnDone = false, params (string AppId, string Environment)[] appIds)
     {
-        GetOrFail(GetAppConfig, out var appConfig);
+        ValueHelpers.GetOrFail(AppEntryHelpers.GetAppConfig, out var appConfig);
 
-        List<(string Text, HorizontalAlignment Alignment)> headers =
+        ConsoleTableHeader[] headers =
             [
                 ("App Id", HorizontalAlignment.Right),
                 ("Environment", HorizontalAlignment.Center),
@@ -1179,7 +582,7 @@ partial class BaseNukeBuildHelpers
 
         while (!cts.IsCancellationRequested)
         {
-            List<List<(string? Text, ConsoleColor TextColor)>> rows = [];
+            List<ConsoleTableRow> rows = [];
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -1193,11 +596,11 @@ partial class BaseNukeBuildHelpers
             {
                 string appId = key;
 
-                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
+                ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
                 AllVersions allVersions;
                 try
                 {
-                    GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out allVersions);
+                    ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out allVersions);
                 }
                 catch
                 {
@@ -1246,34 +649,28 @@ partial class BaseNukeBuildHelpers
                             statusColor = ConsoleColor.DarkGray;
                             allDone = false;
                         }
-                        var bumpedVersionStr = IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
-                        rows.Add(
+                        var bumpedVersionStr = SemverHelpers.IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
+                        rows.Add(ConsoleTableRow.FromValue(
                             [
                                 (firstEntryRow ? appId : "", ConsoleColor.Magenta),
                                 (env, ConsoleColor.Magenta),
                                 (bumpedVersionStr, ConsoleColor.Magenta),
                                 (published, statusColor)
-                            ]);
+                            ]));
                         firstEntryRow = false;
                     }
                 }
                 else
                 {
-                    rows.Add(
+                    rows.Add(ConsoleTableRow.FromValue(
                         [
                             (appId, ConsoleColor.Magenta),
                             (null, ConsoleColor.Magenta),
                             (null, ConsoleColor.Magenta),
                             ("Not published", statusColor)
-                        ]);
+                        ]));
                 }
-                rows.Add(
-                    [
-                        ("-", ConsoleColor.Magenta),
-                        ("-", ConsoleColor.Magenta),
-                        ("-", ConsoleColor.Magenta),
-                        ("-", ConsoleColor.Magenta)
-                    ]);
+                rows.Add(ConsoleTableRow.Separator);
             }
             if (rows.Count != 0)
             {
@@ -1294,7 +691,7 @@ partial class BaseNukeBuildHelpers
             else
             {
                 ConsoleHelpers.WriteLineClean("Time: " + DateTime.Now);
-                lines = LogInfoTableWatch(headers, [.. rows]);
+                lines = ConsoleTableHelpers.LogInfoTableWatch(headers, [.. rows]);
             }
             lines += 1;
 

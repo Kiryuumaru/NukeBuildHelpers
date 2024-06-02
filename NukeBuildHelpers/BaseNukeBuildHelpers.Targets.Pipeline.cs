@@ -4,8 +4,8 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Interfaces;
 using NukeBuildHelpers.Models;
+using NukeBuildHelpers.Pipelines.Interfaces;
 using Semver;
 using Serilog;
 using System.Text.Json;
@@ -19,8 +19,10 @@ partial class BaseNukeBuildHelpers
         .Description("To be used by pipeline")
         .Executes(async () =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await TestAppEntries(appConfig, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
@@ -30,8 +32,10 @@ partial class BaseNukeBuildHelpers
         .Description("To be used by pipeline")
         .Executes(async () =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await BuildAppEntries(appConfig, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
@@ -41,8 +45,10 @@ partial class BaseNukeBuildHelpers
         .Description("To be used by pipeline")
         .Executes(async () =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await PublishAppEntries(appConfig, splitArgs.Select(i => i.Key), GetPreSetupOutput());
         });
@@ -52,8 +58,10 @@ partial class BaseNukeBuildHelpers
         .Description("To be used by pipeline")
         .Executes(() =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             IPipeline pipeline = (Args?.ToLowerInvariant()) switch
             {
@@ -80,8 +88,8 @@ partial class BaseNukeBuildHelpers
             {
                 string appId = key;
 
-                GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
-                GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+                ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
+                ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                 if (allVersions.BuildIdCommitPaired.Count > 0)
                 {
@@ -292,8 +300,10 @@ partial class BaseNukeBuildHelpers
         .Description("To be used by pipeline")
         .Executes(() =>
         {
-            GetOrFail(() => SplitArgs, out var splitArgs);
-            GetOrFail(() => GetAppConfig(), out var appConfig);
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             var preSetupOutput = GetPreSetupOutput();
 

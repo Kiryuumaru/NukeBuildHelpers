@@ -2,8 +2,8 @@
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Interfaces;
 using NukeBuildHelpers.Models;
+using NukeBuildHelpers.Pipelines.Interfaces;
 using Serilog;
 using System.Reflection;
 using System.Text.Json;
@@ -179,14 +179,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void BuildWorkflow()
     {
-        BaseNukeBuildHelpers.GetOrFail(NukeBuild.GetAppConfig, out var appConfig);
+        ValueHelpers.GetOrFail(AppEntryHelpers.GetAppConfig, out var appConfig);
 
-        List<WorkflowBuilder> workflowBuilders = [.. BaseNukeBuildHelpers.GetInstances<WorkflowBuilder>().OrderByDescending(i => i.Priority)];
+        List<WorkflowBuilder> workflowBuilders = [.. ClassHelpers.GetInstances<WorkflowBuilder>().OrderByDescending(i => i.Priority)];
 
         NukeBuild.SetupWorkflowBuilder(workflowBuilders, PipelineType.Github);
 
-        var appEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppEntry>();
-        var appTestEntrySecretMap = BaseNukeBuildHelpers.GetEntrySecretMap<AppTestEntry>();
+        var appEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppEntry>();
+        var appTestEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppTestEntry>();
 
         Dictionary<string, object> workflow = new()
         {
