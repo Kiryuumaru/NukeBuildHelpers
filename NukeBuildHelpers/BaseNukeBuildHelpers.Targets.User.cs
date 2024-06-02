@@ -15,6 +15,8 @@ partial class BaseNukeBuildHelpers
         .Description("Fetch git commits and tags")
         .Executes(() =>
         {
+            CheckEnvironementBranches();
+
             Log.Information("Fetching...");
             Git.Invoke("fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
         });
@@ -24,8 +26,10 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Fetch)
         .Executes(() =>
         {
+            CheckEnvironementBranches();
+
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
@@ -46,7 +50,7 @@ partial class BaseNukeBuildHelpers
                 string appId = key;
 
                 ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
-                ValueHelpers.GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+                ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                 bool firstEntryRow = true;
 
@@ -88,6 +92,8 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Version)
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             var appEntryVersionsToBump = await StartBump();
 
             Console.WriteLine();
@@ -100,6 +106,8 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Version)
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             await StartBump();
         });
 
@@ -107,6 +115,8 @@ partial class BaseNukeBuildHelpers
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
 
@@ -119,8 +129,10 @@ partial class BaseNukeBuildHelpers
         .Description("Test, with --args \"{appid}\"")
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await TestAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
@@ -130,8 +142,10 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Test)
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await BuildAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
@@ -141,17 +155,29 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Build)
         .Executes(async () =>
         {
+            CheckEnvironementBranches();
+
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
             await PublishAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
         });
 
     public Target GithubWorkflow => _ => _
         .Description("Builds the cicd workflow for github")
-        .Executes(() => PipelineHelpers.BuildWorkflow<GithubPipeline>(this));
+        .Executes(() =>
+        {
+            CheckEnvironementBranches();
+
+            PipelineHelpers.BuildWorkflow<GithubPipeline>(this);
+        });
 
     public Target AzureWorkflow => _ => _
         .Description("Builds the cicd workflow for azure")
-        .Executes(() => PipelineHelpers.BuildWorkflow<AzurePipeline>(this));
+        .Executes(() =>
+        {
+            CheckEnvironementBranches();
+
+            PipelineHelpers.BuildWorkflow<AzurePipeline>(this);
+        });
 }

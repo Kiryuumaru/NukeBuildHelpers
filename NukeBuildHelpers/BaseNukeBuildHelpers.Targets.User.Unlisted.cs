@@ -12,6 +12,8 @@ partial class BaseNukeBuildHelpers
         .Description("Delete all origin tags, with --args \"{appid}\"")
         .Executes(() =>
         {
+            CheckEnvironementBranches();
+
             List<string> tagsToDelete = [];
             if (string.IsNullOrEmpty(Args))
             {
@@ -25,7 +27,7 @@ partial class BaseNukeBuildHelpers
             else
             {
                 ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-                ValueHelpers.GetOrFail(() => GetAppConfig(), out var appConfig);
+                ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
 
                 IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -34,7 +36,7 @@ partial class BaseNukeBuildHelpers
                     string appId = key;
 
                     ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
-                    ValueHelpers.GetOrFail(() => GetAllVersions(appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+                    ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
 
                     if (appEntry.Entry.MainRelease)
                     {
