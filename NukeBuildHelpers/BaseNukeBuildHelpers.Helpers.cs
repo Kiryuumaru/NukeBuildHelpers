@@ -228,10 +228,19 @@ partial class BaseNukeBuildHelpers
 
         CacheBump();
 
-        foreach (var ss in CacheDirectory.GlobFiles("**"))
-        {
-            Console.WriteLine("SSSSSSSSSSSSSS" + ss);
-        }
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
+        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
 
         foreach (var appEntry in appConfig.AppEntries)
         {
