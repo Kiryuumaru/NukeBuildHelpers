@@ -100,22 +100,11 @@ partial class BaseNukeBuildHelpers
         catch { }
     }
 
-    private static async void CachePreload(Entry entry)
+    private static async Task CachePreload(Entry entry)
     {
         if (!entryCachePath.DirectoryExists())
         {
             entryCachePath.CreateDirectory();
-        }
-
-        try
-        {
-            Log.Information("{path} ssssssssssssssssssssssssssssss1", entryCacheIndexPath.ReadAllText());
-        }
-        catch { }
-
-        foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
-        {
-            Log.Information("{path} filefilefilefile", file);
         }
 
         Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
@@ -168,7 +157,7 @@ partial class BaseNukeBuildHelpers
         SetCacheIndex(cachePairs);
     }
 
-    private static async void CachePostload(Entry entry)
+    private static async Task CachePostload(Entry entry)
     {
         Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
 
@@ -205,12 +194,6 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(tasks);
 
         SetCacheIndex(cachePairs);
-        Log.Information("{path} ssssssssssssssssssssssssssssss", entryCacheIndexPath.ReadAllText());
-
-        foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
-        {
-            Log.Information("{path} filefilefilefile", file);
-        }
     }
 
     private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
@@ -402,28 +385,28 @@ partial class BaseNukeBuildHelpers
                 testAdded.Add(appEntryTest.Name);
                 if (appEntryTest.RunParallel)
                 {
-                    tasks.Add(Task.Run(() =>
+                    tasks.Add(Task.Run(async () =>
                     {
-                        CachePreload(appEntryTest);
+                        await CachePreload(appEntryTest);
                         foreach (var workflowStep in workflowSteps)
                         {
                             workflowStep.TestRun(appEntryTest);
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
-                        CachePostload(appEntryTest);
+                        await CachePostload(appEntryTest);
                     }));
                 }
                 else
                 {
-                    nonParallels.Add(() =>
+                    nonParallels.Add(async () =>
                     {
-                        CachePreload(appEntryTest);
+                        await CachePreload(appEntryTest);
                         foreach (var workflowStep in workflowSteps)
                         {
                             workflowStep.TestRun(appEntryTest);
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
-                        CachePostload(appEntryTest);
+                        await CachePostload(appEntryTest);
                     });
                 }
             }
@@ -467,28 +450,28 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.RunParallel)
             {
-                tasks.Add(Task.Run(() =>
+                tasks.Add(Task.Run(async () =>
                 {
-                    CachePreload(appEntry.Value);
+                    await CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppBuild(appEntry.Value);
                     }
                     appEntry.Value.Build(appEntry.Value.AppRunContext!);
-                    CachePostload(appEntry.Value);
+                    await CachePostload(appEntry.Value);
                 }));
             }
             else
             {
-                nonParallels.Add(() =>
+                nonParallels.Add(async () =>
                 {
-                    CachePreload(appEntry.Value);
+                    await CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppBuild(appEntry.Value);
                     }
                     appEntry.Value.Build(appEntry.Value.AppRunContext!);
-                    CachePostload(appEntry.Value);
+                    await CachePostload(appEntry.Value);
                 });
             }
         }
@@ -523,28 +506,28 @@ partial class BaseNukeBuildHelpers
             }
             if (appEntry.Value.RunParallel)
             {
-                tasks.Add(Task.Run(() =>
+                tasks.Add(Task.Run(async () =>
                 {
-                    CachePreload(appEntry.Value);
+                    await CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppPublish(appEntry.Value);
                     }
                     appEntry.Value.Publish(appEntry.Value.AppRunContext!);
-                    CachePostload(appEntry.Value);
+                    await CachePostload(appEntry.Value);
                 }));
             }
             else
             {
-                nonParallels.Add(() =>
+                nonParallels.Add(async () =>
                 {
-                    CachePreload(appEntry.Value);
+                    await CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppPublish(appEntry.Value);
                     }
                     appEntry.Value.Publish(appEntry.Value.AppRunContext!);
-                    CachePostload(appEntry.Value);
+                    await CachePostload(appEntry.Value);
                 });
             }
         }
