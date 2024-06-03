@@ -51,7 +51,7 @@ internal static class ConsoleTableHelpers
             }
             else
             {
-                var cells = row.Cells.Select(i => i?.ToString() ?? "null")?.ToArray() ?? [];
+                var cells = row.Cells.Select(i => i.Value?.ToString() ?? "null")?.ToArray() ?? [];
                 int rowCount = row.Cells.Length;
                 Console.Write("║ ");
                 for (int i = 0; i < rowCount; i++)
