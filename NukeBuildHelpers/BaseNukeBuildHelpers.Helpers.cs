@@ -115,7 +115,6 @@ partial class BaseNukeBuildHelpers
 
         foreach (var path in entry.CachePaths)
         {
-            Log.Information("dsefgsef awdawdawd scs {asc}", path);
             if (!path.DirectoryExists())
             {
                 Log.Information("{path} cache missed", path);
@@ -124,18 +123,14 @@ partial class BaseNukeBuildHelpers
 
             if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
             {
-                Log.Information("dsefgsef awdawdawd scs newww {asc}", path);
                 cachePath = entryCachePath / Guid.NewGuid().Encode();
                 cachePairs[path.ToString()] = cachePath;
             }
 
-            Log.Information("dsefgsef awdawdawd scs ss1 {asc}", path);
-
             tasks.Add(Task.Run(() =>
             {
-                Log.Information("dsefgsef awdawdawd scs capeee {asc}", path);
                 var cacheValuePath = cachePath / "value";
-                cacheValuePath.CreateDirectory();
+                cacheValuePath.Parent.CreateDirectory();
                 path.CopyFilesRecursively(cacheValuePath);
                 Log.Information("{path} cache saved", path);
             }));
