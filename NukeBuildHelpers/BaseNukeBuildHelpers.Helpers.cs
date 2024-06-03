@@ -5,8 +5,6 @@ using Semver;
 using Serilog;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Common;
-using System.Reflection;
-using Microsoft.Extensions.DependencyModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Utilities;
 using Nuke.Common.CI.AzurePipelines;
