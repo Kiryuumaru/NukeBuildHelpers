@@ -143,7 +143,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var path in entry.CachePaths)
         {
-            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.FileExists() || !cachePath.DirectoryExists())
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || (!cachePath.FileExists() && !cachePath.DirectoryExists()))
             {
                 Log.Information("{path} cache missed", path);
                 continue;
