@@ -126,7 +126,7 @@ partial class BaseNukeBuildHelpers
             {
                 cachePairs.Remove(pair.Key);
                 pair.Value.DeleteDirectory();
-                Log.Information("{path} cache cleaned", pair.Value);
+                Log.Information("{path} cache cleaned", pair.Key);
             }
         }
 
