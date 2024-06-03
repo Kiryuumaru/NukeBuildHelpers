@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "NukeBuildHelpers": {
-      "commandName": "Project",
-      "commandLineArgs": "azureworkflow"
-    }
-  }
-}
