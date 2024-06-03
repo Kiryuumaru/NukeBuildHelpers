@@ -14,7 +14,7 @@ class NugetBuildHelpersTest : AppTestEntry<Build>
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
-    public override AbsolutePath[] CachePaths => [RootDirectory / "samp"];
+    public override AbsolutePath[] CachePaths => [RootDirectory / "samp" / "test.txt"];
 
     public override void Run(AppTestRunContext appTestRunContext)
     {
