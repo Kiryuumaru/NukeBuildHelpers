@@ -49,7 +49,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private void CacheBump()
+    private static void CacheBump()
     {
         if (!CacheDirectory.DirectoryExists())
         {
@@ -227,6 +227,11 @@ partial class BaseNukeBuildHelpers
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
         CacheBump();
+
+        foreach (var ss in CacheDirectory.GlobFiles("**"))
+        {
+            Console.WriteLine("SSSSSSSSSSSSSS" + ss);
+        }
 
         foreach (var appEntry in appConfig.AppEntries)
         {
