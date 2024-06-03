@@ -124,7 +124,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var dir in entryCachePath.GetDirectories())
         {
-            if (!cachePairs.ContainsKey(dir))
+            if (!cachePairs.Any(i => i.Value == dir))
             {
                 dir.DeleteDirectory();
                 Log.Information("{path} cache cleaned", dir);
@@ -133,7 +133,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var pair in cachePairs.Clone())
         {
-            if (!entry.CachePaths.Any(i => i == pair.Value))
+            if (!entry.CachePaths.Any(i => i == pair.Key))
             {
                 cachePairs.Remove(pair.Key);
                 pair.Value.DeleteDirectory();
