@@ -8,7 +8,11 @@ public abstract class WorkflowStep : BaseHelper
 
     public virtual void AppBuild(AppEntry appEntry) { }
 
+    public virtual Task AppBuildAsync(AppEntry appEntry) { return Task.CompletedTask; }
+
     public virtual void AppPublish(AppEntry appEntry) { }
+
+    public virtual Task AppPublishAsync(AppEntry appEntry) { return Task.CompletedTask; }
 }
 
 public abstract class WorkflowStep<TBuild> : WorkflowStep

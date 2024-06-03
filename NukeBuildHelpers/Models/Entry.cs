@@ -7,8 +7,6 @@ public abstract class Entry : BaseHelper
 {
     public virtual bool Enable { get; } = true;
 
-    public virtual bool RunParallel { get; } = false;
-
     public virtual string Id
     {
         get

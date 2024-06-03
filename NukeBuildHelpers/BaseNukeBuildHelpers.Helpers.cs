@@ -355,8 +355,7 @@ partial class BaseNukeBuildHelpers
 
     private Task TestAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> tasks = [];
-        List<Action> nonParallels = [];
+        List<Func<Task>> tasks = [];
         List<string> testAdded = [];
 
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
@@ -383,50 +382,32 @@ partial class BaseNukeBuildHelpers
                     continue;
                 }
                 testAdded.Add(appEntryTest.Name);
-                if (appEntryTest.RunParallel)
+                tasks.Add(() => Task.Run(async () =>
                 {
-                    tasks.Add(Task.Run(async () =>
+                    await CachePreload(appEntryTest);
+                    foreach (var workflowStep in workflowSteps)
                     {
-                        await CachePreload(appEntryTest);
-                        foreach (var workflowStep in workflowSteps)
-                        {
-                            workflowStep.TestRun(appEntryTest);
-                        }
-                        appEntryTest.Run(appEntryTest.AppTestContext!);
-                        await CachePostload(appEntryTest);
-                    }));
-                }
-                else
-                {
-                    nonParallels.Add(async () =>
-                    {
-                        await CachePreload(appEntryTest);
-                        foreach (var workflowStep in workflowSteps)
-                        {
-                            workflowStep.TestRun(appEntryTest);
-                        }
-                        appEntryTest.Run(appEntryTest.AppTestContext!);
-                        await CachePostload(appEntryTest);
-                    });
-                }
+                        workflowStep.TestRun(appEntryTest);
+                    }
+                    appEntryTest.Run(appEntryTest.AppTestContext!);
+                    await appEntryTest.RunAsync(appEntryTest.AppTestContext!);
+                    await CachePostload(appEntryTest);
+                }));
             }
         }
 
-        tasks.Add(Task.Run(async () =>
+        return Task.Run(async () =>
         {
-            foreach (var nonParallel in nonParallels)
+            foreach (var task in tasks)
             {
-                await Task.Run(nonParallel);
+                await task();
             }
-        }));
-
-        return Task.WhenAll(tasks);
+        });
     }
 
     private Task BuildAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> tasks = [];
-        List<Action> nonParallels = [];
+        List<Func<Task>> tasks = [];
 
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
@@ -448,49 +429,32 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            if (appEntry.Value.RunParallel)
+            tasks.Add(() => Task.Run(async () =>
             {
-                tasks.Add(Task.Run(async () =>
+                await CachePreload(appEntry.Value);
+                foreach (var workflowStep in workflowSteps)
                 {
-                    await CachePreload(appEntry.Value);
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppBuild(appEntry.Value);
-                    }
-                    appEntry.Value.Build(appEntry.Value.AppRunContext!);
-                    await CachePostload(appEntry.Value);
-                }));
-            }
-            else
-            {
-                nonParallels.Add(async () =>
-                {
-                    await CachePreload(appEntry.Value);
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppBuild(appEntry.Value);
-                    }
-                    appEntry.Value.Build(appEntry.Value.AppRunContext!);
-                    await CachePostload(appEntry.Value);
-                });
-            }
+                    workflowStep.AppBuild(appEntry.Value);
+                    await workflowStep.AppBuildAsync(appEntry.Value);
+                }
+                appEntry.Value.Build(appEntry.Value.AppRunContext!);
+                await appEntry.Value.BuildAsync(appEntry.Value.AppRunContext!);
+                await CachePostload(appEntry.Value);
+            }));
         }
 
-        tasks.Add(Task.Run(async () =>
+        return Task.Run(async () =>
         {
-            foreach (var nonParallel in nonParallels)
+            foreach (var task in tasks)
             {
-                await Task.Run(nonParallel);
+                await task();
             }
-        }));
-
-        return Task.WhenAll(tasks);
+        });
     }
 
     private Task PublishAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> tasks = [];
-        List<Action> nonParallels = [];
+        List<Func<Task>> tasks = [];
 
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
@@ -504,43 +468,27 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            if (appEntry.Value.RunParallel)
+            tasks.Add(() => Task.Run(async () =>
             {
-                tasks.Add(Task.Run(async () =>
+                await CachePreload(appEntry.Value);
+                foreach (var workflowStep in workflowSteps)
                 {
-                    await CachePreload(appEntry.Value);
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppPublish(appEntry.Value);
-                    }
-                    appEntry.Value.Publish(appEntry.Value.AppRunContext!);
-                    await CachePostload(appEntry.Value);
-                }));
-            }
-            else
-            {
-                nonParallels.Add(async () =>
-                {
-                    await CachePreload(appEntry.Value);
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppPublish(appEntry.Value);
-                    }
-                    appEntry.Value.Publish(appEntry.Value.AppRunContext!);
-                    await CachePostload(appEntry.Value);
-                });
-            }
+                    workflowStep.AppPublish(appEntry.Value);
+                    await workflowStep.AppPublishAsync(appEntry.Value);
+                }
+                appEntry.Value.Publish(appEntry.Value.AppRunContext!);
+                await appEntry.Value.PublishAsync(appEntry.Value.AppRunContext!);
+                await CachePostload(appEntry.Value);
+            }));
         }
 
-        tasks.Add(Task.Run(async () =>
+        return Task.Run(async () =>
         {
-            foreach (var nonParallel in nonParallels)
+            foreach (var task in tasks)
             {
-                await Task.Run(nonParallel);
+                await task();
             }
-        }));
-
-        return Task.WhenAll(tasks);
+        });
     }
 
     private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> InteractiveRelease()
