@@ -121,7 +121,7 @@ partial class BaseNukeBuildHelpers
             if (!entry.CachePaths.Any(i => i == pair.Value))
             {
                 cachePairs.Remove(pair.Key);
-                (entryCachePath / pair.Key).DeleteDirectory();
+                pair.Value.DeleteDirectory();
                 Log.Information("{path} cache cleaned", pair.Value);
             }
         }
@@ -141,6 +141,8 @@ partial class BaseNukeBuildHelpers
         }
 
         await Task.WhenAll(tasks);
+
+        SetCacheIndex(cachePairs);
     }
 
     private static async void CachePostload(Entry entry)
