@@ -378,7 +378,7 @@ partial class BaseNukeBuildHelpers
         return Task.WhenAll(tasks);
     }
 
-    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartBump()
+    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> InteractiveRelease()
     {
         Prompt.ColorSchema.Answer = ConsoleColor.Green;
         Prompt.ColorSchema.Select = ConsoleColor.DarkMagenta;
@@ -469,7 +469,7 @@ partial class BaseNukeBuildHelpers
             Console.Write("  Current latest version: ");
             ConsoleHelpers.WriteWithColor(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null", ConsoleColor.Green);
             Console.WriteLine("");
-            var bumpVersionStr = Prompt.Input<string>("New Version", validators: [Validators.Required(),
+            List<Func<object, ValidationResult?>> validators = [Validators.Required(),
                     (input => {
                         if (!SemVersion.TryParse(input.ToString(), SemVersionStyles.Strict, out var inputVersion))
                         {
@@ -511,10 +511,27 @@ partial class BaseNukeBuildHelpers
                         }
 
                         return ValidationResult.Success;
-                    })]);
+                    })];
+            
+            var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("New Version", validators: validators));
             var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
             appEntryVersionsToBump.Add((appEntryVersion.AppEntry, appEntryVersion.AllVersions, bumpVersion));
         }
+
+        return appEntryVersionsToBump;
+    }
+
+    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartRelease()
+    {
+        var appEntryVersionsToBump = await InteractiveRelease();
+
+
+        return appEntryVersionsToBump;
+    }
+
+    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartBump()
+    {
+        var appEntryVersionsToBump = await InteractiveRelease();
 
         if (appEntryVersionsToBump.Count == 0)
         {

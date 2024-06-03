@@ -92,11 +92,9 @@ partial class BaseNukeBuildHelpers
         .DependsOn(Version)
         .Executes(async () =>
         {
-            var appEntryVersionsToBump = await StartBump();
+            CheckEnvironementBranches();
 
-            Console.WriteLine();
-
-            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, Repository.Branch.ToLowerInvariant())).ToArray());
+            await StartRelease();
         });
 
     public Target Bump => _ => _
