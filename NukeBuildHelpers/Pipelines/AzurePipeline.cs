@@ -268,11 +268,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var cacheTestStep = AddJobStep(testJob, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
         AddJobStepInputs(cacheTestStep, "path", "./.nuke/temp/cache");
         AddJobStepInputs(cacheTestStep, "key", $"""
-            "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
             """);
         AddJobStepInputs(cacheTestStep, "restoreKeys", $"""
-            "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-            "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+            "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
             """);
         var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
@@ -291,11 +291,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var cacheBuildStep = AddJobStep(buildJob, displayName: "Cache Build", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
         AddJobStepInputs(cacheBuildStep, "path", "./.nuke/temp/cache");
         AddJobStepInputs(cacheBuildStep, "key", $"""
-            "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
             """);
         AddJobStepInputs(cacheBuildStep, "restoreKeys", $"""
-            "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-            "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+            "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
             """);
         var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
@@ -322,11 +322,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var cachePublishStep = AddJobStep(publishJob, displayName: "Cache Publish", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
         AddJobStepInputs(cachePublishStep, "path", "./.nuke/temp/cache");
         AddJobStepInputs(cachePublishStep, "key", $"""
-            "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
             """);
         AddJobStepInputs(cachePublishStep, "restoreKeys", $"""
-            "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-            "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+            "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
             """);
         var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);

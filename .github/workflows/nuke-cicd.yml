@@ -64,6 +64,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       if: ${{ matrix.id != 'skip' }}
+    - name: Cache Test
+      uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
+      with:
+        path: ./.nuke/temp/cache
+        key: test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+        restore-keys: |-
+          test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
+          test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
     - name: Run Nuke PipelineTest
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
@@ -81,6 +90,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       if: ${{ matrix.id != 'skip' }}
+    - name: Cache Build
+      uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
+      with:
+        path: ./.nuke/temp/cache
+        key: build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+        restore-keys: |-
+          build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
+          build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
     - name: Run Nuke PipelineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
@@ -117,6 +135,15 @@ jobs:
         path: ./.nuke/output
         pattern: ${{ matrix.id }}
         merge-multiple: true
+    - name: Cache Publish
+      uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
+      with:
+        path: ./.nuke/temp/cache
+        key: publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+        restore-keys: |-
+          publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
+          publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
     - name: Run Nuke PipelinePublish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}

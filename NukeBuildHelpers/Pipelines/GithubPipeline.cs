@@ -255,6 +255,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
         AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
+        var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepWith(cacheTestStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cacheTestStep, "key", $$$"""
+            test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+            """);
+        AddJobStepWith(cacheTestStep, "restore-keys", $$$"""
+            test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
+            test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
+            """);
         var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
@@ -269,6 +278,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobStepCheckout(buildJob, _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
+        var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepWith(cacheBuildStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cacheBuildStep, "key", $$$"""
+            build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+            """);
+        AddJobStepWith(cacheBuildStep, "restore-keys", $$$"""
+            build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
+            build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
+            """);
         var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
@@ -292,6 +310,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
         AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
+        var cachePublishStep = AddJobStep(publishJob, name: "Cache Publish", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepWith(cachePublishStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cachePublishStep, "key", $$$"""
+            publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+            """);
+        AddJobStepWith(cachePublishStep, "restore-keys", $$$"""
+            publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
+            publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
+            """);
         var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));

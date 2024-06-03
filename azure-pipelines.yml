@@ -64,10 +64,10 @@ jobs:
     condition: ne(variables['id'], 'skip')
     inputs:
       path: ./.nuke/temp/cache
-      key: '"test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
+      key: '"test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
       restoreKeys: |-
-        "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-        "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+        "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+        "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
   - script: $(build_script) PipelineTest --args "$(ids_to_run)"
     displayName: Run Nuke PipelineTest
     condition: ne(variables['id'], 'skip')
@@ -91,10 +91,10 @@ jobs:
     condition: ne(variables['id'], 'skip')
     inputs:
       path: ./.nuke/temp/cache
-      key: '"build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
+      key: '"build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
       restoreKeys: |-
-        "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-        "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+        "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+        "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
   - script: $(build_script) PipelineBuild --args "$(ids_to_run)"
     displayName: Run Nuke PipelineBuild
     condition: ne(variables['id'], 'skip')
@@ -136,10 +136,10 @@ jobs:
     condition: ne(variables['id'], 'skip')
     inputs:
       path: ./.nuke/temp/cache
-      key: '"publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
+      key: '"publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
       restoreKeys: |-
-        "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-        "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+        "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+        "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
   - script: $(build_script) PipelinePublish --args "$(ids_to_run)"
     displayName: Run Nuke PipelinePublish
     condition: ne(variables['id'], 'skip')
