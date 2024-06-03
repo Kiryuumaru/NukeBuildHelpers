@@ -127,7 +127,7 @@ partial class BaseNukeBuildHelpers
 
             tasks.Add(Task.Run(() =>
             {
-                path.MoveFilesRecursively(cachePath);
+                path.CopyFilesRecursively(cachePath);
                 Log.Information("{path} cache saved", path);
             }));
         }
