@@ -82,7 +82,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 Environment = preSetupOutput.Environment,
                 RunsOn = GetRunsOn(appTestEntry.RunsOn),
                 BuildScript = GetBuildScript(appTestEntry.RunsOn),
-                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
+                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
+                CacheInvalidator = appEntry.CacheInvalidator,
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
 
@@ -104,7 +107,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(appEntry.BuildRunsOn),
                 BuildScript = GetBuildScript(appEntry.BuildRunsOn),
                 IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString()
+                Version = entry.Version.ToString(),
+                CacheInvalidator = entry.AppEntry.CacheInvalidator,
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
 
@@ -126,7 +132,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(appEntry.BuildRunsOn),
                 BuildScript = GetBuildScript(appEntry.BuildRunsOn),
                 IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString()
+                Version = entry.Version.ToString(),
+                CacheInvalidator = entry.AppEntry.CacheInvalidator,
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
 
@@ -139,7 +148,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 Environment = preSetupOutput.Environment,
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
-                IdsToRun = ""
+                IdsToRun = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
         if (outputBuildMatrix.Count == 0)
@@ -152,7 +164,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = "",
-                Version = ""
+                Version = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
         if (outputPublishMatrix.Count == 0)
@@ -165,7 +180,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = "",
-                Version = ""
+                Version = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
 

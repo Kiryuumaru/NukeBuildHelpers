@@ -9,6 +9,8 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 {
     public static AbsolutePath OutputDirectory => RootDirectory / ".nuke" / "output";
 
+    public static AbsolutePath CacheDirectory => RootDirectory / ".nuke" / "cache";
+
     public virtual string[] EnvironmentBranches { get; } = [
         "alpha",
         "beta",

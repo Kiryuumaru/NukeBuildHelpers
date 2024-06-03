@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "_build": {
+    "NukeBuildHelpers": {
       "commandName": "Project",
       "commandLineArgs": "azureworkflow"
     }

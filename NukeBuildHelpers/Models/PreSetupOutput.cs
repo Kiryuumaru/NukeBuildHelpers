@@ -28,6 +28,8 @@ internal class PreSetupOutput
 
     public required string Environment { get; init; }
 
+    public required long PullRequestNumber { get; init; }
+
     public required Dictionary<string, PreSetupOutputVersion> Entries { get; init; }
 
     public required List<string> ToTest { get; init; }

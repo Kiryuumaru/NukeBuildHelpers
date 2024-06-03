@@ -64,6 +64,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var outputBuildMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
         var outputPublishMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
 
+        var runClassification = preSetupOutput.TriggerType == TriggerType.PullRequest ? "pr." + preSetupOutput.PullRequestNumber : "main";
+        var runIdentifier = "build." + preSetupOutput.BuildId;
+
         foreach (var toTest in preSetupOutput.ToTest)
         {
             if (!appConfig.AppTestEntries.TryGetValue(toTest, out var appTestEntry))
@@ -82,7 +85,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 Environment = preSetupOutput.Environment,
                 RunsOn = GetRunsOn(appTestEntry.RunsOn),
                 BuildScript = GetBuildScript(appTestEntry.RunsOn),
-                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
+                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
+                CacheInvalidator = appEntry.CacheInvalidator,
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -104,7 +110,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(appEntry.BuildRunsOn),
                 BuildScript = GetBuildScript(appEntry.BuildRunsOn),
                 IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString()
+                Version = entry.Version.ToString(),
+                CacheInvalidator = entry.AppEntry.CacheInvalidator,
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -126,7 +135,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(appEntry.BuildRunsOn),
                 BuildScript = GetBuildScript(appEntry.BuildRunsOn),
                 IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString()
+                Version = entry.Version.ToString(),
+                CacheInvalidator = entry.AppEntry.CacheInvalidator,
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -139,7 +151,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 Environment = preSetupOutput.Environment,
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
-                IdsToRun = ""
+                IdsToRun = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
         if (outputBuildMatrix.Count == 0)
@@ -152,7 +167,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = "",
-                Version = ""
+                Version = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
         if (outputPublishMatrix.Count == 0)
@@ -165,7 +183,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = "",
-                Version = ""
+                Version = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
 
@@ -244,6 +265,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
         AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
+        var cacheTestStep = AddJobStep(testJob, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
+        AddJobStepInputs(cacheTestStep, "path", "./.nuke/temp/cache");
+        AddJobStepInputs(cacheTestStep, "key", $"""
+            "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            """);
+        AddJobStepInputs(cacheTestStep, "restoreKeys", $"""
+            "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+            "test" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            """);
         var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
@@ -258,6 +288,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobStepCheckout(buildJob, condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
+        var cacheBuildStep = AddJobStep(buildJob, displayName: "Cache Build", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
+        AddJobStepInputs(cacheBuildStep, "path", "./.nuke/temp/cache");
+        AddJobStepInputs(cacheBuildStep, "key", $"""
+            "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            """);
+        AddJobStepInputs(cacheBuildStep, "restoreKeys", $"""
+            "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+            "build" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            """);
         var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
@@ -280,6 +319,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
+        var cachePublishStep = AddJobStep(publishJob, displayName: "Cache Publish", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
+        AddJobStepInputs(cachePublishStep, "path", "./.nuke/temp/cache");
+        AddJobStepInputs(cachePublishStep, "key", $"""
+            "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            """);
+        AddJobStepInputs(cachePublishStep, "restoreKeys", $"""
+            "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
+            "publish" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            """);
         var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));

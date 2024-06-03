@@ -11,6 +11,8 @@ public abstract class BaseHelper
 
     public static AbsolutePath OutputDirectory => BaseNukeBuildHelpers.OutputDirectory;
 
+    public static AbsolutePath CacheDirectory => BaseNukeBuildHelpers.CacheDirectory;
+
     public BaseNukeBuildHelpers NukeBuild { get; internal set; } = null!;
 
     public PipelineType PipelineType { get; internal set; }

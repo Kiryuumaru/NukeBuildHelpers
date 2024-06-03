@@ -13,4 +13,10 @@ internal class PreSetupOutputMatrix
     public required string RunsOn { get; init; }
 
     public required string BuildScript { get; init; }
+
+    public required string CacheInvalidator { get; init; }
+
+    public required string RunClassification { get; init; }
+
+    public required string RunIdentifier { get; init; }
 }
