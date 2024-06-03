@@ -140,6 +140,7 @@ partial class BaseNukeBuildHelpers
             tasks.Add(Task.Run(() =>
             {
                 var cachePathValue = cachePath / "value";
+                path.Parent.CreateDirectory();
                 if (cachePathValue.FileExists())
                 {
                     File.Move(cachePathValue, path, true);
