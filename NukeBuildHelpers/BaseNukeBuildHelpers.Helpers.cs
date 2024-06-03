@@ -91,6 +91,10 @@ partial class BaseNukeBuildHelpers
     {
         try
         {
+            if (!entryCacheIndexPath.Parent.DirectoryExists())
+            {
+                entryCacheIndexPath.Parent.CreateDirectory();
+            }
             entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cacheIndex.ToDictionary(i => i.Key, i => i.Value.ToString())));
         }
         catch { }
@@ -98,6 +102,17 @@ partial class BaseNukeBuildHelpers
 
     private static async void CachePreload(Entry entry)
     {
+        if (!entryCachePath.DirectoryExists())
+        {
+            entryCachePath.CreateDirectory();
+        }
+
+        try
+        {
+            Log.Information("{path} ssssssssssssssssssssssssssssss1", entryCacheIndexPath.ReadAllText());
+        }
+        catch { }
+
         foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
         {
             Log.Information("{path} filefilefilefile", file);
@@ -109,7 +124,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var dir in entryCachePath.GetDirectories())
         {
-            if (!cachePairs.ContainsKey(dir.Name))
+            if (!cachePairs.ContainsKey(dir))
             {
                 dir.DeleteDirectory();
                 Log.Information("{path} cache cleaned", dir);
