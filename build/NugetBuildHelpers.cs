@@ -33,7 +33,6 @@ class NugetBuildHelpers : AppEntry<Build>
         {
             appVersion = appPipelineRunContext.AppVersion;
         }
-        OutputDirectory.DeleteDirectory();
         DotNetTasks.DotNetClean(_ => _
             .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
         DotNetTasks.DotNetBuild(_ => _

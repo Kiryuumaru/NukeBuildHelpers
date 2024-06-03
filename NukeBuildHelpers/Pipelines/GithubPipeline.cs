@@ -226,6 +226,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                         }
                     }
                 },
+            ["concurrency"] = new Dictionary<string, object>()
+                {
+                    { "group", "${{ github.workflow }}-${{ github.ref }}" },
+                    { "cancel-in-progress", true }
+                },
             ["jobs"] = new Dictionary<string, object>()
         };
 
