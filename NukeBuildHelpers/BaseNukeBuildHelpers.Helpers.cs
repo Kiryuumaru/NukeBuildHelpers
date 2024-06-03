@@ -49,6 +49,16 @@ partial class BaseNukeBuildHelpers
         }
     }
 
+    private void CacheBump()
+    {
+        if (!CacheDirectory.DirectoryExists())
+        {
+            CacheDirectory.CreateDirectory();
+        }
+
+        (CacheDirectory.Parent / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+    }
+
     private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
     {
         var appEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppEntry>();
@@ -216,10 +226,7 @@ partial class BaseNukeBuildHelpers
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
-        if (!CacheDirectory.DirectoryExists())
-        {
-            CacheDirectory.CreateDirectory();
-        }
+        CacheBump();
 
         foreach (var appEntry in appConfig.AppEntries)
         {
@@ -287,10 +294,7 @@ partial class BaseNukeBuildHelpers
         OutputDirectory.DeleteDirectory();
         OutputDirectory.CreateDirectory();
 
-        if (!CacheDirectory.DirectoryExists())
-        {
-            CacheDirectory.CreateDirectory();
-        }
+        CacheBump();
 
         if (preSetupOutput != null)
         {
@@ -347,10 +351,7 @@ partial class BaseNukeBuildHelpers
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
-        if (!CacheDirectory.DirectoryExists())
-        {
-            CacheDirectory.CreateDirectory();
-        }
+        CacheBump();
 
         foreach (var appEntry in appConfig.AppEntries)
         {

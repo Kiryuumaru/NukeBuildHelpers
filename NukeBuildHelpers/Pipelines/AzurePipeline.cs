@@ -300,7 +300,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
-        var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload artifacts", task: "PublishPipelineArtifact@1", condition: "ne(variables['id'], 'skip')");
+        var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1", condition: "ne(variables['id'], 'skip')");
         AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
         AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
@@ -314,7 +314,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         AddJobStepCheckout(publishJob, condition: "ne(variables['id'], 'skip')");
-        var downloadPublishStep = AddJobStep(publishJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2", condition: "ne(variables['id'], 'skip')");
+        var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2", condition: "ne(variables['id'], 'skip')");
         AddJobStepInputs(downloadPublishStep, "artifact", "$(id)");
         AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
