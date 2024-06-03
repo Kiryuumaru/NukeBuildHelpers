@@ -16,6 +16,7 @@ using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Pipelines.Interfaces;
 using System.Text.Json;
+using System.IO;
 
 namespace NukeBuildHelpers;
 
@@ -69,7 +70,7 @@ partial class BaseNukeBuildHelpers
         {
             try
             {
-                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText())!;
+                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
             }
             catch { }
         }
@@ -98,13 +99,19 @@ partial class BaseNukeBuildHelpers
 
     private static async void CachePostload(Entry entry)
     {
+        Log.Information("dsefgsef awdawdawd scs");
+        Log.Information("dsefgsef awdawdawd scs");
+        Log.Information("dsefgsef awdawdawd scs");
+        Log.Information("dsefgsef awdawdawd scs");
+        Log.Information("dsefgsef awdawdawd scs");
+        Log.Information("dsefgsef awdawdawd scs");
         Dictionary<string, AbsolutePath> cachePairs = [];
 
         if (entryCacheIndexPath.FileExists())
         {
             try
             {
-                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText())!;
+                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
             }
             catch { }
         }
@@ -335,6 +342,17 @@ partial class BaseNukeBuildHelpers
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
                         CachePostload(appEntryTest);
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
                     }));
                 }
                 else
@@ -348,6 +366,16 @@ partial class BaseNukeBuildHelpers
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
                         CachePostload(appEntryTest);
+                        Log.Information("dssd scss");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd sscs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd scs");
+                        Log.Information("dssd sccccs");
+                        Log.Information("dssd scs");
                     });
                 }
             }
