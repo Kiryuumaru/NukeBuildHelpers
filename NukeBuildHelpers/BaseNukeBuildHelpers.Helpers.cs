@@ -114,24 +114,23 @@ partial class BaseNukeBuildHelpers
 
         foreach (var path in entry.CachePaths)
         {
-            if (path.FileExists() || path.DirectoryExists())
-            {
-                if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
-                {
-                    cachePath = entryCachePath / Guid.NewGuid().Encode();
-                    cachePairs[path.ToString()] = cachePath;
-                }
-                tasks.Add(Task.Run(() =>
-                {
-                    cachePath.Parent.CreateDirectory();
-                    path.CopyFilesRecursively(cachePath);
-                    Log.Information("{path} cache saved", path);
-                }));
-            }
-            else
+            if (!path.FileExists() && !path.DirectoryExists())
             {
                 Log.Information("{path} cache missed", path);
+                continue;
             }
+
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
+            {
+                cachePath = entryCachePath / Guid.NewGuid().Encode();
+                cachePairs[path.ToString()] = cachePath;
+            }
+            tasks.Add(Task.Run(() =>
+            {
+                cachePath.Parent.CreateDirectory();
+                path.CopyFilesRecursively(cachePath);
+                Log.Information("{path} cache saved", path);
+            }));
         }
 
         await Task.WhenAll(tasks);
