@@ -22,7 +22,7 @@ class NugetBuildHelpersTest : AppTestEntry<Build>
 
         if (ascas.FileExists())
         {
-            Console.WriteLine("OLD VALLLVALLLLLLVALLLLLL: " + ascas.ReadAllText());
+            Console.WriteLine("OLD VALLLVALLLLLLVALLLLLLs: " + ascas.ReadAllText());
         }
 
         string newVal = Guid.NewGuid().Encode();
