@@ -14,10 +14,22 @@ class NugetBuildHelpersTest : AppTestEntry<Build>
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
-    public override AbsolutePath[] CachePaths => [RootDirectory / "samp" / "test.txt"];
+    public override AbsolutePath[] CachePaths => [RootDirectory / "samp1", RootDirectory / "samp" / "test.txt"];
 
     public override void Run(AppTestRunContext appTestRunContext)
     {
+        AbsolutePath ascas1 = RootDirectory / "samp1" / "test.txt";
+
+        if (ascas1.FileExists())
+        {
+            Console.WriteLine("1OLD VALLLVALLLLLLVALLLdsdLLLs: " + ascas1.ReadAllText());
+        }
+
+        string newVal1 = Guid.NewGuid().Encode();
+        Console.WriteLine("1NEW VALLLLLLVALLLLLL: " + newVal1);
+        ascas1.Parent.CreateDirectory();
+        ascas1.WriteAllText(newVal1);
+
         AbsolutePath ascas = RootDirectory / "samp" / "test.txt";
 
         if (ascas.FileExists())
