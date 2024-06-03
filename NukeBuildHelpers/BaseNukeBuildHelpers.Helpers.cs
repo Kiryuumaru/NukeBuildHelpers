@@ -87,6 +87,7 @@ partial class BaseNukeBuildHelpers
             tasks.Add(Task.Run(() =>
             {
                 cachePath.MoveFilesRecursively(path);
+                Log.Information("{path} cache loaded", path);
             }));
         }
 
@@ -127,6 +128,7 @@ partial class BaseNukeBuildHelpers
             tasks.Add(Task.Run(() =>
             {
                 path.MoveFilesRecursively(cachePath);
+                Log.Information("{path} cache saved", path);
             }));
         }
 
@@ -173,11 +175,11 @@ partial class BaseNukeBuildHelpers
             if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
                 testSecretMap.EntryType == appTestEntry.GetType())
             {
-                foreach (var secret in testSecretMap.Secrets)
+                foreach (var (MemberInfo, Secret) in testSecretMap.Secrets)
                 {
-                    var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? "NUKE_" + secret.Secret.SecretVariableName : secret.Secret.EnvironmentVariableName;
+                    var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                    secret.MemberInfo.SetValue(appTestEntry, secretValue);
+                    MemberInfo.SetValue(appTestEntry, secretValue);
                 }
             }
             appTestEntry.PipelineType = pipelineType;
@@ -227,11 +229,11 @@ partial class BaseNukeBuildHelpers
             if (appEntrySecretMap.TryGetValue(appEntry.Value.Id, out var appSecretMap) &&
                 appSecretMap.EntryType == appEntry.Value.GetType())
             {
-                foreach (var secret in appSecretMap.Secrets)
+                foreach (var (MemberInfo, Secret) in appSecretMap.Secrets)
                 {
-                    var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? "NUKE_" + secret.Secret.SecretVariableName : secret.Secret.EnvironmentVariableName;
+                    var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                    secret.MemberInfo.SetValue(appEntry.Value, secretValue);
+                    MemberInfo.SetValue(appEntry.Value, secretValue);
                 }
             }
 

@@ -1,5 +1,7 @@
-﻿using Nuke.Common.Tools.DotNet;
+﻿using Nuke.Common.IO;
+using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models.RunContext;
 using System;
@@ -12,8 +14,21 @@ class NugetBuildHelpersTest : AppTestEntry<Build>
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
+    public override AbsolutePath[] CachePaths => [RootDirectory / "samp"];
+
     public override void Run(AppTestRunContext appTestRunContext)
     {
+        AbsolutePath ascas = RootDirectory / "samp" / "test.txt";
+
+        if (ascas.Exists())
+        {
+            Console.WriteLine("OLD VALLLLLL: " + ascas.ReadAllText());
+        }
+
+        string newVal = Guid.NewGuid().Encode();
+        Console.WriteLine("NEW VALLLLLL: " + newVal);
+        ascas.WriteAllText(newVal);
+
         DotNetTasks.DotNetClean(_ => _
             .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
         DotNetTasks.DotNetTest(_ => _
