@@ -214,6 +214,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             ["name"] = "Nuke CICD Pipeline",
             ["trigger"] = new Dictionary<string, object>()
                 {
+                    { "batch", true },
                     { "branches", new Dictionary<string, object>()
                         {
                             { "include", NukeBuild.EnvironmentBranches.ToArray() },
@@ -227,6 +228,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 },
             ["pr"] = new Dictionary<string, object>()
                 {
+                    { "batch", true },
                     { "branches", new Dictionary<string, object>()
                         {
                             { "include", new List<string> { "**" } },
