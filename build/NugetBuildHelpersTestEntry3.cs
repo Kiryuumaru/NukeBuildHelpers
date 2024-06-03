@@ -10,7 +10,7 @@ class NugetBuildHelpersTest3 : AppTestEntry<Build>
 {
     public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
 
-    public override RunTestType RunTestOn => RunTestType.All;
+    //public override RunTestType RunTestOn => RunTestType.All;
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers2)];
 

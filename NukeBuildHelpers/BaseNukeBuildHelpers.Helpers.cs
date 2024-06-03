@@ -71,6 +71,7 @@ partial class BaseNukeBuildHelpers
             try
             {
                 cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
+                Log.Information("{path} ssssssssssss", entryCacheIndexPath.ReadAllText());
             }
             catch { }
         }
@@ -84,7 +85,6 @@ partial class BaseNukeBuildHelpers
                 Log.Information("{path} cache missed", path);
                 continue;
             }
-
             tasks.Add(Task.Run(() =>
             {
                 cachePath.MoveFilesRecursively(path);
@@ -106,6 +106,7 @@ partial class BaseNukeBuildHelpers
             try
             {
                 cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
+                Log.Information("{path} ssssssssssss", entryCacheIndexPath.ReadAllText());
             }
             catch { }
         }
@@ -119,7 +120,6 @@ partial class BaseNukeBuildHelpers
                 Log.Information("{path} cache missed", path);
                 continue;
             }
-
             if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
             {
                 cachePath = entryCachePath / Guid.NewGuid().Encode();
