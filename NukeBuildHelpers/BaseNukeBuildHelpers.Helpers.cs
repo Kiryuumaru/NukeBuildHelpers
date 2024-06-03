@@ -130,7 +130,7 @@ partial class BaseNukeBuildHelpers
             tasks.Add(Task.Run(() =>
             {
                 cachePath.Parent.CreateDirectory();
-                path.CopyFilesRecursively(cachePath);
+                path.MoveFilesRecursively(cachePath);
                 Log.Information("{path} cache saved", path);
             }));
         }
@@ -138,6 +138,7 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(tasks);
 
         entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cachePairs));
+        Log.Information("{path} ssssssssssssssssssssssssssssss", entryCacheIndexPath.ReadAllText());
 
         foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
         {
