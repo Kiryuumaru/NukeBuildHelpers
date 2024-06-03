@@ -81,6 +81,7 @@
               "PipelinePublish",
               "PipelineTest",
               "Publish",
+              "Release",
               "StatusWatch",
               "Test",
               "Version"
@@ -106,6 +107,7 @@
               "PipelinePublish",
               "PipelineTest",
               "Publish",
+              "Release",
               "StatusWatch",
               "Test",
               "Version"
