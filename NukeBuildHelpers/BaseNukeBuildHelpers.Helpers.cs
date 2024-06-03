@@ -106,7 +106,7 @@ partial class BaseNukeBuildHelpers
             try
             {
                 cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
-                Log.Information("{path} ssssssssssss", entryCacheIndexPath.ReadAllText());
+                Log.Information("{path} sssssssssssss", entryCacheIndexPath.ReadAllText());
             }
             catch { }
         }
