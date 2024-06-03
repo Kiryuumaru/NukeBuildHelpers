@@ -64,6 +64,11 @@ partial class BaseNukeBuildHelpers
 
     private static async void CachePreload(Entry entry)
     {
+        foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
+        {
+            Log.Information("{path} filefilefilefile", file);
+        }
+
         Dictionary<string, AbsolutePath> cachePairs = [];
 
         if (entryCacheIndexPath.FileExists())
@@ -71,7 +76,6 @@ partial class BaseNukeBuildHelpers
             try
             {
                 cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
-                Log.Information("{path} ssssssssssss", entryCacheIndexPath.ReadAllText());
             }
             catch { }
         }
@@ -93,8 +97,6 @@ partial class BaseNukeBuildHelpers
         }
 
         await Task.WhenAll(tasks);
-
-        entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cachePairs));
     }
 
     private static async void CachePostload(Entry entry)
@@ -136,6 +138,11 @@ partial class BaseNukeBuildHelpers
         await Task.WhenAll(tasks);
 
         entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cachePairs));
+
+        foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
+        {
+            Log.Information("{path} filefilefilefile", file);
+        }
     }
 
     private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
