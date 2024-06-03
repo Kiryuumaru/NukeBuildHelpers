@@ -27,7 +27,7 @@ class NugetBuildHelpersTest : AppTestEntry<Build>
 
         string newVal = Guid.NewGuid().Encode();
         Console.WriteLine("NEW VALLLLLL: " + newVal);
-        ascas.CreateDirectory();
+        ascas.Parent.CreateDirectory();
         ascas.WriteAllText(newVal);
 
         DotNetTasks.DotNetClean(_ => _
