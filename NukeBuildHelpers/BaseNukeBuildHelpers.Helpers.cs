@@ -15,11 +15,15 @@ using System.ComponentModel.DataAnnotations;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Pipelines.Interfaces;
+using System.Text.Json;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    private static readonly AbsolutePath entryCachePath = CommonCacheDirectory / "entry";
+    private static readonly AbsolutePath entryCacheIndexPath = CommonCacheDirectory / "entry_index";
+
     internal void CheckEnvironementBranches()
     {
         HashSet<string> set = [];
@@ -54,7 +58,81 @@ partial class BaseNukeBuildHelpers
             CacheDirectory.CreateDirectory();
         }
 
-        (CacheDirectory.Parent / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+        (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+    }
+
+    private static async void CachePreload(Entry entry)
+    {
+        Dictionary<string, AbsolutePath> cachePairs = [];
+
+        if (entryCacheIndexPath.FileExists())
+        {
+            try
+            {
+                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText())!;
+            }
+            catch { }
+        }
+
+        List<Task> tasks = [];
+
+        foreach (var path in entry.CachePaths)
+        {
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.Exists())
+            {
+                Log.Information("{path} cache missed", path);
+                continue;
+            }
+
+            tasks.Add(Task.Run(() =>
+            {
+                cachePath.MoveFilesRecursively(path);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+
+        entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cachePairs));
+    }
+
+    private static async void CachePostload(Entry entry)
+    {
+        Dictionary<string, AbsolutePath> cachePairs = [];
+
+        if (entryCacheIndexPath.FileExists())
+        {
+            try
+            {
+                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText())!;
+            }
+            catch { }
+        }
+
+        List<Task> tasks = [];
+
+        foreach (var path in entry.CachePaths)
+        {
+            if (!path.Exists())
+            {
+                Log.Information("{path} cache missed", path);
+                continue;
+            }
+
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
+            {
+                cachePath = entryCachePath / Guid.NewGuid().Encode();
+                cachePairs[path.ToString()] = cachePath;
+            }
+
+            tasks.Add(Task.Run(() =>
+            {
+                path.MoveFilesRecursively(cachePath);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+
+        entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cachePairs));
     }
 
     private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
@@ -248,22 +326,26 @@ partial class BaseNukeBuildHelpers
                 {
                     tasks.Add(Task.Run(() =>
                     {
+                        CachePreload(appEntryTest);
                         foreach (var workflowStep in workflowSteps)
                         {
                             workflowStep.TestRun(appEntryTest);
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
+                        CachePostload(appEntryTest);
                     }));
                 }
                 else
                 {
                     nonParallels.Add(() =>
                     {
+                        CachePreload(appEntryTest);
                         foreach (var workflowStep in workflowSteps)
                         {
                             workflowStep.TestRun(appEntryTest);
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
+                        CachePostload(appEntryTest);
                     });
                 }
             }
@@ -309,22 +391,26 @@ partial class BaseNukeBuildHelpers
             {
                 tasks.Add(Task.Run(() =>
                 {
+                    CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppBuild(appEntry.Value);
                     }
                     appEntry.Value.Build(appEntry.Value.AppRunContext!);
+                    CachePostload(appEntry.Value);
                 }));
             }
             else
             {
                 nonParallels.Add(() =>
                 {
+                    CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppBuild(appEntry.Value);
                     }
                     appEntry.Value.Build(appEntry.Value.AppRunContext!);
+                    CachePostload(appEntry.Value);
                 });
             }
         }
@@ -361,22 +447,26 @@ partial class BaseNukeBuildHelpers
             {
                 tasks.Add(Task.Run(() =>
                 {
+                    CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppPublish(appEntry.Value);
                     }
                     appEntry.Value.Publish(appEntry.Value.AppRunContext!);
+                    CachePostload(appEntry.Value);
                 }));
             }
             else
             {
                 nonParallels.Add(() =>
                 {
+                    CachePreload(appEntry.Value);
                     foreach (var workflowStep in workflowSteps)
                     {
                         workflowStep.AppPublish(appEntry.Value);
                     }
                     appEntry.Value.Publish(appEntry.Value.AppRunContext!);
+                    CachePostload(appEntry.Value);
                 });
             }
         }

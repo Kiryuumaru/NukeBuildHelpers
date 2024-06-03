@@ -3,8 +3,10 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.NuGet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Attributes;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models.RunContext;
+using System;
 
 namespace _build;
 
@@ -26,8 +28,21 @@ class NugetBuildHelpers : AppEntry<Build>
 
     public override bool MainRelease => true;
 
+    public override AbsolutePath[] CachePaths => [ RootDirectory / "samp" ];
+
     public override void Build(AppRunContext appRunContext)
     {
+        AbsolutePath ascas = RootDirectory / "samp" / "test.txt";
+
+        if (ascas.Exists())
+        {
+            Console.WriteLine("OLD VALLLLLL: " + ascas.ReadAllText());
+        }
+
+        string newVal = Guid.NewGuid().Encode();
+        Console.WriteLine("NEW VALLLLLL: " + newVal);
+        ascas.WriteAllText(newVal);
+
         AppVersion? appVersion = null;
         if (appRunContext is AppPipelineRunContext appPipelineRunContext)
         {
