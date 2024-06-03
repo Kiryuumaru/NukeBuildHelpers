@@ -64,6 +64,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
         var outputPublishMatrix = new List<PreSetupOutputAppEntryMatrix>();
 
+        var runClassification = preSetupOutput.TriggerType == TriggerType.PullRequest ? "pr." + preSetupOutput.PullRequestNumber : "main";
+        var runIdentifier = "build." + preSetupOutput.BuildId;
+
         foreach (var toTest in preSetupOutput.ToTest)
         {
             if (!appConfig.AppTestEntries.TryGetValue(toTest, out var appTestEntry))
@@ -84,8 +87,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 BuildScript = GetBuildScript(appTestEntry.RunsOn),
                 IdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
                 CacheInvalidator = appEntry.CacheInvalidator,
-                RunClassification = "",
-                RunIdentifier = ""
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -109,8 +112,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 IdsToRun = appEntry.Id,
                 Version = entry.Version.ToString(),
                 CacheInvalidator = entry.AppEntry.CacheInvalidator,
-                RunClassification = "",
-                RunIdentifier = ""
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -134,8 +137,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 IdsToRun = appEntry.Id,
                 Version = entry.Version.ToString(),
                 CacheInvalidator = entry.AppEntry.CacheInvalidator,
-                RunClassification = "",
-                RunIdentifier = ""
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
