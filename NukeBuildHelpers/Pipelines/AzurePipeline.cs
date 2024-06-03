@@ -65,7 +65,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var outputPublishMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
 
         var runClassification = preSetupOutput.TriggerType == TriggerType.PullRequest ? "pr." + preSetupOutput.PullRequestNumber : "main";
-        var runIdentifier = "build." + preSetupOutput.BuildId;
+        var runIdentifier = Guid.NewGuid().Encode();
 
         foreach (var toTest in preSetupOutput.ToTest)
         {
