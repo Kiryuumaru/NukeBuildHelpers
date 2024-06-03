@@ -23,4 +23,8 @@ public abstract class Entry : BaseHelper
             return GetType().Name;
         }
     }
+
+    public virtual string CacheInvalidator => "0";
+
+    public virtual string[] CachePaths { get; } = [];
 }

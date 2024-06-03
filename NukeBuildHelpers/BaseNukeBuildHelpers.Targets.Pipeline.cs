@@ -277,6 +277,7 @@ partial class BaseNukeBuildHelpers
                 IsFirstRelease = isFirstRelease,
                 BuildId = buildId,
                 LastBuildId = targetBuildId,
+                PullRequestNumber = pipelineInfo.PullRequestNumber,
                 Entries = entries,
                 ToTest = toTest,
                 ToBuild = toBuild,

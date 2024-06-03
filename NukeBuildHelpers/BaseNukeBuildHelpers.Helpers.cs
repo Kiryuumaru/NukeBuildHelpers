@@ -5,8 +5,6 @@ using Semver;
 using Serilog;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Common;
-using System.Reflection;
-using Microsoft.Extensions.DependencyModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Utilities;
 using Nuke.Common.CI.AzurePipelines;
@@ -47,6 +45,16 @@ partial class BaseNukeBuildHelpers
             workflowBuilder.PipelineType = pipelineType;
             workflowBuilder.NukeBuild = this;
         }
+    }
+
+    private static void CacheBump()
+    {
+        if (!CacheDirectory.DirectoryExists())
+        {
+            CacheDirectory.CreateDirectory();
+        }
+
+        (CacheDirectory.Parent / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
     }
 
     private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
@@ -216,6 +224,8 @@ partial class BaseNukeBuildHelpers
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
+        CacheBump();
+
         foreach (var appEntry in appConfig.AppEntries)
         {
             if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
@@ -282,6 +292,8 @@ partial class BaseNukeBuildHelpers
         OutputDirectory.DeleteDirectory();
         OutputDirectory.CreateDirectory();
 
+        CacheBump();
+
         if (preSetupOutput != null)
         {
             (OutputDirectory / "notes.md").WriteAllText(preSetupOutput.ReleaseNotes);
@@ -336,6 +348,8 @@ partial class BaseNukeBuildHelpers
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
+
+        CacheBump();
 
         foreach (var appEntry in appConfig.AppEntries)
         {

@@ -64,6 +64,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var outputBuildMatrix = new List<PreSetupOutputAppEntryMatrix>();
         var outputPublishMatrix = new List<PreSetupOutputAppEntryMatrix>();
 
+        var runClassification = preSetupOutput.TriggerType == TriggerType.PullRequest ? "pr." + preSetupOutput.PullRequestNumber : "main";
+        var runIdentifier = "build." + preSetupOutput.BuildId;
+
         foreach (var toTest in preSetupOutput.ToTest)
         {
             if (!appConfig.AppTestEntries.TryGetValue(toTest, out var appTestEntry))
@@ -82,7 +85,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 Environment = preSetupOutput.Environment,
                 RunsOn = GetRunsOn(appTestEntry.RunsOn),
                 BuildScript = GetBuildScript(appTestEntry.RunsOn),
-                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}"
+                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
+                CacheInvalidator = appEntry.CacheInvalidator,
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -104,7 +110,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(appEntry.BuildRunsOn),
                 BuildScript = GetBuildScript(appEntry.BuildRunsOn),
                 IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString()
+                Version = entry.Version.ToString(),
+                CacheInvalidator = entry.AppEntry.CacheInvalidator,
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -126,7 +135,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(appEntry.BuildRunsOn),
                 BuildScript = GetBuildScript(appEntry.BuildRunsOn),
                 IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString()
+                Version = entry.Version.ToString(),
+                CacheInvalidator = entry.AppEntry.CacheInvalidator,
+                RunClassification = runClassification,
+                RunIdentifier = runIdentifier
             });
         }
 
@@ -139,7 +151,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 Environment = preSetupOutput.Environment,
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
-                IdsToRun = ""
+                IdsToRun = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
         if (outputBuildMatrix.Count == 0)
@@ -152,7 +167,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = "",
-                Version = ""
+                Version = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
         if (outputPublishMatrix.Count == 0)
@@ -165,7 +183,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
                 BuildScript = "",
                 IdsToRun = "",
-                Version = ""
+                Version = "",
+                CacheInvalidator = "",
+                RunClassification = "",
+                RunIdentifier = ""
             });
         }
 
@@ -237,6 +258,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
         AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
+        var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepWith(cacheTestStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cacheTestStep, "key", $$$"""
+            test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+            """);
+        AddJobStepWith(cacheTestStep, "restore-keys", $$$"""
+            test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+            test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
+            """);
         var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
@@ -251,10 +281,19 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobStepCheckout(buildJob, _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
+        var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepWith(cacheBuildStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cacheBuildStep, "key", $$$"""
+            build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+            """);
+        AddJobStepWith(cacheBuildStep, "restore-keys", $$$"""
+            build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+            build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
+            """);
         var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
-        var uploadBuildStep = AddJobStep(buildJob, name: "Upload artifacts", uses: "actions/upload-artifact@v4", _if: "${{ matrix.id != 'skip' }}");
+        var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepWith(uploadBuildStep, "name", "${{ matrix.id }}");
         AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
         AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
@@ -274,6 +313,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.id }}");
         AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
+        var cachePublishStep = AddJobStep(publishJob, name: "Cache Publish", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
+        AddJobStepWith(cachePublishStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cachePublishStep, "key", $$$"""
+            publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+            """);
+        AddJobStepWith(cachePublishStep, "restore-keys", $$$"""
+            publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+            publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
+            """);
         var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
@@ -289,7 +337,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStep(postSetupJob, id: "NUKE_PUBLISH_SUCCESS", name: $"Resolve NUKE_PUBLISH_SUCCESS",
             run: $"echo \"NUKE_PUBLISH_SUCCESS=${{NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
         AddJobStepCheckout(postSetupJob);
-        var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
+        var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/output");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunsOnType.Ubuntu2204, "PipelinePostSetup");
         AddJobOrStepEnvVar(nukePostSetup, "NUKE_PUBLISH_SUCCESS", "${{ steps.NUKE_PUBLISH_SUCCESS.outputs.NUKE_PUBLISH_SUCCESS }}");

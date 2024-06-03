@@ -64,6 +64,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       if: ${{ matrix.id != 'skip' }}
+    - name: Cache Test
+      uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
+      with:
+        path: ./.nuke/temp/cache
+        key: test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+        restore-keys: |-
+          test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+          test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
     - name: Run Nuke PipelineTest
       run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
@@ -81,13 +90,22 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       if: ${{ matrix.id != 'skip' }}
+    - name: Cache Build
+      uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
+      with:
+        path: ./.nuke/temp/cache
+        key: build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+        restore-keys: |-
+          build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+          build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
     - name: Run Nuke PipelineBuild
       run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Upload artifacts
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       if: ${{ matrix.id != 'skip' }}
       with:
@@ -117,6 +135,15 @@ jobs:
         path: ./.nuke/output
         pattern: ${{ matrix.id }}
         merge-multiple: true
+    - name: Cache Publish
+      uses: actions/cache@v4
+      if: ${{ matrix.id != 'skip' }}
+      with:
+        path: ./.nuke/temp/cache
+        key: publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+        restore-keys: |-
+          publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+          publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
     - name: Run Nuke PipelinePublish
       run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
@@ -141,7 +168,7 @@ jobs:
       name: Resolve NUKE_PUBLISH_SUCCESS
       run: echo "NUKE_PUBLISH_SUCCESS=${NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
-    - name: Download artifacts
+    - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/output
