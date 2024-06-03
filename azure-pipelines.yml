@@ -102,7 +102,7 @@ jobs:
       NUKE_NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
       NUKE_GITHUB_TOKEN: $(GITHUB_TOKEN)
   - task: PublishPipelineArtifact@1
-    displayName: Upload artifacts
+    displayName: Upload Artifacts
     condition: ne(variables['id'], 'skip')
     inputs:
       artifact: $(id)
@@ -125,7 +125,7 @@ jobs:
     persistCredentials: true
     condition: ne(variables['id'], 'skip')
   - task: DownloadPipelineArtifact@2
-    displayName: Download artifacts
+    displayName: Download Artifacts
     condition: ne(variables['id'], 'skip')
     inputs:
       artifact: $(id)

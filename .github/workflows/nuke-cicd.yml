@@ -105,7 +105,7 @@ jobs:
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Upload artifacts
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       if: ${{ matrix.id != 'skip' }}
       with:
@@ -168,7 +168,7 @@ jobs:
       name: Resolve NUKE_PUBLISH_SUCCESS
       run: echo "NUKE_PUBLISH_SUCCESS=${NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
-    - name: Download artifacts
+    - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/output
