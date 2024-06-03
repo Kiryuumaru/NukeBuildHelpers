@@ -79,7 +79,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var path in entry.CachePaths)
         {
-            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.Exists())
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.DirectoryExists())
             {
                 Log.Information("{path} cache missed", path);
                 continue;
@@ -87,7 +87,8 @@ partial class BaseNukeBuildHelpers
 
             tasks.Add(Task.Run(() =>
             {
-                cachePath.MoveFilesRecursively(path);
+                var cacheValuePath = cachePath / "value";
+                cacheValuePath.MoveFilesRecursively(path);
                 Log.Information("{path} cache loaded", path);
             }));
         }
@@ -115,7 +116,7 @@ partial class BaseNukeBuildHelpers
         foreach (var path in entry.CachePaths)
         {
             Log.Information("dsefgsef awdawdawd scs {asc}", path);
-            if (!path.Exists())
+            if (!path.DirectoryExists())
             {
                 Log.Information("{path} cache missed", path);
                 continue;
@@ -133,7 +134,9 @@ partial class BaseNukeBuildHelpers
             tasks.Add(Task.Run(() =>
             {
                 Log.Information("dsefgsef awdawdawd scs capeee {asc}", path);
-                path.CopyFilesRecursively(cachePath);
+                var cacheValuePath = cachePath / "value";
+                cacheValuePath.CreateDirectory();
+                path.CopyFilesRecursively(cacheValuePath);
                 Log.Information("{path} cache saved", path);
             }));
         }
