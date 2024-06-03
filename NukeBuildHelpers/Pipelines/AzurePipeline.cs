@@ -228,7 +228,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 },
             ["pr"] = new Dictionary<string, object>()
                 {
-                    { "batch", true },
                     { "branches", new Dictionary<string, object>()
                         {
                             { "include", new List<string> { "**" } },
