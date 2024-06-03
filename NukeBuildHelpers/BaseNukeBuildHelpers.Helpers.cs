@@ -228,20 +228,6 @@ partial class BaseNukeBuildHelpers
 
         CacheBump();
 
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-        Console.WriteLine("SSSSSSSSSSSSSS" + (CacheDirectory.Parent / "stamp").ReadAllText());
-
         foreach (var appEntry in appConfig.AppEntries)
         {
             if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
