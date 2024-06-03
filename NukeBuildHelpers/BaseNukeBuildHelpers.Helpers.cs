@@ -554,6 +554,7 @@ partial class BaseNukeBuildHelpers
 
         await Task.Run(() =>
         {
+            Git.Invoke("push origin HEAD", logInvocation: false, logOutput: false);
             var currentBranch = string.Join("", Git.Invoke("rev-parse --abbrev-ref HEAD", logInvocation: false, logOutput: false).Select(i => i.Text)).Trim();
             Git.Invoke($"checkout -b {releasePrBranchName}", logInvocation: false, logOutput: false);
             Git.Invoke($"push -u origin {releasePrBranchName}", logInvocation: false, logOutput: false);
