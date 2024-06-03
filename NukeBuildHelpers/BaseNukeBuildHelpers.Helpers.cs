@@ -17,6 +17,7 @@ using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Pipelines.Interfaces;
 using System.Text.Json;
 using System.IO;
+using System.Collections.Generic;
 
 namespace NukeBuildHelpers;
 
@@ -62,6 +63,39 @@ partial class BaseNukeBuildHelpers
         (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
     }
 
+    private static Dictionary<string, AbsolutePath> GetCacheIndex()
+    {
+        Dictionary<string, AbsolutePath> cachePairs = [];
+
+        if (entryCacheIndexPath.FileExists())
+        {
+            try
+            {
+                var cachePairsStr = JsonSerializer.Deserialize<Dictionary<string, string>>(entryCacheIndexPath.ReadAllText()) ?? [];
+                foreach (var pair in cachePairsStr)
+                {
+                    try
+                    {
+                        cachePairs[pair.Key] = pair.Value;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        return cachePairs;
+    }
+
+    private static void SetCacheIndex(Dictionary<string, AbsolutePath> cacheIndex)
+    {
+        try
+        {
+            entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cacheIndex.ToDictionary(i => i.Key, i => i.Value.ToString())));
+        }
+        catch { }
+    }
+
     private static async void CachePreload(Entry entry)
     {
         foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
@@ -69,18 +103,28 @@ partial class BaseNukeBuildHelpers
             Log.Information("{path} filefilefilefile", file);
         }
 
-        Dictionary<string, AbsolutePath> cachePairs = [];
-
-        if (entryCacheIndexPath.FileExists())
-        {
-            try
-            {
-                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
-            }
-            catch { }
-        }
+        Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
 
         List<Task> tasks = [];
+
+        foreach (var dir in entryCachePath.GetDirectories())
+        {
+            if (!cachePairs.ContainsKey(dir.Name))
+            {
+                dir.DeleteDirectory();
+                Log.Information("{path} cache cleaned", dir);
+            }
+        }
+
+        foreach (var pair in cachePairs.Clone())
+        {
+            if (!entry.CachePaths.Any(i => i == pair.Value))
+            {
+                cachePairs.Remove(pair.Key);
+                (entryCachePath / pair.Key).DeleteDirectory();
+                Log.Information("{path} cache cleaned", pair.Value);
+            }
+        }
 
         foreach (var path in entry.CachePaths)
         {
@@ -101,17 +145,7 @@ partial class BaseNukeBuildHelpers
 
     private static async void CachePostload(Entry entry)
     {
-        Dictionary<string, AbsolutePath> cachePairs = [];
-
-        if (entryCacheIndexPath.FileExists())
-        {
-            try
-            {
-                cachePairs = JsonSerializer.Deserialize<Dictionary<string, AbsolutePath>>(entryCacheIndexPath.ReadAllText()) ?? [];
-                Log.Information("{path} sssssssssssss", entryCacheIndexPath.ReadAllText());
-            }
-            catch { }
-        }
+        Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
 
         List<Task> tasks = [];
 
@@ -137,7 +171,7 @@ partial class BaseNukeBuildHelpers
 
         await Task.WhenAll(tasks);
 
-        entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cachePairs));
+        SetCacheIndex(cachePairs);
         Log.Information("{path} ssssssssssssssssssssssssssssss", entryCacheIndexPath.ReadAllText());
 
         foreach (var file in CommonCacheDirectory.GetFiles("*", 100))
