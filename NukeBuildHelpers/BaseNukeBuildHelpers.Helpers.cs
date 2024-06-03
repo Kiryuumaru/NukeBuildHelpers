@@ -216,6 +216,11 @@ partial class BaseNukeBuildHelpers
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
 
+        if (!CacheDirectory.DirectoryExists())
+        {
+            CacheDirectory.CreateDirectory();
+        }
+
         foreach (var appEntry in appConfig.AppEntries)
         {
             if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
@@ -282,6 +287,11 @@ partial class BaseNukeBuildHelpers
         OutputDirectory.DeleteDirectory();
         OutputDirectory.CreateDirectory();
 
+        if (!CacheDirectory.DirectoryExists())
+        {
+            CacheDirectory.CreateDirectory();
+        }
+
         if (preSetupOutput != null)
         {
             (OutputDirectory / "notes.md").WriteAllText(preSetupOutput.ReleaseNotes);
@@ -336,6 +346,11 @@ partial class BaseNukeBuildHelpers
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
         SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
+
+        if (!CacheDirectory.DirectoryExists())
+        {
+            CacheDirectory.CreateDirectory();
+        }
 
         foreach (var appEntry in appConfig.AppEntries)
         {
