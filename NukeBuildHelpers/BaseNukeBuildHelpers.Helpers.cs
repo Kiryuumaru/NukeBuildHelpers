@@ -17,6 +17,7 @@ using System.ComponentModel.DataAnnotations;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Pipelines.Interfaces;
+using System.Linq;
 
 namespace NukeBuildHelpers;
 
@@ -544,12 +545,19 @@ partial class BaseNukeBuildHelpers
                 tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
             }
         }
+
+        var releaseTitle = "Release: `scscsc` and `scscsc`";
+        var releaseBody = "awdawd";
+
         // ---------- Apply bump ----------
 
         await Task.Run(() =>
         {
-            var bumpTag = "bump-" + Repository.Branch.ToLowerInvariant();
+            var bumpTag = "bump-" + Repository.Branch.ToLowerInvariant() + "/" + Guid.NewGuid().Encode();
+            var currentBranch = string.Join("", Git.Invoke("rev-parse --abbrev-ref HEAD", logInvocation: false, logOutput: false).Select(i => i.Text)).Trim();
             Git.Invoke("checkout -b rel/" + bumpTag, logInvocation: false, logOutput: false);
+            Gh.Invoke($"pr create --title {releaseTitle} --body {releaseBody}", logInvocation: false, logOutput: false);
+            Git.Invoke("checkout " + currentBranch, logInvocation: false, logOutput: false);
         });
 
         return appEntryVersionsToBump;
