@@ -7,9 +7,11 @@ namespace NukeBuildHelpers;
 
 public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
+    internal static AbsolutePath CommonCacheDirectory => RootDirectory / ".nuke" / "cache";
+
     public static AbsolutePath OutputDirectory => RootDirectory / ".nuke" / "output";
 
-    public static AbsolutePath CacheDirectory => RootDirectory / ".nuke" / "temp" / "cache" / "output";
+    public static AbsolutePath CacheDirectory => CommonCacheDirectory / "output";
 
     public virtual string[] EnvironmentBranches { get; } = [
         "alpha",

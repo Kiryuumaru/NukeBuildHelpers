@@ -15,11 +15,17 @@ using System.ComponentModel.DataAnnotations;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Pipelines.Interfaces;
+using System.Text.Json;
+using System.IO;
+using System.Collections.Generic;
 
 namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    private static readonly AbsolutePath entryCachePath = CommonCacheDirectory / "entry";
+    private static readonly AbsolutePath entryCacheIndexPath = CommonCacheDirectory / "entry_index";
+
     internal void CheckEnvironementBranches()
     {
         HashSet<string> set = [];
@@ -54,7 +60,141 @@ partial class BaseNukeBuildHelpers
             CacheDirectory.CreateDirectory();
         }
 
-        (CacheDirectory.Parent / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+        (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+    }
+
+    private static Dictionary<string, AbsolutePath> GetCacheIndex()
+    {
+        Dictionary<string, AbsolutePath> cachePairs = [];
+
+        if (entryCacheIndexPath.FileExists())
+        {
+            try
+            {
+                var cachePairsStr = JsonSerializer.Deserialize<Dictionary<string, string>>(entryCacheIndexPath.ReadAllText()) ?? [];
+                foreach (var pair in cachePairsStr)
+                {
+                    try
+                    {
+                        cachePairs[pair.Key] = pair.Value;
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+        }
+
+        return cachePairs;
+    }
+
+    private static void SetCacheIndex(Dictionary<string, AbsolutePath> cacheIndex)
+    {
+        try
+        {
+            if (!entryCacheIndexPath.Parent.DirectoryExists())
+            {
+                entryCacheIndexPath.Parent.CreateDirectory();
+            }
+            entryCacheIndexPath.WriteAllText(JsonSerializer.Serialize(cacheIndex.ToDictionary(i => i.Key, i => i.Value.ToString())));
+        }
+        catch { }
+    }
+
+    private static async Task CachePreload(Entry entry)
+    {
+        if (!entryCachePath.DirectoryExists())
+        {
+            entryCachePath.CreateDirectory();
+        }
+
+        Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
+
+        List<Task> tasks = [];
+
+        foreach (var dir in entryCachePath.GetDirectories())
+        {
+            if (!cachePairs.Any(i => i.Value == dir))
+            {
+                dir.DeleteDirectory();
+                Log.Information("{path} cache cleaned", dir);
+            }
+        }
+
+        foreach (var pair in cachePairs.Clone())
+        {
+            if (!entry.CachePaths.Any(i => i == pair.Key))
+            {
+                cachePairs.Remove(pair.Key);
+                pair.Value.DeleteDirectory();
+                Log.Information("{path} cache cleaned", pair.Key);
+            }
+        }
+
+        foreach (var path in entry.CachePaths)
+        {
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.DirectoryExists())
+            {
+                Log.Information("{path} cache missed", path);
+                continue;
+            }
+            tasks.Add(Task.Run(() =>
+            {
+                var cachePathValue = cachePath / "value";
+                path.Parent.CreateDirectory();
+                if (cachePathValue.FileExists())
+                {
+                    File.Move(cachePathValue, path, true);
+                }
+                else if (cachePathValue.DirectoryExists())
+                {
+                    cachePathValue.MoveFilesRecursively(path);
+                }
+                Log.Information("{path} cache loaded", path);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+
+        SetCacheIndex(cachePairs);
+    }
+
+    private static async Task CachePostload(Entry entry)
+    {
+        Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
+
+        List<Task> tasks = [];
+
+        foreach (var path in entry.CachePaths)
+        {
+            if (!path.FileExists() && !path.DirectoryExists())
+            {
+                Log.Information("{path} cache missed", path);
+                continue;
+            }
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
+            {
+                cachePath = entryCachePath / Guid.NewGuid().Encode();
+                cachePairs[path.ToString()] = cachePath;
+            }
+            tasks.Add(Task.Run(() =>
+            {
+                var cachePathValue = cachePath / "value";
+                cachePath.CreateDirectory();
+                if (path.FileExists())
+                {
+                    File.Move(path, cachePathValue, true);
+                }
+                else if (path.DirectoryExists())
+                {
+                    path.MoveFilesRecursively(cachePathValue);
+                }
+                Log.Information("{path} cache saved", path);
+            }));
+        }
+
+        await Task.WhenAll(tasks);
+
+        SetCacheIndex(cachePairs);
     }
 
     private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
@@ -95,11 +235,11 @@ partial class BaseNukeBuildHelpers
             if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
                 testSecretMap.EntryType == appTestEntry.GetType())
             {
-                foreach (var secret in testSecretMap.Secrets)
+                foreach (var (MemberInfo, Secret) in testSecretMap.Secrets)
                 {
-                    var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? "NUKE_" + secret.Secret.SecretVariableName : secret.Secret.EnvironmentVariableName;
+                    var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                    secret.MemberInfo.SetValue(appTestEntry, secretValue);
+                    MemberInfo.SetValue(appTestEntry, secretValue);
                 }
             }
             appTestEntry.PipelineType = pipelineType;
@@ -149,11 +289,11 @@ partial class BaseNukeBuildHelpers
             if (appEntrySecretMap.TryGetValue(appEntry.Value.Id, out var appSecretMap) &&
                 appSecretMap.EntryType == appEntry.Value.GetType())
             {
-                foreach (var secret in appSecretMap.Secrets)
+                foreach (var (MemberInfo, Secret) in appSecretMap.Secrets)
                 {
-                    var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? "NUKE_" + secret.Secret.SecretVariableName : secret.Secret.EnvironmentVariableName;
+                    var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
                     var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                    secret.MemberInfo.SetValue(appEntry.Value, secretValue);
+                    MemberInfo.SetValue(appEntry.Value, secretValue);
                 }
             }
 
@@ -216,8 +356,7 @@ partial class BaseNukeBuildHelpers
 
     private Task TestAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> tasks = [];
-        List<Action> nonParallels = [];
+        List<Func<Task>> tasks = [];
         List<string> testAdded = [];
 
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
@@ -244,46 +383,32 @@ partial class BaseNukeBuildHelpers
                     continue;
                 }
                 testAdded.Add(appEntryTest.Name);
-                if (appEntryTest.RunParallel)
+                tasks.Add(() => Task.Run(async () =>
                 {
-                    tasks.Add(Task.Run(() =>
+                    await CachePreload(appEntryTest);
+                    foreach (var workflowStep in workflowSteps)
                     {
-                        foreach (var workflowStep in workflowSteps)
-                        {
-                            workflowStep.TestRun(appEntryTest);
-                        }
-                        appEntryTest.Run(appEntryTest.AppTestContext!);
-                    }));
-                }
-                else
-                {
-                    nonParallels.Add(() =>
-                    {
-                        foreach (var workflowStep in workflowSteps)
-                        {
-                            workflowStep.TestRun(appEntryTest);
-                        }
-                        appEntryTest.Run(appEntryTest.AppTestContext!);
-                    });
-                }
+                        workflowStep.TestRun(appEntryTest);
+                    }
+                    appEntryTest.Run(appEntryTest.AppTestContext!);
+                    await appEntryTest.RunAsync(appEntryTest.AppTestContext!);
+                    await CachePostload(appEntryTest);
+                }));
             }
         }
 
-        tasks.Add(Task.Run(async () =>
+        return Task.Run(async () =>
         {
-            foreach (var nonParallel in nonParallels)
+            foreach (var task in tasks)
             {
-                await Task.Run(nonParallel);
+                await task();
             }
-        }));
-
-        return Task.WhenAll(tasks);
+        });
     }
 
     private Task BuildAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> tasks = [];
-        List<Action> nonParallels = [];
+        List<Func<Task>> tasks = [];
 
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
@@ -305,45 +430,32 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            if (appEntry.Value.RunParallel)
+            tasks.Add(() => Task.Run(async () =>
             {
-                tasks.Add(Task.Run(() =>
+                await CachePreload(appEntry.Value);
+                foreach (var workflowStep in workflowSteps)
                 {
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppBuild(appEntry.Value);
-                    }
-                    appEntry.Value.Build(appEntry.Value.AppRunContext!);
-                }));
-            }
-            else
-            {
-                nonParallels.Add(() =>
-                {
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppBuild(appEntry.Value);
-                    }
-                    appEntry.Value.Build(appEntry.Value.AppRunContext!);
-                });
-            }
+                    workflowStep.AppBuild(appEntry.Value);
+                    await workflowStep.AppBuildAsync(appEntry.Value);
+                }
+                appEntry.Value.Build(appEntry.Value.AppRunContext!);
+                await appEntry.Value.BuildAsync(appEntry.Value.AppRunContext!);
+                await CachePostload(appEntry.Value);
+            }));
         }
 
-        tasks.Add(Task.Run(async () =>
+        return Task.Run(async () =>
         {
-            foreach (var nonParallel in nonParallels)
+            foreach (var task in tasks)
             {
-                await Task.Run(nonParallel);
+                await task();
             }
-        }));
-
-        return Task.WhenAll(tasks);
+        });
     }
 
     private Task PublishAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
     {
-        List<Task> tasks = [];
-        List<Action> nonParallels = [];
+        List<Func<Task>> tasks = [];
 
         List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
 
@@ -357,39 +469,27 @@ partial class BaseNukeBuildHelpers
             {
                 continue;
             }
-            if (appEntry.Value.RunParallel)
+            tasks.Add(() => Task.Run(async () =>
             {
-                tasks.Add(Task.Run(() =>
+                await CachePreload(appEntry.Value);
+                foreach (var workflowStep in workflowSteps)
                 {
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppPublish(appEntry.Value);
-                    }
-                    appEntry.Value.Publish(appEntry.Value.AppRunContext!);
-                }));
-            }
-            else
-            {
-                nonParallels.Add(() =>
-                {
-                    foreach (var workflowStep in workflowSteps)
-                    {
-                        workflowStep.AppPublish(appEntry.Value);
-                    }
-                    appEntry.Value.Publish(appEntry.Value.AppRunContext!);
-                });
-            }
+                    workflowStep.AppPublish(appEntry.Value);
+                    await workflowStep.AppPublishAsync(appEntry.Value);
+                }
+                appEntry.Value.Publish(appEntry.Value.AppRunContext!);
+                await appEntry.Value.PublishAsync(appEntry.Value.AppRunContext!);
+                await CachePostload(appEntry.Value);
+            }));
         }
 
-        tasks.Add(Task.Run(async () =>
+        return Task.Run(async () =>
         {
-            foreach (var nonParallel in nonParallels)
+            foreach (var task in tasks)
             {
-                await Task.Run(nonParallel);
+                await task();
             }
-        }));
-
-        return Task.WhenAll(tasks);
+        });
     }
 
     private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> InteractiveRelease()

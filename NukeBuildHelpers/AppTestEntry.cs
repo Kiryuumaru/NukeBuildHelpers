@@ -13,6 +13,8 @@ public abstract class AppTestEntry : Entry
 
     public virtual void Run(AppTestRunContext appTestContext) { }
 
+    public virtual Task RunAsync(AppTestRunContext appTestContext) { return Task.CompletedTask; }
+
     internal AppTestRunContext? AppTestContext { get; set; }
 }
 

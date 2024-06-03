@@ -17,7 +17,11 @@ public abstract class AppEntry : Entry
 
     public virtual void Build(AppRunContext appRunContext) { }
 
+    public virtual Task BuildAsync(AppRunContext appRunContext) { return Task.CompletedTask; }
+
     public virtual void Publish(AppRunContext appRunContext) { }
+
+    public virtual Task PublishAsync(AppRunContext appRunContext) { return Task.CompletedTask; }
 
     internal AppRunContext? AppRunContext { get; set; }
 }
