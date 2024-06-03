@@ -79,7 +79,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var path in entry.CachePaths)
         {
-            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.DirectoryExists())
+            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.FileExists() || !cachePath.DirectoryExists())
             {
                 Log.Information("{path} cache missed", path);
                 continue;
@@ -87,8 +87,7 @@ partial class BaseNukeBuildHelpers
 
             tasks.Add(Task.Run(() =>
             {
-                var cacheValuePath = cachePath / "value";
-                cacheValuePath.MoveFilesRecursively(path);
+                cachePath.MoveFilesRecursively(path);
                 Log.Information("{path} cache loaded", path);
             }));
         }
@@ -115,25 +114,24 @@ partial class BaseNukeBuildHelpers
 
         foreach (var path in entry.CachePaths)
         {
-            if (!path.DirectoryExists())
+            if (path.FileExists() || path.DirectoryExists())
+            {
+                if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
+                {
+                    cachePath = entryCachePath / Guid.NewGuid().Encode();
+                    cachePairs[path.ToString()] = cachePath;
+                }
+                tasks.Add(Task.Run(() =>
+                {
+                    cachePath.Parent.CreateDirectory();
+                    path.CopyFilesRecursively(cachePath);
+                    Log.Information("{path} cache saved", path);
+                }));
+            }
+            else
             {
                 Log.Information("{path} cache missed", path);
-                continue;
             }
-
-            if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
-            {
-                cachePath = entryCachePath / Guid.NewGuid().Encode();
-                cachePairs[path.ToString()] = cachePath;
-            }
-
-            tasks.Add(Task.Run(() =>
-            {
-                var cacheValuePath = cachePath / "value";
-                cacheValuePath.Parent.CreateDirectory();
-                path.CopyFilesRecursively(cacheValuePath);
-                Log.Information("{path} cache saved", path);
-            }));
         }
 
         await Task.WhenAll(tasks);
