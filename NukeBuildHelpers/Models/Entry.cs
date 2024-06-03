@@ -1,4 +1,5 @@
-﻿using NukeBuildHelpers.Common;
+﻿using Nuke.Common.IO;
+using NukeBuildHelpers.Common;
 
 namespace NukeBuildHelpers;
 
@@ -26,5 +27,5 @@ public abstract class Entry : BaseHelper
 
     public virtual string CacheInvalidator => "0";
 
-    public virtual string[] CachePaths { get; } = [];
+    public virtual AbsolutePath[] CachePaths { get; } = [];
 }

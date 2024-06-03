@@ -264,7 +264,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(testJob, _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
         var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
-        AddJobStepWith(cacheTestStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cacheTestStep, "path", "./.nuke/cache");
         AddJobStepWith(cacheTestStep, "key", $$$"""
             test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
             """);
@@ -287,7 +287,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(buildJob, _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
         var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
-        AddJobStepWith(cacheBuildStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cacheBuildStep, "path", "./.nuke/cache");
         AddJobStepWith(cacheBuildStep, "key", $$$"""
             build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
             """);
@@ -319,7 +319,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
         var cachePublishStep = AddJobStep(publishJob, name: "Cache Publish", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
-        AddJobStepWith(cachePublishStep, "path", "./.nuke/temp/cache");
+        AddJobStepWith(cachePublishStep, "path", "./.nuke/cache");
         AddJobStepWith(cachePublishStep, "key", $$$"""
             publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
             """);

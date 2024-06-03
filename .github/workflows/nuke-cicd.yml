@@ -71,7 +71,7 @@ jobs:
       uses: actions/cache@v4
       if: ${{ matrix.id != 'skip' }}
       with:
-        path: ./.nuke/temp/cache
+        path: ./.nuke/cache
         key: test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
         restore-keys: |-
           test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
@@ -97,7 +97,7 @@ jobs:
       uses: actions/cache@v4
       if: ${{ matrix.id != 'skip' }}
       with:
-        path: ./.nuke/temp/cache
+        path: ./.nuke/cache
         key: build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
         restore-keys: |-
           build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
@@ -142,7 +142,7 @@ jobs:
       uses: actions/cache@v4
       if: ${{ matrix.id != 'skip' }}
       with:
-        path: ./.nuke/temp/cache
+        path: ./.nuke/cache
         key: publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
         restore-keys: |-
           publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-

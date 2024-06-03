@@ -267,7 +267,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
         var cacheTestStep = AddJobStep(testJob, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
-        AddJobStepInputs(cacheTestStep, "path", "./.nuke/temp/cache");
+        AddJobStepInputs(cacheTestStep, "path", "./.nuke/cache");
         AddJobStepInputs(cacheTestStep, "key", $"""
             "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
             """);
@@ -290,7 +290,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(buildJob, condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
         var cacheBuildStep = AddJobStep(buildJob, displayName: "Cache Build", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
-        AddJobStepInputs(cacheBuildStep, "path", "./.nuke/temp/cache");
+        AddJobStepInputs(cacheBuildStep, "path", "./.nuke/cache");
         AddJobStepInputs(cacheBuildStep, "key", $"""
             "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
             """);
@@ -321,7 +321,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
         var cachePublishStep = AddJobStep(publishJob, displayName: "Cache Publish", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
-        AddJobStepInputs(cachePublishStep, "path", "./.nuke/temp/cache");
+        AddJobStepInputs(cachePublishStep, "path", "./.nuke/cache");
         AddJobStepInputs(cachePublishStep, "key", $"""
             "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
             """);
