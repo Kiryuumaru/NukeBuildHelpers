@@ -258,11 +258,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepWith(cacheTestStep, "path", "./.nuke/temp/cache");
         AddJobStepWith(cacheTestStep, "key", $$$"""
-            test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+            test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
             """);
         AddJobStepWith(cacheTestStep, "restore-keys", $$$"""
-            test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
-            test-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
+            test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+            test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
             """);
         var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
@@ -281,11 +281,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepWith(cacheBuildStep, "path", "./.nuke/temp/cache");
         AddJobStepWith(cacheBuildStep, "key", $$$"""
-            build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+            build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
             """);
         AddJobStepWith(cacheBuildStep, "restore-keys", $$$"""
-            build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
-            build-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
+            build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+            build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
             """);
         var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
@@ -313,11 +313,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var cachePublishStep = AddJobStep(publishJob, name: "Cache Publish", uses: "actions/cache@v4", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepWith(cachePublishStep, "path", "./.nuke/temp/cache");
         AddJobStepWith(cachePublishStep, "key", $$$"""
-            publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-${{ run_identifier }}"
+            publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
             """);
         AddJobStepWith(cachePublishStep, "restore-keys", $$$"""
-            publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-${{ run_classification }}-
-            publish-${{ runs_on }}-${{ id }}-${{ cache_invalidator }}-${{ environment }}-main-
+            publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
+            publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
             """);
         var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
