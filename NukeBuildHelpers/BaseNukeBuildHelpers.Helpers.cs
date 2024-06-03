@@ -521,40 +521,6 @@ partial class BaseNukeBuildHelpers
         return appEntryVersionsToBump;
     }
 
-    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartRelease()
-    {
-        var appEntryVersionsToBump = await InteractiveRelease();
-
-        if (appEntryVersionsToBump.Count == 0)
-        {
-            Log.Information("No version selected to bump.");
-            return appEntryVersionsToBump;
-        }
-
-        List<string> tagsToPush = [];
-
-        foreach (var appEntryVersionToBump in appEntryVersionsToBump)
-        {
-            if (appEntryVersionToBump.AppEntry.MainRelease)
-            {
-                tagsToPush.Add(appEntryVersionToBump.BumpVersion.ToString() + "-bump");
-            }
-            else
-            {
-                tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
-            }
-        }
-        // ---------- Apply bump ----------
-
-        await Task.Run(() =>
-        {
-            var bumpTag = "bump-" + Repository.Branch.ToLowerInvariant();
-            Git.Invoke("checkout -b rel/" + bumpTag, logInvocation: false, logOutput: false);
-        });
-
-        return appEntryVersionsToBump;
-    }
-
     private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartBump()
     {
         var appEntryVersionsToBump = await InteractiveRelease();
