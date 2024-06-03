@@ -99,12 +99,6 @@ partial class BaseNukeBuildHelpers
 
     private static async void CachePostload(Entry entry)
     {
-        Log.Information("dsefgsef awdawdawd scs");
-        Log.Information("dsefgsef awdawdawd scs");
-        Log.Information("dsefgsef awdawdawd scs");
-        Log.Information("dsefgsef awdawdawd scs");
-        Log.Information("dsefgsef awdawdawd scs");
-        Log.Information("dsefgsef awdawdawd scs");
         Dictionary<string, AbsolutePath> cachePairs = [];
 
         if (entryCacheIndexPath.FileExists())
@@ -120,6 +114,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var path in entry.CachePaths)
         {
+            Log.Information("dsefgsef awdawdawd scs {asc}", path);
             if (!path.Exists())
             {
                 Log.Information("{path} cache missed", path);
@@ -128,12 +123,16 @@ partial class BaseNukeBuildHelpers
 
             if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
             {
+                Log.Information("dsefgsef awdawdawd scs newww {asc}", path);
                 cachePath = entryCachePath / Guid.NewGuid().Encode();
                 cachePairs[path.ToString()] = cachePath;
             }
 
+            Log.Information("dsefgsef awdawdawd scs ss1 {asc}", path);
+
             tasks.Add(Task.Run(() =>
             {
+                Log.Information("dsefgsef awdawdawd scs capeee {asc}", path);
                 path.CopyFilesRecursively(cachePath);
                 Log.Information("{path} cache saved", path);
             }));
@@ -342,17 +341,6 @@ partial class BaseNukeBuildHelpers
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
                         CachePostload(appEntryTest);
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
                     }));
                 }
                 else
@@ -366,16 +354,6 @@ partial class BaseNukeBuildHelpers
                         }
                         appEntryTest.Run(appEntryTest.AppTestContext!);
                         CachePostload(appEntryTest);
-                        Log.Information("dssd scss");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd sscs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd scs");
-                        Log.Information("dssd sccccs");
-                        Log.Information("dssd scs");
                     });
                 }
             }
