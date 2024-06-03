@@ -20,7 +20,7 @@ class NugetBuildHelpersTest : AppTestEntry<Build>
     {
         AbsolutePath ascas = RootDirectory / "samp" / "test.txt";
 
-        if (ascas.Exists())
+        if (ascas.FileExists())
         {
             Console.WriteLine("OLD VALLLLLL: " + ascas.ReadAllText());
         }
