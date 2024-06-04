@@ -18,8 +18,6 @@ class NugetBuildHelpers : AppEntry<Build>
 
     public override RunType RunBuildOn =>  RunType.All;
 
-    public override RunType RunPublishOn =>  RunType.All;
-
     [SecretVariable("NUGET_AUTH_TOKEN")]
     readonly string? NuGetAuthToken;
 
