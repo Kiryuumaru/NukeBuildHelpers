@@ -280,17 +280,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         needs.Add("test");
 
         // ██████████████████████████████████████
-        // ███████████ Test Validation ██████████
-        // ██████████████████████████████████████
-        var testValidationJob = AddJob(workflow, "test_validation", "Test Validation", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "succeeded()");
-        AddJobEnvVar(testValidationJob, "NUKE_TEST_SUCCESS_AZURE", "$[ dependencies.test.result ]");
-        AddJobStep(testValidationJob, displayName: $"Resolve NUKE_TEST_SUCCESS",
-            script: $"echo \"##vso[task.setvariable variable=NUKE_TEST_SUCCESS]${{NUKE_TEST_SUCCESS_AZURE/Succeeded/ok}}\"");
-        AddJobStep(testValidationJob, displayName: $"Output NUKE_TEST_SUCCESS",
-            script: $"echo \"##vso[task.setvariable variable=NUKE_TEST_SUCCESS]$NUKE_TEST_SUCCESS\" && echo \"##vso[task.setvariable variable=NUKE_TEST_SUCCESS;isOutput=true]$NUKE_TEST_SUCCESS\"");
-        needs.Add("test_validation");
-
-        // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
         var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
@@ -315,17 +304,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
         AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
         needs.Add("build");
-
-        // ██████████████████████████████████████
-        // ██████████ Build Validation ██████████
-        // ██████████████████████████████████████
-        var buildValidationJob = AddJob(workflow, "build_validation", "Build Validation", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "succeeded()");
-        AddJobEnvVar(buildValidationJob, "NUKE_BUILD_SUCCESS_AZURE", "$[ dependencies.build.result ]");
-        AddJobStep(buildValidationJob, displayName: $"Resolve NUKE_BUILD_SUCCESS",
-            script: $"echo \"##vso[task.setvariable variable=NUKE_BUILD_SUCCESS]${{NUKE_BUILD_SUCCESS_AZURE/Succeeded/ok}}\"");
-        AddJobStep(buildValidationJob, displayName: $"Output NUKE_BUILD_SUCCESS",
-            script: $"echo \"##vso[task.setvariable variable=NUKE_BUILD_SUCCESS]$NUKE_BUILD_SUCCESS\" && echo \"##vso[task.setvariable variable=NUKE_BUILD_SUCCESS;isOutput=true]$NUKE_BUILD_SUCCESS\"");
-        needs.Add("build_validation");
 
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
@@ -354,15 +332,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         needs.Add("publish");
 
         // ██████████████████████████████████████
-        // █████████ Publish Validation █████████
+        // ███████████ Run Validation ███████████
         // ██████████████████████████████████████
-        var publishValidationJob = AddJob(workflow, "publish_validation", "Publish Validation", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "succeeded()");
-        AddJobEnvVar(publishValidationJob, "NUKE_PUBLISH_SUCCESS_AZURE", "$[ dependencies.publish.result ]");
-        AddJobStep(publishValidationJob, displayName: $"Resolve NUKE_PUBLISH_SUCCESS",
-            script: $"echo \"##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS]${{NUKE_PUBLISH_SUCCESS_AZURE/Succeeded/ok}}\"");
-        AddJobStep(publishValidationJob, displayName: $"Output NUKE_PUBLISH_SUCCESS",
-            script: $"echo \"##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS]$NUKE_PUBLISH_SUCCESS\" && echo \"##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS;isOutput=true]$NUKE_PUBLISH_SUCCESS\"");
-        needs.Add("publish_validation");
+        var runValidationJob = AddJob(workflow, "run_validation", "Run Validation", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "succeeded()");
+        AddJobEnvVar(runValidationJob, "NUKE_RUN_SUCCESS_AZURE", "$[ dependencies.publish.result ]");
+        AddJobStep(runValidationJob, displayName: $"Resolve NUKE_RUN_SUCCESS",
+            script: $"echo \"##vso[task.setvariable variable=NUKE_RUN_SUCCESS]${{NUKE_RUN_SUCCESS_AZURE/Succeeded/ok}}\"");
+        AddJobStep(runValidationJob, displayName: $"Output NUKE_RUN_SUCCESS",
+            script: $"echo \"##vso[task.setvariable variable=NUKE_RUN_SUCCESS]$NUKE_RUN_SUCCESS\" && echo \"##vso[task.setvariable variable=NUKE_RUN_SUCCESS;isOutput=true]$NUKE_RUN_SUCCESS\"");
+        needs.Add("run_validation");
 
         // ██████████████████████████████████████
         // █████████████ Post Setup █████████████
