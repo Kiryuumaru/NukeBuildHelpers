@@ -87,6 +87,21 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX) }}
+  test_validation:
+    name: Test Validation
+    runs-on: ubuntu-22.04
+    steps:
+    - id: NUKE_TEST_SUCCESS
+      name: Resolve NUKE_TEST_SUCCESS
+      run: echo "NUKE_TEST_SUCCESS=${NUKE_TEST_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
+    needs:
+    - pre_setup
+    - test
+    if: success()
+    env:
+      NUKE_TEST_SUCCESS_GITHUB: ${{ needs.test.result }}
+    outputs:
+      NUKE_TEST_SUCCESS: ${{ steps.NUKE_TEST_SUCCESS.outputs.NUKE_TEST_SUCCESS }}
   build:
     name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -119,12 +134,30 @@ jobs:
     needs:
     - pre_setup
     - test
+    - test_validation
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
+  build_validation:
+    name: Build Validation
+    runs-on: ubuntu-22.04
+    steps:
+    - id: NUKE_BUILD_SUCCESS
+      name: Resolve NUKE_BUILD_SUCCESS
+      run: echo "NUKE_BUILD_SUCCESS=${NUKE_BUILD_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
+    needs:
+    - pre_setup
+    - test
+    - test_validation
+    - build
+    if: success()
+    env:
+      NUKE_BUILD_SUCCESS_GITHUB: ${{ needs.build.result }}
+    outputs:
+      NUKE_BUILD_SUCCESS: ${{ steps.NUKE_BUILD_SUCCESS.outputs.NUKE_BUILD_SUCCESS }}
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -156,13 +189,34 @@ jobs:
     needs:
     - pre_setup
     - test
+    - test_validation
     - build
+    - build_validation
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
+  publish_validation:
+    name: Publish Validation
+    runs-on: ubuntu-22.04
+    steps:
+    - id: NUKE_PUBLISH_SUCCESS
+      name: Resolve NUKE_PUBLISH_SUCCESS
+      run: echo "NUKE_PUBLISH_SUCCESS=${NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
+    needs:
+    - pre_setup
+    - test
+    - test_validation
+    - build
+    - build_validation
+    - publish
+    if: success()
+    env:
+      NUKE_PUBLISH_SUCCESS_GITHUB: ${{ needs.publish.result }}
+    outputs:
+      NUKE_PUBLISH_SUCCESS: ${{ steps.NUKE_PUBLISH_SUCCESS.outputs.NUKE_PUBLISH_SUCCESS }}
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
@@ -183,8 +237,11 @@ jobs:
     needs:
     - pre_setup
     - test
+    - test_validation
     - build
+    - build_validation
     - publish
+    - publish_validation
     if: success() || failure() || always()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
