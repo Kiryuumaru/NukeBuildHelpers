@@ -85,10 +85,8 @@ jobs:
     vmImage: ubuntu-22.04
   steps:
   - script: echo "##vso[task.setvariable variable=NUKE_TEST_SUCCESS]${NUKE_TEST_SUCCESS_AZURE/Succeeded/ok}"
-    name: NUKE_TEST_SUCCESS
     displayName: Resolve NUKE_TEST_SUCCESS
   - script: echo "##vso[task.setvariable variable=NUKE_TEST_SUCCESS]$NUKE_TEST_SUCCESS" && echo "##vso[task.setvariable variable=NUKE_TEST_SUCCESS;isOutput=true]$NUKE_TEST_SUCCESS"
-    name: NUKE_TEST_SUCCESS
     displayName: Output NUKE_TEST_SUCCESS
   dependsOn:
   - pre_setup
@@ -141,10 +139,8 @@ jobs:
     vmImage: ubuntu-22.04
   steps:
   - script: echo "##vso[task.setvariable variable=NUKE_BUILD_SUCCESS]${NUKE_BUILD_SUCCESS_AZURE/Succeeded/ok}"
-    name: NUKE_BUILD_SUCCESS
     displayName: Resolve NUKE_BUILD_SUCCESS
   - script: echo "##vso[task.setvariable variable=NUKE_BUILD_SUCCESS]$NUKE_BUILD_SUCCESS" && echo "##vso[task.setvariable variable=NUKE_BUILD_SUCCESS;isOutput=true]$NUKE_BUILD_SUCCESS"
-    name: NUKE_BUILD_SUCCESS
     displayName: Output NUKE_BUILD_SUCCESS
   dependsOn:
   - pre_setup
@@ -201,10 +197,8 @@ jobs:
     vmImage: ubuntu-22.04
   steps:
   - script: echo "##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS]${NUKE_PUBLISH_SUCCESS_AZURE/Succeeded/ok}"
-    name: NUKE_PUBLISH_SUCCESS
     displayName: Resolve NUKE_PUBLISH_SUCCESS
   - script: echo "##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS]$NUKE_PUBLISH_SUCCESS" && echo "##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS;isOutput=true]$NUKE_PUBLISH_SUCCESS"
-    name: NUKE_PUBLISH_SUCCESS
     displayName: Output NUKE_PUBLISH_SUCCESS
   dependsOn:
   - pre_setup
