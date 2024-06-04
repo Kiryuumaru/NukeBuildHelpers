@@ -92,14 +92,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - id: NUKE_TEST_SUCCESS
-      name: Expose Test Result
+      name: Resolve NUKE_TEST_SUCCESS
       run: echo "NUKE_TEST_SUCCESS=${NUKE_TEST_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
     needs:
     - pre_setup
     - test
     if: success()
     env:
-      NUKE_TEST_SUCCESS_GITHUB: ${{ needs.publish.result }}
+      NUKE_TEST_SUCCESS_GITHUB: ${{ needs.test.result }}
     outputs:
       NUKE_TEST_SUCCESS: ${{ steps.NUKE_TEST_SUCCESS.outputs.NUKE_TEST_SUCCESS }}
   build:
@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - id: NUKE_BUILD_SUCCESS
-      name: Expose Build Result
+      name: Resolve NUKE_BUILD_SUCCESS
       run: echo "NUKE_BUILD_SUCCESS=${NUKE_BUILD_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
     needs:
     - pre_setup
@@ -155,7 +155,7 @@ jobs:
     - build
     if: success()
     env:
-      NUKE_BUILD_SUCCESS_GITHUB: ${{ needs.publish.result }}
+      NUKE_BUILD_SUCCESS_GITHUB: ${{ needs.build.result }}
     outputs:
       NUKE_BUILD_SUCCESS: ${{ steps.NUKE_BUILD_SUCCESS.outputs.NUKE_BUILD_SUCCESS }}
   publish:
@@ -203,7 +203,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - id: NUKE_PUBLISH_SUCCESS
-      name: Expose Publish Result
+      name: Resolve NUKE_PUBLISH_SUCCESS
       run: echo "NUKE_PUBLISH_SUCCESS=${NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
     needs:
     - pre_setup
