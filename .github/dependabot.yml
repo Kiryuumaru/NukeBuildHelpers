@@ -1,0 +1,16 @@
+version: 2
+updates:
+
+  - package-ecosystem: "nuget"
+    target-branch: "main"
+    directory: "/"
+    open-pull-requests-limit: 100
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "npm"
+    target-branch: "main"
+    directory: "/"
+    open-pull-requests-limit: 100
+    schedule:
+      interval: "daily"
