@@ -87,6 +87,11 @@ jobs:
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX) }}
+  test_validation:
+    name: Test Validation
+    runs-on: ubuntu-22.04
+    steps: []
+    if: success()
   build:
     name: Build - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -119,12 +124,18 @@ jobs:
     needs:
     - pre_setup
     - test
+    - test_validation
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
+  build_validation:
+    name: Build Validation
+    runs-on: ubuntu-22.04
+    steps: []
+    if: success()
   publish:
     name: Publish - ${{ matrix.name }}
     runs-on: ${{ matrix.runs_on }}
@@ -156,13 +167,20 @@ jobs:
     needs:
     - pre_setup
     - test
+    - test_validation
     - build
+    - build_validation
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
     strategy:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
+  publish_validation:
+    name: Publish Validation
+    runs-on: ubuntu-22.04
+    steps: []
+    if: success()
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
@@ -183,8 +201,11 @@ jobs:
     needs:
     - pre_setup
     - test
+    - test_validation
     - build
+    - build_validation
     - publish
+    - publish_validation
     if: success() || failure() || always()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}

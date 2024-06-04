@@ -252,7 +252,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX", "./.nuke/temp/pre_setup_output_build_matrix.json");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "./.nuke/temp/pre_setup_output_publish_matrix.json");
-
         needs.Add("pre_setup");
 
         // ██████████████████████████████████████
@@ -275,8 +274,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
-
         needs.Add("test");
+
+        // ██████████████████████████████████████
+        // ███████████ Test Validation ██████████
+        // ██████████████████████████████████████
+        var testValidationJob = AddJob(workflow, "test_validation", "Test Validation", RunsOnType.Ubuntu2204, _if: "success()");
+        needs.Add("test_validation");
 
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
@@ -303,8 +307,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
         AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
         AddJobStepWith(uploadBuildStep, "retention-days", "1");
-
         needs.Add("build");
+
+        // ██████████████████████████████████████
+        // ██████████ Build Validation ██████████
+        // ██████████████████████████████████████
+        var buildValidationJob = AddJob(workflow, "build_validation", "Build Validation", RunsOnType.Ubuntu2204, _if: "success()");
+        needs.Add("build_validation");
 
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
@@ -330,8 +339,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
-
         needs.Add("publish");
+
+        // ██████████████████████████████████████
+        // ██████████ Build Validation ██████████
+        // ██████████████████████████████████████
+        var publishValidationJob = AddJob(workflow, "publish_validation", "Publish Validation", RunsOnType.Ubuntu2204, _if: "success()");
+        needs.Add("publish_validation");
 
         // ██████████████████████████████████████
         // █████████████ Post Setup █████████████
