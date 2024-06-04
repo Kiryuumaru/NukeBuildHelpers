@@ -277,15 +277,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         needs.Add("test");
 
         // ██████████████████████████████████████
-        // ███████████ Test Validation ██████████
-        // ██████████████████████████████████████
-        var testValidationJob = AddJob(workflow, "test_validation", "Test Validation", RunsOnType.Ubuntu2204, needs: [.. needs], _if: "success()");
-        AddJobOrStepEnvVar(testValidationJob, "NUKE_TEST_SUCCESS_GITHUB", "${{ needs.test.result }}");
-        var testExposeResult = AddJobStep(testValidationJob, id: "NUKE_TEST_SUCCESS", name: $"Resolve NUKE_TEST_SUCCESS", run: $"echo \"NUKE_TEST_SUCCESS=${{NUKE_TEST_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
-        AddJobOutput(testValidationJob, "NUKE_TEST_SUCCESS", "NUKE_TEST_SUCCESS", "NUKE_TEST_SUCCESS");
-        needs.Add("test_validation");
-
-        // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
         var buildJob = AddJob(workflow, "build", "Build - ${{ matrix.name }}", "${{ matrix.runs_on }}", needs: [.. needs], _if: "success()");
@@ -311,15 +302,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
         AddJobStepWith(uploadBuildStep, "retention-days", "1");
         needs.Add("build");
-
-        // ██████████████████████████████████████
-        // ██████████ Build Validation ██████████
-        // ██████████████████████████████████████
-        var buildValidationJob = AddJob(workflow, "build_validation", "Build Validation", RunsOnType.Ubuntu2204, needs: [.. needs], _if: "success()");
-        AddJobOrStepEnvVar(buildValidationJob, "NUKE_BUILD_SUCCESS_GITHUB", "${{ needs.build.result }}");
-        var buildExposeResult = AddJobStep(buildValidationJob, id: "NUKE_BUILD_SUCCESS", name: $"Resolve NUKE_BUILD_SUCCESS", run: $"echo \"NUKE_BUILD_SUCCESS=${{NUKE_BUILD_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
-        AddJobOutput(buildValidationJob, "NUKE_BUILD_SUCCESS", "NUKE_BUILD_SUCCESS", "NUKE_BUILD_SUCCESS");
-        needs.Add("build_validation");
 
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
@@ -348,13 +330,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         needs.Add("publish");
 
         // ██████████████████████████████████████
-        // █████████ Publish Validation █████████
+        // ███████████ Run Validation ███████████
         // ██████████████████████████████████████
-        var publishValidationJob = AddJob(workflow, "publish_validation", "Publish Validation", RunsOnType.Ubuntu2204, needs: [.. needs], _if: "success()");
-        AddJobOrStepEnvVar(publishValidationJob, "NUKE_PUBLISH_SUCCESS_GITHUB", "${{ needs.publish.result }}");
-        var publishExposeResult = AddJobStep(publishValidationJob, id: "NUKE_PUBLISH_SUCCESS", name: $"Resolve NUKE_PUBLISH_SUCCESS", run: $"echo \"NUKE_PUBLISH_SUCCESS=${{NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
-        AddJobOutput(publishValidationJob, "NUKE_PUBLISH_SUCCESS", "NUKE_PUBLISH_SUCCESS", "NUKE_PUBLISH_SUCCESS");
-        needs.Add("publish_validation");
+        var runValidationJob = AddJob(workflow, "run_validation", "Run Validation", RunsOnType.Ubuntu2204, needs: [.. needs], _if: "success()");
+        AddJobOrStepEnvVar(runValidationJob, "NUKE_RUN_SUCCESS_GITHUB", "${{ needs.publish.result }}");
+        var runExposeResult = AddJobStep(runValidationJob, id: "NUKE_RUN_SUCCESS", name: $"Resolve NUKE_RUN_SUCCESS", run: $"echo \"NUKE_RUN_SUCCESS=${{NUKE_RUN_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
+        AddJobOutput(runValidationJob, "NUKE_RUN_SUCCESS", "NUKE_RUN_SUCCESS", "NUKE_RUN_SUCCESS");
+        needs.Add("run_validation");
 
         // ██████████████████████████████████████
         // █████████████ Post Setup █████████████
