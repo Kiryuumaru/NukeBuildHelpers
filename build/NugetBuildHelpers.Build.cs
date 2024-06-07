@@ -1,26 +1,27 @@
 ﻿using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.NuGet;
 using NukeBuildHelpers;
+using NukeBuildHelpers.Attributes;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
-using Serilog;
+using System;
 
 namespace _build;
 
-class NugetBuildHelpers2 : AppEntry<Build>
+class NugetBuildHelpers_Build : BuildEntry<Build>
 {
-    public override RunnerOS BuildRunnerOS => RunnerOS.Ubuntu2204;
+    public override string Id => "nuget_build_helpers";
 
-    public override RunnerOS PublishRunnerOS => RunnerOS.WindowsLatest;
+    public override RunnerOS RunnerOS => RunnerOS.Ubuntu2204;
 
-    public override RunType RunBuildOn => RunType.None;
+    public override RunType RunOn => RunType.All;
 
-    public override RunType RunPublishOn => RunType.None;
-
-    public override void Build(AppRunContext appRunContext)
+    public override void Run(AppRunContext runContext)
     {
         AppVersion? appVersion = null;
-        if (appRunContext is AppPipelineRunContext appPipelineRunContext)
+        if (runContext is AppPipelineRunContext appPipelineRunContext)
         {
             appVersion = appPipelineRunContext.AppVersion;
         }
@@ -39,16 +40,5 @@ class NugetBuildHelpers2 : AppEntry<Build>
             .SetVersion(appVersion?.Version?.ToString() ?? "0.0.0")
             .SetPackageReleaseNotes(appVersion?.ReleaseNotes)
             .SetOutputDirectory(OutputDirectory));
-    }
-
-    public override void Publish(AppRunContext appRunContext)
-    {
-        if (appRunContext.RunType == RunType.Bump && PipelineType == NukeBuildHelpers.Pipelines.Enums.PipelineType.Github)
-        {
-            foreach (var ss in OutputDirectory.GetFiles())
-            {
-                Log.Information("Publish: {name}", ss.Name);
-            }
-        }
     }
 }

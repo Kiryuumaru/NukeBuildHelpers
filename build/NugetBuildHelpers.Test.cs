@@ -1,18 +1,18 @@
-﻿using Nuke.Common.Tools.DotNet;
+﻿using Nuke.Common.IO;
+using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
 using System;
 
 namespace _build;
 
-class NugetBuildHelpersTest3 : AppTestEntry<Build>
+class NugetBuildHelpers_Test : TestEntry<Build>
 {
-    public override RunnerOS RunnerOS => RunnerOS.Ubuntu2204;
+    public override string[] TargetAppIds => ["nuget_build_helpers"];
 
-    public override RunTestType RunTestOn => RunTestType.All;
-
-    public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers2)];
+    public override RunnerOS RunnerOS => RunnerOS.WindowsLatest;
 
     public override void Run(AppTestRunContext appTestRunContext)
     {
