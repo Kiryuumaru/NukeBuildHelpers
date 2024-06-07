@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.Models;
 
+/// <summary>
+/// Represents the base class for pipeline-specific operating systems.
+/// </summary>
 public abstract class RunnerPipelineOS
 {
 }

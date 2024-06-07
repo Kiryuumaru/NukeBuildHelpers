@@ -2,7 +2,13 @@
 
 namespace NukeBuildHelpers.Models;
 
+/// <summary>
+/// Represents the context for running an application.
+/// </summary>
 public abstract class AppRunContext : RunContext
 {
-    public required RunType RunType { get; init; }
+    /// <summary>
+    /// Gets the type of run for the application.
+    /// </summary>
+    public RunType RunType { get; internal set; }
 }

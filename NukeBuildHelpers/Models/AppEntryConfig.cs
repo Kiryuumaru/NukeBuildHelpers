@@ -1,6 +1,6 @@
 ﻿namespace NukeBuildHelpers.Models;
 
-public class AppEntryConfig
+internal class AppEntryConfig
 {
     public required AppEntry Entry { get; init; }
 

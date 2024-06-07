@@ -1,6 +1,12 @@
 ﻿namespace NukeBuildHelpers.Models;
 
+/// <summary>
+/// Represents the context for running an application pipeline.
+/// </summary>
 public class AppPipelineRunContext : AppRunContext
 {
-    public required AppVersion AppVersion { get; init; }
+    /// <summary>
+    /// Gets the application version for the pipeline run.
+    /// </summary>
+    public AppVersion AppVersion { get; internal set; } = null!;
 }

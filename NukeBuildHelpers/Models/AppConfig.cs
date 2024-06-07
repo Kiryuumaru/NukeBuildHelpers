@@ -1,6 +1,6 @@
 ﻿namespace NukeBuildHelpers.Models;
 
-public class AppConfig
+internal class AppConfig
 {
     public required Dictionary<string, AppEntryConfig> AppEntryConfigs { get; init; }
 
