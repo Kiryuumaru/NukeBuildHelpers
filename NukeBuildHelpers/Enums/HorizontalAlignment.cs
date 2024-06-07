@@ -1,6 +1,6 @@
 ﻿namespace NukeBuildHelpers.Enums;
 
-public enum HorizontalAlignment
+internal enum HorizontalAlignment
 {
     Left, Right, Center
 }

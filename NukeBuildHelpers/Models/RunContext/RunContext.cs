@@ -2,7 +2,13 @@
 
 namespace NukeBuildHelpers.Models;
 
+/// <summary>
+/// Represents the base context for running operations.
+/// </summary>
 public class RunContext
 {
-    public required AbsolutePath OutputDirectory { get; init; }
+    /// <summary>
+    /// Gets the output directory for the run.
+    /// </summary>
+    public AbsolutePath OutputDirectory { get; internal set; } = null!;
 }

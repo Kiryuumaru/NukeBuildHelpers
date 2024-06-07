@@ -1,6 +1,6 @@
 ﻿namespace NukeBuildHelpers.Enums;
 
-public enum TriggerType
+internal enum TriggerType
 {
     PullRequest,
     Tag,

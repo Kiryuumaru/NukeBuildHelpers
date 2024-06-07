@@ -1,6 +1,6 @@
 ﻿namespace NukeBuildHelpers.ConsoleInterface;
 
-public static class ConsoleHelpers
+internal static class ConsoleHelpers
 {
     public static void ClearCurrentConsoleLine()
     {

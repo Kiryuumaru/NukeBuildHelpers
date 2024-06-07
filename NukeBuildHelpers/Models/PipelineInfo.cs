@@ -2,7 +2,7 @@
 
 namespace NukeBuildHelpers.Models;
 
-public class PipelineInfo
+internal class PipelineInfo
 {
     public required string Branch { get; init; }
 
