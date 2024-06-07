@@ -1,6 +1,6 @@
 ﻿using Nuke.Common.IO;
 
-namespace NukeBuildHelpers.Models.RunContext;
+namespace NukeBuildHelpers.Models;
 
 public class RunContext
 {

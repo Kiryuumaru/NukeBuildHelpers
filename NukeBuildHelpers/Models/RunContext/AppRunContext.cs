@@ -1,6 +1,6 @@
 ﻿using NukeBuildHelpers.Enums;
 
-namespace NukeBuildHelpers.Models.RunContext;
+namespace NukeBuildHelpers.Models;
 
 public abstract class AppRunContext : RunContext
 {

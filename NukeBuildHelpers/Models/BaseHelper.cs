@@ -1,5 +1,5 @@
 ﻿using Nuke.Common.IO;
-using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Pipelines.Enums;
 
 namespace NukeBuildHelpers;
 

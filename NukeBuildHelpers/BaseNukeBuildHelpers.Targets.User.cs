@@ -36,7 +36,7 @@ partial class BaseNukeBuildHelpers
 
             ConsoleTableHeader[] headers =
                 [
-                    ("App Id", HorizontalAlignment.Right),
+                    ("App EntryId", HorizontalAlignment.Right),
                     ("Environment", HorizontalAlignment.Center),
                     ("Bumped Version", HorizontalAlignment.Right),
                     ("Published", HorizontalAlignment.Center)

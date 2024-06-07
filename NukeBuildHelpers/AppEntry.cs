@@ -1,13 +1,13 @@
 ﻿using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Models.RunContext;
+using NukeBuildHelpers.Models;
 
 namespace NukeBuildHelpers;
 
 public abstract class AppEntry : Entry
 {
-    public abstract RunsOnType BuildRunsOn { get; }
+    public abstract RunnerOS BuildRunnerOS { get; }
 
-    public abstract RunsOnType PublishRunsOn { get; }
+    public abstract RunnerOS PublishRunnerOS { get; }
 
     public virtual RunType RunBuildOn { get; } = RunType.Bump;
 

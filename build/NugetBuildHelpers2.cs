@@ -2,16 +2,16 @@
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Models.RunContext;
+using NukeBuildHelpers.Models;
 using Serilog;
 
 namespace _build;
 
 class NugetBuildHelpers2 : AppEntry<Build>
 {
-    public override RunsOnType BuildRunsOn => RunsOnType.Ubuntu2204;
+    public override RunnerOS BuildRunnerOS => RunnerOS.Ubuntu2204;
 
-    public override RunsOnType PublishRunsOn => RunsOnType.WindowsLatest;
+    public override RunnerOS PublishRunnerOS => RunnerOS.WindowsLatest;
 
     public override RunType RunBuildOn => RunType.None;
 
