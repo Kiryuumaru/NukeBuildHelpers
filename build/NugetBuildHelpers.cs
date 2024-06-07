@@ -6,16 +6,15 @@ using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
-using NukeBuildHelpers.Pipelines.Models;
 using System;
 
 namespace _build;
 
 class NugetBuildHelpers : AppEntry<Build>
 {
-    public override RunnerOS BuildRunnerOS => new CustomRunnerOS();
+    public override RunnerOS BuildRunnerOS => RunnerOS.Ubuntu2204;
 
-    public override RunnerOS PublishRunnerOS => new CustomRunnerOS();
+    public override RunnerOS PublishRunnerOS => RunnerOS.Ubuntu2204;
 
     public override RunType RunBuildOn =>  RunType.All;
 

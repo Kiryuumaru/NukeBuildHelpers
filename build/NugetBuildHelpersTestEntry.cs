@@ -4,14 +4,13 @@ using NukeBuildHelpers;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
-using NukeBuildHelpers.Pipelines.Models;
 using System;
 
 namespace _build;
 
 class NugetBuildHelpersTest : AppTestEntry<Build>
 {
-    public override RunnerOS RunnerOS => new CustomRunnerOS();
+    public override RunnerOS RunnerOS => RunnerOS.WindowsLatest;
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
