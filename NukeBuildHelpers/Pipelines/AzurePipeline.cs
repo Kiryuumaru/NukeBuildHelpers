@@ -299,7 +299,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
             "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
             """);
-        var nukeTestStep = AddJobStepNukeRun(testJob, "$(run_script)", "PipelineTest", "$(entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
+        var nukeTestStep = AddJobStepNukeRun(testJob, "$(nuke_run_script)", "PipelineTest", "$(nuke_entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
         needs.Add("test");
