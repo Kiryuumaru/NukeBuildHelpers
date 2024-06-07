@@ -9,7 +9,7 @@ namespace NukeBuildHelpers.Pipelines.Models;
 
 public class RunnerGithubPipelineOS : RunnerPipelineOS
 {
-    public string? RunsOn { get; init; }
+    public virtual string? RunsOn { get; init; }
 
-    public string[]? RunsOnLabels { get; init; }
+    public virtual string[]? RunsOnLabels { get; init; }
 }

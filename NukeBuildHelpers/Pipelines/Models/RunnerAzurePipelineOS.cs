@@ -9,7 +9,7 @@ namespace NukeBuildHelpers.Pipelines.Models;
 
 public class RunnerAzurePipelineOS : RunnerPipelineOS
 {
-    public string? PoolName { get; init; }
+    public virtual string? PoolName { get; init; }
 
-    public string? PoolVMImage { get; init; }
+    public virtual string? PoolVMImage { get; init; }
 }
