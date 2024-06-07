@@ -77,7 +77,7 @@ jobs:
           test-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
           test-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
     - name: Run Nuke PipelineTest
-      run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.entry_ids_to_run }}"
+      run: ${{ matrix.run_script }} PipelineTest --args "${{ matrix.entry_ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
     needs:
     - pre_setup
@@ -103,7 +103,7 @@ jobs:
           build-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
           build-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
     - name: Run Nuke PipelineBuild
-      run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.entry_ids_to_run }}"
+      run: ${{ matrix.run_script }} PipelineBuild --args "${{ matrix.entry_ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
@@ -148,7 +148,7 @@ jobs:
           publish-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
           publish-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
     - name: Run Nuke PipelinePublish
-      run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.entry_ids_to_run }}"
+      run: ${{ matrix.run_script }} PipelinePublish --args "${{ matrix.entry_ids_to_run }}"
       if: ${{ matrix.id != 'skip' }}
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}

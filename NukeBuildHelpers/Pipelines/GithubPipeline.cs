@@ -287,7 +287,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             test-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
             test-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
             """);
-        var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.build_script }}", "PipelineTest", "${{ matrix.entry_ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
+        var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.run_script }}", "PipelineTest", "${{ matrix.entry_ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
         needs.Add("test");
@@ -309,7 +309,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             build-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
             build-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
             """);
-        var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.build_script }}", "PipelineBuild", "${{ matrix.entry_ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
+        var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.run_script }}", "PipelineBuild", "${{ matrix.entry_ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
         var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4", _if: "${{ matrix.id != 'skip' }}");
@@ -340,7 +340,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             publish-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
             publish-${{ matrix.runner_name }}-${{ matrix.entry_id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
             """);
-        var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.build_script }}", "PipelinePublish", "${{ matrix.entry_ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
+        var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.run_script }}", "PipelinePublish", "${{ matrix.entry_ids_to_run }}", _if: "${{ matrix.id != 'skip' }}");
         AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
         needs.Add("publish");

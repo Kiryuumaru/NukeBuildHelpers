@@ -71,7 +71,7 @@ jobs:
       restoreKeys: |-
         "test" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
         "test" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
-  - script: $(build_script) PipelineTest --args "$(entry_ids_to_run)"
+  - script: $(run_script) PipelineTest --args "$(entry_ids_to_run)"
     displayName: Run Nuke PipelineTest
     condition: ne(variables['id'], 'skip')
   dependsOn:
@@ -99,7 +99,7 @@ jobs:
       restoreKeys: |-
         "build" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
         "build" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
-  - script: $(build_script) PipelineBuild --args "$(entry_ids_to_run)"
+  - script: $(run_script) PipelineBuild --args "$(entry_ids_to_run)"
     displayName: Run Nuke PipelineBuild
     condition: ne(variables['id'], 'skip')
     env:
@@ -145,7 +145,7 @@ jobs:
       restoreKeys: |-
         "publish" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
         "publish" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
-  - script: $(build_script) PipelinePublish --args "$(entry_ids_to_run)"
+  - script: $(run_script) PipelinePublish --args "$(entry_ids_to_run)"
     displayName: Run Nuke PipelinePublish
     condition: ne(variables['id'], 'skip')
     env:

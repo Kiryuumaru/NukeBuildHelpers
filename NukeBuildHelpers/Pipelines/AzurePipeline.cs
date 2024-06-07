@@ -299,7 +299,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             "test" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
             "test" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
             """);
-        var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(entry_ids_to_run)", condition: "ne(variables['id'], 'skip')");
+        var nukeTestStep = AddJobStepNukeRun(testJob, "$(run_script)", "PipelineTest", "$(entry_ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
         needs.Add("test");
@@ -321,7 +321,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             "build" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
             "build" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
             """);
-        var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(entry_ids_to_run)", condition: "ne(variables['id'], 'skip')");
+        var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(run_script)", "PipelineBuild", "$(entry_ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
         var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1", condition: "ne(variables['id'], 'skip')");
@@ -351,7 +351,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             "publish" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
             "publish" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
             """);
-        var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(entry_ids_to_run)", condition: "ne(variables['id'], 'skip')");
+        var nukePublishStep = AddJobStepNukeRun(publishJob, "$(run_script)", "PipelinePublish", "$(entry_ids_to_run)", condition: "ne(variables['id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
         needs.Add("publish");
