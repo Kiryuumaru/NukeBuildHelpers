@@ -71,7 +71,7 @@ jobs:
       restoreKeys: |-
         "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
         "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
-  - script: $(run_script) PipelineTest --args "$(entry_ids_to_run)"
+  - script: $(nuke_run_script) PipelineTest --args "$(nuke_entry_ids_to_run)"
     displayName: Run Nuke PipelineTest
     condition: ne(variables['nuke_entry_id'], 'skip')
   dependsOn:
