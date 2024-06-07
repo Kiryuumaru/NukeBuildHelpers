@@ -52,7 +52,7 @@ class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish(AppRunContext appRunContext)
     {
-        if (appRunContext.RunType == RunType.Bump)
+        if (appRunContext.RunType == RunType.Bump && PipelineType == NukeBuildHelpers.Pipelines.Enums.PipelineType.Github)
         {
             DotNetTasks.DotNetNuGetPush(_ => _
                 .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")

@@ -43,7 +43,7 @@ class NugetBuildHelpers4 : AppEntry<Build>
 
     public override void Publish(AppRunContext appRunContext)
     {
-        if (appRunContext.RunType == RunType.Bump)
+        if (appRunContext.RunType == RunType.Bump && PipelineType == NukeBuildHelpers.Pipelines.Enums.PipelineType.Github)
         {
             foreach (var ss in OutputDirectory.GetFiles())
             {
