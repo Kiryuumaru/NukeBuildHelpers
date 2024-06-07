@@ -8,9 +8,9 @@ namespace NukeBuildHelpers.Pipelines.Models;
 
 internal class AzurePreSetupOutputAppEntryMatrix : PreSetupOutputAppEntryMatrix
 {
-    public required string? PoolName { get; init; }
+    public required string? NukePoolName { get; init; }
 
-    public required string? PoolVMImage { get; init; }
+    public required string? NukePoolVMImage { get; init; }
 
-    public override string RunnerName { get; } = "azure";
+    public override string NukeRunnerName { get; } = "azure";
 }

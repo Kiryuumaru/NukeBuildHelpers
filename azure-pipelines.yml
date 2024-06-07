@@ -56,24 +56,24 @@ jobs:
 - job: test
   displayName: Test
   pool:
-    name: $(pool_name)
-    vmImage: $(pool_vm_image)
+    name: $(nuke_pool_name)
+    vmImage: $(nuke_pool_vm_image)
   steps:
   - checkout: self
     persistCredentials: true
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
   - task: Cache@2
     displayName: Cache Test
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: '"test" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
+      key: '"test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"'
       restoreKeys: |-
-        "test" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-        "test" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+        "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+        "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
   - script: $(run_script) PipelineTest --args "$(entry_ids_to_run)"
     displayName: Run Nuke PipelineTest
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
   dependsOn:
   - pre_setup
   condition: succeeded()
@@ -84,32 +84,32 @@ jobs:
 - job: build
   displayName: Build
   pool:
-    name: $(pool_name)
-    vmImage: $(pool_vm_image)
+    name: $(nuke_pool_name)
+    vmImage: $(nuke_pool_vm_image)
   steps:
   - checkout: self
     persistCredentials: true
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
   - task: Cache@2
     displayName: Cache Build
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: '"build" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
+      key: '"build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"'
       restoreKeys: |-
-        "build" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-        "build" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
-  - script: $(run_script) PipelineBuild --args "$(entry_ids_to_run)"
+        "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+        "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
+  - script: $(nuke_run_script) PipelineBuild --args "$(nuke_entry_ids_to_run)"
     displayName: Run Nuke PipelineBuild
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
     env:
       NUKE_NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
       NUKE_GITHUB_TOKEN: $(GITHUB_TOKEN)
   - task: PublishPipelineArtifact@1
     displayName: Upload Artifacts
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
-      artifact: $(entry_id)
+      artifact: $(nuke_entry_id)
       targetPath: ./.nuke/output
       continueOnError: true
   dependsOn:
@@ -123,31 +123,31 @@ jobs:
 - job: publish
   displayName: Publish
   pool:
-    name: $(pool_name)
-    vmImage: $(pool_vm_image)
+    name: $(nuke_pool_name)
+    vmImage: $(nuke_pool_vm_image)
   steps:
   - checkout: self
     persistCredentials: true
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
   - task: DownloadPipelineArtifact@2
     displayName: Download Artifacts
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
-      artifact: $(entry_id)
+      artifact: $(nuke_entry_id)
       path: ./.nuke/output
       continueOnError: true
   - task: Cache@2
     displayName: Cache Publish
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: '"publish" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"'
+      key: '"publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"'
       restoreKeys: |-
-        "publish" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-        "publish" | "$(runner_name)" | "$(entry_id)" | "$(cache_invalidator)" | "$(environment)" | "main"
-  - script: $(run_script) PipelinePublish --args "$(entry_ids_to_run)"
+        "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+        "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
+  - script: $(nuke_run_script) PipelinePublish --args "$(nuke_entry_ids_to_run)"
     displayName: Run Nuke PipelinePublish
-    condition: ne(variables['id'], 'skip')
+    condition: ne(variables['nuke_entry_id'], 'skip')
     env:
       NUKE_NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
       NUKE_GITHUB_TOKEN: $(GITHUB_TOKEN)

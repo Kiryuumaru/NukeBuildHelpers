@@ -8,7 +8,7 @@ namespace NukeBuildHelpers.Pipelines.Models;
 
 internal class GithubPreSetupOutputAppTestEntryMatrix : PreSetupOutputAppTestEntryMatrix
 {
-    public required string RunsOn { get; init; }
+    public required string NukeRunsOn { get; init; }
 
-    public override string RunnerName { get; } = "github";
+    public override string NukeRunnerName { get; } = "github";
 }

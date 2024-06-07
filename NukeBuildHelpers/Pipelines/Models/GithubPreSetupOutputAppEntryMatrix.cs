@@ -10,5 +10,5 @@ internal class GithubPreSetupOutputAppEntryMatrix : PreSetupOutputAppEntryMatrix
 {
     public required string RunsOn { get; init; }
 
-    public override string RunnerName { get; } = "github";
+    public override string NukeRunnerName { get; } = "github";
 }
