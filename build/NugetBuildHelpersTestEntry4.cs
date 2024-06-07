@@ -1,14 +1,14 @@
 ﻿using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Models.RunContext;
+using NukeBuildHelpers.Models;
 using System;
 
 namespace _build;
 
 class NugetBuildHelpersTest4 : AppTestEntry<Build>
 {
-    public override RunsOnType RunsOn => RunsOnType.Ubuntu2204;
+    public override RunnerOS RunnerOS => RunnerOS.Ubuntu2204;
 
     public override RunTestType RunTestOn => RunTestType.Target;
 

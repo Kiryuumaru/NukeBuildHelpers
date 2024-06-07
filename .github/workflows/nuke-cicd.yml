@@ -62,23 +62,23 @@ jobs:
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
   test:
-    name: Test - ${{ matrix.name }}
-    runs-on: ${{ matrix.runs_on }}
+    name: Test - ${{ matrix.nuke_entry_name }}
+    runs-on: ${{ matrix.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
     - name: Cache Test
       uses: actions/cache@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+        key: test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
         restore-keys: |-
-          test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
-          test-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
+          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
+          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
     - name: Run Nuke PipelineTest
-      run: ${{ matrix.build_script }} PipelineTest --args "${{ matrix.ids_to_run }}"
-      if: ${{ matrix.id != 'skip' }}
+      run: ${{ matrix.nuke_run_script }} PipelineTest --args "${{ matrix.nuke_entry_ids_to_run }}"
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
     if: success()
@@ -88,31 +88,31 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX) }}
   build:
-    name: Build - ${{ matrix.name }}
-    runs-on: ${{ matrix.runs_on }}
+    name: Build - ${{ matrix.nuke_entry_name }}
+    runs-on: ${{ matrix.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
     - name: Cache Build
       uses: actions/cache@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+        key: build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
         restore-keys: |-
-          build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
-          build-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
+          build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
+          build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
     - name: Run Nuke PipelineBuild
-      run: ${{ matrix.build_script }} PipelineBuild --args "${{ matrix.ids_to_run }}"
-      if: ${{ matrix.id != 'skip' }}
+      run: ${{ matrix.nuke_run_script }} PipelineBuild --args "${{ matrix.nuke_entry_ids_to_run }}"
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
-        name: ${{ matrix.id }}
+        name: ${{ matrix.nuke_entry_id }}
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -126,30 +126,30 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
   publish:
-    name: Publish - ${{ matrix.name }}
-    runs-on: ${{ matrix.runs_on }}
+    name: Publish - ${{ matrix.nuke_entry_name }}
+    runs-on: ${{ matrix.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
     - name: Download artifacts
       uses: actions/download-artifact@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/output
-        pattern: ${{ matrix.id }}
+        pattern: ${{ matrix.nuke_entry_id }}
         merge-multiple: true
     - name: Cache Publish
       uses: actions/cache@v4
-      if: ${{ matrix.id != 'skip' }}
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-${{ matrix.run_identifier }}"
+        key: publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
         restore-keys: |-
-          publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-${{ matrix.run_classification }}-
-          publish-${{ matrix.runs_on }}-${{ matrix.id }}-${{ matrix.cache_invalidator }}-${{ matrix.environment }}-main-
+          publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
+          publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
     - name: Run Nuke PipelinePublish
-      run: ${{ matrix.build_script }} PipelinePublish --args "${{ matrix.ids_to_run }}"
-      if: ${{ matrix.id != 'skip' }}
+      run: ${{ matrix.nuke_run_script }} PipelinePublish --args "${{ matrix.nuke_entry_ids_to_run }}"
+      if: ${{ matrix.nuke_entry_id != 'skip' }}
       env:
         NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
         NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

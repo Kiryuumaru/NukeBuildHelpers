@@ -1,4 +1,4 @@
-﻿namespace NukeBuildHelpers.Models.RunContext;
+﻿namespace NukeBuildHelpers.Models;
 
 public class AppPipelineRunContext : AppRunContext
 {

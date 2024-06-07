@@ -1,9 +1,12 @@
-﻿using Nuke.Common;
+﻿using ICSharpCode.SharpZipLib.Zip;
+using Nuke.Common;
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Models;
+using NukeBuildHelpers.Pipelines.Enums;
 using NukeBuildHelpers.Pipelines.Interfaces;
+using NukeBuildHelpers.Pipelines.Models;
 using Serilog;
 using System.Reflection;
 using System.Text.Json;
@@ -60,9 +63,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public void Prepare(PreSetupOutput preSetupOutput, AppConfig appConfig, Dictionary<string, AppRunEntry> toEntry)
     {
-        var outputTestMatrix = new Dictionary<string, PreSetupOutputAppTestEntryMatrix>();
-        var outputBuildMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
-        var outputPublishMatrix = new Dictionary<string, PreSetupOutputAppEntryMatrix>();
+        var outputTestMatrix = new Dictionary<string, AzurePreSetupOutputAppTestEntryMatrix>();
+        var outputBuildMatrix = new Dictionary<string, AzurePreSetupOutputAppEntryMatrix>();
+        var outputPublishMatrix = new Dictionary<string, AzurePreSetupOutputAppEntryMatrix>();
 
         var runClassification = preSetupOutput.TriggerType == TriggerType.PullRequest ? "pr." + preSetupOutput.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
@@ -78,17 +81,22 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 continue;
             }
+            RunnerAzurePipelineOS runnerPipelineOS = (appTestEntry.RunnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
+            string? poolName = runnerPipelineOS.PoolName;
+            string? poolVMImage = runnerPipelineOS.PoolVMImage;
+            string? runScript = appTestEntry.RunnerOS.GetRunScript(PipelineType.Azure);
             outputTestMatrix.Add(appTestEntry.Id, new()
             {
-                Id = appTestEntry.Id,
-                Name = appTestEntry.Name,
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(appTestEntry.RunsOn),
-                BuildScript = GetBuildScript(appTestEntry.RunsOn),
-                IdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
-                CacheInvalidator = appEntry.CacheInvalidator,
-                RunClassification = runClassification,
-                RunIdentifier = runIdentifier
+                NukeEntryId = appTestEntry.Id,
+                NukeEntryName = appTestEntry.Name,
+                NukeEnvironment = preSetupOutput.Environment,
+                NukePoolName = poolName,
+                NukePoolVMImage = poolVMImage,
+                NukeRunScript = runScript,
+                NukeEntryIdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
+                NukeCacheInvalidator = appEntry.CacheInvalidator,
+                NukeRunClassification = runClassification,
+                NukeRunIdentifier = runIdentifier
             });
         }
 
@@ -102,18 +110,23 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 continue;
             }
+            RunnerAzurePipelineOS runnerPipelineOS = (appEntry.BuildRunnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
+            string? poolName = runnerPipelineOS.PoolName;
+            string? poolVMImage = runnerPipelineOS.PoolVMImage;
+            string? runScript = appEntry.BuildRunnerOS.GetRunScript(PipelineType.Azure);
             outputBuildMatrix.Add(appEntry.Id, new()
             {
-                Id = appEntry.Id,
-                Name = appEntry.Name,
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(appEntry.BuildRunsOn),
-                BuildScript = GetBuildScript(appEntry.BuildRunsOn),
-                IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString(),
-                CacheInvalidator = entry.AppEntry.CacheInvalidator,
-                RunClassification = runClassification,
-                RunIdentifier = runIdentifier
+                NukeEntryId = appEntry.Id,
+                NukeEntryName = appEntry.Name,
+                NukeEnvironment = preSetupOutput.Environment,
+                NukePoolName = poolName,
+                NukePoolVMImage = poolVMImage,
+                NukeRunScript = runScript,
+                NukeEntryIdsToRun = appEntry.Id,
+                NukeVersion = entry.Version.ToString(),
+                NukeCacheInvalidator = appEntry.CacheInvalidator,
+                NukeRunClassification = runClassification,
+                NukeRunIdentifier = runIdentifier
             });
         }
 
@@ -127,66 +140,78 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 continue;
             }
+            RunnerAzurePipelineOS runnerPipelineOS = (appEntry.PublishRunnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
+            string? poolName = runnerPipelineOS.PoolName;
+            string? poolVMImage = runnerPipelineOS.PoolVMImage;
+            string? runScript = appEntry.PublishRunnerOS.GetRunScript(PipelineType.Azure);
             outputPublishMatrix.Add(appEntry.Id, new()
             {
-                Id = appEntry.Id,
-                Name = appEntry.Name,
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(appEntry.BuildRunsOn),
-                BuildScript = GetBuildScript(appEntry.BuildRunsOn),
-                IdsToRun = appEntry.Id,
-                Version = entry.Version.ToString(),
-                CacheInvalidator = entry.AppEntry.CacheInvalidator,
-                RunClassification = runClassification,
-                RunIdentifier = runIdentifier
+                NukeEntryId = appEntry.Id,
+                NukeEntryName = appEntry.Name,
+                NukeEnvironment = preSetupOutput.Environment,
+                NukePoolName = poolName,
+                NukePoolVMImage = poolVMImage,
+                NukeRunScript = runScript,
+                NukeEntryIdsToRun = appEntry.Id,
+                NukeVersion = entry.Version.ToString(),
+                NukeCacheInvalidator = appEntry.CacheInvalidator,
+                NukeRunClassification = runClassification,
+                NukeRunIdentifier = runIdentifier
             });
         }
 
+        RunnerAzurePipelineOS skipRunnerPipelineOS = (RunnerOS.Ubuntu2204.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
+        string? skipPoolName = skipRunnerPipelineOS.PoolName;
+        string? skipPoolVMImage = skipRunnerPipelineOS.PoolVMImage;
+        string? skipRunScript = RunnerOS.Ubuntu2204.GetRunScript(PipelineType.Azure);
         if (outputTestMatrix.Count == 0)
         {
             outputTestMatrix.Add("skip", new()
             {
-                Id = "skip",
-                Name = "Skip",
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
-                BuildScript = "",
-                IdsToRun = "",
-                CacheInvalidator = "",
-                RunClassification = "",
-                RunIdentifier = ""
+                NukeEntryId = "skip",
+                NukeEntryName = "Skip",
+                NukeEnvironment = preSetupOutput.Environment,
+                NukePoolName = skipPoolName,
+                NukePoolVMImage = skipPoolVMImage,
+                NukeRunScript = skipRunScript,
+                NukeEntryIdsToRun = "",
+                NukeCacheInvalidator = "",
+                NukeRunClassification = "",
+                NukeRunIdentifier = ""
             });
         }
         if (outputBuildMatrix.Count == 0)
         {
             outputBuildMatrix.Add("skip", new()
             {
-                Id = "skip",
-                Name = "Skip",
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
-                BuildScript = "",
-                IdsToRun = "",
-                Version = "",
-                CacheInvalidator = "",
-                RunClassification = "",
-                RunIdentifier = ""
+                NukeEntryId = "skip",
+                NukeEntryName = "Skip",
+                NukeEnvironment = preSetupOutput.Environment,
+                NukePoolName = skipPoolName,
+                NukePoolVMImage = skipPoolVMImage,
+                NukeRunScript = skipRunScript,
+                NukeEntryIdsToRun = "",
+                NukeVersion = "",
+                NukeCacheInvalidator = "",
+                NukeRunClassification = "",
+                NukeRunIdentifier = ""
             });
         }
         if (outputPublishMatrix.Count == 0)
         {
             outputPublishMatrix.Add("skip", new()
             {
-                Id = "skip",
-                Name = "Skip",
-                Environment = preSetupOutput.Environment,
-                RunsOn = GetRunsOn(RunsOnType.Ubuntu2204),
-                BuildScript = "",
-                IdsToRun = "",
-                Version = "",
-                CacheInvalidator = "",
-                RunClassification = "",
-                RunIdentifier = ""
+                NukeEntryId = "skip",
+                NukeEntryName = "Skip",
+                NukeEnvironment = preSetupOutput.Environment,
+                NukePoolName = skipPoolName,
+                NukePoolVMImage = skipPoolVMImage,
+                NukeRunScript = skipRunScript,
+                NukeEntryIdsToRun = "",
+                NukeVersion = "",
+                NukeCacheInvalidator = "",
+                NukeRunClassification = "",
+                NukeRunIdentifier = ""
             });
         }
 
@@ -242,9 +267,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
-        var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunsOnType.Ubuntu2204);
+        var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunnerOS.Ubuntu2204);
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunsOnType.Ubuntu2204, "PipelinePreSetup", "azure");
+        var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunnerOS.Ubuntu2204, "PipelinePreSetup", "azure");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
         AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_ENTRIES", "./.nuke/temp/pre_setup_has_entries.txt");
@@ -260,21 +285,21 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ████████████████ Test ████████████████
         // ██████████████████████████████████████
-        var testJob = AddJob(workflow, "test", "Test", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
+        var testJob = AddJob(workflow, "test", "Test", "$(nuke_pool_name)", "$(nuke_pool_vm_image)", needs: [.. needs], condition: "succeeded()");
         AddJobEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
-        AddJobStepCheckout(testJob, condition: "ne(variables['id'], 'skip')");
+        AddJobStepCheckout(testJob, condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
-        var cacheTestStep = AddJobStep(testJob, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
+        var cacheTestStep = AddJobStep(testJob, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddJobStepInputs(cacheTestStep, "path", "./.nuke/cache");
         AddJobStepInputs(cacheTestStep, "key", $"""
-            "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"
             """);
         AddJobStepInputs(cacheTestStep, "restoreKeys", $"""
-            "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-            "test" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+            "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
             """);
-        var nukeTestStep = AddJobStepNukeRun(testJob, "$(build_script)", "PipelineTest", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
+        var nukeTestStep = AddJobStepNukeRun(testJob, "$(nuke_run_script)", "PipelineTest", "$(nuke_entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
         needs.Add("test");
@@ -282,25 +307,25 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
-        var buildJob = AddJob(workflow, "build", "Build", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
+        var buildJob = AddJob(workflow, "build", "Build", "$(nuke_pool_name)", "$(nuke_pool_vm_image)", needs: [.. needs], condition: "succeeded()");
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-        AddJobStepCheckout(buildJob, condition: "ne(variables['id'], 'skip')");
+        AddJobStepCheckout(buildJob, condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
-        var cacheBuildStep = AddJobStep(buildJob, displayName: "Cache Build", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
+        var cacheBuildStep = AddJobStep(buildJob, displayName: "Cache Build", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddJobStepInputs(cacheBuildStep, "path", "./.nuke/cache");
         AddJobStepInputs(cacheBuildStep, "key", $"""
-            "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"
             """);
         AddJobStepInputs(cacheBuildStep, "restoreKeys", $"""
-            "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-            "build" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+            "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
             """);
-        var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(build_script)", "PipelineBuild", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
+        var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(nuke_run_script)", "PipelineBuild", "$(nuke_entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
         AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
-        var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1", condition: "ne(variables['id'], 'skip')");
-        AddJobStepInputs(uploadBuildStep, "artifact", "$(id)");
+        var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1", condition: "ne(variables['nuke_entry_id'], 'skip')");
+        AddJobStepInputs(uploadBuildStep, "artifact", "$(nuke_entry_id)");
         AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
         AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
         needs.Add("build");
@@ -308,25 +333,25 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
         // ██████████████████████████████████████
-        var publishJob = AddJob(workflow, "publish", "Publish", "$(runs_on)", needs: [.. needs], condition: "succeeded()");
+        var publishJob = AddJob(workflow, "publish", "Publish", "$(nuke_pool_name)", "$(nuke_pool_vm_image)", needs: [.. needs], condition: "succeeded()");
         AddJobEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
-        AddJobStepCheckout(publishJob, condition: "ne(variables['id'], 'skip')");
-        var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2", condition: "ne(variables['id'], 'skip')");
-        AddJobStepInputs(downloadPublishStep, "artifact", "$(id)");
+        AddJobStepCheckout(publishJob, condition: "ne(variables['nuke_entry_id'], 'skip')");
+        var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
+        AddJobStepInputs(downloadPublishStep, "artifact", "$(nuke_entry_id)");
         AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
-        var cachePublishStep = AddJobStep(publishJob, displayName: "Cache Publish", task: "Cache@2", condition: "ne(variables['id'], 'skip')");
+        var cachePublishStep = AddJobStep(publishJob, displayName: "Cache Publish", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddJobStepInputs(cachePublishStep, "path", "./.nuke/cache");
         AddJobStepInputs(cachePublishStep, "key", $"""
-            "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)" | "$(run_identifier)"
+            "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"
             """);
         AddJobStepInputs(cachePublishStep, "restoreKeys", $"""
-            "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "$(run_classification)"
-            "publish" | "$(runs_on)" | "$(id)" | "$(cache_invalidator)" | "$(environment)" | "main"
+            "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+            "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
             """);
-        var nukePublishStep = AddJobStepNukeRun(publishJob, "$(build_script)", "PipelinePublish", "$(ids_to_run)", condition: "ne(variables['id'], 'skip')");
+        var nukePublishStep = AddJobStepNukeRun(publishJob, "$(nuke_run_script)", "PipelinePublish", "$(nuke_entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
         AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
         AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
         needs.Add("publish");
@@ -334,7 +359,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ███████████ Run Validation ███████████
         // ██████████████████████████████████████
-        var runValidationJob = AddJob(workflow, "run_validation", "Run Validation", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "succeeded()");
+        var runValidationJob = AddJob(workflow, "run_validation", "Run Validation", RunnerOS.Ubuntu2204, needs: [.. needs], condition: "succeeded()");
         AddJobEnvVar(runValidationJob, "NUKE_RUN_SUCCESS_AZURE", "$[ dependencies.publish.result ]");
         AddJobStep(runValidationJob, displayName: $"Resolve NUKE_RUN_SUCCESS",
             script: $"echo \"##vso[task.setvariable variable=NUKE_RUN_SUCCESS]${{NUKE_RUN_SUCCESS_AZURE/Succeeded/ok}}\"");
@@ -345,7 +370,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // █████████████ Post Setup █████████████
         // ██████████████████████████████████████
-        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunsOnType.Ubuntu2204, needs: [.. needs], condition: "always()");
+        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. needs], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobEnvVar(postSetupJob, "NUKE_PUBLISH_SUCCESS_AZURE", "$[ dependencies.publish.result ]");
         AddJobStep(postSetupJob, name: "NUKE_PUBLISH_SUCCESS", displayName: $"Resolve NUKE_PUBLISH_SUCCESS",
@@ -355,7 +380,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
         AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
-        var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, GetBuildScript(RunsOnType.Ubuntu2204), "PipelinePostSetup");
+        var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
         AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
         
         // ██████████████████████████████████████
@@ -368,30 +393,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
 
         Log.Information("Workflow built at " + workflowPath.ToString());
-    }
-
-    private static string GetRunsOn(RunsOnType runsOnType)
-    {
-        return runsOnType switch
-        {
-            RunsOnType.WindowsLatest => "windows-latest",
-            RunsOnType.Windows2022 => "windows-2022",
-            RunsOnType.UbuntuLatest => "ubuntu-latest",
-            RunsOnType.Ubuntu2204 => "ubuntu-22.04",
-            _ => throw new NotImplementedException()
-        };
-    }
-
-    private static string GetBuildScript(RunsOnType runsOnType)
-    {
-        return runsOnType switch
-        {
-            RunsOnType.WindowsLatest => "./build.cmd",
-            RunsOnType.Windows2022 => "./build.cmd",
-            RunsOnType.UbuntuLatest => "chmod +x ./build.sh && ./build.sh",
-            RunsOnType.Ubuntu2204 => "chmod +x ./build.sh && ./build.sh",
-            _ => throw new NotImplementedException()
-        };
     }
 
     private static void AddJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)
@@ -409,15 +410,16 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobMatrixInclude(job, $"$[ dependencies.pre_setup.outputs['{outputName}.{outputName}'] ]");
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string>? needs = null, string condition = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string? poolName, string? poolVMImage, IEnumerable<string>? needs = null, string condition = "")
     {
         Dictionary<string, object> job = new()
         {
             ["job"] = id,
             ["displayName"] = name,
-            ["pool"] = new Dictionary<string, object>
+            ["pool"] = new Dictionary<string, object?>
             {
-                { "vmImage", runsOn }
+                { "name", poolName },
+                { "vmImage", poolVMImage }
             },
             ["steps"] = new List<object>()
         };
@@ -433,9 +435,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return job;
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunsOnType buildsOnType, IEnumerable<string>? needs = null, string condition = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, IEnumerable<string>? needs = null, string condition = "")
     {
-        return AddJob(workflow, id, name, GetRunsOn(buildsOnType), needs, condition);
+        var azureRunnerOs = (runnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
+        return AddJob(workflow, id, name, azureRunnerOs.PoolName, azureRunnerOs.PoolVMImage, needs, condition);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string name = "", string displayName = "", string task = "", string script = "", string condition = "")
@@ -504,9 +507,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return AddJobStep(job, displayName: $"Run Nuke {targetName}", script: script, condition: condition);
     }
 
-    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunsOnType runsOnType, string targetName, string args = "", string condition = "")
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunnerOS runnerOS, string targetName, string args = "", string condition = "")
     {
-        return AddJobStepNukeRun(job, GetBuildScript(runsOnType), targetName, args, condition);
+        return AddJobStepNukeRun(job, runnerOS.GetRunScript(PipelineType.Azure), targetName, args, condition);
     }
 
     private static void AddJobStepInputs(Dictionary<string, object> step, string name, string value)

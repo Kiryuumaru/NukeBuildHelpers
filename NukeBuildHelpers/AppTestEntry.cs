@@ -1,11 +1,11 @@
 ﻿using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Models.RunContext;
+using NukeBuildHelpers.Models;
 
 namespace NukeBuildHelpers;
 
 public abstract class AppTestEntry : Entry
 {
-    public abstract RunsOnType RunsOn { get; }
+    public abstract RunnerOS RunnerOS { get; }
 
     public virtual RunTestType RunTestOn { get; } = RunTestType.All;
 

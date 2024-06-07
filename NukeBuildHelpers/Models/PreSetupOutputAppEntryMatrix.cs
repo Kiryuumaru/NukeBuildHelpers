@@ -1,6 +1,6 @@
 ﻿namespace NukeBuildHelpers;
 
-internal class PreSetupOutputAppEntryMatrix : PreSetupOutputMatrix
+internal abstract class PreSetupOutputAppEntryMatrix : PreSetupOutputMatrix
 {
-    public required string Version { get; init; }
+    public required string NukeVersion { get; init; }
 }

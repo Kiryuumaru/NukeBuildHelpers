@@ -5,16 +5,16 @@ using NukeBuildHelpers;
 using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Models.RunContext;
+using NukeBuildHelpers.Models;
 using System;
 
 namespace _build;
 
 class NugetBuildHelpers : AppEntry<Build>
 {
-    public override RunsOnType BuildRunsOn => RunsOnType.Ubuntu2204;
+    public override RunnerOS BuildRunnerOS => RunnerOS.Ubuntu2204;
 
-    public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
+    public override RunnerOS PublishRunnerOS => RunnerOS.Ubuntu2204;
 
     public override RunType RunBuildOn =>  RunType.All;
 
@@ -52,7 +52,7 @@ class NugetBuildHelpers : AppEntry<Build>
 
     public override void Publish(AppRunContext appRunContext)
     {
-        if (appRunContext.RunType == RunType.Bump)
+        if (appRunContext.RunType == RunType.Bump && PipelineType == NukeBuildHelpers.Pipelines.Enums.PipelineType.Github)
         {
             DotNetTasks.DotNetNuGetPush(_ => _
                 .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")

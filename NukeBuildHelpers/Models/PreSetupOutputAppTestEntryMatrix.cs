@@ -1,5 +1,5 @@
 ﻿namespace NukeBuildHelpers;
 
-internal class PreSetupOutputAppTestEntryMatrix : PreSetupOutputMatrix
+internal abstract class PreSetupOutputAppTestEntryMatrix : PreSetupOutputMatrix
 {
 }

@@ -1,0 +1,211 @@
+name: Nuke CICD Pipeline
+trigger:
+  batch: true
+  branches:
+    include:
+    - prerelease
+    - main
+  tags:
+    include:
+    - bump-*
+pr:
+  branches:
+    include:
+    - '**'
+jobs:
+- job: pre_setup
+  displayName: Pre Setup
+  pool:
+    name: Azure Pipelines
+    vmImage: ubuntu-22.04
+  steps:
+  - checkout: self
+    persistCredentials: true
+    fetchDepth: 0
+  - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "azure"
+    displayName: Run Nuke PipelinePreSetup
+    env:
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_RELEASE]$(cat ./.nuke/temp/pre_setup_has_release.txt)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_RELEASE;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_release.txt)"
+    name: NUKE_PRE_SETUP_HAS_RELEASE
+    displayName: Output NUKE_PRE_SETUP_HAS_RELEASE
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_ENTRIES]$(cat ./.nuke/temp/pre_setup_has_entries.txt)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_ENTRIES;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_entries.txt)"
+    name: NUKE_PRE_SETUP_HAS_ENTRIES
+    displayName: Output NUKE_PRE_SETUP_HAS_ENTRIES
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_TEST]$(cat ./.nuke/temp/pre_setup_has_test.txt)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_TEST;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_test.txt)"
+    name: NUKE_PRE_SETUP_HAS_TEST
+    displayName: Output NUKE_PRE_SETUP_HAS_TEST
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_BUILD]$(cat ./.nuke/temp/pre_setup_has_build.txt)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_BUILD;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_build.txt)"
+    name: NUKE_PRE_SETUP_HAS_BUILD
+    displayName: Output NUKE_PRE_SETUP_HAS_BUILD
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_PUBLISH]$(cat ./.nuke/temp/pre_setup_has_publish.txt)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_HAS_PUBLISH;isOutput=true]$(cat ./.nuke/temp/pre_setup_has_publish.txt)"
+    name: NUKE_PRE_SETUP_HAS_PUBLISH
+    displayName: Output NUKE_PRE_SETUP_HAS_PUBLISH
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT]$(cat ./.nuke/temp/pre_setup_output.json)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT;isOutput=true]$(cat ./.nuke/temp/pre_setup_output.json)"
+    name: NUKE_PRE_SETUP_OUTPUT
+    displayName: Output NUKE_PRE_SETUP_OUTPUT
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX]$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)"
+    name: NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX
+    displayName: Output NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX]$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)"
+    name: NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX
+    displayName: Output NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX
+  - script: echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" && echo "##vso[task.setvariable variable=NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX;isOutput=true]$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)"
+    name: NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX
+    displayName: Output NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX
+- job: test
+  displayName: Test
+  pool:
+    name: $(nuke_pool_name)
+    vmImage: $(nuke_pool_vm_image)
+  steps:
+  - checkout: self
+    persistCredentials: true
+    condition: ne(variables['nuke_entry_id'], 'skip')
+  - task: Cache@2
+    displayName: Cache Test
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: '"test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"'
+      restoreKeys: |-
+        "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+        "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
+  - script: $(nuke_run_script) PipelineTest --args "$(nuke_entry_ids_to_run)"
+    displayName: Run Nuke PipelineTest
+    condition: ne(variables['nuke_entry_id'], 'skip')
+  dependsOn:
+  - pre_setup
+  condition: succeeded()
+  variables:
+    NUKE_PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT.NUKE_PRE_SETUP_OUTPUT'] ]
+  strategy:
+    matrix: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX'] ]
+- job: build
+  displayName: Build
+  pool:
+    name: $(nuke_pool_name)
+    vmImage: $(nuke_pool_vm_image)
+  steps:
+  - checkout: self
+    persistCredentials: true
+    condition: ne(variables['nuke_entry_id'], 'skip')
+  - task: Cache@2
+    displayName: Cache Build
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: '"build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"'
+      restoreKeys: |-
+        "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+        "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
+  - script: $(nuke_run_script) PipelineBuild --args "$(nuke_entry_ids_to_run)"
+    displayName: Run Nuke PipelineBuild
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    env:
+      NUKE_NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
+      NUKE_GITHUB_TOKEN: $(GITHUB_TOKEN)
+  - task: PublishPipelineArtifact@1
+    displayName: Upload Artifacts
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      artifact: $(nuke_entry_id)
+      targetPath: ./.nuke/output
+      continueOnError: true
+  dependsOn:
+  - pre_setup
+  - test
+  condition: succeeded()
+  strategy:
+    matrix: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX'] ]
+  variables:
+    NUKE_PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT.NUKE_PRE_SETUP_OUTPUT'] ]
+- job: publish
+  displayName: Publish
+  pool:
+    name: $(nuke_pool_name)
+    vmImage: $(nuke_pool_vm_image)
+  steps:
+  - checkout: self
+    persistCredentials: true
+    condition: ne(variables['nuke_entry_id'], 'skip')
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Artifacts
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      artifact: $(nuke_entry_id)
+      path: ./.nuke/output
+      continueOnError: true
+  - task: Cache@2
+    displayName: Cache Publish
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: '"publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"'
+      restoreKeys: |-
+        "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
+        "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
+  - script: $(nuke_run_script) PipelinePublish --args "$(nuke_entry_ids_to_run)"
+    displayName: Run Nuke PipelinePublish
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    env:
+      NUKE_NUGET_AUTH_TOKEN: $(NUGET_AUTH_TOKEN)
+      NUKE_GITHUB_TOKEN: $(GITHUB_TOKEN)
+  dependsOn:
+  - pre_setup
+  - test
+  - build
+  condition: succeeded()
+  variables:
+    NUKE_PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT.NUKE_PRE_SETUP_OUTPUT'] ]
+  strategy:
+    matrix: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX'] ]
+- job: run_validation
+  displayName: Run Validation
+  pool:
+    name: Azure Pipelines
+    vmImage: ubuntu-22.04
+  steps:
+  - script: echo "##vso[task.setvariable variable=NUKE_RUN_SUCCESS]${NUKE_RUN_SUCCESS_AZURE/Succeeded/ok}"
+    displayName: Resolve NUKE_RUN_SUCCESS
+  - script: echo "##vso[task.setvariable variable=NUKE_RUN_SUCCESS]$NUKE_RUN_SUCCESS" && echo "##vso[task.setvariable variable=NUKE_RUN_SUCCESS;isOutput=true]$NUKE_RUN_SUCCESS"
+    displayName: Output NUKE_RUN_SUCCESS
+  dependsOn:
+  - pre_setup
+  - test
+  - build
+  - publish
+  condition: succeeded()
+  variables:
+    NUKE_RUN_SUCCESS_AZURE: $[ dependencies.publish.result ]
+- job: post_setup
+  displayName: Post Setup
+  pool:
+    name: Azure Pipelines
+    vmImage: ubuntu-22.04
+  steps:
+  - script: echo "##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS]${NUKE_PUBLISH_SUCCESS_AZURE/Succeeded/ok}"
+    name: NUKE_PUBLISH_SUCCESS
+    displayName: Resolve NUKE_PUBLISH_SUCCESS
+  - checkout: self
+    persistCredentials: true
+  - task: DownloadPipelineArtifact@2
+    displayName: Download artifacts
+    inputs:
+      path: ./.nuke/output
+      patterns: '**'
+      continueOnError: true
+  - script: chmod +x ./build.sh && ./build.sh PipelinePostSetup
+    displayName: Run Nuke PipelinePostSetup
+    env:
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
+  dependsOn:
+  - pre_setup
+  - test
+  - build
+  - publish
+  - run_validation
+  condition: always()
+  variables:
+    NUKE_PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT.NUKE_PRE_SETUP_OUTPUT'] ]
+    NUKE_PUBLISH_SUCCESS_AZURE: $[ dependencies.publish.result ]

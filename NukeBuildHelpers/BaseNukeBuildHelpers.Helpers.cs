@@ -10,7 +10,6 @@ using Nuke.Common.Utilities;
 using Nuke.Common.CI.AzurePipelines;
 using Nuke.Common.CI.GitHubActions;
 using Sharprompt;
-using NukeBuildHelpers.Models.RunContext;
 using System.ComponentModel.DataAnnotations;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Models;
@@ -18,6 +17,7 @@ using NukeBuildHelpers.Pipelines.Interfaces;
 using System.Text.Json;
 using System.IO;
 using System.Collections.Generic;
+using NukeBuildHelpers.Pipelines.Enums;
 
 namespace NukeBuildHelpers;
 
@@ -690,7 +690,7 @@ partial class BaseNukeBuildHelpers
 
         ConsoleTableHeader[] headers =
             [
-                ("App Id", HorizontalAlignment.Right),
+                ("App EntryId", HorizontalAlignment.Right),
                 ("Environment", HorizontalAlignment.Center),
                 ("Version", HorizontalAlignment.Right),
                 ("Status", HorizontalAlignment.Center)

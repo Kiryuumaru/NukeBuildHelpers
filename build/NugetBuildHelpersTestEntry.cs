@@ -3,14 +3,14 @@ using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Enums;
-using NukeBuildHelpers.Models.RunContext;
+using NukeBuildHelpers.Models;
 using System;
 
 namespace _build;
 
 class NugetBuildHelpersTest : AppTestEntry<Build>
 {
-    public override RunsOnType RunsOn => RunsOnType.WindowsLatest;
+    public override RunnerOS RunnerOS => RunnerOS.WindowsLatest;
 
     public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
 
