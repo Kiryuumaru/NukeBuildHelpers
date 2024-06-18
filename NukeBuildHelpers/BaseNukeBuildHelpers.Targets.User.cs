@@ -2,9 +2,12 @@
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.ConsoleInterface;
+using NukeBuildHelpers.ConsoleInterface.Enums;
 using NukeBuildHelpers.ConsoleInterface.Models;
-using NukeBuildHelpers.Enums;
+using NukeBuildHelpers.Entry.Helpers;
+using NukeBuildHelpers.Pipelines.Azure;
 using NukeBuildHelpers.Pipelines.Common;
+using NukeBuildHelpers.Pipelines.Github;
 using Serilog;
 
 namespace NukeBuildHelpers;
@@ -29,7 +32,7 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
@@ -45,12 +48,12 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : appConfig.AppEntryConfigs.Select(i => i.Key))
+            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : allEntry.AppEntryMap.Select(i => i.Key))
             {
                 string appId = key;
 
-                ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
-                ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+                ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
+                ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
 
                 bool firstEntryRow = true;
 
@@ -98,7 +101,7 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
 
-            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.Id, Repository.Branch.ToLowerInvariant())).ToArray());
+            await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.AppId, Repository.Branch)).ToArray());
         });
 
     public Target BumpAndForget => _ => _
@@ -132,9 +135,9 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            await TestAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
+            await TestAppEntries(allEntry, splitArgs.Select(i => i.Key), null);
         });
 
     public Target Build => _ => _
@@ -145,9 +148,9 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            await BuildAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
+            await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key), null);
         });
 
     public Target Publish => _ => _
@@ -158,9 +161,9 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            await PublishAppEntries(appConfig, splitArgs.Select(i => i.Key), null);
+            await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key), null);
         });
 
     public Target GithubWorkflow => _ => _

@@ -2,6 +2,7 @@
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
+using NukeBuildHelpers.Pipelines.Common.Enums;
 
 namespace NukeBuildHelpers;
 /// <summary>
@@ -17,9 +18,9 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
     public static AbsolutePath OutputDirectory => RootDirectory / ".nuke" / "output";
 
     /// <summary>
-    /// Gets the cache directory path.
+    /// Gets the common cache directory path.
     /// </summary>
-    public static AbsolutePath CacheDirectory => CommonCacheDirectory / "output";
+    public static AbsolutePath CommonCacheOutputDirectory => CommonCacheDirectory / "output";
 
     /// <summary>
     /// Gets the list of environment branches.
@@ -84,6 +85,11 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
             return splitArgs;
         }
     }
+
+    /// <summary>
+    /// Gets the type of pipeline running.
+    /// </summary>
+    public PipelineType PipelineType { get; internal set; }
 
     private IReadOnlyDictionary<string, string?>? splitArgs;
 }

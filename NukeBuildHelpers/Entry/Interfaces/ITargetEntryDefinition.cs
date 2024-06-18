@@ -1,0 +1,12 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace NukeBuildHelpers.Entry.Interfaces;
+
+public interface ITargetEntryDefinition : IEntryDefinition
+{
+    internal string? AppId { get; set; }
+}

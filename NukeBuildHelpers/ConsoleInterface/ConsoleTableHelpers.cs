@@ -1,6 +1,6 @@
 ﻿using NukeBuildHelpers.Common;
+using NukeBuildHelpers.ConsoleInterface.Enums;
 using NukeBuildHelpers.ConsoleInterface.Models;
-using NukeBuildHelpers.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
