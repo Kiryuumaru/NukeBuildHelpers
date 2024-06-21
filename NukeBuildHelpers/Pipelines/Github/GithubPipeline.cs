@@ -107,7 +107,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            string? runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
+            string runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn! : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
             outputTestMatrix.Add(new()
             {
                 NukeEntryId = appEntryDefinition.Id,
