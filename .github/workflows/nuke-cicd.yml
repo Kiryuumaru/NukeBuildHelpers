@@ -22,7 +22,7 @@ jobs:
         fetch-depth: 0
     - id: NUKE_RUN
       name: Run Nuke PipelinePreSetup
-      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
+      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:

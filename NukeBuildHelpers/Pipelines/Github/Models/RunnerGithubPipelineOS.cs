@@ -10,7 +10,7 @@ namespace NukeBuildHelpers.Pipelines.Github.Models;
 /// <summary>
 /// Represents the GitHub pipeline-specific operating system.
 /// </summary>
-public class RunnerGithubPipelineOS : RunnerPipelineOS
+public class RunnerGithubPipelineOS
 {
     /// <summary>
     /// Gets or sets the runner that the job will run on.

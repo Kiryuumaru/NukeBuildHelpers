@@ -38,7 +38,7 @@ public abstract class RunnerOS
     /// </summary>
     /// <param name="pipelineType">The type of pipeline.</param>
     /// <returns>The pipeline-specific operating system.</returns>
-    public abstract RunnerPipelineOS GetPipelineOS(PipelineType pipelineType);
+    public abstract object GetPipelineOS(PipelineType pipelineType);
 
     /// <summary>
     /// Gets the run script for the specified pipeline type.

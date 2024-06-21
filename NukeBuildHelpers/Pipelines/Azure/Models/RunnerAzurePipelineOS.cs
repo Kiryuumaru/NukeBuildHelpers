@@ -10,7 +10,7 @@ namespace NukeBuildHelpers.Pipelines.Azure.Models;
 /// <summary>
 /// Represents the Azure pipeline-specific operating system.
 /// </summary>
-public class RunnerAzurePipelineOS : RunnerPipelineOS
+public class RunnerAzurePipelineOS
 {
     /// <summary>
     /// Gets or sets the name of the pool.

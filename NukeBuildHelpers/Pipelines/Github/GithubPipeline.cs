@@ -232,7 +232,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     i => (object)$"${{{{ secrets.{i.Secret.SecretVariableName} }}}}")
         };
 
-
         // ██████████████████████████████████████
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
