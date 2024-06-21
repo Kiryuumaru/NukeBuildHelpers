@@ -26,6 +26,6 @@ internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinit
 
     protected override Task<bool> GetDefaultCondition(IRunContext runContext)
     {
-        return Task.FromResult(runContext.RunType == Common.Enums.RunType.Bump);
+        return Task.FromResult(true);
     }
 }

@@ -7,11 +7,6 @@
 public enum RunType
 {
     /// <summary>
-    /// No specific run type.
-    /// </summary>
-    None = 0b00000,
-
-    /// <summary>
     /// Local run only, excluding pipeline execution.
     /// </summary>
     Local = 0b00001,
@@ -34,10 +29,5 @@ public enum RunType
     /// <summary>
     /// Run for the target app entry only if it's also running.
     /// </summary>
-    Target = 0b10000,
-
-    /// <summary>
-    /// Run always, regardless of other conditions.
-    /// </summary>
-    All = 0b11111
+    Target = 0b10000
 }
