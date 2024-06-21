@@ -62,11 +62,12 @@ internal static class EntryHelpers
         {
             foreach (var appId in testEntryDefinition.AppIds)
             {
-                if (!appEntryMap.TryGetValue(appId, out var appEntry))
+                var appIdLower = appId.ToLowerInvariant();
+                if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
                 {
                     appEntry = new()
                     {
-                        AppId = appId
+                        AppId = appIdLower
                     };
                 }
                 appEntry.TestEntryDefinitions.Add(testEntryDefinition);
@@ -75,12 +76,12 @@ internal static class EntryHelpers
 
         foreach (var buildEntryDefinition in buildEntryDefinitions)
         {
-            string appId = buildEntryDefinition.AppId.NotNullOrEmpty();
-            if (!appEntryMap.TryGetValue(appId, out var appEntry))
+            string appIdLower = buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant();
+            if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
             {
                 appEntry = new()
                 {
-                    AppId = appId
+                    AppId = appIdLower
                 };
             }
             appEntry.BuildEntryDefinitions.Add(buildEntryDefinition);
@@ -88,12 +89,12 @@ internal static class EntryHelpers
 
         foreach (var publishEntryDefinition in publishEntryDefinitions)
         {
-            string appId = publishEntryDefinition.AppId.NotNullOrEmpty();
-            if (!appEntryMap.TryGetValue(appId, out var appEntry))
+            string appIdLower = publishEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant();
+            if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
             {
                 appEntry = new()
                 {
-                    AppId = appId
+                    AppId = appIdLower
                 };
             }
             appEntry.PublishEntryDefinitions.Add(publishEntryDefinition);

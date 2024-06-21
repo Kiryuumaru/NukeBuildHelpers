@@ -211,6 +211,20 @@ partial class BaseNukeBuildHelpers
         SetCacheIndex(cachePairs);
     }
 
+    private static PipelinePreSetup GetPipelinePreSetup()
+    {
+        string? pipelinePreSetupValue = Environment.GetEnvironmentVariable("NUKE_PRE_SETUP");
+
+        if (string.IsNullOrEmpty(pipelinePreSetupValue))
+        {
+            throw new Exception("NUKE_PRE_SETUP is empty");
+        }
+
+        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
+
+        return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
+    }
+
     private void SetupSecretVariables()
     {
         var nukeBuildType = GetType();
@@ -314,8 +328,13 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task StartPreSetup(AllEntry allEntry, PipelineRun pipeline)
+    private async Task StartPreSetup(AllEntry allEntry)
     {
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
+        Log.Information("Trigger type: {branch}", pipeline.PipelineInfo.TriggerType);
+
         SetupSecretVariables();
 
         PipelineType = pipeline.PipelineType;
@@ -596,6 +615,7 @@ partial class BaseNukeBuildHelpers
             BuildId = buildId,
             LastBuildId = targetBuildId,
             PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber,
+            HasRelease = hasRelease,
             TestEntries = [.. testEntrySetupMap.Keys],
             BuildEntries = [.. buildEntrySetupMap.Keys],
             PublishEntries = [.. publishEntrySetupMap.Keys],
@@ -687,8 +707,12 @@ partial class BaseNukeBuildHelpers
         });
     }
 
-    private Task TestAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun, PipelinePreSetup? pipelinePreSetup)
+    private Task TestAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
     {
+        var pipelinePreSetup = GetPipelinePreSetup();
+
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
         IEnumerable<IEntryDefinition> entriesToRun;
 
         if (idsToRun.Any())
@@ -703,8 +727,12 @@ partial class BaseNukeBuildHelpers
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
     }
 
-    private Task BuildAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun, PipelinePreSetup? pipelinePreSetup)
+    private Task BuildAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
     {
+        var pipelinePreSetup = GetPipelinePreSetup();
+
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
         IEnumerable<IEntryDefinition> entriesToRun;
 
         OutputDirectory.DeleteDirectory();
@@ -727,8 +755,12 @@ partial class BaseNukeBuildHelpers
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
     }
 
-    private Task PublishAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun, PipelinePreSetup? pipelinePreSetup)
+    private Task PublishAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
     {
+        var pipelinePreSetup = GetPipelinePreSetup();
+
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
         IEnumerable<IEntryDefinition> entriesToRun;
 
         if (idsToRun.Any())
@@ -741,6 +773,90 @@ partial class BaseNukeBuildHelpers
         }
 
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
+    }
+
+    private Task StartPostSetup(AllEntry allEntry)
+    {
+        var pipelinePreSetup = GetPipelinePreSetup();
+
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        if (pipelinePreSetup.HasRelease)
+        {
+            if (Environment.GetEnvironmentVariable("NUKE_PUBLISH_SUCCESS") == "ok")
+            {
+                foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                {
+                    if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+                    {
+                        continue;
+                    }
+                    var appIdLower = appEntry.AppId.ToLowerInvariant();
+                    var releasePath = OutputDirectory / appIdLower;
+                    if (!releasePath.DirectoryExists())
+                    {
+                        throw new Exception("No release found for " + appIdLower);
+                    }
+                    var outPath = OutputDirectory / appIdLower + "-" + appRunEntry.Version;
+                    var outPathZip = OutputDirectory / appIdLower + "-" + appRunEntry.Version + ".zip";
+                    releasePath.CopyFilesRecursively(outPath);
+                    outPath.ZipTo(outPathZip);
+                    Log.Information("Publish: {name}", appIdLower);
+                }
+
+                return Task.Run(() =>
+                {
+                    foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                    {
+                        if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+                        {
+                            continue;
+                        }
+                        var appIdLower = appEntry.AppId.ToLowerInvariant();
+                        var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                        string latestTag = "latest";
+                        if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            latestTag += "-" + appRunEntry.Environment;
+                        }
+
+                        Git.Invoke("tag -f " + appIdLower + "/" + version + "-passed");
+                        Git.Invoke("tag -f " + appIdLower + "/" + version);
+                        Git.Invoke("tag -f " + appIdLower + "/" + latestTag);
+                    }
+
+                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
+
+                    Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
+
+                    Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
+                });
+            }
+            else
+            {
+                return Task.Run(() =>
+                {
+                    foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                    {
+                        var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                        string latestTag = "latest";
+                        if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            latestTag += "-" + appRunEntry.Environment;
+                        }
+
+                        Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version + "-failed");
+                        Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version);
+                    }
+
+                    Gh.Invoke("release delete -y build." + pipelinePreSetup.BuildId);
+
+                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
+                });
+            }
+        }
+
+        return Task.CompletedTask;
     }
 
     private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> InteractiveRelease()

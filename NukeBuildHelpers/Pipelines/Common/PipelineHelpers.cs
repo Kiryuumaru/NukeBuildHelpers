@@ -24,10 +24,9 @@ internal static class PipelineHelpers
         (Activator.CreateInstance(typeof(T), baseNukeBuildHelpers) as IPipeline)!.BuildWorkflow();
     }
 
-    internal static PipelineRun SetupPipeline(BaseNukeBuildHelpers baseNukeBuildHelpers)
+    internal static PipelineRun? SetupPipeline(BaseNukeBuildHelpers baseNukeBuildHelpers)
     {
         IPipeline pipeline;
-        PipelineInfo pipelineInfo;
         PipelineType pipelineType;
 
         if (NukeBuild.Host is AzurePipelines)
@@ -42,15 +41,13 @@ internal static class PipelineHelpers
         }
         else
         {
-            throw new NotImplementedException();
+            return null;
         }
-
-        pipelineInfo = pipeline.GetPipelineInfo();
 
         return new()
         {
             Pipeline = pipeline,
-            PipelineInfo = pipelineInfo,
+            PipelineInfo = pipeline.GetPipelineInfo(),
             PipelineType = pipelineType,
         };
     }

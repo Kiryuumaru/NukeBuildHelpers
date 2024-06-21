@@ -20,6 +20,8 @@ internal class PipelinePreSetup
 
     public required long PullRequestNumber { get; init; }
 
+    public required bool HasRelease { get; init; }
+
     public required List<string> TestEntries { get; init; }
 
     public required List<string> BuildEntries { get; init; }

@@ -30,9 +30,7 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
-
-            await TestAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), GetPipelinePreSetup());
+            await TestAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
     public Target PipelineBuild => _ => _
@@ -45,9 +43,7 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
-
-            await BuildAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), GetPipelinePreSetup());
+            await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
     public Target PipelinePublish => _ => _
@@ -60,9 +56,7 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
-
-            await PublishAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), GetPipelinePreSetup());
+            await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
     public Target PipelinePreSetup => _ => _
@@ -74,122 +68,19 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
-
-            Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
-            Log.Information("Trigger type: {branch}", pipeline.PipelineInfo.TriggerType);
-
-            await StartPreSetup(allEntry, pipeline);
+            await StartPreSetup(allEntry);
         });
 
     public Target PipelinePostSetup => _ => _
         .Unlisted()
         .Description("To be used by pipeline")
-        .Executes(() =>
+        .Executes(async () =>
         {
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            var preSetupOutput = GetPipelinePreSetup();
-
-            if (preSetupOutput.HasRelease)
-            {
-                if (Environment.GetEnvironmentVariable("NUKE_PUBLISH_SUCCESS") == "ok")
-                {
-                    foreach (var release in OutputDirectory.GetDirectories())
-                    {
-                        if (!preSetupOutput.Entries.TryGetValue(release.Name, out var preSetupOutputVersion))
-                        {
-                            continue;
-                        }
-                        var outPath = OutputDirectory / release.Name + "-" + preSetupOutputVersion.Version;
-                        var outPathZip = OutputDirectory / release.Name + "-" + preSetupOutputVersion.Version + ".zip";
-                        release.CopyFilesRecursively(outPath);
-                        outPath.ZipTo(outPathZip);
-                    }
-                    foreach (var release in OutputDirectory.GetFiles())
-                    {
-                        Log.Information("Publish: {name}", release.Name);
-                    }
-
-                    foreach (var release in preSetupOutput.Entries.Values)
-                    {
-                        if (!allEntry.AppEntryMap.TryGetValue(release.AppId, out var appEntry))
-                        {
-                            continue;
-                        }
-                        var version = SemVersion.Parse(release.Version, SemVersionStyles.Strict).WithoutMetadata();
-                        string latestTag = "latest";
-                        if (!release.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            latestTag += "-" + release.Environment.ToLowerInvariant();
-                        }
-                        if (appEntry.Entry.MainRelease)
-                        {
-                            Git.Invoke("tag -f " + version + "-passed");
-                            Git.Invoke("tag -f " + version);
-                            Git.Invoke("tag -f " + latestTag);
-                        }
-                        else
-                        {
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version + "-passed");
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version);
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + latestTag);
-                        }
-                    }
-
-                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
-
-                    Gh.Invoke("release upload --clobber build." + preSetupOutput.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
-
-                    Gh.Invoke("release edit --draft=false build." + preSetupOutput.BuildId);
-                }
-                else
-                {
-                    foreach (var release in preSetupOutput.Entries.Values)
-                    {
-                        if (!appConfig.AppEntryConfigs.TryGetValue(release.AppId, out var appEntry))
-                        {
-                            continue;
-                        }
-                        var version = SemVersion.Parse(release.Version, SemVersionStyles.Strict).WithoutMetadata();
-                        string latestTag = "latest";
-                        if (!release.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            latestTag += "-" + release.Environment.ToLowerInvariant();
-                        }
-                        if (appEntry.Entry.MainRelease)
-                        {
-                            Git.Invoke("tag -f " + version + "-failed");
-                            Git.Invoke("tag -f " + version);
-                        }
-                        else
-                        {
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version + "-failed");
-                            Git.Invoke("tag -f " + appEntry.Entry.Id.ToLowerInvariant() + "/" + version);
-                        }
-                    }
-
-                    Gh.Invoke("release delete -y build." + preSetupOutput.BuildId);
-
-                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
-                }
-            }
+            await StartPostSetup(allEntry);
         });
-
-    private static PipelinePreSetup GetPipelinePreSetup()
-    {
-        string? pipelinePreSetupValue = Environment.GetEnvironmentVariable("NUKE_PRE_SETUP");
-
-        if (string.IsNullOrEmpty(pipelinePreSetupValue))
-        {
-            throw new Exception("NUKE_PRE_SETUP is empty");
-        }
-
-        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
-
-        return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
-    }
 }

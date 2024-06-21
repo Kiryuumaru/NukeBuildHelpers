@@ -5,7 +5,7 @@ using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Entry.Extensions;
-using NukeBuildHelpers.RunContext.Common;
+using NukeBuildHelpers.RunContext.Extensions;
 using Semver;
 
 class Build : BaseNukeBuildHelpers
@@ -39,12 +39,12 @@ class Build : BaseNukeBuildHelpers
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
             {
-                version = bumpContext.Version.ToString();
-                releaseNotes = bumpContext.ReleaseNotes;
+                version = bumpContext.AppVersion.Version.ToString();
+                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
             }
             else if (context.TryGetPullRequestContext(out var pullRequestContext))
             {
-                version = pullRequestContext.Version.ToString();
+                version = pullRequestContext.AppVersion.Version.ToString();
             }
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));

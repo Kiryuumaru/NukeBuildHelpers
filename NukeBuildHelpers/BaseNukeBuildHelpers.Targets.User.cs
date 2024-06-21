@@ -137,7 +137,7 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            await TestAppEntries(allEntry, splitArgs.Select(i => i.Key), null);
+            await TestAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
     public Target Build => _ => _
@@ -150,7 +150,7 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key), null);
+            await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
     public Target Publish => _ => _
@@ -163,7 +163,7 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key), null);
+            await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
     public Target GithubWorkflow => _ => _
