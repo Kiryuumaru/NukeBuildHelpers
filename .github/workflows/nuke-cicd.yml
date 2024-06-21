@@ -30,9 +30,15 @@ jobs:
       NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_ID }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_ID }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
   NugetBuildHelpersTest1:
-    name: Test - ${{ needs.pre_setup.outputs.nuke_entry_name }}
-    runs-on: ${{ needs.pre_setup.outputs.nuke_runs_on }}
+    name: Test - ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Test
@@ -52,8 +58,8 @@ jobs:
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
   NugetBuildHelpersTest2:
-    name: Test - ${{ needs.pre_setup.outputs.nuke_entry_name }}
-    runs-on: ${{ needs.pre_setup.outputs.nuke_runs_on }}
+    name: Test - ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Test

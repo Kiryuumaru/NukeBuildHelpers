@@ -120,6 +120,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 NukeRunClassification = runClassification,
                 NukeRunIdentifier = runIdentifier
             });
+
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_ID={entryId}\" >> $GITHUB_OUTPUT");
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_NAME={entrySetup.Name}\" >> $GITHUB_OUTPUT");
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON={runsOn}\" >> $GITHUB_OUTPUT");
         }
 
         foreach (var entryId in pipelinePreSetup.BuildEntries)
@@ -244,6 +248,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
+        foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
+        {
+            AddJobOutput(preSetupJob, $"NUKE_PRE_SETUP_{entryDefinition.Id}_ID", "NUKE_RUN", $"NUKE_PRE_SETUP_{entryDefinition.Id}_ID");
+            AddJobOutput(preSetupJob, $"NUKE_PRE_SETUP_{entryDefinition.Id}_NAME", "NUKE_RUN", $"NUKE_PRE_SETUP_{entryDefinition.Id}_NAME");
+            AddJobOutput(preSetupJob, $"NUKE_PRE_SETUP_{entryDefinition.Id}_RUNS_ON", "NUKE_RUN", $"NUKE_PRE_SETUP_{entryDefinition.Id}_RUNS_ON");
+        }
         needs.Add("pre_setup");
 
         // ██████████████████████████████████████
@@ -252,7 +262,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         List<string> testNeeds = [.. needs];
         foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
         {
-            var testJob = AddJob(workflow, entryDefinition.Id, "Test - ${{ needs.pre_setup.outputs.nuke_entry_name }}", "${{ needs.pre_setup.outputs.nuke_runs_on }}", needs: [.. needs], _if: "success()");
+            var testJob = AddJob(workflow, entryDefinition.Id, "Test - ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_" + entryDefinition.Id + "_NAME }}", "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_" + entryDefinition.Id + "_RUNS_ON }}", needs: [.. needs], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
             AddJobStepCheckout(testJob);
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
