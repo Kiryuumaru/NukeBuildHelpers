@@ -22,7 +22,17 @@ class Build : BaseNukeBuildHelpers
     [SecretVariable("GITHUB_TOKEN")]
     readonly string? GithubToken;
 
-    TestEntry NugetBuildHelpersTest => _ => _
+    TestEntry NugetBuildHelpersTest1 => _ => _
+        .AppId("nuget_build_helpers")
+        .Execute(() =>
+        {
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+            DotNetTasks.DotNetTest(_ => _
+                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+        });
+
+    TestEntry NugetBuildHelpersTest2 => _ => _
         .AppId("nuget_build_helpers")
         .Execute(() =>
         {
