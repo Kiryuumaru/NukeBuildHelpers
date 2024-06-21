@@ -267,7 +267,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-
                 test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
                 """);
-            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineTest", "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineTest", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
             testNeeds.Add(entryDefinition.Id);
         }
@@ -291,7 +291,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 build-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-
                 build-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
                 """);
-            var nukeBuild = AddJobStepNukeRun(buildJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineBuild", "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var nukeBuild = AddJobStepNukeRun(buildJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineBuild", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
             //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
             var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
             AddJobStepWith(uploadBuildStep, "name", "${{ needs.pre_setup.outputs.nuke_entry_id }}");
@@ -324,7 +324,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 publish-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-
                 publish-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
                 """);
-            var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelinePublish", "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelinePublish", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
             //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
             publishNeeds.Add(entryDefinition.Id);
         }
