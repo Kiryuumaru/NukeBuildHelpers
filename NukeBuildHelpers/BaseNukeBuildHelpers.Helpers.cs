@@ -284,6 +284,14 @@ partial class BaseNukeBuildHelpers
 
     private async Task StartPreSetup(AllEntry allEntry)
     {
+        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.AppEntryMap.Count);
+        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.EntryDefinitionMap.Count);
+        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.DependentEntryDefinitionMap.Count);
+        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.TargetEntryDefinitionMap.Count);
+        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.TestEntryDefinitionMap.Count);
+        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.BuildEntryDefinitionMap.Count);
+        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.PublishEntryDefinitionMap.Count);
+
         var pipeline = PipelineHelpers.SetupPipeline(this);
 
         Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
@@ -498,21 +506,6 @@ partial class BaseNukeBuildHelpers
 
         foreach (var entry in allEntry.PublishEntryDefinitionMap.Values)
         {
-            if (entry.RunContext == null)
-            {
-                Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS");
-                Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS");
-                Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS");
-                Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS");
-            }
-            else
-            {
-                Log.Information("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-                Log.Information("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-                Log.Information("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-                Log.Information("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-                Log.Information("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-            }
             EntrySetup setup = await createEntrySetup(entry);
             publishEntrySetupMap.Add(entry.Id, setup);
             targetEntrySetupMap.Add(entry.Id, setup);
