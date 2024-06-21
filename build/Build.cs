@@ -6,6 +6,7 @@ using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.RunContext.Extensions;
+using NukeBuildHelpers.Runner.Abstraction;
 using Semver;
 
 class Build : BaseNukeBuildHelpers
@@ -25,6 +26,7 @@ class Build : BaseNukeBuildHelpers
     TestEntry NugetBuildHelpersTest1 => _ => _
         .AppId("nuget_build_helpers")
         .Name("Name sa first test")
+        .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(() =>
         {
             DotNetTasks.DotNetClean(_ => _
@@ -36,6 +38,7 @@ class Build : BaseNukeBuildHelpers
     TestEntry NugetBuildHelpersTest2 => _ => _
         .AppId("nuget_build_helpers")
         .Name("Name sa second test")
+        .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(() =>
         {
             DotNetTasks.DotNetClean(_ => _
@@ -46,6 +49,7 @@ class Build : BaseNukeBuildHelpers
 
     BuildEntry NugetBuildHelpersBuild => _ => _
         .AppId("nuget_build_helpers")
+        .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -77,6 +81,7 @@ class Build : BaseNukeBuildHelpers
 
     PublishEntry NugetBuildHelpersPublish => _ => _
         .AppId("nuget_build_helpers")
+        .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context =>
         {
             if (context.RunType == RunType.Bump)

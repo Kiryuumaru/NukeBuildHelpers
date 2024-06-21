@@ -61,6 +61,7 @@ internal static class EntryHelpers
 
         foreach (var testEntryDefinition in testEntryDefinitions)
         {
+            testEntryDefinition.RunnerOS.NotNull($"RunnerOS for {testEntryDefinition.Id} is null");
             foreach (var appId in testEntryDefinition.AppIds)
             {
                 var appIdLower = appId.ToLowerInvariant();
@@ -77,6 +78,7 @@ internal static class EntryHelpers
 
         foreach (var buildEntryDefinition in buildEntryDefinitions)
         {
+            buildEntryDefinition.RunnerOS.NotNull($"RunnerOS for {buildEntryDefinition.Id} is null");
             string appIdLower = buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant();
             if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
             {
@@ -90,6 +92,7 @@ internal static class EntryHelpers
 
         foreach (var publishEntryDefinition in publishEntryDefinitions)
         {
+            publishEntryDefinition.RunnerOS.NotNull($"RunnerOS for {publishEntryDefinition.Id} is null");
             string appIdLower = publishEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant();
             if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
             {
