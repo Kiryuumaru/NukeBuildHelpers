@@ -13,5 +13,10 @@ public enum PipelineType
     /// <summary>
     /// Represents a GitHub pipeline.
     /// </summary>
-    Github
+    Github,
+
+    /// <summary>
+    /// Represents a local pipeline.
+    /// </summary>
+    Local
 }

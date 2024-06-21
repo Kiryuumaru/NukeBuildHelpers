@@ -4,6 +4,7 @@ using Nuke.Common;
 using Nuke.Common.Tooling;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
@@ -359,5 +360,42 @@ internal static class EntryHelpers
             VersionFailed = versionFailed,
             VersionPassed = versionPassed,
         };
+    }
+
+    internal static List<(MemberInfo MemberInfo, SecretVariableAttribute Secret)> GetSecretVariables(BaseNukeBuildHelpers baseNukeBuildHelpers)
+    {
+        var nukeBuildType = baseNukeBuildHelpers.GetType();
+        List<(MemberInfo MemberInfo, SecretVariableAttribute Secret)> secretMemberList = [];
+        foreach (PropertyInfo prop in nukeBuildType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        {
+            foreach (object attr in prop.GetCustomAttributes(true))
+            {
+                if (attr is SecretVariableAttribute SecretAttr)
+                {
+                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(prop, SecretAttr));
+                }
+            }
+        }
+        foreach (FieldInfo field in nukeBuildType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+        {
+            foreach (object attr in field.GetCustomAttributes(true))
+            {
+                if (attr is SecretVariableAttribute SecretAttr)
+                {
+                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(field, SecretAttr));
+                }
+            }
+        }
+        return secretMemberList;
+    }
+
+    internal static void SetupSecretVariables(BaseNukeBuildHelpers baseNukeBuildHelpers)
+    {
+        foreach (var (MemberInfo, Secret) in GetSecretVariables(baseNukeBuildHelpers))
+        {
+            var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
+            var secretValue = Environment.GetEnvironmentVariable(envVarName);
+            MemberInfo.SetValue(baseNukeBuildHelpers, secretValue);
+        }
     }
 }

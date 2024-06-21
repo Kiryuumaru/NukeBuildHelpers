@@ -225,39 +225,7 @@ partial class BaseNukeBuildHelpers
         return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
     }
 
-    private void SetupSecretVariables()
-    {
-        var nukeBuildType = GetType();
-        List<(MemberInfo MemberInfo, SecretVariableAttribute Secret)> secretMemberList = [];
-        foreach (PropertyInfo prop in nukeBuildType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-        {
-            foreach (object attr in prop.GetCustomAttributes(true))
-            {
-                if (attr is SecretVariableAttribute SecretAttr)
-                {
-                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(prop, SecretAttr));
-                }
-            }
-        }
-        foreach (FieldInfo field in nukeBuildType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-        {
-            foreach (object attr in field.GetCustomAttributes(true))
-            {
-                if (attr is SecretVariableAttribute SecretAttr)
-                {
-                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(field, SecretAttr));
-                }
-            }
-        }
-        foreach (var (MemberInfo, Secret) in secretMemberList)
-        {
-            var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
-            var secretValue = Environment.GetEnvironmentVariable(envVarName);
-            MemberInfo.SetValue(this, secretValue);
-        }
-    }
-
-    private void SetupTargetRunContext(ITargetEntryDefinition targetEntry, RunType runType, AppVersion? appVersion, string releaseNotes, long pullRequestNumber)
+    private void SetupTargetRunContext(ITargetEntryDefinition targetEntry, RunType runType, AppVersion? appVersion, string releaseNotes, PipelineRun pipeline)
     {
         if (appVersion == null || runType == RunType.Local)
         {
@@ -294,7 +262,7 @@ partial class BaseNukeBuildHelpers
                     Environment = appVersion.Environment,
                     Version = appVersion.Version,
                     BuildId = appVersion.BuildId,
-                    PullRequestNumber = pullRequestNumber
+                    PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber
                 }
             };
         }
@@ -335,7 +303,7 @@ partial class BaseNukeBuildHelpers
         Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
         Log.Information("Trigger type: {branch}", pipeline.PipelineInfo.TriggerType);
 
-        SetupSecretVariables();
+        EntryHelpers.SetupSecretVariables(this);
 
         PipelineType = pipeline.PipelineType;
 
@@ -440,7 +408,7 @@ partial class BaseNukeBuildHelpers
             };
         }
 
-        if (hasRelease)
+        if (hasRelease && pipeline.PipelineType != PipelineType.Local)
         {
             foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
             {
@@ -490,6 +458,7 @@ partial class BaseNukeBuildHelpers
                 TriggerType.PullRequest => RunType.PullRequest,
                 TriggerType.Commit => RunType.Commit,
                 TriggerType.Tag => entry.HasRelease ? RunType.Bump : RunType.Commit,
+                TriggerType.Local => RunType.Local,
                 _ => throw new NotSupportedException()
             };
 
@@ -501,7 +470,7 @@ partial class BaseNukeBuildHelpers
                 BuildId = buildId
             };
 
-            SetupTargetRunContext(targetEntry, runType, appVersion, releaseNotes, pipeline.PipelineInfo.PullRequestNumber);
+            SetupTargetRunContext(targetEntry, runType, appVersion, releaseNotes, pipeline);
         }
 
         Dictionary<string, EntrySetup> testEntrySetupMap = [];
@@ -587,6 +556,7 @@ partial class BaseNukeBuildHelpers
                 TriggerType.PullRequest => RunType.PullRequest,
                 TriggerType.Commit => RunType.Commit,
                 TriggerType.Tag => targetEntries.Any(i => i.Entry.RunContext is IBumpContext) ? RunType.Bump : RunType.Commit,
+                TriggerType.Local => RunType.Local,
                 _ => throw new NotSupportedException()
             };
 
@@ -626,12 +596,12 @@ partial class BaseNukeBuildHelpers
         File.WriteAllText(TemporaryDirectory / "pre_setup.json", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption));
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
 
-        pipeline.Pipeline.PreSetup(allEntry, pipelinePreSetup);
+        await pipeline.Pipeline.PreSetup(allEntry, pipelinePreSetup);
     }
 
     private void EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup? pipelinePreSetup)
     {
-        SetupSecretVariables();
+        EntryHelpers.SetupSecretVariables(this);
 
         PipelineType = pipeline.PipelineType;
 
@@ -639,7 +609,7 @@ partial class BaseNukeBuildHelpers
         {
             if (pipelinePreSetup == null)
             {
-                SetupTargetRunContext(targetEntry, RunType.Local, null, "", 0);
+                SetupTargetRunContext(targetEntry, RunType.Local, null, "", pipeline);
                 continue;
             }
 
@@ -660,7 +630,7 @@ partial class BaseNukeBuildHelpers
                 BuildId = pipelinePreSetup.BuildId
             };
 
-            SetupTargetRunContext(targetEntry, entrySetup.RunType, appVersion, pipelinePreSetup.ReleaseNotes, pipeline.PipelineInfo.PullRequestNumber);
+            SetupTargetRunContext(targetEntry, entrySetup.RunType, appVersion, pipelinePreSetup.ReleaseNotes, pipeline);
         }
         
         foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)

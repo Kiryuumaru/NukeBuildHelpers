@@ -1,18 +1,24 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Identity.Client;
 using Nuke.Common;
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Common.Models;
+using NukeBuildHelpers.Entry;
+using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.Runner.Abstraction;
+using NukeBuildHelpers.Runner.Models;
+using Octokit;
 using Serilog;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
 
@@ -68,169 +74,123 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    public void Prepare(PreSetupOutput preSetupOutput, AllEntry appConfig, Dictionary<string, AppRunEntry> toEntry)
+    public Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         var outputTestMatrix = new List<GithubPreSetupOutputAppTestEntryMatrix>();
         var outputBuildMatrix = new List<GithubPreSetupOutputAppEntryMatrix>();
         var outputPublishMatrix = new List<GithubPreSetupOutputAppEntryMatrix>();
 
-        var runClassification = preSetupOutput.TriggerType == TriggerType.PullRequest ? "pr." + preSetupOutput.PullRequestNumber : "main";
+        var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
-        foreach (var toTest in preSetupOutput.ToTest)
+        foreach (var entryId in pipelinePreSetup.TestEntries)
         {
-            if (!appConfig.AppTestEntries.TryGetValue(toTest, out var appTestEntry))
+            if (!allEntry.TestEntryDefinitionMap.TryGetValue(entryId, out var appEntryDefinition))
             {
                 continue;
             }
-            var appEntry = appConfig.AppEntries.Values.FirstOrDefault(i => appTestEntry.AppEntryTargets.Contains(i.GetType()));
-            if (appEntry == null)
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
             {
                 continue;
             }
-            RunnerGithubPipelineOS runnerPipelineOS = (appTestEntry.RunnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
+            RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             string? runsOn = string.IsNullOrEmpty(runnerPipelineOS.RunsOn) ? "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]" : runnerPipelineOS.RunsOn;
-            string? runScript = appTestEntry.RunnerOS.GetRunScript(PipelineType.Azure);
             outputTestMatrix.Add(new()
             {
-                NukeEntryId = appTestEntry.Id,
-                NukeEntryName = appTestEntry.Name,
-                NukeEnvironment = preSetupOutput.Environment,
+                NukeEntryId = appEntryDefinition.Id,
+                NukeEntryName = entrySetup.Name,
+                NukeEnvironment = pipelinePreSetup.Environment,
                 NukeRunsOn = runsOn,
-                NukeRunScript = runScript,
-                NukeEntryIdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
-                NukeCacheInvalidator = appEntry.CacheInvalidator,
+                NukeRunScript = entrySetup.RunnerOSSetup.RunScript,
+                NukeEntryIdsToRun = entryId,
+                NukeCacheInvalidator = entrySetup.CacheInvalidator,
                 NukeRunClassification = runClassification,
                 NukeRunIdentifier = runIdentifier
             });
         }
 
-        foreach (var toBuild in preSetupOutput.ToBuild)
+        foreach (var entryId in pipelinePreSetup.BuildEntries)
         {
-            if (!appConfig.AppEntries.TryGetValue(toBuild, out var appEntry))
+            if (!allEntry.BuildEntryDefinitionMap.TryGetValue(entryId, out var appEntryDefinition))
             {
                 continue;
             }
-            if (!toEntry.TryGetValue(appEntry.Id, out var entry))
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
             {
                 continue;
             }
-            RunnerGithubPipelineOS runnerPipelineOS = (appEntry.BuildRunnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
+            if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(appEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant(), out var appRunEntry))
+            {
+                continue;
+            }
+
+            RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             string? runsOn = string.IsNullOrEmpty(runnerPipelineOS.RunsOn) ? "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]" : runnerPipelineOS.RunsOn;
-            string? runScript = appEntry.BuildRunnerOS.GetRunScript(PipelineType.Azure);
             outputBuildMatrix.Add(new()
             {
-                NukeEntryId = appEntry.Id,
-                NukeEntryName = appEntry.Name,
-                NukeEnvironment = preSetupOutput.Environment,
+                NukeEntryId = appEntryDefinition.Id,
+                NukeEntryName = entrySetup.Name,
+                NukeEnvironment = pipelinePreSetup.Environment,
                 NukeRunsOn = runsOn,
-                NukeRunScript = runScript,
-                NukeEntryIdsToRun = appEntry.Id,
-                NukeVersion = entry.Version.ToString(),
-                NukeCacheInvalidator = entry.AppEntry.CacheInvalidator,
+                NukeRunScript = entrySetup.RunnerOSSetup.RunScript,
+                NukeEntryIdsToRun = entryId,
+                NukeCacheInvalidator = entrySetup.CacheInvalidator,
                 NukeRunClassification = runClassification,
-                NukeRunIdentifier = runIdentifier
+                NukeRunIdentifier = runIdentifier,
+                NukeVersion = appRunEntry.Version,
             });
         }
 
-        foreach (var toPublish in preSetupOutput.ToPublish)
+        foreach (var entryId in pipelinePreSetup.PublishEntries)
         {
-            if (!appConfig.AppEntries.TryGetValue(toPublish, out var appEntry))
+            if (!allEntry.PublishEntryDefinitionMap.TryGetValue(entryId, out var appEntryDefinition))
             {
                 continue;
             }
-            if (!toEntry.TryGetValue(appEntry.Id, out var entry))
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
             {
                 continue;
             }
-            RunnerGithubPipelineOS runnerPipelineOS = (appEntry.PublishRunnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
+            if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(appEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant(), out var appRunEntry))
+            {
+                continue;
+            }
+
+            RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             string? runsOn = string.IsNullOrEmpty(runnerPipelineOS.RunsOn) ? "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]" : runnerPipelineOS.RunsOn;
-            string? runScript = appEntry.PublishRunnerOS.GetRunScript(PipelineType.Azure);
             outputPublishMatrix.Add(new()
             {
-                NukeEntryId = appEntry.Id,
-                NukeEntryName = appEntry.Name,
-                NukeEnvironment = preSetupOutput.Environment,
+                NukeEntryId = appEntryDefinition.Id,
+                NukeEntryName = entrySetup.Name,
+                NukeEnvironment = pipelinePreSetup.Environment,
                 NukeRunsOn = runsOn,
-                NukeRunScript = runScript,
-                NukeEntryIdsToRun = appEntry.Id,
-                NukeVersion = entry.Version.ToString(),
-                NukeCacheInvalidator = entry.AppEntry.CacheInvalidator,
+                NukeRunScript = entrySetup.RunnerOSSetup.RunScript,
+                NukeEntryIdsToRun = entryId,
+                NukeCacheInvalidator = entrySetup.CacheInvalidator,
                 NukeRunClassification = runClassification,
-                NukeRunIdentifier = runIdentifier
+                NukeRunIdentifier = runIdentifier,
+                NukeVersion = appRunEntry.Version,
             });
         }
 
-        RunnerGithubPipelineOS skipRunnerPipelineOS = (RunnerOS.Ubuntu2204.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
-        string? skipRunsOn = string.IsNullOrEmpty(skipRunnerPipelineOS.RunsOn) ? "[ " + string.Join(", ", skipRunnerPipelineOS.RunsOnLabels!) + " ]" : skipRunnerPipelineOS.RunsOn;
-        string? skipRunScript = RunnerOS.Ubuntu2204.GetRunScript(PipelineType.Azure);
-        if (outputTestMatrix.Count == 0)
+        return Task.Run(() =>
         {
-            outputTestMatrix.Add(new()
-            {
-                NukeEntryId = "skip",
-                NukeEntryName = "Skip",
-                NukeEnvironment = preSetupOutput.Environment,
-                NukeRunsOn = skipRunsOn,
-                NukeRunScript = skipRunScript,
-                NukeEntryIdsToRun = "",
-                NukeCacheInvalidator = "",
-                NukeRunClassification = "",
-                NukeRunIdentifier = ""
-            });
-        }
-        if (outputBuildMatrix.Count == 0)
-        {
-            outputBuildMatrix.Add(new()
-            {
-                NukeEntryId = "skip",
-                NukeEntryName = "Skip",
-                NukeEnvironment = preSetupOutput.Environment,
-                NukeRunsOn = skipRunsOn,
-                NukeRunScript = skipRunScript,
-                NukeEntryIdsToRun = "",
-                NukeVersion = "",
-                NukeCacheInvalidator = "",
-                NukeRunClassification = "",
-                NukeRunIdentifier = ""
-            });
-        }
-        if (outputPublishMatrix.Count == 0)
-        {
-            outputPublishMatrix.Add(new()
-            {
-                NukeEntryId = "skip",
-                NukeEntryName = "Skip",
-                NukeEnvironment = preSetupOutput.Environment,
-                NukeRunsOn = skipRunsOn,
-                NukeRunScript = skipRunScript,
-                NukeEntryIdsToRun = "",
-                NukeVersion = "",
-                NukeCacheInvalidator = "",
-                NukeRunClassification = "",
-                NukeRunIdentifier = ""
-            });
-        }
-
-        File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
-        File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));
-        File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption));
-        Log.Information("NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
-        Log.Information("NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
-        Log.Information("NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
+            File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
+            File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));
+            File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption));
+            Log.Information("NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
+            Log.Information("NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
+            Log.Information("NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
+        });
     }
 
-    public void BuildWorkflow()
+    public void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        ValueHelpers.GetOrFail(AppEntryHelpers.GetAllEntries, out var appConfig);
+        throw new NotImplementedException();
+    }
 
-        List<WorkflowEntry> workflowBuilders = [.. ClassHelpers.GetInstances<WorkflowEntry>().OrderByDescending(i => i.Priority)];
-
-        NukeBuild.SetupWorkflowBuilder(workflowBuilders, PipelineType.Github);
-
-        var appEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppEntry>();
-        var appTestEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppTestEntry>();
-
+    public void BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    {
         Dictionary<string, object> workflow = new()
         {
             ["name"] = "Nuke CICD Pipeline",
@@ -253,7 +213,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     { "group", "${{ github.workflow }}-${{ github.ref }}" },
                     { "cancel-in-progress", true }
                 },
-            ["jobs"] = new Dictionary<string, object>()
+            ["jobs"] = new Dictionary<string, object>(),
+            ["env"] = EntryHelpers.GetSecretVariables(baseNukeBuildHelpers)
+                .ToDictionary(
+                    i => string.IsNullOrEmpty(i.Secret.EnvironmentVariableName) ? $"NUKE_{i.Secret.SecretVariableName}" : i.Secret.EnvironmentVariableName,
+                    i => (object)$"${{{{ secrets.{i.Secret.SecretVariableName} }}}}")
         };
 
         List<string> needs = [];
@@ -283,7 +247,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
         AddJobStepCheckout(testJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
-        AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
+        //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
         var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
         AddJobStepWith(cacheTestStep, "path", "./.nuke/cache");
         AddJobStepWith(cacheTestStep, "key", $$$"""
@@ -294,8 +258,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
             """);
         var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.nuke_run_script }}", "PipelineTest", "${{ matrix.nuke_entry_ids_to_run }}", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
-        AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
-        AddJobOrStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
+        //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
         needs.Add("test");
 
         // ██████████████████████████████████████
@@ -305,7 +268,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobStepCheckout(buildJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
-        AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
+        //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
         var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
         AddJobStepWith(cacheBuildStep, "path", "./.nuke/cache");
         AddJobStepWith(cacheBuildStep, "key", $$$"""
@@ -316,8 +279,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
             """);
         var nukeBuild = AddJobStepNukeRun(buildJob, "${{ matrix.nuke_run_script }}", "PipelineBuild", "${{ matrix.nuke_entry_ids_to_run }}", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
-        AddJobOrStepEnvVarFromSecretMap(nukeBuild, appEntrySecretMap);
-        AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
+        //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
         var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
         AddJobStepWith(uploadBuildStep, "name", "${{ matrix.nuke_entry_id }}");
         AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
@@ -336,7 +298,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(downloadBuildStep, "path", "./.nuke/output");
         AddJobStepWith(downloadBuildStep, "pattern", "${{ matrix.nuke_entry_id }}");
         AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
-        AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
+        //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
         var cachePublishStep = AddJobStep(publishJob, name: "Cache Publish", uses: "actions/cache@v4", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
         AddJobStepWith(cachePublishStep, "path", "./.nuke/cache");
         AddJobStepWith(cachePublishStep, "key", $$$"""
@@ -347,8 +309,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
             """);
         var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.nuke_run_script }}", "PipelinePublish", "${{ matrix.nuke_entry_ids_to_run }}", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
-        AddJobOrStepEnvVarFromSecretMap(nukePublishTask, appEntrySecretMap);
-        AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
+        //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
         needs.Add("publish");
 
         // ██████████████████████████████████████
@@ -441,18 +402,18 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static void AddJobStepsFromBuilder(Dictionary<string, object> job, List<WorkflowEntry> workflowBuilders, Action<WorkflowEntry, Dictionary<string, object>> toBuild)
-    {
-        foreach (var workflowBuilder in workflowBuilders)
-        {
-            Dictionary<string, object> step = [];
-            toBuild.Invoke(workflowBuilder, step);
-            if (step.Count > 0)
-            {
-                ((List<object>)job["steps"]).Add(step);
-            }
-        }
-    }
+    //private static void AddJobStepsFromBuilder(Dictionary<string, object> job, List<WorkflowEntry> workflowBuilders, Action<WorkflowEntry, Dictionary<string, object>> toBuild)
+    //{
+    //    foreach (var workflowBuilder in workflowBuilders)
+    //    {
+    //        Dictionary<string, object> step = [];
+    //        toBuild.Invoke(workflowBuilder, step);
+    //        if (step.Count > 0)
+    //        {
+    //            ((List<object>)job["steps"]).Add(step);
+    //        }
+    //    }
+    //}
 
     private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string _if = "", int? fetchDepth = null)
     {
@@ -526,18 +487,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             jobOrStep["env"] = value;
         }
         ((Dictionary<string, object>)value)[envVarName] = envVarValue;
-    }
-
-    private static void AddJobOrStepEnvVarFromSecretMap(Dictionary<string, object> jobOrStep, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretVariableAttribute Secret)> Secrets)> secretMap)
-    {
-        foreach (var map in secretMap)
-        {
-            foreach (var secret in map.Value.Secrets)
-            {
-                var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? $"NUKE_{secret.Secret.SecretVariableName}" : secret.Secret.EnvironmentVariableName;
-                AddJobOrStepEnvVar(jobOrStep, envVarName, $"${{{{ secrets.{secret.Secret.SecretVariableName} }}}}");
-            }
-        }
     }
 
     private static void AddJobOrStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envOutName, string needsId)

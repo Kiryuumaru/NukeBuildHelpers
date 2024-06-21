@@ -105,9 +105,6 @@ jobs:
     - name: Run Nuke PipelineBuild
       run: ${{ matrix.nuke_run_script }} PipelineBuild --args "${{ matrix.nuke_entry_ids_to_run }}"
       if: ${{ matrix.nuke_entry_id != 'skip' }}
-      env:
-        NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
-        NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       if: ${{ matrix.nuke_entry_id != 'skip' }}
@@ -150,9 +147,6 @@ jobs:
     - name: Run Nuke PipelinePublish
       run: ${{ matrix.nuke_run_script }} PipelinePublish --args "${{ matrix.nuke_entry_ids_to_run }}"
       if: ${{ matrix.nuke_entry_id != 'skip' }}
-      env:
-        NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
-        NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
     - test
@@ -207,3 +201,6 @@ jobs:
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
       NUKE_PUBLISH_SUCCESS_GITHUB: ${{ needs.publish.result }}
+env:
+  NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
+  NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

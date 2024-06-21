@@ -172,7 +172,9 @@ partial class BaseNukeBuildHelpers
         {
             CheckEnvironementBranches();
 
-            PipelineHelpers.BuildWorkflow<GithubPipeline>(this);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            PipelineHelpers.BuildWorkflow<GithubPipeline>(this, allEntry);
         });
 
     public Target AzureWorkflow => _ => _
@@ -181,6 +183,8 @@ partial class BaseNukeBuildHelpers
         {
             CheckEnvironementBranches();
 
-            PipelineHelpers.BuildWorkflow<AzurePipeline>(this);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            PipelineHelpers.BuildWorkflow<AzurePipeline>(this, allEntry);
         });
 }

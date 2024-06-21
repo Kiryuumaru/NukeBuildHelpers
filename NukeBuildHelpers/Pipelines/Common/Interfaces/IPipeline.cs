@@ -10,9 +10,9 @@ internal interface IPipeline
 
     PipelineInfo GetPipelineInfo();
 
-    void PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+    Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
     void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
-    void BuildWorkflow();
+    void BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry);
 }
