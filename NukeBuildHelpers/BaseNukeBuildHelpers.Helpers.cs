@@ -284,14 +284,6 @@ partial class BaseNukeBuildHelpers
 
     private async Task StartPreSetup(AllEntry allEntry)
     {
-        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.AppEntryMap.Count);
-        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.EntryDefinitionMap.Count);
-        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.DependentEntryDefinitionMap.Count);
-        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.TargetEntryDefinitionMap.Count);
-        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.TestEntryDefinitionMap.Count);
-        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.BuildEntryDefinitionMap.Count);
-        Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + allEntry.PublishEntryDefinitionMap.Count);
-
         var pipeline = PipelineHelpers.SetupPipeline(this);
 
         Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
