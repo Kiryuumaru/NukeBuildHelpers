@@ -256,7 +256,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var testJob = AddJob(workflow, entryDefinition.Id, "Test - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. needs], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
             var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
@@ -281,7 +280,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var buildJob = AddJob(workflow, entryDefinition.Id, "Build - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. testNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
             AddJobStepCheckout(buildJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
             //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
             var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
@@ -311,7 +309,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var publishJob = AddJob(workflow, entryDefinition.Id, "Publish - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. buildNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
             AddJobStepCheckout(publishJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/output");

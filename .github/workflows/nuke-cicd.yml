@@ -54,9 +54,6 @@ jobs:
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX) }}
   NugetBuildHelpersTest2:
     name: Test - ${{ matrix.nuke_entry_name }}
     runs-on: ${{ matrix.nuke_runs_on }}
@@ -81,9 +78,6 @@ jobs:
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX) }}
   NugetBuildHelpersBuild:
     name: Build - ${{ matrix.nuke_entry_name }}
     runs-on: ${{ matrix.nuke_runs_on }}
@@ -118,9 +112,6 @@ jobs:
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
   NugetBuildHelpersPublish:
     name: Publish - ${{ matrix.nuke_entry_name }}
     runs-on: ${{ matrix.nuke_runs_on }}
@@ -153,9 +144,6 @@ jobs:
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
