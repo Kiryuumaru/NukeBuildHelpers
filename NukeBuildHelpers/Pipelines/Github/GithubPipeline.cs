@@ -269,7 +269,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
         List<string> buildNeeds = [.. needs];
-        foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
+        foreach (var entryDefinition in allEntry.BuildEntryDefinitionMap.Values)
         {
             var buildJob = AddJob(workflow, entryDefinition.Id, "Build - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. buildNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
@@ -299,7 +299,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Publish ███████████████
         // ██████████████████████████████████████
         List<string> publishNeeds = [.. needs];
-        foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
+        foreach (var entryDefinition in allEntry.PublishEntryDefinitionMap.Values)
         {
             var publishJob = AddJob(workflow, entryDefinition.Id, "Publish - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. publishNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
