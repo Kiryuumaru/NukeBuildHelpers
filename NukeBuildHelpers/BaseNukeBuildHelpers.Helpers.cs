@@ -480,12 +480,6 @@ partial class BaseNukeBuildHelpers
                 return flatPath[RootDirectory.ToString().Length..];
             });
 
-            Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + runnerOs.GetPipelineOS(PipelineType).GetType());
-            Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + JsonSerializer.Serialize<object>(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented));
-            Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + JsonSerializer.Serialize<object>(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented));
-            Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + JsonSerializer.Serialize<object>(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented));
-            Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + JsonSerializer.Serialize<object>(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented));
-
             EntrySetup setup = new()
             {
                 Id = entry.Id,
@@ -500,6 +494,7 @@ partial class BaseNukeBuildHelpers
                     RunScript = runnerOs.GetRunScript(PipelineType)
                 }
             };
+
             return setup;
         }
 
