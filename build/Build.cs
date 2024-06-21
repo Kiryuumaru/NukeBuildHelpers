@@ -38,7 +38,7 @@ class Build : BaseNukeBuildHelpers
     TestEntry NugetBuildHelpersTest2 => _ => _
         .AppId("nuget_build_helpers")
         .Name("Name sa second test")
-        .RunnerOS(RunnerOS.Ubuntu2204)
+        .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
         {
             DotNetTasks.DotNetClean(_ => _
