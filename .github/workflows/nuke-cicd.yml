@@ -31,77 +31,77 @@ jobs:
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
   NugetBuildHelpersTest1:
-    name: Test - ${{ matrix.nuke_entry_name }}
-    runs-on: ${{ matrix.nuke_runs_on }}
+    name: Test - ${{ env.nuke_entry_name }}
+    runs-on: ${{ env.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
     - name: Cache Test
       uses: actions/cache@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
+        key: test-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-${{ env.nuke_run_identifier }}"
         restore-keys: |-
-          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
-          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
-    - id: ${{ matrix.nuke_entry_ids_to_run }}
+          test-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-
+          test-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-main-
+    - id: ${{ env.nuke_entry_ids_to_run }}
       name: Run Nuke PipelineTest
-      run: ${{ matrix.nuke_run_script }} PipelineTest
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      run: ${{ env.nuke_run_script }} PipelineTest
+      if: ${{ env.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
   NugetBuildHelpersTest2:
-    name: Test - ${{ matrix.nuke_entry_name }}
-    runs-on: ${{ matrix.nuke_runs_on }}
+    name: Test - ${{ env.nuke_entry_name }}
+    runs-on: ${{ env.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
     - name: Cache Test
       uses: actions/cache@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
+        key: test-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-${{ env.nuke_run_identifier }}"
         restore-keys: |-
-          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
-          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
-    - id: ${{ matrix.nuke_entry_ids_to_run }}
+          test-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-
+          test-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-main-
+    - id: ${{ env.nuke_entry_ids_to_run }}
       name: Run Nuke PipelineTest
-      run: ${{ matrix.nuke_run_script }} PipelineTest
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      run: ${{ env.nuke_run_script }} PipelineTest
+      if: ${{ env.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
     if: success()
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
   NugetBuildHelpersBuild:
-    name: Build - ${{ matrix.nuke_entry_name }}
-    runs-on: ${{ matrix.nuke_runs_on }}
+    name: Build - ${{ env.nuke_entry_name }}
+    runs-on: ${{ env.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
     - name: Cache Build
       uses: actions/cache@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
+        key: build-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-${{ env.nuke_run_identifier }}"
         restore-keys: |-
-          build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
-          build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
-    - id: ${{ matrix.nuke_entry_ids_to_run }}
+          build-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-
+          build-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-main-
+    - id: ${{ env.nuke_entry_ids_to_run }}
       name: Run Nuke PipelineBuild
-      run: ${{ matrix.nuke_run_script }} PipelineBuild
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      run: ${{ env.nuke_run_script }} PipelineBuild
+      if: ${{ env.nuke_entry_id != 'skip' }}
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
       with:
-        name: ${{ matrix.nuke_entry_id }}
+        name: ${{ env.nuke_entry_id }}
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -113,31 +113,31 @@ jobs:
     env:
       NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
   NugetBuildHelpersPublish:
-    name: Publish - ${{ matrix.nuke_entry_name }}
-    runs-on: ${{ matrix.nuke_runs_on }}
+    name: Publish - ${{ env.nuke_entry_name }}
+    runs-on: ${{ env.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
     - name: Download artifacts
       uses: actions/download-artifact@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/output
-        pattern: ${{ matrix.nuke_entry_id }}
+        pattern: ${{ env.nuke_entry_id }}
         merge-multiple: true
     - name: Cache Publish
       uses: actions/cache@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      if: ${{ env.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
+        key: publish-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-${{ env.nuke_run_identifier }}"
         restore-keys: |-
-          publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
-          publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
-    - id: ${{ matrix.nuke_entry_ids_to_run }}
+          publish-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-${{ env.nuke_run_classification }}-
+          publish-${{ env.nuke_runner_name }}-${{ env.nuke_entry_id }}-${{ env.nuke_cache_invalidator }}-${{ env.nuke_environment }}-main-
+    - id: ${{ env.nuke_entry_ids_to_run }}
       name: Run Nuke PipelinePublish
-      run: ${{ matrix.nuke_run_script }} PipelinePublish
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+      run: ${{ env.nuke_run_script }} PipelinePublish
+      if: ${{ env.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
     - NugetBuildHelpersBuild
