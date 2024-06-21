@@ -71,6 +71,7 @@ internal static class EntryHelpers
                     {
                         AppId = appIdLower
                     };
+                    appEntryMap.Add(appIdLower, appEntry);
                 }
                 appEntry.TestEntryDefinitions.Add(testEntryDefinition);
             }
@@ -86,6 +87,7 @@ internal static class EntryHelpers
                 {
                     AppId = appIdLower
                 };
+                appEntryMap.Add(appIdLower, appEntry);
             }
             appEntry.BuildEntryDefinitions.Add(buildEntryDefinition);
         }
@@ -100,6 +102,7 @@ internal static class EntryHelpers
                 {
                     AppId = appIdLower
                 };
+                appEntryMap.Add(appIdLower, appEntry);
             }
             appEntry.PublishEntryDefinitions.Add(publishEntryDefinition);
         }
