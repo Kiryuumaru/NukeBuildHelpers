@@ -110,6 +110,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + entrySetup.RunnerOSSetup.RunnerPipelineOS);
             Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + entrySetup.RunnerOSSetup.RunnerPipelineOS);
             Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + entrySetup.RunnerOSSetup.RunnerPipelineOS);
+            Log.Information("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: " + entrySetup.RunnerOSSetup.RunScript);
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             string? runsOn = string.IsNullOrEmpty(runnerPipelineOS.RunsOn) ? "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]" : runnerPipelineOS.RunsOn;
