@@ -176,8 +176,6 @@ jobs:
       if: ${{ matrix.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
-    - NugetBuildHelpersTest1
-    - NugetBuildHelpersTest2
     - NugetBuildHelpersBuild
     if: success()
     env:
@@ -204,9 +202,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
-    - NugetBuildHelpersTest1
-    - NugetBuildHelpersTest2
-    - NugetBuildHelpersBuild
     - NugetBuildHelpersPublish
     if: success() || failure() || always()
     env:

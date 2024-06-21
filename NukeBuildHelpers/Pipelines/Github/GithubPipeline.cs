@@ -220,11 +220,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     i => (object)$"${{{{ secrets.{i.Secret.SecretVariableName} }}}}")
         };
 
-        List<string> needs = [];
 
         // ██████████████████████████████████████
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
+        List<string> needs = [];
         var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunnerOS.Ubuntu2204);
         AddJobOrStepEnvVar(preSetupJob, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobStepCheckout(preSetupJob, fetchDepth: 0);
@@ -246,7 +246,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         List<string> testNeeds = [.. needs];
         foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
         {
-            var testJob = AddJob(workflow, entryDefinition.Id, "Test - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. testNeeds], _if: "success()");
+            var testJob = AddJob(workflow, entryDefinition.Id, "Test - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. needs], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
             AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
             AddJobStepCheckout(testJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
@@ -262,7 +262,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 """);
             var nukeTestStep = AddJobStepNukeRun(testJob, "${{ matrix.nuke_run_script }}", "PipelineTest", "${{ matrix.nuke_entry_ids_to_run }}", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
-            needs.Add(entryDefinition.Id);
+            testNeeds.Add(entryDefinition.Id);
         }
 
         // ██████████████████████████████████████
@@ -271,7 +271,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         List<string> buildNeeds = [.. needs];
         foreach (var entryDefinition in allEntry.BuildEntryDefinitionMap.Values)
         {
-            var buildJob = AddJob(workflow, entryDefinition.Id, "Build - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. buildNeeds], _if: "success()");
+            var buildJob = AddJob(workflow, entryDefinition.Id, "Build - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. testNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
             AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
             AddJobStepCheckout(buildJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
@@ -292,7 +292,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
             AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
             AddJobStepWith(uploadBuildStep, "retention-days", "1");
-            needs.Add(entryDefinition.Id);
+            buildNeeds.Add(entryDefinition.Id);
         }
 
         // ██████████████████████████████████████
@@ -301,7 +301,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         List<string> publishNeeds = [.. needs];
         foreach (var entryDefinition in allEntry.PublishEntryDefinitionMap.Values)
         {
-            var publishJob = AddJob(workflow, entryDefinition.Id, "Publish - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. publishNeeds], _if: "success()");
+            var publishJob = AddJob(workflow, entryDefinition.Id, "Publish - ${{ matrix.nuke_entry_name }}", "${{ matrix.nuke_runs_on }}", needs: [.. buildNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
             AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
             AddJobStepCheckout(publishJob, _if: "${{ matrix.nuke_entry_id != 'skip' }}");
@@ -321,13 +321,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 """);
             var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ matrix.nuke_run_script }}", "PipelinePublish", "${{ matrix.nuke_entry_ids_to_run }}", _if: "${{ matrix.nuke_entry_id != 'skip' }}");
             //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
-            needs.Add(entryDefinition.Id);
+            publishNeeds.Add(entryDefinition.Id);
         }
 
         // ██████████████████████████████████████
         // █████████████ Post Setup █████████████
         // ██████████████████████████████████████
-        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. needs], _if: "success() || failure() || always()");
+        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. publishNeeds], _if: "success() || failure() || always()");
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
         AddJobOrStepEnvVar(postSetupJob, "NUKE_PUBLISH_SUCCESS_GITHUB", "${{ needs.publish.result }}");
         AddJobStep(postSetupJob, id: "NUKE_PUBLISH_SUCCESS", name: $"Resolve NUKE_PUBLISH_SUCCESS",
