@@ -68,6 +68,20 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
+    public PipelinePreSetup GetPipelinePreSetup()
+    {
+        string? pipelinePreSetupValue = Environment.GetEnvironmentVariable("NUKE_PRE_SETUP");
+
+        if (string.IsNullOrEmpty(pipelinePreSetupValue))
+        {
+            throw new Exception("NUKE_PRE_SETUP is empty");
+        }
+
+        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
+
+        return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
+    }
+
     public Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         //var outputTestMatrix = new Dictionary<string, AzurePreSetupOutputAppTestEntryMatrix>();

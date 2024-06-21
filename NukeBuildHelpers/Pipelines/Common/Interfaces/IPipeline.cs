@@ -10,6 +10,8 @@ internal interface IPipeline
 
     PipelineInfo GetPipelineInfo();
 
+    PipelinePreSetup GetPipelinePreSetup();
+
     Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
     void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);

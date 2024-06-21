@@ -24,6 +24,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NugetBuildHelpersTest1 => _ => _
         .AppId("nuget_build_helpers")
+        .Name("Name sa first test")
         .Execute(() =>
         {
             DotNetTasks.DotNetClean(_ => _
@@ -34,6 +35,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NugetBuildHelpersTest2 => _ => _
         .AppId("nuget_build_helpers")
+        .Name("Name sa second test")
         .Execute(() =>
         {
             DotNetTasks.DotNetClean(_ => _

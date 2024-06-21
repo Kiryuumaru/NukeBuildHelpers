@@ -34,6 +34,11 @@ internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
+    public PipelinePreSetup GetPipelinePreSetup()
+    {
+        throw new NotImplementedException();
+    }
+
     public Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         throw new NotSupportedException();

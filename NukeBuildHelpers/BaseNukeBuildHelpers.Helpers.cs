@@ -211,20 +211,6 @@ partial class BaseNukeBuildHelpers
         SetCacheIndex(cachePairs);
     }
 
-    private static PipelinePreSetup GetPipelinePreSetup()
-    {
-        string? pipelinePreSetupValue = Environment.GetEnvironmentVariable("NUKE_PRE_SETUP");
-
-        if (string.IsNullOrEmpty(pipelinePreSetupValue))
-        {
-            throw new Exception("NUKE_PRE_SETUP is empty");
-        }
-
-        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
-
-        return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
-    }
-
     private void SetupTargetRunContext(ITargetEntryDefinition targetEntry, RunType runType, AppVersion? appVersion, string releaseNotes, PipelineRun pipeline)
     {
         if (appVersion == null || runType == RunType.Local)
@@ -593,9 +579,6 @@ partial class BaseNukeBuildHelpers
             AppRunEntryMap = toEntry
         };
 
-        File.WriteAllText(TemporaryDirectory / "pre_setup.json", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption));
-        Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
-
         await pipeline.Pipeline.PreSetup(allEntry, pipelinePreSetup);
     }
 
@@ -679,9 +662,9 @@ partial class BaseNukeBuildHelpers
 
     private Task TestAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
     {
-        var pipelinePreSetup = GetPipelinePreSetup();
-
         var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         IEnumerable<IEntryDefinition> entriesToRun;
 
@@ -699,9 +682,9 @@ partial class BaseNukeBuildHelpers
 
     private Task BuildAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
     {
-        var pipelinePreSetup = GetPipelinePreSetup();
-
         var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         IEnumerable<IEntryDefinition> entriesToRun;
 
@@ -727,9 +710,9 @@ partial class BaseNukeBuildHelpers
 
     private Task PublishAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
     {
-        var pipelinePreSetup = GetPipelinePreSetup();
-
         var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         IEnumerable<IEntryDefinition> entriesToRun;
 
@@ -747,9 +730,9 @@ partial class BaseNukeBuildHelpers
 
     private Task StartPostSetup(AllEntry allEntry)
     {
-        var pipelinePreSetup = GetPipelinePreSetup();
-
         var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         if (pipelinePreSetup.HasRelease)
         {
