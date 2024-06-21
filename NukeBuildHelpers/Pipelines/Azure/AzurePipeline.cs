@@ -20,8 +20,6 @@ namespace NukeBuildHelpers.Pipelines.Azure;
 
 internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
-    public const string Id = "azure";
-
     public BaseNukeBuildHelpers NukeBuild { get; set; } = nukeBuild;
 
     public PipelineInfo GetPipelineInfo()
