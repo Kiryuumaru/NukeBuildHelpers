@@ -35,10 +35,8 @@ jobs:
     runs-on: ${{ needs.pre_setup.outputs.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     - name: Cache Test
       uses: actions/cache@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
         key: test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-${{ needs.pre_setup.outputs.nuke_run_identifier }}"
@@ -48,7 +46,6 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelineTest
       run: ${{ needs.pre_setup.outputs.nuke_run_script }} PipelineTest --args "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}"
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
     if: success()
@@ -59,10 +56,8 @@ jobs:
     runs-on: ${{ needs.pre_setup.outputs.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     - name: Cache Test
       uses: actions/cache@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
         key: test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-${{ needs.pre_setup.outputs.nuke_run_identifier }}"
@@ -72,7 +67,6 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelineTest
       run: ${{ needs.pre_setup.outputs.nuke_run_script }} PipelineTest --args "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}"
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
     if: success()
@@ -83,10 +77,8 @@ jobs:
     runs-on: ${{ needs.pre_setup.outputs.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     - name: Cache Build
       uses: actions/cache@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
         key: build-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-${{ needs.pre_setup.outputs.nuke_run_identifier }}"
@@ -96,10 +88,8 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelineBuild
       run: ${{ needs.pre_setup.outputs.nuke_run_script }} PipelineBuild --args "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}"
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
       with:
         name: ${{ needs.pre_setup.outputs.nuke_entry_id }}
         path: ./.nuke/output/*
@@ -117,17 +107,14 @@ jobs:
     runs-on: ${{ needs.pre_setup.outputs.nuke_runs_on }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     - name: Download artifacts
       uses: actions/download-artifact@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/output
         pattern: ${{ needs.pre_setup.outputs.nuke_entry_id }}
         merge-multiple: true
     - name: Cache Publish
       uses: actions/cache@v4
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
         key: publish-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-${{ needs.pre_setup.outputs.nuke_run_identifier }}"
@@ -137,7 +124,6 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelinePublish
       run: ${{ needs.pre_setup.outputs.nuke_run_script }} PipelinePublish --args "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}"
-      if: ${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}
     needs:
     - pre_setup
     - NugetBuildHelpersBuild

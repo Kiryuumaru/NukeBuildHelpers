@@ -254,9 +254,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var testJob = AddJob(workflow, entryDefinition.Id, "Test - ${{ needs.pre_setup.outputs.nuke_entry_name }}", "${{ needs.pre_setup.outputs.nuke_runs_on }}", needs: [.. needs], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobStepCheckout(testJob, _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            AddJobStepCheckout(testJob);
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
-            var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var cacheTestStep = AddJobStep(testJob, name: "Cache Test", uses: "actions/cache@v4");
             AddJobStepWith(cacheTestStep, "path", "./.nuke/cache");
             AddJobStepWith(cacheTestStep, "key", $$$"""
                 test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-${{ needs.pre_setup.outputs.nuke_run_identifier }}"
@@ -265,7 +265,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-
                 test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
                 """);
-            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineTest", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineTest", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}");
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
             testNeeds.Add(entryDefinition.Id);
         }
@@ -278,9 +278,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var buildJob = AddJob(workflow, entryDefinition.Id, "Build - ${{ needs.pre_setup.outputs.nuke_entry_name }}", "${{ needs.pre_setup.outputs.nuke_runs_on }}", needs: [.. testNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobStepCheckout(buildJob, _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            AddJobStepCheckout(buildJob);
             //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
-            var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var cacheBuildStep = AddJobStep(buildJob, name: "Cache Build", uses: "actions/cache@v4");
             AddJobStepWith(cacheBuildStep, "path", "./.nuke/cache");
             AddJobStepWith(cacheBuildStep, "key", $$$"""
                 build-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-${{ needs.pre_setup.outputs.nuke_run_identifier }}"
@@ -289,9 +289,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 build-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-
                 build-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
                 """);
-            var nukeBuild = AddJobStepNukeRun(buildJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineBuild", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var nukeBuild = AddJobStepNukeRun(buildJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineBuild", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}");
             //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
-            var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadBuildStep, "name", "${{ needs.pre_setup.outputs.nuke_entry_id }}");
             AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
             AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
@@ -307,13 +307,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var publishJob = AddJob(workflow, entryDefinition.Id, "Publish - ${{ needs.pre_setup.outputs.nuke_entry_name }}", "${{ needs.pre_setup.outputs.nuke_runs_on }}", needs: [.. buildNeeds], _if: "success()");
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-            AddJobStepCheckout(publishJob, _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
-            var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            AddJobStepCheckout(publishJob);
+            var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/output");
             AddJobStepWith(downloadBuildStep, "pattern", "${{ needs.pre_setup.outputs.nuke_entry_id }}");
             AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
             //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
-            var cachePublishStep = AddJobStep(publishJob, name: "Cache Publish", uses: "actions/cache@v4", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var cachePublishStep = AddJobStep(publishJob, name: "Cache Publish", uses: "actions/cache@v4");
             AddJobStepWith(cachePublishStep, "path", "./.nuke/cache");
             AddJobStepWith(cachePublishStep, "key", $$$"""
                 publish-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-${{ needs.pre_setup.outputs.nuke_run_identifier }}"
@@ -322,7 +322,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 publish-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-
                 publish-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
                 """);
-            var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelinePublish", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}", _if: "${{ needs.pre_setup.outputs.nuke_entry_id != 'skip' }}");
+            var nukePublishTask = AddJobStepNukeRun(publishJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelinePublish", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}");
             //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
             publishNeeds.Add(entryDefinition.Id);
         }
