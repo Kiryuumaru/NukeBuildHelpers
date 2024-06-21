@@ -124,6 +124,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_ID={entryId}\" >> $GITHUB_OUTPUT");
             await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_NAME={entrySetup.Name}\" >> $GITHUB_OUTPUT");
             await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON={runsOn}\" >> $GITHUB_OUTPUT");
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT={entrySetup.RunnerOSSetup.RunScript}\" >> $GITHUB_OUTPUT");
         }
 
         foreach (var entryId in pipelinePreSetup.BuildEntries)
@@ -253,6 +254,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobOutput(preSetupJob, $"NUKE_PRE_SETUP_{entryDefinition.Id}_ID", "NUKE_RUN", $"NUKE_PRE_SETUP_{entryDefinition.Id}_ID");
             AddJobOutput(preSetupJob, $"NUKE_PRE_SETUP_{entryDefinition.Id}_NAME", "NUKE_RUN", $"NUKE_PRE_SETUP_{entryDefinition.Id}_NAME");
             AddJobOutput(preSetupJob, $"NUKE_PRE_SETUP_{entryDefinition.Id}_RUNS_ON", "NUKE_RUN", $"NUKE_PRE_SETUP_{entryDefinition.Id}_RUNS_ON");
+            AddJobOutput(preSetupJob, $"NUKE_PRE_SETUP_{entryDefinition.Id}_RUN_SCRIPT", "NUKE_RUN", $"NUKE_PRE_SETUP_{entryDefinition.Id}_RUN_SCRIPT");
         }
         needs.Add("pre_setup");
 
@@ -275,7 +277,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-${{ needs.pre_setup.outputs.nuke_run_classification }}-
                 test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
                 """);
-            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ needs.pre_setup.outputs.nuke_run_script }}", "PipelineTest", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}");
+            var nukeTestStep = AddJobStepNukeRun(testJob, "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_" + entryDefinition.Id + "_RUN_SCRIPT }}", "PipelineTest", id: "NUKE_RUN", args: "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_" + entryDefinition.Id + "_ID }}");
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
             testNeeds.Add(entryDefinition.Id);
         }

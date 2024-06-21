@@ -33,9 +33,11 @@ jobs:
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_ID }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_ID }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }}
   NugetBuildHelpersTest1:
     name: Test - ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME }}
     runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
@@ -51,7 +53,7 @@ jobs:
           test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
     - id: NUKE_RUN
       name: Run Nuke PipelineTest
-      run: ${{ needs.pre_setup.outputs.nuke_run_script }} PipelineTest --args "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }} PipelineTest --args "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_ID }}"
     needs:
     - pre_setup
     if: success()
@@ -72,7 +74,7 @@ jobs:
           test-${{ needs.pre_setup.outputs.nuke_runner_name }}-${{ needs.pre_setup.outputs.nuke_entry_id }}-${{ needs.pre_setup.outputs.nuke_cache_invalidator }}-${{ needs.pre_setup.outputs.nuke_environment }}-main-
     - id: NUKE_RUN
       name: Run Nuke PipelineTest
-      run: ${{ needs.pre_setup.outputs.nuke_run_script }} PipelineTest --args "${{ needs.pre_setup.outputs.nuke_entry_ids_to_run }}"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }} PipelineTest --args "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_ID }}"
     needs:
     - pre_setup
     if: success()
