@@ -26,6 +26,7 @@ class Build : BaseNukeBuildHelpers
     TestEntry NugetBuildHelpersTest1 => _ => _
         .AppId("nuget_build_helpers")
         .Name("Name sa first test")
+        .Condition(context => context.RunType == RunType.All)
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(() =>
         {

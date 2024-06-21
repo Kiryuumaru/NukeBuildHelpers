@@ -54,6 +54,41 @@ public static class EntryExtensions
         return definition;
     }
 
+    public static TEntryDefinition Condition<TEntryDefinition>(this TEntryDefinition definition, bool condition)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.Condition = _ => Task.Run(() => condition);
+        return definition;
+    }
+
+    public static TEntryDefinition Condition<TEntryDefinition>(this TEntryDefinition definition, Func<bool> condition)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.Condition = _ => Task.Run(() => condition());
+        return definition;
+    }
+
+    public static TEntryDefinition Condition<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, bool> condition)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.Condition = runContext => Task.Run(() => condition(runContext));
+        return definition;
+    }
+
+    public static TEntryDefinition Condition<TEntryDefinition>(this TEntryDefinition definition, Func<Task<bool>> condition)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.Condition = _ => Task.Run(async () => await condition());
+        return definition;
+    }
+
+    public static TEntryDefinition Condition<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, Task<bool>> condition)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.Condition = runContext => Task.Run(async () => await condition(runContext));
+        return definition;
+    }
+
     public static TEntryDefinition RunnerOS<TEntryDefinition>(this TEntryDefinition definition, RunnerOS runnerOS)
         where TEntryDefinition : IEntryDefinition
     {
@@ -68,10 +103,24 @@ public static class EntryExtensions
         return definition;
     }
 
+    public static TEntryDefinition RunnerOS<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, RunnerOS> runnerOS)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.RunnerOS = runContext => Task.Run(() => runnerOS(runContext));
+        return definition;
+    }
+
     public static TEntryDefinition RunnerOS<TEntryDefinition>(this TEntryDefinition definition, Func<Task<RunnerOS>> runnerOS)
         where TEntryDefinition : IEntryDefinition
     {
         definition.RunnerOS = _ => Task.Run(async () => await runnerOS());
+        return definition;
+    }
+
+    public static TEntryDefinition RunnerOS<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, Task<RunnerOS>> runnerOS)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.RunnerOS = runContext => Task.Run(async () => await runnerOS(runContext));
         return definition;
     }
 

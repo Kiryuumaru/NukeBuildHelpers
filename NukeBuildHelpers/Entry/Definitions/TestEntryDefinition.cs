@@ -1,5 +1,6 @@
 ﻿using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Interfaces;
+using NukeBuildHelpers.RunContext.Interfaces;
 using NukeBuildHelpers.Runner.Abstraction;
 using System;
 using System.Collections.Generic;
@@ -21,5 +22,10 @@ internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinit
         {
             return "Test - " + ((ITestEntryDefinition)this).AppIds.First();
         }
+    }
+
+    protected override Task<bool> GetDefaultCondition(IRunContext runContext)
+    {
+        return Task.FromResult(runContext.RunType == Common.Enums.RunType.Bump);
     }
 }

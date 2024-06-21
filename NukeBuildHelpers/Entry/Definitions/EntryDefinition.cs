@@ -18,7 +18,11 @@ internal abstract class EntryDefinition : IEntryDefinition
 
     Func<IRunContext, Task<string>>? name = null;
 
+    Func<IRunContext, Task<bool>>? condition = null;
+
     protected abstract string GetDefaultName();
+
+    protected abstract Task<bool> GetDefaultCondition(IRunContext runContext);
 
     string IEntryDefinition.Id
     {
@@ -32,6 +36,12 @@ internal abstract class EntryDefinition : IEntryDefinition
         set => name = value;
     }
 
+    Func<IRunContext, Task<bool>> IEntryDefinition.Condition
+    {
+        get => condition ?? (runContext => GetDefaultCondition(runContext));
+        set => condition = value;
+    }
+
     Func<IWorkflowBuilder, Task>? IEntryDefinition.WorkflowBuilder { get; set; }
 
     Func<IRunContext, Task<string>> IEntryDefinition.CacheInvalidator { get; set; } = _ => Task.FromResult("0");
@@ -39,8 +49,6 @@ internal abstract class EntryDefinition : IEntryDefinition
     Func<IRunContext, Task<AbsolutePath[]>>? IEntryDefinition.CachePaths { get; set; }
 
     Func<IRunContext, Task>? IEntryDefinition.Execute { get; set; }
-
-    Func<IRunContext, Task<bool>>? IEntryDefinition.Condition { get; set; }
 
     Func<IRunContext, Task<RunnerOS>>? IEntryDefinition.RunnerOS { get; set; }
 
