@@ -37,7 +37,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NugetBuildHelpersTest2 => _ => _
         .AppId("nuget_build_helpers")
-        .Name("Name sa second test")
+        .Name("Name-sa-second-test")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
         {
