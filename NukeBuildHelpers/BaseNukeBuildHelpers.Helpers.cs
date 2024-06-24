@@ -737,7 +737,18 @@ partial class BaseNukeBuildHelpers
 
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
-        if (Environment.GetEnvironmentVariable("NUKE_RUN_SUCCESS") == "ok")
+        bool success = true;
+
+        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        {
+            if (Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id) == "error")
+            {
+                success = false;
+                break;
+            }
+        }
+
+        if (success)
         {
             if (pipelinePreSetup.HasRelease)
             {
