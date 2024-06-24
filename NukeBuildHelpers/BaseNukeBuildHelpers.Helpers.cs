@@ -739,6 +739,11 @@ partial class BaseNukeBuildHelpers
 
         bool success = true;
 
+        foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
+        {
+            Log.Information("EnvVar-- " + e.Key + ": " + e.Value);
+        }
+
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
             var entryRunResult = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id);

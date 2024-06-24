@@ -283,6 +283,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. postNeeds], _if: "success() || failure() || always()");
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP", "pre_setup");
+        AddJobStepCheckout(postSetupJob);
+        var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
+        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/output");
         string runResultScript = "";
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
@@ -290,14 +293,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 runResultScript += "\n";
             }
-            runResultScript += "NUKE_RUN_RESULT_GITHUB=${{ needs." + entryDefinition.Id + ".result }} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/cancelled/error}\n";
-            runResultScript += "echo \"NUKE_RUN_RESULT_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB}\" >> $GITHUB_ENV";
+            runResultScript +=
+                "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${{ needs." + entryDefinition.Id + ".result }} &&" +
+                "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB/failure/error} &&" +
+                "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB/cancelled/error}\n";
+            runResultScript += "echo \"NUKE_RUN_RESULT_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "}\" >> $GITHUB_ENV";
         }
         AddJobStep(postSetupJob, id: "NUKE_RUN_RESULT", name: $"Resolve NUKE_RUN_RESULT",
             run: runResultScript);
-        AddJobStepCheckout(postSetupJob);
-        var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
-        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/output");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
         AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 

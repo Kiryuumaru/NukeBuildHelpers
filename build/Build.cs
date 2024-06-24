@@ -54,10 +54,6 @@ class Build : BaseNukeBuildHelpers
         .Name("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context => {
-            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
@@ -91,10 +87,6 @@ class Build : BaseNukeBuildHelpers
         .Name("Build try")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(context => {
-            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
