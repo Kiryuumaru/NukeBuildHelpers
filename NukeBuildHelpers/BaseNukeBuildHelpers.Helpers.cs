@@ -741,10 +741,11 @@ partial class BaseNukeBuildHelpers
 
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            if (Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id) == "error")
+            var entryRunResult = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id);
+            Log.Information("{entryId} result: {}", entryDefinition.Id, entryRunResult);
+            if (entryRunResult == "error" && success)
             {
                 success = false;
-                break;
             }
         }
 
