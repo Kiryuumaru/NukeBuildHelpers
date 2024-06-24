@@ -679,14 +679,6 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.TestEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        foreach (var entryId in idsToRun)
-        {
-            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_ID={Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_ID")}\" >> $GITHUB_OUTPUT");
-            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_NAME={Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_NAME")}\" >> $GITHUB_OUTPUT");
-            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON={Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_RUNS_ON")}\" >> $GITHUB_OUTPUT");
-            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT={Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT")}\" >> $GITHUB_OUTPUT");
-        }
-
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
     }
 
