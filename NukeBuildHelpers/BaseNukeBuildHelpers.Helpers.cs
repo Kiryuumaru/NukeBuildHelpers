@@ -286,6 +286,8 @@ partial class BaseNukeBuildHelpers
     {
         var pipeline = PipelineHelpers.SetupPipeline(this);
 
+        await pipeline.Pipeline.PreparePreSetup(allEntry);
+
         Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
         Log.Information("Trigger type: {branch}", pipeline.PipelineInfo.TriggerType);
 
@@ -582,10 +584,10 @@ partial class BaseNukeBuildHelpers
             AppRunEntryMap = toEntry
         };
 
-        await pipeline.Pipeline.PreSetup(allEntry, pipelinePreSetup);
+        await pipeline.Pipeline.FinalizePreSetup(allEntry, pipelinePreSetup);
     }
 
-    private void EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup? pipelinePreSetup)
+    private void EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup pipelinePreSetup)
     {
         EntryHelpers.SetupSecretVariables(this);
 
@@ -636,7 +638,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup? pipelinePreSetup)
+    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup pipelinePreSetup)
     {
         List<Func<Task>> tasks = [];
 
@@ -654,13 +656,10 @@ partial class BaseNukeBuildHelpers
             }));
         }
 
-        return Task.Run(async () =>
+        foreach (var task in tasks)
         {
-            foreach (var task in tasks)
-            {
-                await task();
-            }
-        });
+            await task();
+        }
     }
 
     private Task TestAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
@@ -694,10 +693,7 @@ partial class BaseNukeBuildHelpers
         OutputDirectory.DeleteDirectory();
         OutputDirectory.CreateDirectory();
 
-        if (pipelinePreSetup != null)
-        {
-            (OutputDirectory / "notes.md").WriteAllText(pipelinePreSetup.ReleaseNotes);
-        }
+        (OutputDirectory / "notes.md").WriteAllText(pipelinePreSetup.ReleaseNotes);
 
         if (!idsToRun.Any())
         {
@@ -736,6 +732,8 @@ partial class BaseNukeBuildHelpers
         var pipeline = PipelineHelpers.SetupPipeline(this);
 
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
+
+        await pipeline.Pipeline.PreparePostSetup(allEntry, pipelinePreSetup);
 
         bool success = true;
 
@@ -830,7 +828,12 @@ partial class BaseNukeBuildHelpers
                     Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
                 });
             }
+        }
 
+        await pipeline.Pipeline.FinalizePostSetup(allEntry, pipelinePreSetup);
+
+        if (!success)
+        {
             throw new Exception("Run has error(s)");
         }
     }

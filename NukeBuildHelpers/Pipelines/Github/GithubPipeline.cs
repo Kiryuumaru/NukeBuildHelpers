@@ -88,7 +88,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
     }
 
-    public async Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePreSetup(AllEntry allEntry)
+    {
+        return Task.CompletedTask;
+    }
+
+    public async Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
@@ -158,12 +163,35 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT");
     }
 
-    public void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
+        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        {
+            string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id) ?? "";
+            result = result.Replace("failure", "error");
+            result = result.Replace("cancelled", "error");
+            Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id, result);
+        }
+
         throw new NotImplementedException();
     }
 
-    public void BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
     {
         Dictionary<string, object> workflow = new()
         {
@@ -293,14 +321,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 runResultScript += "\n";
             }
-            runResultScript +=
-                "NUKE_RUN_RESULT_" + entryDefinition.Id + "=${{ needs." + entryDefinition.Id + ".result }} && " +
-                "NUKE_RUN_RESULT_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_" + entryDefinition.Id + "/failure/error} && " +
-                "NUKE_RUN_RESULT_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_" + entryDefinition.Id + "/cancelled/error}\n";
-            runResultScript += "echo \"NUKE_RUN_RESULT_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_" + entryDefinition.Id + "}\" >> $GITHUB_ENV";
+            runResultScript += "echo \"NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${{ needs." + entryDefinition.Id + ".result }}\" >> $GITHUB_ENV";
         }
-        AddJobStep(postSetupJob, id: "NUKE_RUN_RESULT", name: $"Resolve NUKE_RUN_RESULT",
-            run: runResultScript);
+        AddJobStep(postSetupJob, id: "NUKE_RUN_RESULT", name: $"Resolve NUKE_RUN_RESULT", run: runResultScript);
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
         AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 
@@ -314,6 +337,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
 
         Log.Information("Workflow built at " + workflowPath.ToString());
+
+        return Task.CompletedTask;
     }
 
     private static async Task ExportEnvVarRuntime(string entryId, string name, string value)

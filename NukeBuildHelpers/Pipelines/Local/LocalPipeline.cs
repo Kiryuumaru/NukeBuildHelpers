@@ -39,17 +39,37 @@ internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         throw new NotImplementedException();
     }
 
-    public Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePreSetup(AllEntry allEntry)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         throw new NotSupportedException();
     }
 
-    public void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         throw new NotSupportedException();
     }
 
-    public void BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
     {
         throw new NotSupportedException();
     }

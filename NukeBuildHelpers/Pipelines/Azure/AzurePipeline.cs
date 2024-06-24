@@ -80,7 +80,12 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
     }
 
-    public Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePreSetup(AllEntry allEntry)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         //var outputTestMatrix = new Dictionary<string, AzurePreSetupOutputAppTestEntryMatrix>();
         //var outputBuildMatrix = new Dictionary<string, AzurePreSetupOutputAppEntryMatrix>();
@@ -247,12 +252,27 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return Task.CompletedTask;
     }
 
-    public void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
         throw new NotImplementedException();
     }
 
-    public void BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
     {
         //ValueHelpers.GetOrFail(AppEntryHelpers.GetAllEntries, out var appConfig);
 
@@ -422,6 +442,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         //File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
 
         //Log.Information("Workflow built at " + workflowPath.ToString());
+
+        return Task.CompletedTask;
     }
 
     private static void AddJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)

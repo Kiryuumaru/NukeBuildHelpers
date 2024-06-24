@@ -12,9 +12,17 @@ internal interface IPipeline
 
     PipelinePreSetup GetPipelinePreSetup();
 
-    Task PreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+    Task PreparePreSetup(AllEntry allEntry);
 
-    void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+    Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
-    void BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry);
+    Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+
+    Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+
+    Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+
+    Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+
+    Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry);
 }
