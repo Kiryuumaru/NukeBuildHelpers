@@ -490,6 +490,7 @@ partial class BaseNukeBuildHelpers
                 RunType = ValueHelpers.GetOrNullFail(entry.RunContext).RunType,
                 RunnerOSSetup = new()
                 {
+                    Name = runnerOs.Name,
                     RunnerPipelineOS = JsonSerializer.Serialize(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented),
                     RunScript = runnerOs.GetRunScript(PipelineType)
                 }

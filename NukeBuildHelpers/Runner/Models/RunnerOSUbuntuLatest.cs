@@ -12,6 +12,8 @@ namespace NukeBuildHelpers.Runner.Models;
 
 internal class RunnerOSUbuntuLatest : RunnerOS
 {
+    public override string Name { get; } = "ubuntu-latest";
+
     public override object GetPipelineOS(PipelineType pipelineType)
     {
         return pipelineType switch

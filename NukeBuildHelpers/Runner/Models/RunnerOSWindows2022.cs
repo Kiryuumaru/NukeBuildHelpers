@@ -12,6 +12,8 @@ namespace NukeBuildHelpers.Runner.Models;
 
 internal class RunnerOSWindows2022 : RunnerOS
 {
+    public override string Name { get; } = "windows-2022";
+
     public override object GetPipelineOS(PipelineType pipelineType)
     {
         return pipelineType switch

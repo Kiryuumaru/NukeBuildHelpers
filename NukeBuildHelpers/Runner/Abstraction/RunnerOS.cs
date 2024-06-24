@@ -34,6 +34,11 @@ public abstract class RunnerOS
     public static RunnerOS Windows2022 { get; } = new RunnerOSWindows2022();
 
     /// <summary>
+    /// Gets the name of the runner.
+    /// </summary>
+    public abstract string Name { get; }
+
+    /// <summary>
     /// Gets the pipeline-specific operating system for this runner OS.
     /// </summary>
     /// <param name="pipelineType">The type of pipeline.</param>

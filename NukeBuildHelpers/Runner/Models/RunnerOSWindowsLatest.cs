@@ -12,6 +12,8 @@ namespace NukeBuildHelpers.Runner.Models;
 
 internal class RunnerOSWindowsLatest : RunnerOS
 {
+    public override string Name { get; } = "windows-latest";
+
     public override object GetPipelineOS(PipelineType pipelineType)
     {
         return pipelineType switch
