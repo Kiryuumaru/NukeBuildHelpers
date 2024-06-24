@@ -78,7 +78,7 @@ jobs:
     - pre_setup
     if: success()
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersTest2:
     name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME }}
     runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
@@ -99,7 +99,7 @@ jobs:
     - pre_setup
     if: success()
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersBuild:
     name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_NAME }}
     runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_RUNS_ON }}
@@ -129,7 +129,7 @@ jobs:
     - NugetBuildHelpersTest2
     if: success()
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersPublish:
     name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME }}
     runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON }}
@@ -157,7 +157,7 @@ jobs:
     - NugetBuildHelpersBuild
     if: success()
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
@@ -180,7 +180,7 @@ jobs:
     - NugetBuildHelpersPublish
     if: success() || failure() || always()
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
       NUKE_PUBLISH_SUCCESS_GITHUB: ${{ needs.publish.result }}
 env:
   NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}

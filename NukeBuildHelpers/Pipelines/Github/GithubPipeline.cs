@@ -83,8 +83,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             throw new Exception("NUKE_PRE_SETUP is empty");
         }
 
-        Log.Information("CCCCCCCCCCCCCCC: " + pipelinePreSetupValue);
-
         PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
 
         return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
@@ -97,6 +95,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
         async Task ExportEnvVarEntryRuntime(string entryId, string name, string runsOn, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
         {
+            cacheFamily = cacheFamily.Replace("-", ".");
+            osName = osName.Replace("-", ".");
+            entryId = entryId.Replace("-", ".");
+            cacheInvalidator = cacheInvalidator.Replace("-", ".");
+            environment = environment.Replace("-", ".");
+            runClassification = runClassification.Replace("-", ".");
+            runIdentifier = runIdentifier.Replace("-", ".");
+
             await ExportEnvVarRuntime(entryId, "ID", entryId);
             await ExportEnvVarRuntime(entryId, "NAME", name);
             await ExportEnvVarRuntime(entryId, "RUNS_ON", runsOn);
@@ -220,7 +226,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
         {
             var testJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarWorkflow(entryDefinition.Id, "NAME"), GetImportedEnvVarWorkflow(entryDefinition.Id, "RUNS_ON"), needs: [.. needs], _if: "success()");
-            AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
+            AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "pre_setup");
             AddJobStepCheckout(testJob);
             //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
             AddJobStepCache(testJob, entryDefinition.Id);
@@ -236,7 +242,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var entryDefinition in allEntry.BuildEntryDefinitionMap.Values)
         {
             var buildJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarWorkflow(entryDefinition.Id, "NAME"), GetImportedEnvVarWorkflow(entryDefinition.Id, "RUNS_ON"), needs: [.. testNeeds], _if: "success()");
-            AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
+            AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "pre_setup");
             AddJobStepCheckout(buildJob);
             //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
             AddJobStepCache(buildJob, entryDefinition.Id);
@@ -257,7 +263,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var entryDefinition in allEntry.PublishEntryDefinitionMap.Values)
         {
             var publishJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarWorkflow(entryDefinition.Id, "NAME"), GetImportedEnvVarWorkflow(entryDefinition.Id, "RUNS_ON"), needs: [.. buildNeeds], _if: "success()");
-            AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
+            AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "pre_setup");
             AddJobStepCheckout(publishJob);
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/output");
@@ -274,7 +280,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // █████████████ Post Setup █████████████
         // ██████████████████████████████████████
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. publishNeeds], _if: "success() || failure() || always()");
-        AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
+        AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP", "pre_setup");
         AddJobOrStepEnvVar(postSetupJob, "NUKE_PUBLISH_SUCCESS_GITHUB", "${{ needs.publish.result }}");
         AddJobStep(postSetupJob, id: "NUKE_PUBLISH_SUCCESS", name: $"Resolve NUKE_PUBLISH_SUCCESS",
             run: $"echo \"NUKE_PUBLISH_SUCCESS=${{NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
