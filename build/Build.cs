@@ -1,3 +1,4 @@
+using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Common.Attributes;
@@ -125,6 +126,10 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context =>
         {
+            foreach (var path in OutputDirectory.GetFiles("**", 99))
+            {
+                Log.Information(path);
+            }
             if (context.RunType == RunType.Bump)
             {
                 DotNetTasks.DotNetNuGetPush(_ => _
