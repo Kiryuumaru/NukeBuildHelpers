@@ -650,6 +650,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var entry in entriesToRun)
         {
+            Log.Information("ToRUNNN: " + entry.Id);
             tasks.Add(() => Task.Run(async () =>
             {
                 await CachePreload(entry);
