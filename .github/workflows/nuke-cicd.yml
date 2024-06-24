@@ -31,30 +31,35 @@ jobs:
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION }}
       NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON }}
       NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY }}
@@ -78,7 +83,7 @@ jobs:
       run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest1"
     needs:
     - pre_setup
-    if: success()
+    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION }} == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersTest2:
@@ -99,7 +104,7 @@ jobs:
       run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest2"
     needs:
     - pre_setup
-    if: success()
+    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION }} == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersBuild1:
@@ -129,7 +134,7 @@ jobs:
     - pre_setup
     - NugetBuildHelpersTest1
     - NugetBuildHelpersTest2
-    if: success()
+    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION }} == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersBuild2:
@@ -159,7 +164,7 @@ jobs:
     - pre_setup
     - NugetBuildHelpersTest1
     - NugetBuildHelpersTest2
-    if: success()
+    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION }} == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersPublish:
@@ -188,7 +193,7 @@ jobs:
     - pre_setup
     - NugetBuildHelpersBuild1
     - NugetBuildHelpersBuild2
-    if: success()
+    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION }} == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   post_setup:
