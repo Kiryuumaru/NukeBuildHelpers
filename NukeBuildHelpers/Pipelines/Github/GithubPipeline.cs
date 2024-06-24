@@ -294,8 +294,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 runResultScript += "\n";
             }
             runResultScript +=
-                "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${{ needs." + entryDefinition.Id + ".result }} &&" +
-                "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB/failure/error} &&" +
+                "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${{ needs." + entryDefinition.Id + ".result }} && " +
+                "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB/failure/error} && " +
                 "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB/cancelled/error}\n";
             runResultScript += "echo \"NUKE_RUN_RESULT_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id + "}\" >> $GITHUB_ENV";
         }
