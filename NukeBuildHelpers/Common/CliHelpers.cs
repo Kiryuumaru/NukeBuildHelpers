@@ -23,12 +23,12 @@ public static class CliHelpers
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             osCli = CliWrap.Cli.Wrap("cmd")
-                .WithArguments(["/c", $"\"{command}\""], false);
+                .WithArguments(["/c", $"\"{command.Replace("\"", "\\\"")}\""], false);
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             osCli = CliWrap.Cli.Wrap("/bin/bash")
-                .WithArguments(["-c", $"\"{command}\""], false);
+                .WithArguments(["-c", $"\"{command.Replace("\"", "\\\"")}\""], false);
         }
         else
         {
