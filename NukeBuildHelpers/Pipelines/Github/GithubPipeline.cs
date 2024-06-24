@@ -121,10 +121,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 NukeRunIdentifier = runIdentifier
             });
 
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_ID='{entryId}'\" >> $GITHUB_OUTPUT");
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_NAME='{entrySetup.Name}'\" >> $GITHUB_OUTPUT");
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON='{runsOn}'\" >> $GITHUB_OUTPUT");
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT='{entrySetup.RunnerOSSetup.RunScript}'\" >> $GITHUB_OUTPUT");
+            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_ID={entryId}\" >> $GITHUB_OUTPUT");
+            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_NAME={entrySetup.Name}\" >> $GITHUB_OUTPUT");
+            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON={runsOn}\" >> $GITHUB_OUTPUT");
+            Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT={entrySetup.RunnerOSSetup.RunScript}\" >> $GITHUB_OUTPUT");
+
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_ID=\'{entryId}\'\" >> $GITHUB_OUTPUT");
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_NAME=\'{entrySetup.Name}\'\" >> $GITHUB_OUTPUT");
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON=\'{runsOn}\'\" >> $GITHUB_OUTPUT");
+            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT=\'{entrySetup.RunnerOSSetup.RunScript}\'\" >> $GITHUB_OUTPUT");
         }
 
         foreach (var entryId in pipelinePreSetup.BuildEntries)
@@ -195,10 +200,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         Log.Information("NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
         Log.Information("NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
         Log.Information("NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
-        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption)}\" >> $GITHUB_OUTPUT");
-        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX={JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption)}\" >> $GITHUB_OUTPUT");
-        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX={JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption)}\" >> $GITHUB_OUTPUT");
-        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX={JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption)}\" >> $GITHUB_OUTPUT");
+        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP='{JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption)}'\" >> $GITHUB_OUTPUT");
+        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX='{JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption)}'\" >> $GITHUB_OUTPUT");
+        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX='{JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption)}'\" >> $GITHUB_OUTPUT");
+        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX='{JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption)}'\" >> $GITHUB_OUTPUT");
     }
 
     public void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
