@@ -171,7 +171,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/output
-        pattern: nuget_build_helpers
+        pattern: nuget_build_helpers - *
         merge-multiple: true
     - name: Cache Test
       uses: actions/cache@v4

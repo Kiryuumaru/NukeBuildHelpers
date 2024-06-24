@@ -265,7 +265,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(publishJob);
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/output");
-            AddJobStepWith(downloadBuildStep, "pattern", entryDefinition.AppId.NotNullOrEmpty());
+            AddJobStepWith(downloadBuildStep, "pattern", entryDefinition.AppId.NotNullOrEmpty() + " - *");
             AddJobStepWith(downloadBuildStep, "merge-multiple", "true");
             //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
             AddJobStepCache(publishJob, entryDefinition.Id);
@@ -444,25 +444,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         ((Dictionary<string, object>)withValue)[name] = value;
     }
 
-    private static void AddJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)
-    {
-        if (!job.TryGetValue("strategy", out object? value))
-        {
-            value = new Dictionary<string, object>();
-            job["strategy"] = value;
-        }
-        if (!((Dictionary<string, object>)value).ContainsKey("matrix"))
-        {
-            ((Dictionary<string, object>)value)["matrix"] = new Dictionary<string, object>();
-        }
-        ((Dictionary<string, object>)((Dictionary<string, object>)value)["matrix"])["include"] = matrixInclude;
-    }
-
-    private static void AddJobMatrixIncludeFromPreSetup(Dictionary<string, object> job, string outputName)
-    {
-        AddJobMatrixInclude(job, $"${{{{ fromJson(needs.pre_setup.outputs.outputs.{outputName}) }}}}");
-    }
-
     private static void AddJobOutput(Dictionary<string, object> job, string outputName, string fromStepId, string fromStepVariable)
     {
         if (!job.TryGetValue("outputs", out object? value))
@@ -486,11 +467,5 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static void AddJobOrStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envOutName, string needsId)
     {
         AddJobOrStepEnvVar(jobOrStep, envOutName, $"${{{{ needs.{needsId}.outputs.{envOutName} }}}}");
-    }
-
-    private static void AddJobOutputFromFile(Dictionary<string, object> job, string envVarName, string filename)
-    {
-        AddJobStep(job, id: envVarName, name: $"Output {envVarName}", run: $"echo \"{envVarName}=$(cat {filename})\" >> $GITHUB_OUTPUT");
-        AddJobOutput(job, envVarName, envVarName, envVarName);
     }
 }
