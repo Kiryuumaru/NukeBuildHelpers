@@ -165,10 +165,10 @@ jobs:
     - id: NUKE_RUN_RESULT
       name: Resolve NUKE_RUN_RESULT
       run: |-
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest1.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest1=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest2.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest2=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersBuild.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersPublish.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersPublish=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest1.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest2.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersBuild.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersPublish.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
     - uses: actions/checkout@v4
     - name: Download Artifacts
       uses: actions/download-artifact@v4

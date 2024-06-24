@@ -292,7 +292,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 runResultScript += "\n";
             }
-            runResultScript += "NUKE_RUN_RESULT_GITHUB=${{ needs." + entryDefinition.Id + ".result }} && echo \"NUKE_RUN_RESULT_" + entryDefinition.Id + "=${{NUKE_RUN_RESULT_GITHUB/failure/error}}\" >> $GITHUB_ENV";
+            runResultScript += "NUKE_RUN_RESULT_GITHUB=${{ needs." + entryDefinition.Id + ".result }} && echo \"NUKE_RUN_RESULT_" + entryDefinition.Id + "=${NUKE_RUN_RESULT_GITHUB/failure/error}\" >> $GITHUB_ENV";
         }
         AddJobStep(postSetupJob, id: "NUKE_RUN_RESULT", name: $"Resolve NUKE_RUN_RESULT",
             run: runResultScript);
