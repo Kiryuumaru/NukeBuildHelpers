@@ -162,9 +162,13 @@ jobs:
     name: Post Setup
     runs-on: ubuntu-22.04
     steps:
-    - id: NUKE_PUBLISH_SUCCESS
-      name: Resolve NUKE_PUBLISH_SUCCESS
-      run: echo "NUKE_PUBLISH_SUCCESS=${NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
+    - id: NUKE_RUN_RESULT
+      name: Resolve NUKE_RUN_RESULT
+      run: |-
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest1.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest1=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest2.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest2=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersBuild.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersPublish.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersPublish=${{NUKE_RUN_RESULT_GITHUB/failure/error}}" >> $GITHUB_ENV
     - uses: actions/checkout@v4
     - name: Download Artifacts
       uses: actions/download-artifact@v4
@@ -173,15 +177,16 @@ jobs:
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
-        NUKE_PUBLISH_SUCCESS: ${{ steps.NUKE_PUBLISH_SUCCESS.outputs.NUKE_PUBLISH_SUCCESS }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
+    - NugetBuildHelpersTest1
+    - NugetBuildHelpersTest2
+    - NugetBuildHelpersBuild
     - NugetBuildHelpersPublish
     if: success() || failure() || always()
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-      NUKE_PUBLISH_SUCCESS_GITHUB: ${{ needs.publish.result }}
 env:
   NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
   NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -83,8 +83,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             throw new Exception("NUKE_PRE_SETUP is empty");
         }
 
-        Log.Information("CCCCCCCCCCCCCCC: " + pipelinePreSetupValue);
-
         PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
 
         return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
@@ -158,7 +156,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
-        Log.Information("OUT: " + await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT"));
+        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT");
     }
 
     public void EntrySetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
@@ -281,16 +279,27 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // █████████████ Post Setup █████████████
         // ██████████████████████████████████████
-        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. publishNeeds], _if: "success() || failure() || always()");
+        List<string> postNeeds = [.. needs];
+        postNeeds.AddRange(testNeeds.Where(i => !needs.Contains(i)));
+        postNeeds.AddRange(buildNeeds.Where(i => !needs.Contains(i)));
+        postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
+        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. postNeeds], _if: "success() || failure() || always()");
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP", "pre_setup");
-        AddJobOrStepEnvVar(postSetupJob, "NUKE_PUBLISH_SUCCESS_GITHUB", "${{ needs.publish.result }}");
-        AddJobStep(postSetupJob, id: "NUKE_PUBLISH_SUCCESS", name: $"Resolve NUKE_PUBLISH_SUCCESS",
-            run: $"echo \"NUKE_PUBLISH_SUCCESS=${{NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}}\" >> $GITHUB_OUTPUT");
+        string runResultScript = "";
+        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        {
+            if (!string.IsNullOrEmpty(runResultScript))
+            {
+                runResultScript += "\n";
+            }
+            runResultScript += "NUKE_RUN_RESULT_GITHUB=${{ needs." + entryDefinition.Id + ".result }} && echo \"NUKE_RUN_RESULT_" + entryDefinition.Id + "=${{NUKE_RUN_RESULT_GITHUB/failure/error}}\" >> $GITHUB_ENV";
+        }
+        AddJobStep(postSetupJob, id: "NUKE_RUN_RESULT", name: $"Resolve NUKE_RUN_RESULT",
+            run: runResultScript);
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/output");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
-        AddJobOrStepEnvVar(nukePostSetup, "NUKE_PUBLISH_SUCCESS", "${{ steps.NUKE_PUBLISH_SUCCESS.outputs.NUKE_PUBLISH_SUCCESS }}");
         AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 
         // ██████████████████████████████████████

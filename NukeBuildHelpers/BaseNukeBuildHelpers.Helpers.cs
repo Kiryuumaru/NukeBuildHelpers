@@ -618,7 +618,7 @@ partial class BaseNukeBuildHelpers
 
             SetupTargetRunContext(targetEntry, entrySetup.RunType, appVersion, pipelinePreSetup.ReleaseNotes, pipeline);
         }
-        
+
         foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)
         {
             if (pipelinePreSetup == null)
@@ -731,15 +731,15 @@ partial class BaseNukeBuildHelpers
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
     }
 
-    private Task StartPostSetup(AllEntry allEntry)
+    private async Task StartPostSetup(AllEntry allEntry)
     {
         var pipeline = PipelineHelpers.SetupPipeline(this);
 
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
-        if (pipelinePreSetup.HasRelease)
+        if (Environment.GetEnvironmentVariable("NUKE_RUN_SUCCESS") == "ok")
         {
-            if (Environment.GetEnvironmentVariable("NUKE_PUBLISH_SUCCESS") == "ok")
+            if (pipelinePreSetup.HasRelease)
             {
                 foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                 {
@@ -760,7 +760,7 @@ partial class BaseNukeBuildHelpers
                     Log.Information("Publish: {name}", appIdLower);
                 }
 
-                return Task.Run(() =>
+                await Task.Run(() =>
                 {
                     foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                     {
@@ -788,9 +788,12 @@ partial class BaseNukeBuildHelpers
                     Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
                 });
             }
-            else
+        }
+        else
+        {
+            if (pipelinePreSetup.HasRelease)
             {
-                return Task.Run(() =>
+                await Task.Run(() =>
                 {
                     foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                     {
@@ -810,9 +813,9 @@ partial class BaseNukeBuildHelpers
                     Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
                 });
             }
-        }
 
-        return Task.CompletedTask;
+            throw new Exception("Run has error(s)");
+        }
     }
 
     private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> InteractiveRelease()
@@ -948,7 +951,7 @@ partial class BaseNukeBuildHelpers
 
                         return ValidationResult.Success;
                     })];
-            
+
             var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("New Version", validators: validators));
             var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
             appEntryVersionsToBump.Add((appEntryVersion.AppEntry, appEntryVersion.AllVersions, bumpVersion));
