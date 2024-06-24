@@ -650,20 +650,11 @@ partial class BaseNukeBuildHelpers
 
         foreach (var entry in entriesToRun)
         {
-            Log.Information("ToRUNNN1scsc: " + entry.Id);
-            Log.Information("ToRUNNNscsc2: " + entry.Execute);
-            Log.Information("ToRUNNNscsc2: " + (entry.Execute != null));
             tasks.Add(() => Task.Run(async () =>
             {
-                Log.Information("ToRUNNN1: " + entry.Id);
-                Log.Information("ToRUNNN2: " + entry.Execute);
-                Log.Information("ToRUNNN2: " + (entry.Execute != null));
                 await CachePreload(entry);
                 await entry.GetExecute();
                 await CachePostload(entry);
-                Log.Information("ToRUNNN14: " + entry.Id);
-                Log.Information("ToRUNNN24: " + entry.Execute);
-                Log.Information("ToRUNNN24: " + (entry.Execute != null));
             }));
         }
 

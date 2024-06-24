@@ -127,14 +127,14 @@ public static class EntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition>(this TEntryDefinition definition, Action action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = _ => Task.Run(() => action);
+        definition.Execute = _ => Task.Run(() => action());
         return definition;
     }
 
     public static TEntryDefinition Execute<TEntryDefinition, T>(this TEntryDefinition definition, Func<T> action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = _ => Task.Run(() => action);
+        definition.Execute = _ => Task.Run(() => action());
         return definition;
     }
 
