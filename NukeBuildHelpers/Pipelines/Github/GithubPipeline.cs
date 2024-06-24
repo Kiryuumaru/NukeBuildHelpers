@@ -126,10 +126,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON={runsOn}\" >> $GITHUB_OUTPUT");
             Log.Information($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT={entrySetup.RunnerOSSetup.RunScript}\" >> $GITHUB_OUTPUT");
 
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_ID=\'{entryId}\'\" >> $GITHUB_OUTPUT");
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_NAME=\'{entrySetup.Name}\'\" >> $GITHUB_OUTPUT");
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON=\'{runsOn}\'\" >> $GITHUB_OUTPUT");
-            await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT=\'{entrySetup.RunnerOSSetup.RunScript}\'\" >> $GITHUB_OUTPUT");
+            Log.Information("OUT: " + await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_ID=\'{entryId}\'\" >> $GITHUB_OUTPUT"));
+            Log.Information("OUT: " + await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_NAME=\'{entrySetup.Name}\'\" >> $GITHUB_OUTPUT"));
+            Log.Information("OUT: " + await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUNS_ON=\'{runsOn}\'\" >> $GITHUB_OUTPUT"));
+            Log.Information("OUT: " + await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT=\'{entrySetup.RunnerOSSetup.RunScript}\'\" >> $GITHUB_OUTPUT"));
         }
 
         foreach (var entryId in pipelinePreSetup.BuildEntries)
