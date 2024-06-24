@@ -46,7 +46,7 @@ internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        throw new NotSupportedException();
+        throw new NotImplementedException();
     }
 
     public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
@@ -61,12 +61,12 @@ internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        throw new NotSupportedException();
+        throw new NotImplementedException();
     }
 
     public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        throw new NotSupportedException();
+        throw new NotImplementedException();
     }
 
     public Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
