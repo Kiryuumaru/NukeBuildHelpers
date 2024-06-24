@@ -165,15 +165,16 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        return Task.Run(() =>
         {
-            string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id) ?? "";
-            result = result.Replace("failure", "error");
-            result = result.Replace("cancelled", "error");
-            Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id, result);
-        }
-
-        throw new NotImplementedException();
+            foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+            {
+                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id) ?? "";
+                result = result.Replace("failure", "error");
+                result = result.Replace("cancelled", "error");
+                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id, result);
+            }
+        });
     }
 
     public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)

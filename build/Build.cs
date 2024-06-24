@@ -31,6 +31,11 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(() =>
         {
+            Log.Information("G=SSSSSSSSSSSSSSSSSSSSSSSSS");
+            Log.Information("G=SSSSSSSSSSSSSSSSSSSSSSSSS");
+            Log.Information("G=SSSSSSSSSSSSSSSSSSSSSSSSS");
+            Log.Information("G=SSSSSSSSSSSSSSSSSSSSSSSSS");
+            Log.Information("G=SSSSSSSSSSSSSSSSSSSSSSSSS");
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
             DotNetTasks.DotNetTest(_ => _
@@ -43,6 +48,11 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
         {
+            Log.Information("G=GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+            Log.Information("G=GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+            Log.Information("G=GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+            Log.Information("G=GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+            Log.Information("G=GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
             DotNetTasks.DotNetTest(_ => _
