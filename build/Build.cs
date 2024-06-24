@@ -27,7 +27,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NugetBuildHelpersTest1 => _ => _
         .AppId("nuget_build_helpers")
-        .Name("Name sa first test")
+        .Name("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(() =>
         {
@@ -39,7 +39,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NugetBuildHelpersTest2 => _ => _
         .AppId("nuget_build_helpers")
-        .Name("Name sa second test")
+        .Name("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
         {
@@ -51,6 +51,7 @@ class Build : BaseNukeBuildHelpers
 
     BuildEntry NugetBuildHelpersBuild1 => _ => _
         .AppId("nuget_build_helpers")
+        .Name("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context => {
             Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
@@ -87,6 +88,7 @@ class Build : BaseNukeBuildHelpers
 
     BuildEntry NugetBuildHelpersBuild2 => _ => _
         .AppId("nuget_build_helpers")
+        .Name("Build try")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(context => {
             Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");

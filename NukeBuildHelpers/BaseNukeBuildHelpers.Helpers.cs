@@ -671,7 +671,7 @@ partial class BaseNukeBuildHelpers
 
         IEnumerable<IEntryDefinition> entriesToRun;
 
-        if (idsToRun.Any())
+        if (!idsToRun.Any())
         {
             entriesToRun = allEntry.TestEntryDefinitionMap.Values.Cast<IEntryDefinition>();
         }
@@ -699,7 +699,7 @@ partial class BaseNukeBuildHelpers
             (OutputDirectory / "notes.md").WriteAllText(pipelinePreSetup.ReleaseNotes);
         }
 
-        if (idsToRun.Any())
+        if (!idsToRun.Any())
         {
             entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Cast<IEntryDefinition>();
         }
@@ -719,7 +719,7 @@ partial class BaseNukeBuildHelpers
 
         IEnumerable<IEntryDefinition> entriesToRun;
 
-        if (idsToRun.Any())
+        if (!idsToRun.Any())
         {
             entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Cast<IEntryDefinition>();
         }
