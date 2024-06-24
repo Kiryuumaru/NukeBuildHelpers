@@ -650,7 +650,9 @@ partial class BaseNukeBuildHelpers
 
         foreach (var entry in entriesToRun)
         {
-            Log.Information("ToRUNNN: " + entry.Id);
+            Log.Information("ToRUNNN1: " + entry.Id);
+            Log.Information("ToRUNNN2: " + entry.Execute);
+            Log.Information("ToRUNNN2: " + (entry.Execute != null));
             tasks.Add(() => Task.Run(async () =>
             {
                 await CachePreload(entry);
@@ -741,11 +743,6 @@ partial class BaseNukeBuildHelpers
         await pipeline.Pipeline.PreparePostSetup(allEntry, pipelinePreSetup);
 
         bool success = true;
-
-        foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
-        {
-            Log.Information("EnvVar-- " + e.Key + ": " + e.Value);
-        }
 
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
