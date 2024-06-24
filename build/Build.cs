@@ -8,6 +8,7 @@ using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.RunContext.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
 using Semver;
+using Serilog;
 
 class Build : BaseNukeBuildHelpers
 {
@@ -51,6 +52,10 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuget_build_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context => {
+            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+            Log.Information("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
@@ -83,6 +88,10 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuget_build_helpers")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(context => {
+            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            Log.Information("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
