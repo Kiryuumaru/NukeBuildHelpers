@@ -124,6 +124,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             });
 
             await ExportEnvVarRuntime(entryId, "ID", entryId);
+            await ExportEnvVarRuntime(entryId, "NAME", entrySetup.Name);
             await ExportEnvVarRuntime(entryId, "RUNS_ON", runsOn);
             await ExportEnvVarRuntime(entryId, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
             await ExportEnvVarRuntime(entryId, "CACHE_KEY", $"test-{entrySetup.RunnerOSSetup.Name}-{entryId}-{entrySetup.CacheInvalidator}-{pipelinePreSetup.Environment}-{runClassification}-{runIdentifier}");
@@ -257,6 +258,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
         {
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "ID");
+            ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "NAME");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "RUNS_ON");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "RUN_SCRIPT");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "CACHE_KEY");

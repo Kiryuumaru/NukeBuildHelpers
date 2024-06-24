@@ -31,12 +31,14 @@ jobs:
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_ID }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_ID }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY }}
