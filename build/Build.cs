@@ -47,7 +47,7 @@ class Build : BaseNukeBuildHelpers
                 .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
         });
 
-    BuildEntry NugetBuildHelpersBuild => _ => _
+    BuildEntry NugetBuildHelpersBuild1 => _ => _
         .AppId("nuget_build_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context => {
@@ -77,6 +77,38 @@ class Build : BaseNukeBuildHelpers
                 .SetVersion(version)
                 .SetPackageReleaseNotes(releaseNotes)
                 .SetOutputDirectory(OutputDirectory));
+        });
+
+    BuildEntry NugetBuildHelpersBuild2 => _ => _
+        .AppId("nuget_build_helpers")
+        .RunnerOS(RunnerOS.Windows2022)
+        .Execute(context => {
+            string version = "0.0.0";
+            string? releaseNotes = null;
+            if (context.TryGetBumpContext(out var bumpContext))
+            {
+                version = bumpContext.AppVersion.Version.ToString();
+                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+            }
+            else if (context.TryGetPullRequestContext(out var pullRequestContext))
+            {
+                version = pullRequestContext.AppVersion.Version.ToString();
+            }
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
+            DotNetTasks.DotNetBuild(_ => _
+                .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetConfiguration("Release"));
+            DotNetTasks.DotNetPack(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetConfiguration("Release")
+                .SetNoRestore(true)
+                .SetNoBuild(true)
+                .SetIncludeSymbols(true)
+                .SetSymbolPackageFormat("snupkg")
+                .SetVersion(version)
+                .SetPackageReleaseNotes(releaseNotes)
+                .SetOutputDirectory(OutputDirectory / "extra"));
         });
 
     PublishEntry NugetBuildHelpersPublish => _ => _
