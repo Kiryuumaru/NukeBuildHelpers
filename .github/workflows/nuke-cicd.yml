@@ -44,13 +44,20 @@ jobs:
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NugetBuildHelpersBuild_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_ID }}
-      NUKE_PRE_SETUP_NugetBuildHelpersBuild_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_NAME }}
-      NUKE_PRE_SETUP_NugetBuildHelpersBuild_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_RUNS_ON }}
-      NUKE_PRE_SETUP_NugetBuildHelpersBuild_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_RUN_SCRIPT }}
-      NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_KEY }}
-      NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_ID }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_ID }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY }}
       NUKE_PRE_SETUP_NugetBuildHelpersPublish_ID: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_ID }}
       NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME }}
       NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON }}
@@ -100,26 +107,56 @@ jobs:
     if: success()
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-  NugetBuildHelpersBuild:
-    name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_NAME }}
-    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_RUNS_ON }}
+  NugetBuildHelpersBuild1:
+    name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Test
       uses: actions/cache@v4
       with:
         path: ./.nuke/cache
-        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_KEY }}
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY }}
         restore-keys: |-
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_RESTORE_KEY }}
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_CACHE_MAIN_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
       name: Run Nuke PipelineBuild
-      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_RUN_SCRIPT }} PipelineBuild --args "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_ID }}"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT }} PipelineBuild --args "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_ID }}"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild_ID }}
+        name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_ID }}
+        path: ./.nuke/output/*
+        if-no-files-found: error
+        retention-days: 1
+    needs:
+    - pre_setup
+    - NugetBuildHelpersTest1
+    - NugetBuildHelpersTest2
+    if: success()
+    env:
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+  NugetBuildHelpersBuild2:
+    name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Cache Test
+      uses: actions/cache@v4
+      with:
+        path: ./.nuke/cache
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY }}
+        restore-keys: |-
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY }}
+    - id: NUKE_RUN
+      name: Run Nuke PipelineBuild
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT }} PipelineBuild --args "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_ID }}"
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_ID }}
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -154,7 +191,8 @@ jobs:
       run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT }} PipelinePublish --args "${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_ID }}"
     needs:
     - pre_setup
-    - NugetBuildHelpersBuild
+    - NugetBuildHelpersBuild1
+    - NugetBuildHelpersBuild2
     if: success()
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
@@ -165,10 +203,11 @@ jobs:
     - id: NUKE_RUN_RESULT
       name: Resolve NUKE_RUN_RESULT
       run: |-
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest1.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest2.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersBuild.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersPublish.result }} && echo "NUKE_RUN_RESULT_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_GITHUB/failure/error}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest1.result }} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/cancelled/error} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_GITHUB}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersTest2.result }} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/cancelled/error} && echo "NUKE_RUN_RESULT_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_GITHUB}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersBuild1.result }} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/cancelled/error} && echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild1=${NUKE_RUN_RESULT_GITHUB}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersBuild2.result }} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/cancelled/error} && echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild2=${NUKE_RUN_RESULT_GITHUB}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_GITHUB=${{ needs.NugetBuildHelpersPublish.result }} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB=${NUKE_RUN_RESULT_GITHUB/cancelled/error} && echo "NUKE_RUN_RESULT_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_GITHUB}" >> $GITHUB_ENV
     - uses: actions/checkout@v4
     - name: Download Artifacts
       uses: actions/download-artifact@v4
@@ -182,7 +221,8 @@ jobs:
     - pre_setup
     - NugetBuildHelpersTest1
     - NugetBuildHelpersTest2
-    - NugetBuildHelpersBuild
+    - NugetBuildHelpersBuild1
+    - NugetBuildHelpersBuild2
     - NugetBuildHelpersPublish
     if: success() || failure() || always()
     env:
