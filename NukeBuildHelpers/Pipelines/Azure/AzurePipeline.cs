@@ -106,16 +106,16 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         //    string? runScript = appTestEntry.RunnerOS.GetRunScript(PipelineType.Azure);
         //    outputTestMatrix.Add(appTestEntry.Id, new()
         //    {
-        //        NukeEntryId = appTestEntry.Id,
-        //        NukeEntryName = appTestEntry.Name,
-        //        NukeEnvironment = preSetupOutput.Environment,
+        //        EntryId = appTestEntry.Id,
+        //        EntryName = appTestEntry.Name,
+        //        Environment = preSetupOutput.Environment,
         //        NukePoolName = poolName,
         //        NukePoolVMImage = poolVMImage,
-        //        NukeRunScript = runScript,
-        //        NukeEntryIdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
-        //        NukeCacheInvalidator = appEntry.CacheInvalidator,
-        //        NukeRunClassification = runClassification,
-        //        NukeRunIdentifier = runIdentifier
+        //        RunScript = runScript,
+        //        EntryIdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
+        //        CacheInvalidator = appEntry.CacheInvalidator,
+        //        RunClassification = runClassification,
+        //        RunIdentifier = runIdentifier
         //    });
         //}
 
@@ -135,17 +135,17 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         //    string? runScript = appEntry.BuildRunnerOS.GetRunScript(PipelineType.Azure);
         //    outputBuildMatrix.Add(appEntry.Id, new()
         //    {
-        //        NukeEntryId = appEntry.Id,
-        //        NukeEntryName = appEntry.Name,
-        //        NukeEnvironment = preSetupOutput.Environment,
+        //        EntryId = appEntry.Id,
+        //        EntryName = appEntry.Name,
+        //        Environment = preSetupOutput.Environment,
         //        NukePoolName = poolName,
         //        NukePoolVMImage = poolVMImage,
-        //        NukeRunScript = runScript,
-        //        NukeEntryIdsToRun = appEntry.Id,
+        //        RunScript = runScript,
+        //        EntryIdsToRun = appEntry.Id,
         //        NukeVersion = entry.Version.ToString(),
-        //        NukeCacheInvalidator = appEntry.CacheInvalidator,
-        //        NukeRunClassification = runClassification,
-        //        NukeRunIdentifier = runIdentifier
+        //        CacheInvalidator = appEntry.CacheInvalidator,
+        //        RunClassification = runClassification,
+        //        RunIdentifier = runIdentifier
         //    });
         //}
 
@@ -165,17 +165,17 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         //    string? runScript = appEntry.PublishRunnerOS.GetRunScript(PipelineType.Azure);
         //    outputPublishMatrix.Add(appEntry.Id, new()
         //    {
-        //        NukeEntryId = appEntry.Id,
-        //        NukeEntryName = appEntry.Name,
-        //        NukeEnvironment = preSetupOutput.Environment,
+        //        EntryId = appEntry.Id,
+        //        EntryName = appEntry.Name,
+        //        Environment = preSetupOutput.Environment,
         //        NukePoolName = poolName,
         //        NukePoolVMImage = poolVMImage,
-        //        NukeRunScript = runScript,
-        //        NukeEntryIdsToRun = appEntry.Id,
+        //        RunScript = runScript,
+        //        EntryIdsToRun = appEntry.Id,
         //        NukeVersion = entry.Version.ToString(),
-        //        NukeCacheInvalidator = appEntry.CacheInvalidator,
-        //        NukeRunClassification = runClassification,
-        //        NukeRunIdentifier = runIdentifier
+        //        CacheInvalidator = appEntry.CacheInvalidator,
+        //        RunClassification = runClassification,
+        //        RunIdentifier = runIdentifier
         //    });
         //}
 
@@ -187,50 +187,50 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         //{
         //    outputTestMatrix.Add("skip", new()
         //    {
-        //        NukeEntryId = "skip",
-        //        NukeEntryName = "Skip",
-        //        NukeEnvironment = preSetupOutput.Environment,
+        //        EntryId = "skip",
+        //        EntryName = "Skip",
+        //        Environment = preSetupOutput.Environment,
         //        NukePoolName = skipPoolName,
         //        NukePoolVMImage = skipPoolVMImage,
-        //        NukeRunScript = skipRunScript,
-        //        NukeEntryIdsToRun = "",
-        //        NukeCacheInvalidator = "",
-        //        NukeRunClassification = "",
-        //        NukeRunIdentifier = ""
+        //        RunScript = skipRunScript,
+        //        EntryIdsToRun = "",
+        //        CacheInvalidator = "",
+        //        RunClassification = "",
+        //        RunIdentifier = ""
         //    });
         //}
         //if (outputBuildMatrix.Count == 0)
         //{
         //    outputBuildMatrix.Add("skip", new()
         //    {
-        //        NukeEntryId = "skip",
-        //        NukeEntryName = "Skip",
-        //        NukeEnvironment = preSetupOutput.Environment,
+        //        EntryId = "skip",
+        //        EntryName = "Skip",
+        //        Environment = preSetupOutput.Environment,
         //        NukePoolName = skipPoolName,
         //        NukePoolVMImage = skipPoolVMImage,
-        //        NukeRunScript = skipRunScript,
-        //        NukeEntryIdsToRun = "",
+        //        RunScript = skipRunScript,
+        //        EntryIdsToRun = "",
         //        NukeVersion = "",
-        //        NukeCacheInvalidator = "",
-        //        NukeRunClassification = "",
-        //        NukeRunIdentifier = ""
+        //        CacheInvalidator = "",
+        //        RunClassification = "",
+        //        RunIdentifier = ""
         //    });
         //}
         //if (outputPublishMatrix.Count == 0)
         //{
         //    outputPublishMatrix.Add("skip", new()
         //    {
-        //        NukeEntryId = "skip",
-        //        NukeEntryName = "Skip",
-        //        NukeEnvironment = preSetupOutput.Environment,
+        //        EntryId = "skip",
+        //        EntryName = "Skip",
+        //        Environment = preSetupOutput.Environment,
         //        NukePoolName = skipPoolName,
         //        NukePoolVMImage = skipPoolVMImage,
-        //        NukeRunScript = skipRunScript,
-        //        NukeEntryIdsToRun = "",
+        //        RunScript = skipRunScript,
+        //        EntryIdsToRun = "",
         //        NukeVersion = "",
-        //        NukeCacheInvalidator = "",
-        //        NukeRunClassification = "",
-        //        NukeRunIdentifier = ""
+        //        CacheInvalidator = "",
+        //        RunClassification = "",
+        //        RunIdentifier = ""
         //    });
         //}
 

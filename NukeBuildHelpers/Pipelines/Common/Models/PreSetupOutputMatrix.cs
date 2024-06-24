@@ -2,21 +2,21 @@
 
 internal abstract class PreSetupOutputMatrix
 {
-    public required string NukeEntryId { get; init; }
+    public required string EntryId { get; init; }
 
-    public required string NukeEntryName { get; init; }
+    public required string EntryName { get; init; }
 
-    public required string NukeEntryIdsToRun { get; init; }
+    public required string EntryIdsToRun { get; init; }
 
-    public required string NukeEnvironment { get; init; }
+    public required string Environment { get; init; }
 
-    public required string NukeRunScript { get; init; }
+    public required string RunScript { get; init; }
 
-    public required string NukeCacheInvalidator { get; init; }
+    public required string CacheInvalidator { get; init; }
 
-    public required string NukeRunClassification { get; init; }
+    public required string RunClassification { get; init; }
 
-    public required string NukeRunIdentifier { get; init; }
+    public required string RunIdentifier { get; init; }
 
     public abstract string NukeRunnerName { get; }
 }
