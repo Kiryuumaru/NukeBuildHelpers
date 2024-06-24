@@ -327,7 +327,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static string GetImportedEnvVarName(string entryId, string name)
     {
-        return "dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_" + entryId + "_" + name + "']";
+        return "dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_" + entryId + "_" + name + "']";
     }
 
     private static string GetImportedEnvVarExpression(string entryId, string name)
