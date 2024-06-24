@@ -23,8 +23,8 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelinePreSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePreSetup
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
       NUKE_PRE_SETUP: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP }}
       NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX }}
@@ -78,9 +78,15 @@ jobs:
         restore-keys: |-
           ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY }}
           ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY }}
+    - id: test_github_1
+      name: Custom github step test 1
+      run: echo "Test github 1"
     - id: NUKE_RUN
       name: Run Nuke PipelineTest
       run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest1"
+    - id: test_github_2
+      name: Custom github step test 2
+      run: echo "Test github 2"
     needs:
     - pre_setup
     if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION == 'true'

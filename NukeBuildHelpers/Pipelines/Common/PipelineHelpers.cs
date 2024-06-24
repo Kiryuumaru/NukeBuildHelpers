@@ -18,10 +18,10 @@ namespace NukeBuildHelpers.Pipelines.Common;
 
 internal static class PipelineHelpers
 {
-    internal static void BuildWorkflow<T>(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    internal static Task BuildWorkflow<T>(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
         where T : IPipeline
     {
-        (Activator.CreateInstance(typeof(T), baseNukeBuildHelpers) as IPipeline)!.BuildWorkflow(baseNukeBuildHelpers, allEntry);
+        return (Activator.CreateInstance(typeof(T), baseNukeBuildHelpers) as IPipeline)!.BuildWorkflow(baseNukeBuildHelpers, allEntry);
     }
 
     internal static PipelineRun SetupPipeline(BaseNukeBuildHelpers baseNukeBuildHelpers)

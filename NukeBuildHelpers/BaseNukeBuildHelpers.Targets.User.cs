@@ -168,23 +168,23 @@ partial class BaseNukeBuildHelpers
 
     public Target GithubWorkflow => _ => _
         .Description("Builds the cicd workflow for github")
-        .Executes(() =>
+        .Executes(async () =>
         {
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            PipelineHelpers.BuildWorkflow<GithubPipeline>(this, allEntry);
+            await PipelineHelpers.BuildWorkflow<GithubPipeline>(this, allEntry);
         });
 
     public Target AzureWorkflow => _ => _
         .Description("Builds the cicd workflow for azure")
-        .Executes(() =>
+        .Executes(async () =>
         {
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            PipelineHelpers.BuildWorkflow<AzurePipeline>(this, allEntry);
+            await PipelineHelpers.BuildWorkflow<AzurePipeline>(this, allEntry);
         });
 }

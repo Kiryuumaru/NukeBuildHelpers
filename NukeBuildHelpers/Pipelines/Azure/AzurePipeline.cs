@@ -6,7 +6,9 @@ using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Common.Models;
+using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
+using NukeBuildHelpers.Pipelines.Azure.Interfaces;
 using NukeBuildHelpers.Pipelines.Azure.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
@@ -15,6 +17,7 @@ using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
 using System.Reflection;
 using System.Text.Json;
+using YamlDotNet.Core.Tokens;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
 
@@ -82,368 +85,254 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public Task PreparePreSetup(AllEntry allEntry)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
-    public Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public async Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        //var outputTestMatrix = new Dictionary<string, AzurePreSetupOutputAppTestEntryMatrix>();
-        //var outputBuildMatrix = new Dictionary<string, AzurePreSetupOutputAppEntryMatrix>();
-        //var outputPublishMatrix = new Dictionary<string, AzurePreSetupOutputAppEntryMatrix>();
+        var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
+        var runIdentifier = Guid.NewGuid().Encode();
 
-        //var runClassification = preSetupOutput.TriggerType == TriggerType.PullRequest ? "pr." + preSetupOutput.PullRequestNumber : "main";
-        //var runIdentifier = Guid.NewGuid().Encode();
+        async Task ExportEnvVarEntryRuntime(string entryId, string name, bool condition, string? poolName, string? poolVmImage, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
+        {
+            cacheFamily = cacheFamily.Replace("-", ".");
+            osName = osName.Replace("-", ".");
+            entryId = entryId.Replace("-", ".");
+            cacheInvalidator = cacheInvalidator.Replace("-", ".");
+            environment = environment.Replace("-", ".");
+            runClassification = runClassification.Replace("-", ".");
+            runIdentifier = runIdentifier.Replace("-", ".");
 
-        //foreach (var toTest in preSetupOutput.ToTest)
-        //{
-        //    if (!appConfig.AppTestEntries.TryGetValue(toTest, out var appTestEntry))
-        //    {
-        //        continue;
-        //    }
-        //    var appEntry = appConfig.AppEntries.Values.FirstOrDefault(i => appTestEntry.AppEntryTargets.Contains(i.GetType()));
-        //    if (appEntry == null)
-        //    {
-        //        continue;
-        //    }
-        //    RunnerAzurePipelineOS runnerPipelineOS = (appTestEntry.RunnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
-        //    string? poolName = runnerPipelineOS.PoolName;
-        //    string? poolVMImage = runnerPipelineOS.PoolVMImage;
-        //    string? runScript = appTestEntry.RunnerOS.GetRunScript(PipelineType.Azure);
-        //    outputTestMatrix.Add(appTestEntry.Id, new()
-        //    {
-        //        EntryId = appTestEntry.Id,
-        //        EntryName = appTestEntry.Name,
-        //        Environment = preSetupOutput.Environment,
-        //        NukePoolName = poolName,
-        //        NukePoolVMImage = poolVMImage,
-        //        RunScript = runScript,
-        //        EntryIdsToRun = $"{appEntry.Id};{appTestEntry.Id}",
-        //        CacheInvalidator = appEntry.CacheInvalidator,
-        //        RunClassification = runClassification,
-        //        RunIdentifier = runIdentifier
-        //    });
-        //}
+            await ExportEnvVarRuntime(entryId, "NAME", name);
+            await ExportEnvVarRuntime(entryId, "CONDITION", condition ? "true" : "false");
+            await ExportEnvVarRuntime(entryId, "POOL_NAME", poolName);
+            await ExportEnvVarRuntime(entryId, "POOL_VM_IMAGE", poolVmImage);
+            await ExportEnvVarRuntime(entryId, "RUN_SCRIPT", runsScript);
+            await ExportEnvVarRuntime(entryId, "CACHE_KEY", $"{cacheFamily}-{osName}-{entryId}-{cacheInvalidator}-{environment}-{runClassification}-{runIdentifier}");
+            await ExportEnvVarRuntime(entryId, "CACHE_RESTORE_KEY", $"{cacheFamily}-{osName}-{entryId}-{cacheInvalidator}-{environment}-{runClassification}-");
+            await ExportEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamily}-{osName}-{entryId}-{cacheInvalidator}-{environment}-main-");
+        }
 
-        //foreach (var toBuild in preSetupOutput.ToBuild)
-        //{
-        //    if (!appConfig.AppEntries.TryGetValue(toBuild, out var appEntry))
-        //    {
-        //        continue;
-        //    }
-        //    if (!toEntry.TryGetValue(appEntry.Id, out var entry))
-        //    {
-        //        continue;
-        //    }
-        //    RunnerAzurePipelineOS runnerPipelineOS = (appEntry.BuildRunnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
-        //    string? poolName = runnerPipelineOS.PoolName;
-        //    string? poolVMImage = runnerPipelineOS.PoolVMImage;
-        //    string? runScript = appEntry.BuildRunnerOS.GetRunScript(PipelineType.Azure);
-        //    outputBuildMatrix.Add(appEntry.Id, new()
-        //    {
-        //        EntryId = appEntry.Id,
-        //        EntryName = appEntry.Name,
-        //        Environment = preSetupOutput.Environment,
-        //        NukePoolName = poolName,
-        //        NukePoolVMImage = poolVMImage,
-        //        RunScript = runScript,
-        //        EntryIdsToRun = appEntry.Id,
-        //        NukeVersion = entry.Version.ToString(),
-        //        CacheInvalidator = appEntry.CacheInvalidator,
-        //        RunClassification = runClassification,
-        //        RunIdentifier = runIdentifier
-        //    });
-        //}
+        foreach (var entryId in pipelinePreSetup.TestEntries)
+        {
+            if (!allEntry.TestEntryDefinitionMap.TryGetValue(entryId, out var appEntryDefinition))
+            {
+                continue;
+            }
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
+            {
+                continue;
+            }
 
-        //foreach (var toPublish in preSetupOutput.ToPublish)
-        //{
-        //    if (!appConfig.AppEntries.TryGetValue(toPublish, out var appEntry))
-        //    {
-        //        continue;
-        //    }
-        //    if (!toEntry.TryGetValue(appEntry.Id, out var entry))
-        //    {
-        //        continue;
-        //    }
-        //    RunnerAzurePipelineOS runnerPipelineOS = (appEntry.PublishRunnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
-        //    string? poolName = runnerPipelineOS.PoolName;
-        //    string? poolVMImage = runnerPipelineOS.PoolVMImage;
-        //    string? runScript = appEntry.PublishRunnerOS.GetRunScript(PipelineType.Azure);
-        //    outputPublishMatrix.Add(appEntry.Id, new()
-        //    {
-        //        EntryId = appEntry.Id,
-        //        EntryName = appEntry.Name,
-        //        Environment = preSetupOutput.Environment,
-        //        NukePoolName = poolName,
-        //        NukePoolVMImage = poolVMImage,
-        //        RunScript = runScript,
-        //        EntryIdsToRun = appEntry.Id,
-        //        NukeVersion = entry.Version.ToString(),
-        //        CacheInvalidator = appEntry.CacheInvalidator,
-        //        RunClassification = runClassification,
-        //        RunIdentifier = runIdentifier
-        //    });
-        //}
+            RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
+            
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+        }
 
-        //RunnerAzurePipelineOS skipRunnerPipelineOS = (RunnerOS.Ubuntu2204.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
-        //string? skipPoolName = skipRunnerPipelineOS.PoolName;
-        //string? skipPoolVMImage = skipRunnerPipelineOS.PoolVMImage;
-        //string? skipRunScript = RunnerOS.Ubuntu2204.GetRunScript(PipelineType.Azure);
-        //if (outputTestMatrix.Count == 0)
-        //{
-        //    outputTestMatrix.Add("skip", new()
-        //    {
-        //        EntryId = "skip",
-        //        EntryName = "Skip",
-        //        Environment = preSetupOutput.Environment,
-        //        NukePoolName = skipPoolName,
-        //        NukePoolVMImage = skipPoolVMImage,
-        //        RunScript = skipRunScript,
-        //        EntryIdsToRun = "",
-        //        CacheInvalidator = "",
-        //        RunClassification = "",
-        //        RunIdentifier = ""
-        //    });
-        //}
-        //if (outputBuildMatrix.Count == 0)
-        //{
-        //    outputBuildMatrix.Add("skip", new()
-        //    {
-        //        EntryId = "skip",
-        //        EntryName = "Skip",
-        //        Environment = preSetupOutput.Environment,
-        //        NukePoolName = skipPoolName,
-        //        NukePoolVMImage = skipPoolVMImage,
-        //        RunScript = skipRunScript,
-        //        EntryIdsToRun = "",
-        //        NukeVersion = "",
-        //        CacheInvalidator = "",
-        //        RunClassification = "",
-        //        RunIdentifier = ""
-        //    });
-        //}
-        //if (outputPublishMatrix.Count == 0)
-        //{
-        //    outputPublishMatrix.Add("skip", new()
-        //    {
-        //        EntryId = "skip",
-        //        EntryName = "Skip",
-        //        Environment = preSetupOutput.Environment,
-        //        NukePoolName = skipPoolName,
-        //        NukePoolVMImage = skipPoolVMImage,
-        //        RunScript = skipRunScript,
-        //        EntryIdsToRun = "",
-        //        NukeVersion = "",
-        //        CacheInvalidator = "",
-        //        RunClassification = "",
-        //        RunIdentifier = ""
-        //    });
-        //}
+        foreach (var entryId in pipelinePreSetup.BuildEntries)
+        {
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
+            {
+                continue;
+            }
 
-        //return Task.Run(() =>
-        //{
-        //    File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_test_matrix.json", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOption));
-        //    File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_build_matrix.json", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOption));
-        //    File.WriteAllText(Nuke.Common.NukeBuild.TemporaryDirectory / "pre_setup_output_publish_matrix.json", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOption));
-        //    Log.Information("NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputTestMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
-        //    Log.Information("NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputBuildMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
-        //    Log.Information("NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: {outputMatrix}", JsonSerializer.Serialize(outputPublishMatrix, JsonExtension.SnakeCaseNamingOptionIndented));
-        //});
+            RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
+            
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+        }
 
-        return Task.CompletedTask;
+        foreach (var entryId in pipelinePreSetup.PublishEntries)
+        {
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
+            {
+                continue;
+            }
+
+            RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
+            
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "publish", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+        }
+
+        Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
+        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT");
     }
 
     public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        throw new NotImplementedException();
+        return Task.Run(() =>
+        {
+            foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+            {
+                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id) ?? "";
+                result = result.Replace("SucceededWithIssues", "error");
+                result = result.Replace("Failed", "error");
+                result = result.Replace("Canceled", "error");
+                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id, result);
+            }
+        });
     }
 
     public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
-    public Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    public async Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
     {
-        //ValueHelpers.GetOrFail(AppEntryHelpers.GetAllEntries, out var appConfig);
+        Dictionary<string, object> workflow = new()
+        {
+            ["name"] = "Nuke CICD Pipeline",
+            ["trigger"] = new Dictionary<string, object>()
+                {
+                    { "batch", true },
+                    { "branches", new Dictionary<string, object>()
+                        {
+                            { "include", NukeBuild.EnvironmentBranches.ToArray() },
+                        }
+                    },
+                    { "tags", new Dictionary<string, object>()
+                        {
+                            { "include", new List<string> { "bump-*" } }
+                        }
+                    }
+                },
+            ["pr"] = new Dictionary<string, object>()
+                {
+                    { "branches", new Dictionary<string, object>()
+                        {
+                            { "include", new List<string> { "**" } },
+                        }
+                    }
+                },
+            ["jobs"] = new List<object>()
+        };
 
-        //List<WorkflowEntry> workflowBuilders = [.. ClassHelpers.GetInstances<WorkflowEntry>().OrderByDescending(i => i.Priority)];
+        // ██████████████████████████████████████
+        // ██████████████ Pre Setup █████████████
+        // ██████████████████████████████████████
+        List<string> needs = [];
+        var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunnerOS.Ubuntu2204);
+        AddJobStepCheckout(preSetupJob, fetchDepth: 0);
+        var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunnerOS.Ubuntu2204, "PipelinePreSetup", name: "NUKE_RUN");
+        AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
+        needs.Add("pre_setup");
 
-        //NukeBuild.SetupWorkflowBuilder(workflowBuilders, PipelineType.Azure);
+        // ██████████████████████████████████████
+        // ████████████████ Test ████████████████
+        // ██████████████████████████████████████
+        List<string> testNeeds = [.. needs];
+        foreach (var entryDefinition in allEntry.TestEntryDefinitionMap.Values)
+        {
+            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
+            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            var testJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarExpression(entryDefinition.Id, "NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "POOL_VM_IMAGE"), needs: [.. needs], condition: "and(succeeded(), eq(" + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + ", 'true'))");
+            AddJobEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "pre_setup");
+            AddJobStepCheckout(testJob);
+            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "PipelineTest");
+            testNeeds.Add(entryDefinition.Id);
+        }
 
-        //var appEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppEntry>();
-        //var appTestEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppTestEntry>();
+        // ██████████████████████████████████████
+        // ███████████████ Build ████████████████
+        // ██████████████████████████████████████
+        List<string> buildNeeds = [.. needs];
+        foreach (var entryDefinition in allEntry.BuildEntryDefinitionMap.Values)
+        {
+            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
+            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            var buildJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarExpression(entryDefinition.Id, "NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "POOL_VM_IMAGE"), needs: [.. testNeeds], condition: "and(succeeded(), eq(" + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + ", 'true'))");
+            AddJobEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "pre_setup");
+            AddJobStepCheckout(buildJob);
+            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
+            var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
+            AddJobStepInputs(uploadBuildStep, "artifact", "$(nuke_entry_id)");
+            AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
+            AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
+            buildNeeds.Add(entryDefinition.Id);
+        }
 
-        //Dictionary<string, object> workflow = new()
-        //{
-        //    ["name"] = "Nuke CICD Pipeline",
-        //    ["trigger"] = new Dictionary<string, object>()
-        //        {
-        //            { "batch", true },
-        //            { "branches", new Dictionary<string, object>()
-        //                {
-        //                    { "include", NukeBuild.EnvironmentBranches.ToArray() },
-        //                }
-        //            },
-        //            { "tags", new Dictionary<string, object>()
-        //                {
-        //                    { "include", new List<string> { "bump-*" } }
-        //                }
-        //            }
-        //        },
-        //    ["pr"] = new Dictionary<string, object>()
-        //        {
-        //            { "branches", new Dictionary<string, object>()
-        //                {
-        //                    { "include", new List<string> { "**" } },
-        //                }
-        //            }
-        //        },
-        //    ["jobs"] = new List<object>()
-        //};
+        // ██████████████████████████████████████
+        // ██████████████ Publish ███████████████
+        // ██████████████████████████████████████
+        List<string> publishNeeds = [.. needs];
+        foreach (var entryDefinition in allEntry.PublishEntryDefinitionMap.Values)
+        {
+            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
+            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            var publishJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarExpression(entryDefinition.Id, "NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "POOL_VM_IMAGE"), needs: [.. buildNeeds], condition: "and(succeeded(), eq(" + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + ", 'true'))");
+            AddJobEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "pre_setup");
+            AddJobStepCheckout(publishJob);
+            var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
+            AddJobStepInputs(downloadPublishStep, "artifact", "$(nuke_entry_id)");
+            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
+            AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
+            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
+            publishNeeds.Add(entryDefinition.Id);
+        }
 
-        //List<string> needs = [];
+        // ██████████████████████████████████████
+        // █████████████ Post Setup █████████████
+        // ██████████████████████████████████████
+        List<string> postNeeds = [.. needs];
+        postNeeds.AddRange(testNeeds.Where(i => !needs.Contains(i)));
+        postNeeds.AddRange(buildNeeds.Where(i => !needs.Contains(i)));
+        postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
+        var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. postNeeds], condition: "always()");
+        AddJobEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
+        AddJobStepCheckout(postSetupJob);
+        var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
+        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/output");
+        AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
+        AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
+        string runResultScript = "";
+        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        {
+            if (!string.IsNullOrEmpty(runResultScript))
+            {
+                runResultScript += "\n";
+            }
+            runResultScript += "echo \"##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id + "]$[ dependencies." + entryDefinition.Id + ".result ]\"";
+        }
+        AddJobStep(postSetupJob, name: "NUKE_RUN_RESULT", displayName: $"Resolve NUKE_RUN_RESULT", script: runResultScript);
+        var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
+        AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
 
-        //// ██████████████████████████████████████
-        //// ██████████████ Pre Setup █████████████
-        //// ██████████████████████████████████████
-        //var preSetupJob = AddJob(workflow, "pre_setup", "Pre Setup", RunnerOS.Ubuntu2204);
-        //AddJobStepCheckout(preSetupJob, fetchDepth: 0);
-        //var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, RunnerOS.Ubuntu2204, "PipelinePreSetup", Id);
-        //AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_RELEASE", "./.nuke/temp/pre_setup_has_release.txt");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_ENTRIES", "./.nuke/temp/pre_setup_has_entries.txt");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_TEST", "./.nuke/temp/pre_setup_has_test.txt");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_BUILD", "./.nuke/temp/pre_setup_has_build.txt");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_HAS_PUBLISH", "./.nuke/temp/pre_setup_has_publish.txt");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT", "./.nuke/temp/pre_setup_output.json");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX", "./.nuke/temp/pre_setup_output_test_matrix.json");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX", "./.nuke/temp/pre_setup_output_build_matrix.json");
-        //AddJobOutputFromFile(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "./.nuke/temp/pre_setup_output_publish_matrix.json");
-        //needs.Add("pre_setup");
+        // ██████████████████████████████████████
+        // ███████████████ Write ████████████████
+        // ██████████████████████████████████████
+        var workflowDirPath = Nuke.Common.NukeBuild.RootDirectory;
+        var workflowPath = Nuke.Common.NukeBuild.RootDirectory / "azure-pipelines.yml";
 
-        //// ██████████████████████████████████████
-        //// ████████████████ Test ████████████████
-        //// ██████████████████████████████████████
-        //var testJob = AddJob(workflow, "test", "Test", "$(nuke_pool_name)", "$(nuke_pool_vm_image)", needs: [.. needs], condition: "succeeded()");
-        //AddJobEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-        //AddJobMatrixIncludeFromPreSetup(testJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
-        //AddJobStepCheckout(testJob, condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreTestRun(step));
-        //var cacheTestStep = AddJobStep(testJob, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepInputs(cacheTestStep, "path", "./.nuke/cache");
-        //AddJobStepInputs(cacheTestStep, "key", $"""
-        //    "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"
-        //    """);
-        //AddJobStepInputs(cacheTestStep, "restoreKeys", $"""
-        //    "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
-        //    "test" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
-        //    """);
-        //var nukeTestStep = AddJobStepNukeRun(testJob, "$(nuke_run_script)", "PipelineTest", "$(nuke_entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepsFromBuilder(testJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostTestRun(step));
-        //AddStepEnvVarFromSecretMap(nukeTestStep, appTestEntrySecretMap);
-        //needs.Add("test");
+        Directory.CreateDirectory(workflowDirPath);
+        File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
 
-        //// ██████████████████████████████████████
-        //// ███████████████ Build ████████████████
-        //// ██████████████████████████████████████
-        //var buildJob = AddJob(workflow, "build", "Build", "$(nuke_pool_name)", "$(nuke_pool_vm_image)", needs: [.. needs], condition: "succeeded()");
-        //AddJobMatrixIncludeFromPreSetup(buildJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
-        //AddJobEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-        //AddJobStepCheckout(buildJob, condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPreBuildRun(step));
-        //var cacheBuildStep = AddJobStep(buildJob, displayName: "Cache Build", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepInputs(cacheBuildStep, "path", "./.nuke/cache");
-        //AddJobStepInputs(cacheBuildStep, "key", $"""
-        //    "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"
-        //    """);
-        //AddJobStepInputs(cacheBuildStep, "restoreKeys", $"""
-        //    "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
-        //    "build" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
-        //    """);
-        //var nukeBuildStep = AddJobStepNukeRun(buildJob, "$(nuke_run_script)", "PipelineBuild", "$(nuke_entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddStepEnvVarFromSecretMap(nukeBuildStep, appEntrySecretMap);
-        //AddJobStepsFromBuilder(buildJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostBuildRun(step));
-        //var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepInputs(uploadBuildStep, "artifact", "$(nuke_entry_id)");
-        //AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
-        //AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
-        //needs.Add("build");
+        Log.Information("Workflow built at " + workflowPath.ToString());
+    }
 
-        //// ██████████████████████████████████████
-        //// ██████████████ Publish ███████████████
-        //// ██████████████████████████████████████
-        //var publishJob = AddJob(workflow, "publish", "Publish", "$(nuke_pool_name)", "$(nuke_pool_vm_image)", needs: [.. needs], condition: "succeeded()");
-        //AddJobEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-        //AddJobMatrixIncludeFromPreSetup(publishJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
-        //AddJobStepCheckout(publishJob, condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepInputs(downloadPublishStep, "artifact", "$(nuke_entry_id)");
-        //AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
-        //AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
-        //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPrePublishRun(step));
-        //var cachePublishStep = AddJobStep(publishJob, displayName: "Cache Publish", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddJobStepInputs(cachePublishStep, "path", "./.nuke/cache");
-        //AddJobStepInputs(cachePublishStep, "key", $"""
-        //    "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)" | "$(nuke_run_identifier)"
-        //    """);
-        //AddJobStepInputs(cachePublishStep, "restoreKeys", $"""
-        //    "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "$(nuke_run_classification)"
-        //    "publish" | "$(nuke_runner_name)" | "$(nuke_entry_id)" | "$(nuke_cache_invalidator)" | "$(nuke_environment)" | "main"
-        //    """);
-        //var nukePublishStep = AddJobStepNukeRun(publishJob, "$(nuke_run_script)", "PipelinePublish", "$(nuke_entry_ids_to_run)", condition: "ne(variables['nuke_entry_id'], 'skip')");
-        //AddStepEnvVarFromSecretMap(nukePublishStep, appEntrySecretMap);
-        //AddJobStepsFromBuilder(publishJob, workflowBuilders, (wb, step) => wb.WorkflowBuilderPostPublishRun(step));
-        //needs.Add("publish");
+    private static async Task ExportEnvVarRuntime(string entryId, string name, string? value)
+    {
+        await CliHelpers.RunOnce($"echo \"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name}]{value}\"");
+        await CliHelpers.RunOnce($"echo \"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name};isOutput=true]{value}\"");
+    }
 
-        //// ██████████████████████████████████████
-        //// ███████████ Run Validation ███████████
-        //// ██████████████████████████████████████
-        //var runValidationJob = AddJob(workflow, "run_validation", "Run Validation", RunnerOS.Ubuntu2204, needs: [.. needs], condition: "succeeded()");
-        //AddJobEnvVar(runValidationJob, "NUKE_RUN_SUCCESS_AZURE", "$[ dependencies.publish.result ]");
-        //AddJobStep(runValidationJob, displayName: $"Resolve NUKE_RUN_SUCCESS",
-        //    script: $"echo \"##vso[task.setvariable variable=NUKE_RUN_SUCCESS]${{NUKE_RUN_SUCCESS_AZURE/Succeeded/ok}}\"");
-        //AddJobStep(runValidationJob, displayName: $"Output NUKE_RUN_SUCCESS",
-        //    script: $"echo \"##vso[task.setvariable variable=NUKE_RUN_SUCCESS]$NUKE_RUN_SUCCESS\" && echo \"##vso[task.setvariable variable=NUKE_RUN_SUCCESS;isOutput=true]$NUKE_RUN_SUCCESS\"");
-        //needs.Add("run_validation");
+    private static string GetImportedEnvVarName(string entryId, string name)
+    {
+        return "dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_" + entryId + "_" + name + "']";
+    }
 
-        //// ██████████████████████████████████████
-        //// █████████████ Post Setup █████████████
-        //// ██████████████████████████████████████
-        //var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. needs], condition: "always()");
-        //AddJobEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP_OUTPUT", "pre_setup");
-        //AddJobEnvVar(postSetupJob, "NUKE_PUBLISH_SUCCESS_AZURE", "$[ dependencies.publish.result ]");
-        //AddJobStep(postSetupJob, name: "NUKE_PUBLISH_SUCCESS", displayName: $"Resolve NUKE_PUBLISH_SUCCESS",
-        //    script: $"echo \"##vso[task.setvariable variable=NUKE_PUBLISH_SUCCESS]${{NUKE_PUBLISH_SUCCESS_AZURE/Succeeded/ok}}\"");
-        //AddJobStepCheckout(postSetupJob);
-        //var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-        //AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/output");
-        //AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
-        //AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
-        //var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
-        //AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
-
-        //// ██████████████████████████████████████
-        //// ███████████████ Write ████████████████
-        //// ██████████████████████████████████████
-        //var workflowDirPath = Nuke.Common.NukeBuild.RootDirectory;
-        //var workflowPath = Nuke.Common.NukeBuild.RootDirectory / "azure-pipelines.yml";
-
-        //Directory.CreateDirectory(workflowDirPath);
-        //File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
-
-        //Log.Information("Workflow built at " + workflowPath.ToString());
-
-        return Task.CompletedTask;
+    private static string GetImportedEnvVarExpression(string entryId, string name)
+    {
+        return "$[ " + GetImportedEnvVarName(entryId, name) + " ]";
     }
 
     private static void AddJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)
@@ -519,18 +408,33 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    //private static void AddJobStepsFromBuilder(Dictionary<string, object> job, List<WorkflowEntry> workflowBuilders, Action<WorkflowEntry, Dictionary<string, object>> toBuild)
-    //{
-    //    foreach (var workflowBuilder in workflowBuilders)
-    //    {
-    //        Dictionary<string, object> step = [];
-    //        toBuild.Invoke(workflowBuilder, step);
-    //        if (step.Count > 0)
-    //        {
-    //            ((List<object>)job["steps"]).Add(step);
-    //        }
-    //    }
-    //}
+    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IAzureWorkflowBuilder workflowBuilder, IEntryDefinition entryDefinition, string targetName)
+    {
+        AddJobStepCache(job, entryDefinition.Id);
+        foreach (var step in workflowBuilder.PreExecuteSteps)
+        {
+            ((List<object>)job["steps"]).Add(step);
+        }
+        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id, "RUN_SCRIPT"), targetName, name: "NUKE_RUN", args: entryDefinition.Id);
+        foreach (var step in workflowBuilder.PostExecuteSteps)
+        {
+            ((List<object>)job["steps"]).Add(step);
+        }
+    }
+
+    private static Dictionary<string, object> AddJobStepCache(Dictionary<string, object> job, string entryId)
+    {
+        var step = AddJobStep(job, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
+        AddJobStepInputs(step, "path", "./.nuke/cache");
+        AddJobStepInputs(step, "key", $"""
+            {GetImportedEnvVarExpression(entryId, "CACHE_KEY")}
+            """);
+        AddJobStepInputs(step, "restoreKeys", $"""
+            {GetImportedEnvVarExpression(entryId, "CACHE_RESTORE_KEY")}
+            {GetImportedEnvVarExpression(entryId, "CACHE_MAIN_RESTORE_KEY")}
+            """);
+        return step;
+    }
 
     private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string condition = "", int? fetchDepth = null)
     {
@@ -548,19 +452,19 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string args = "", string condition = "")
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string name = "", string args = "", string condition = "")
     {
         var script = $"{buildScript} {targetName}";
         if (!string.IsNullOrEmpty(args))
         {
             script += $" --args \"{args}\"";
         }
-        return AddJobStep(job, displayName: $"Run Nuke {targetName}", script: script, condition: condition);
+        return AddJobStep(job, displayName: $"Run Nuke {targetName}", name: name, script: script, condition: condition);
     }
 
-    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunnerOS runnerOS, string targetName, string args = "", string condition = "")
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunnerOS runnerOS, string targetName, string name = "", string args = "", string condition = "")
     {
-        return AddJobStepNukeRun(job, runnerOS.GetRunScript(PipelineType.Azure), targetName, args, condition);
+        return AddJobStepNukeRun(job, runnerOS.GetRunScript(PipelineType.Azure), targetName, name, args, condition);
     }
 
     private static void AddJobStepInputs(Dictionary<string, object> step, string name, string value)

@@ -32,6 +32,8 @@ public interface IEntryDefinition
 
     internal IRunContext? RunContext { get; set; }
 
+    internal Task GetWorkflowBuilder(IWorkflowBuilder workflowBuilder) => WorkflowBuilder?.Invoke(workflowBuilder) ?? Task.CompletedTask;
+
     internal async Task<string> GetName() => ValueHelpers.GetOrNullFail(await Name(ValueHelpers.GetOrNullFail(RunContext)));
 
     internal Task<bool> GetCondition() => Condition.Invoke(ValueHelpers.GetOrNullFail(RunContext));

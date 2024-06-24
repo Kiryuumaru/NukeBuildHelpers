@@ -1,0 +1,220 @@
+name: Nuke CICD Pipeline
+trigger:
+  batch: true
+  branches:
+    include:
+    - prerelease
+    - main
+  tags:
+    include:
+    - bump-*
+pr:
+  branches:
+    include:
+    - '**'
+jobs:
+- job: pre_setup
+  displayName: Pre Setup
+  pool:
+    name: Azure Pipelines
+    vmImage: ubuntu-22.04
+  steps:
+  - checkout: self
+    persistCredentials: true
+    fetchDepth: 0
+  - script: chmod +x ./build.sh && ./build.sh PipelinePreSetup
+    name: NUKE_RUN
+    displayName: Run Nuke PipelinePreSetup
+    env:
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
+- job: NugetBuildHelpersTest1
+  displayName: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME'] ]
+  pool:
+    name: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_NAME'] ]
+    vmImage: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_VM_IMAGE'] ]
+  steps:
+  - checkout: self
+    persistCredentials: true
+  - task: Cache@2
+    displayName: Cache Test
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY'] ]
+      restoreKeys: |-
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY'] ]
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY'] ]
+  - script: echo "Test azure 1"
+    name: test_azure_1
+    displayName: Custom azure step test 1
+  - script: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT'] ] PipelineTest --args "NugetBuildHelpersTest1"
+    name: NUKE_RUN
+    displayName: Run Nuke PipelineTest
+  - script: echo "Test azure 2"
+    name: test_azure_2
+    displayName: Custom azure step test 2
+  dependsOn:
+  - pre_setup
+  condition: and(succeeded(), eq(dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION'], 'true'))
+  variables:
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+- job: NugetBuildHelpersTest2
+  displayName: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME'] ]
+  pool:
+    name: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_NAME'] ]
+    vmImage: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_VM_IMAGE'] ]
+  steps:
+  - checkout: self
+    persistCredentials: true
+  - task: Cache@2
+    displayName: Cache Test
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY'] ]
+      restoreKeys: |-
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY'] ]
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY'] ]
+  - script: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT'] ] PipelineTest --args "NugetBuildHelpersTest2"
+    name: NUKE_RUN
+    displayName: Run Nuke PipelineTest
+  dependsOn:
+  - pre_setup
+  condition: and(succeeded(), eq(dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION'], 'true'))
+  variables:
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+- job: NugetBuildHelpersBuild1
+  displayName: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME'] ]
+  pool:
+    name: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_NAME'] ]
+    vmImage: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_VM_IMAGE'] ]
+  steps:
+  - checkout: self
+    persistCredentials: true
+  - task: Cache@2
+    displayName: Cache Test
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY'] ]
+      restoreKeys: |-
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY'] ]
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY'] ]
+  - script: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT'] ] PipelineBuild --args "NugetBuildHelpersBuild1"
+    name: NUKE_RUN
+    displayName: Run Nuke PipelineBuild
+  - task: PublishPipelineArtifact@1
+    displayName: Upload Artifacts
+    inputs:
+      artifact: $(nuke_entry_id)
+      targetPath: ./.nuke/output
+      continueOnError: true
+  dependsOn:
+  - pre_setup
+  - NugetBuildHelpersTest1
+  - NugetBuildHelpersTest2
+  condition: and(succeeded(), eq(dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION'], 'true'))
+  variables:
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+- job: NugetBuildHelpersBuild2
+  displayName: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME'] ]
+  pool:
+    name: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_NAME'] ]
+    vmImage: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_VM_IMAGE'] ]
+  steps:
+  - checkout: self
+    persistCredentials: true
+  - task: Cache@2
+    displayName: Cache Test
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY'] ]
+      restoreKeys: |-
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY'] ]
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY'] ]
+  - script: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT'] ] PipelineBuild --args "NugetBuildHelpersBuild2"
+    name: NUKE_RUN
+    displayName: Run Nuke PipelineBuild
+  - task: PublishPipelineArtifact@1
+    displayName: Upload Artifacts
+    inputs:
+      artifact: $(nuke_entry_id)
+      targetPath: ./.nuke/output
+      continueOnError: true
+  dependsOn:
+  - pre_setup
+  - NugetBuildHelpersTest1
+  - NugetBuildHelpersTest2
+  condition: and(succeeded(), eq(dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION'], 'true'))
+  variables:
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+- job: NugetBuildHelpersPublish
+  displayName: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME'] ]
+  pool:
+    name: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_NAME'] ]
+    vmImage: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_VM_IMAGE'] ]
+  steps:
+  - checkout: self
+    persistCredentials: true
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Artifacts
+    inputs:
+      artifact: $(nuke_entry_id)
+      path: ./.nuke/output
+      continueOnError: true
+  - task: Cache@2
+    displayName: Cache Test
+    condition: ne(variables['nuke_entry_id'], 'skip')
+    inputs:
+      path: ./.nuke/cache
+      key: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY'] ]
+      restoreKeys: |-
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_RESTORE_KEY'] ]
+        $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY'] ]
+  - script: $[ dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT'] ] PipelinePublish --args "NugetBuildHelpersPublish"
+    name: NUKE_RUN
+    displayName: Run Nuke PipelinePublish
+  dependsOn:
+  - pre_setup
+  - NugetBuildHelpersBuild1
+  - NugetBuildHelpersBuild2
+  condition: and(succeeded(), eq(dependencies.pre_setup.outputs.['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION'], 'true'))
+  variables:
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+- job: post_setup
+  displayName: Post Setup
+  pool:
+    name: Azure Pipelines
+    vmImage: ubuntu-22.04
+  steps:
+  - checkout: self
+    persistCredentials: true
+  - task: DownloadPipelineArtifact@2
+    displayName: Download artifacts
+    inputs:
+      path: ./.nuke/output
+      patterns: '**'
+      continueOnError: true
+  - script: |-
+      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest1]$[ dependencies.NugetBuildHelpersTest1.result ]"
+      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest2]$[ dependencies.NugetBuildHelpersTest2.result ]"
+      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild1]$[ dependencies.NugetBuildHelpersBuild1.result ]"
+      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild2]$[ dependencies.NugetBuildHelpersBuild2.result ]"
+      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersPublish]$[ dependencies.NugetBuildHelpersPublish.result ]"
+    name: NUKE_RUN_RESULT
+    displayName: Resolve NUKE_RUN_RESULT
+  - script: chmod +x ./build.sh && ./build.sh PipelinePostSetup
+    displayName: Run Nuke PipelinePostSetup
+    env:
+      GITHUB_TOKEN: $(GITHUB_TOKEN)
+  dependsOn:
+  - pre_setup
+  - NugetBuildHelpersTest1
+  - NugetBuildHelpersTest2
+  - NugetBuildHelpersBuild1
+  - NugetBuildHelpersBuild2
+  - NugetBuildHelpersPublish
+  condition: always()
+  variables:
+    NUKE_PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT.NUKE_PRE_SETUP_OUTPUT'] ]

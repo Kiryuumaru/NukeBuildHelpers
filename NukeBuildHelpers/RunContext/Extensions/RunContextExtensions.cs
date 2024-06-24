@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.RunContext.Extensions;
 
-public static class IRunContextExtensions
+public static class RunContextExtensions
 {
     public static bool TryGetContext<TRunContext>(this IRunContext runContext, [NotNullWhen(true)] out TRunContext? context)
         where TRunContext : IRunContext

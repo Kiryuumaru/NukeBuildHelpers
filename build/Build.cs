@@ -6,6 +6,8 @@ using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Entry.Extensions;
+using NukeBuildHelpers.Pipelines.Azure.Extensions;
+using NukeBuildHelpers.Pipelines.Github.Extensions;
 using NukeBuildHelpers.RunContext.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
 using Semver;
@@ -29,6 +31,39 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuget_build_helpers")
         .Name("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .WorkflowBuilder(builder =>
+        {
+            if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
+            {
+                githubWorkflowBuilder.AddPostExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                {
+                    { "id", "test_github_2" },
+                    { "name", "Custom github step test 2" },
+                    { "run", "echo \"Test github 2\"" },
+                });
+                githubWorkflowBuilder.AddPreExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                {
+                    { "id", "test_github_1" },
+                    { "name", "Custom github step test 1" },
+                    { "run", "echo \"Test github 1\"" },
+                });
+            }
+            if (builder.TryGetAzureWorkflowBuilder(out var azureWorkflowBuilder))
+            {
+                azureWorkflowBuilder.AddPostExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                {
+                    { "script", "echo \"Test azure 2\"" },
+                    { "name", "test_azure_2" },
+                    { "displayName", "Custom azure step test 2" },
+                });
+                azureWorkflowBuilder.AddPreExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                {
+                    { "script", "echo \"Test azure 1\"" },
+                    { "name", "test_azure_1" },
+                    { "displayName", "Custom azure step test 1" },
+                });
+            }
+        })
         .Execute(() =>
         {
             DotNetTasks.DotNetClean(_ => _
@@ -79,7 +114,7 @@ class Build : BaseNukeBuildHelpers
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
                 .SetPackageReleaseNotes(releaseNotes)
-                .SetOutputDirectory(OutputDirectory));
+                .SetOutputDirectory(OutputDirectory / "main"));
         });
 
     BuildEntry NugetBuildHelpersBuild2 => _ => _
@@ -112,7 +147,7 @@ class Build : BaseNukeBuildHelpers
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
                 .SetPackageReleaseNotes(releaseNotes)
-                .SetOutputDirectory(OutputDirectory / "extra"));
+                .SetOutputDirectory(OutputDirectory / "try"));
         });
 
     PublishEntry NugetBuildHelpersPublish => _ => _
@@ -129,11 +164,11 @@ class Build : BaseNukeBuildHelpers
                 DotNetTasks.DotNetNuGetPush(_ => _
                     .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
                     .SetApiKey(GithubToken)
-                    .SetTargetPath(OutputDirectory / "**"));
+                    .SetTargetPath(OutputDirectory / "main" / "**"));
                 DotNetTasks.DotNetNuGetPush(_ => _
                     .SetSource("https://api.nuget.org/v3/index.json")
                     .SetApiKey(NuGetAuthToken)
-                    .SetTargetPath(OutputDirectory / "**"));
+                    .SetTargetPath(OutputDirectory / "main" / "**"));
             }
         });
 }
