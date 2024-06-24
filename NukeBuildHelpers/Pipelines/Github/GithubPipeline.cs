@@ -83,6 +83,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             throw new Exception("NUKE_PRE_SETUP is empty");
         }
 
+        Log.Information("CCCCCCCCCCCCCCC: " + pipelinePreSetupValue);
+
         PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
 
         return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
