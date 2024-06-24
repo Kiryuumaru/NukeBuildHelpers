@@ -83,7 +83,7 @@ jobs:
       run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest1"
     needs:
     - pre_setup
-    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION }} == 'true'
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersTest2:
@@ -104,7 +104,7 @@ jobs:
       run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest2"
     needs:
     - pre_setup
-    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION }} == 'true'
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersBuild1:
@@ -134,7 +134,7 @@ jobs:
     - pre_setup
     - NugetBuildHelpersTest1
     - NugetBuildHelpersTest2
-    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION }} == 'true'
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersBuild2:
@@ -164,7 +164,7 @@ jobs:
     - pre_setup
     - NugetBuildHelpersTest1
     - NugetBuildHelpersTest2
-    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION }} == 'true'
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   NugetBuildHelpersPublish:
@@ -193,7 +193,7 @@ jobs:
     - pre_setup
     - NugetBuildHelpersBuild1
     - NugetBuildHelpersBuild2
-    if: success() && ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION }} == 'true'
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   post_setup:
