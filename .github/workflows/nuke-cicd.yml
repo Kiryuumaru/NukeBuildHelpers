@@ -203,16 +203,16 @@ jobs:
     - id: NUKE_RUN_RESULT
       name: Resolve NUKE_RUN_RESULT
       run: |-
-        NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest1=${{ needs.NugetBuildHelpersTest1.result }} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_GITHUB/cancelled/error}
-        echo "NUKE_RUN_RESULT_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest1}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest2=${{ needs.NugetBuildHelpersTest2.result }} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_GITHUB/cancelled/error}
-        echo "NUKE_RUN_RESULT_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest2}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild1=${{ needs.NugetBuildHelpersBuild1.result }} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild1=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild1=${NUKE_RUN_RESULT_GITHUB/cancelled/error}
-        echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild1=${NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild1}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild2=${{ needs.NugetBuildHelpersBuild2.result }} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild2=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild2=${NUKE_RUN_RESULT_GITHUB/cancelled/error}
-        echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild2=${NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild2}" >> $GITHUB_ENV
-        NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersPublish=${{ needs.NugetBuildHelpersPublish.result }} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_GITHUB/failure/error} && NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_GITHUB/cancelled/error}
-        echo "NUKE_RUN_RESULT_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersPublish}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_NugetBuildHelpersTest1=${{ needs.NugetBuildHelpersTest1.result }} && NUKE_RUN_RESULT_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_NugetBuildHelpersTest1/failure/error} && NUKE_RUN_RESULT_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_NugetBuildHelpersTest1/cancelled/error}
+        echo "NUKE_RUN_RESULT_NugetBuildHelpersTest1=${NUKE_RUN_RESULT_NugetBuildHelpersTest1}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_NugetBuildHelpersTest2=${{ needs.NugetBuildHelpersTest2.result }} && NUKE_RUN_RESULT_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_NugetBuildHelpersTest2/failure/error} && NUKE_RUN_RESULT_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_NugetBuildHelpersTest2/cancelled/error}
+        echo "NUKE_RUN_RESULT_NugetBuildHelpersTest2=${NUKE_RUN_RESULT_NugetBuildHelpersTest2}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_NugetBuildHelpersBuild1=${{ needs.NugetBuildHelpersBuild1.result }} && NUKE_RUN_RESULT_NugetBuildHelpersBuild1=${NUKE_RUN_RESULT_NugetBuildHelpersBuild1/failure/error} && NUKE_RUN_RESULT_NugetBuildHelpersBuild1=${NUKE_RUN_RESULT_NugetBuildHelpersBuild1/cancelled/error}
+        echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild1=${NUKE_RUN_RESULT_NugetBuildHelpersBuild1}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_NugetBuildHelpersBuild2=${{ needs.NugetBuildHelpersBuild2.result }} && NUKE_RUN_RESULT_NugetBuildHelpersBuild2=${NUKE_RUN_RESULT_NugetBuildHelpersBuild2/failure/error} && NUKE_RUN_RESULT_NugetBuildHelpersBuild2=${NUKE_RUN_RESULT_NugetBuildHelpersBuild2/cancelled/error}
+        echo "NUKE_RUN_RESULT_NugetBuildHelpersBuild2=${NUKE_RUN_RESULT_NugetBuildHelpersBuild2}" >> $GITHUB_ENV
+        NUKE_RUN_RESULT_NugetBuildHelpersPublish=${{ needs.NugetBuildHelpersPublish.result }} && NUKE_RUN_RESULT_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_NugetBuildHelpersPublish/failure/error} && NUKE_RUN_RESULT_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_NugetBuildHelpersPublish/cancelled/error}
+        echo "NUKE_RUN_RESULT_NugetBuildHelpersPublish=${NUKE_RUN_RESULT_NugetBuildHelpersPublish}" >> $GITHUB_ENV
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
