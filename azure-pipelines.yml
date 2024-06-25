@@ -28,10 +28,10 @@ jobs:
     env:
       GITHUB_TOKEN: $(GITHUB_TOKEN)
 - job: NugetBuildHelpersTest1
-  displayName: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME'] ]
+  displayName: $(NUKE_PRE_SETUP_NAME)
   pool:
-    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_NAME'] ]
-    vmImage: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_VM_IMAGE'] ]
+    name: $(NUKE_PRE_SETUP_POOL_NAME)
+    vmImage: $(NUKE_PRE_SETUP_POOL_VM_IMAGE)
   steps:
   - checkout: self
     persistCredentials: true
@@ -40,14 +40,14 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY'] ]
+      key: $(NUKE_PRE_SETUP_CACHE_KEY)
       restoreKeys: |-
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY'] ]
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY'] ]
+        $(NUKE_PRE_SETUP_CACHE_RESTORE_KEY)
+        $(NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY)
   - script: echo "Test azure 1"
     name: test_azure_1
     displayName: Custom azure step test 1
-  - script: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT'] ] PipelineTest --args "NugetBuildHelpersTest1"
+  - script: $(NUKE_PRE_SETUP_RUN_SCRIPT) PipelineTest --args "NugetBuildHelpersTest1"
     name: NUKE_RUN
     displayName: Run Nuke PipelineTest
   - script: echo "Test azure 2"
@@ -55,14 +55,22 @@ jobs:
     displayName: Custom azure step test 2
   dependsOn:
   - pre_setup
-  condition: and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION'], 'true'))
+  condition: and(succeeded(), eq(NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
-    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME'] ]
+    NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION'] ]
+    NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_NAME'] ]
+    NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_VM_IMAGE'] ]
+    NUKE_PRE_SETUP_RUN_SCRIPT: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT'] ]
+    NUKE_PRE_SETUP_CACHE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersTest2
-  displayName: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME'] ]
+  displayName: $(NUKE_PRE_SETUP_NAME)
   pool:
-    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_NAME'] ]
-    vmImage: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_VM_IMAGE'] ]
+    name: $(NUKE_PRE_SETUP_POOL_NAME)
+    vmImage: $(NUKE_PRE_SETUP_POOL_VM_IMAGE)
   steps:
   - checkout: self
     persistCredentials: true
@@ -71,23 +79,31 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY'] ]
+      key: $(NUKE_PRE_SETUP_CACHE_KEY)
       restoreKeys: |-
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY'] ]
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY'] ]
-  - script: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT'] ] PipelineTest --args "NugetBuildHelpersTest2"
+        $(NUKE_PRE_SETUP_CACHE_RESTORE_KEY)
+        $(NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY)
+  - script: $(NUKE_PRE_SETUP_RUN_SCRIPT) PipelineTest --args "NugetBuildHelpersTest2"
     name: NUKE_RUN
     displayName: Run Nuke PipelineTest
   dependsOn:
   - pre_setup
-  condition: and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION'], 'true'))
+  condition: and(succeeded(), eq(NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
-    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME'] ]
+    NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION'] ]
+    NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_NAME'] ]
+    NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_VM_IMAGE'] ]
+    NUKE_PRE_SETUP_RUN_SCRIPT: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT'] ]
+    NUKE_PRE_SETUP_CACHE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersBuild1
-  displayName: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME'] ]
+  displayName: $(NUKE_PRE_SETUP_NAME)
   pool:
-    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_NAME'] ]
-    vmImage: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_VM_IMAGE'] ]
+    name: $(NUKE_PRE_SETUP_POOL_NAME)
+    vmImage: $(NUKE_PRE_SETUP_POOL_VM_IMAGE)
   steps:
   - checkout: self
     persistCredentials: true
@@ -96,11 +112,11 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY'] ]
+      key: $(NUKE_PRE_SETUP_CACHE_KEY)
       restoreKeys: |-
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY'] ]
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY'] ]
-  - script: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT'] ] PipelineBuild --args "NugetBuildHelpersBuild1"
+        $(NUKE_PRE_SETUP_CACHE_RESTORE_KEY)
+        $(NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY)
+  - script: $(NUKE_PRE_SETUP_RUN_SCRIPT) PipelineBuild --args "NugetBuildHelpersBuild1"
     name: NUKE_RUN
     displayName: Run Nuke PipelineBuild
   - task: PublishPipelineArtifact@1
@@ -113,14 +129,22 @@ jobs:
   - pre_setup
   - NugetBuildHelpersTest1
   - NugetBuildHelpersTest2
-  condition: and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION'], 'true'))
+  condition: and(succeeded(), eq(NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
-    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME'] ]
+    NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION'] ]
+    NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_NAME'] ]
+    NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_VM_IMAGE'] ]
+    NUKE_PRE_SETUP_RUN_SCRIPT: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT'] ]
+    NUKE_PRE_SETUP_CACHE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersBuild2
-  displayName: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME'] ]
+  displayName: $(NUKE_PRE_SETUP_NAME)
   pool:
-    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_NAME'] ]
-    vmImage: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_VM_IMAGE'] ]
+    name: $(NUKE_PRE_SETUP_POOL_NAME)
+    vmImage: $(NUKE_PRE_SETUP_POOL_VM_IMAGE)
   steps:
   - checkout: self
     persistCredentials: true
@@ -129,11 +153,11 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY'] ]
+      key: $(NUKE_PRE_SETUP_CACHE_KEY)
       restoreKeys: |-
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY'] ]
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY'] ]
-  - script: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT'] ] PipelineBuild --args "NugetBuildHelpersBuild2"
+        $(NUKE_PRE_SETUP_CACHE_RESTORE_KEY)
+        $(NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY)
+  - script: $(NUKE_PRE_SETUP_RUN_SCRIPT) PipelineBuild --args "NugetBuildHelpersBuild2"
     name: NUKE_RUN
     displayName: Run Nuke PipelineBuild
   - task: PublishPipelineArtifact@1
@@ -146,14 +170,22 @@ jobs:
   - pre_setup
   - NugetBuildHelpersTest1
   - NugetBuildHelpersTest2
-  condition: and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION'], 'true'))
+  condition: and(succeeded(), eq(NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
-    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME'] ]
+    NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION'] ]
+    NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_NAME'] ]
+    NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_VM_IMAGE'] ]
+    NUKE_PRE_SETUP_RUN_SCRIPT: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT'] ]
+    NUKE_PRE_SETUP_CACHE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersPublish
-  displayName: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME'] ]
+  displayName: $(NUKE_PRE_SETUP_NAME)
   pool:
-    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_NAME'] ]
-    vmImage: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_VM_IMAGE'] ]
+    name: $(NUKE_PRE_SETUP_POOL_NAME)
+    vmImage: $(NUKE_PRE_SETUP_POOL_VM_IMAGE)
   steps:
   - checkout: self
     persistCredentials: true
@@ -168,20 +200,28 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY'] ]
+      key: $(NUKE_PRE_SETUP_CACHE_KEY)
       restoreKeys: |-
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_RESTORE_KEY'] ]
-        $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY'] ]
-  - script: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT'] ] PipelinePublish --args "NugetBuildHelpersPublish"
+        $(NUKE_PRE_SETUP_CACHE_RESTORE_KEY)
+        $(NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY)
+  - script: $(NUKE_PRE_SETUP_RUN_SCRIPT) PipelinePublish --args "NugetBuildHelpersPublish"
     name: NUKE_RUN
     displayName: Run Nuke PipelinePublish
   dependsOn:
   - pre_setup
   - NugetBuildHelpersBuild1
   - NugetBuildHelpersBuild2
-  condition: and(succeeded(), eq(dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION'], 'true'))
+  condition: and(succeeded(), eq(NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
-    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
+    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME'] ]
+    NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION'] ]
+    NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_NAME'] ]
+    NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_VM_IMAGE'] ]
+    NUKE_PRE_SETUP_RUN_SCRIPT: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT'] ]
+    NUKE_PRE_SETUP_CACHE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_RESTORE_KEY'] ]
+    NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY'] ]
 - job: post_setup
   displayName: Post Setup
   pool:
@@ -217,4 +257,4 @@ jobs:
   - NugetBuildHelpersPublish
   condition: always()
   variables:
-    NUKE_PRE_SETUP_OUTPUT: $[ dependencies.pre_setup.outputs['NUKE_PRE_SETUP_OUTPUT.NUKE_PRE_SETUP_OUTPUT'] ]
+    NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]

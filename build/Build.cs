@@ -1,3 +1,4 @@
+using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
@@ -12,6 +13,7 @@ using NukeBuildHelpers.RunContext.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
 using Semver;
 using Serilog;
+using System.Linq;
 
 class Build : BaseNukeBuildHelpers
 {
@@ -26,6 +28,22 @@ class Build : BaseNukeBuildHelpers
 
     [SecretVariable("GITHUB_TOKEN")]
     readonly string? GithubToken;
+
+    Target Clean => _ => _
+        .Executes(() =>
+        {
+            foreach (var path in RootDirectory.GetFiles("**", 99).Where(i => i.Name.EndsWith(".csproj")))
+            {
+                if (path.Name == "_build.csproj")
+                {
+                    continue;
+                }
+                Log.Information("Cleaning {path}", path);
+                (path.Parent / "bin").DeleteDirectory();
+                (path.Parent / "obj").DeleteDirectory();
+            }
+            (RootDirectory / ".vs").DeleteDirectory();
+        });
 
     TestEntry NugetBuildHelpersTest1 => _ => _
         .AppId("nuget_build_helpers")
