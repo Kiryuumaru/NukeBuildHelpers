@@ -117,7 +117,7 @@ jobs:
   - task: PublishPipelineArtifact@1
     displayName: Upload Artifacts
     inputs:
-      artifact: nuget_build_helpers-NugetBuildHelpersBuild1
+      artifact: nuget_build_helpers--NugetBuildHelpersBuild1
       targetPath: ./.nuke/output
       continueOnError: true
   dependsOn:
@@ -156,7 +156,7 @@ jobs:
   - task: PublishPipelineArtifact@1
     displayName: Upload Artifacts
     inputs:
-      artifact: nuget_build_helpers-NugetBuildHelpersBuild2
+      artifact: nuget_build_helpers--NugetBuildHelpersBuild2
       targetPath: ./.nuke/output
       continueOnError: true
   dependsOn:
@@ -195,7 +195,7 @@ jobs:
   - task: PublishPipelineArtifact@1
     displayName: Upload Artifacts
     inputs:
-      artifact: nuget_build_helpers2-NugetBuildHelpersBuild3
+      artifact: nuget_build_helpers2--NugetBuildHelpersBuild3
       targetPath: ./.nuke/output
       continueOnError: true
   dependsOn:
@@ -223,7 +223,7 @@ jobs:
   - task: DownloadPipelineArtifact@2
     displayName: Download Artifacts
     inputs:
-      itemPattern: nuget_build_helpers-@(NugetBuildHelpersBuild1|NugetBuildHelpersBuild2)
+      itemPattern: nuget_build_helpers--@(NugetBuildHelpersBuild1|NugetBuildHelpersBuild2)/**
       path: ./.nuke/output
       continueOnError: true
   - task: Cache@2

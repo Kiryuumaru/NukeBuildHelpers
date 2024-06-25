@@ -133,7 +133,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuget_build_helpers-NugetBuildHelpersBuild1
+        name: nuget_build_helpers--NugetBuildHelpersBuild1
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -163,7 +163,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuget_build_helpers-NugetBuildHelpersBuild2
+        name: nuget_build_helpers--NugetBuildHelpersBuild2
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -193,7 +193,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuget_build_helpers2-NugetBuildHelpersBuild3
+        name: nuget_build_helpers2--NugetBuildHelpersBuild3
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -213,7 +213,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/output
-        pattern: nuget_build_helpers-*
+        pattern: nuget_build_helpers--*
         merge-multiple: true
     - name: Cache Run
       uses: actions/cache@v4
