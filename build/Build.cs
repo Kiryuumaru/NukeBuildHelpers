@@ -167,6 +167,39 @@ class Build : BaseNukeBuildHelpers
                 .SetOutputDirectory(OutputDirectory / "try"));
         });
 
+    BuildEntry NugetBuildHelpersBuild3 => _ => _
+        .AppId("nuget_build_helpers2")
+        .DisplayName("Build try 2")
+        .RunnerOS(RunnerOS.Windows2022)
+        .Execute(context => {
+            string version = "0.0.0";
+            string? releaseNotes = null;
+            if (context.TryGetBumpContext(out var bumpContext))
+            {
+                version = bumpContext.AppVersion.Version.ToString();
+                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+            }
+            else if (context.TryGetPullRequestContext(out var pullRequestContext))
+            {
+                version = pullRequestContext.AppVersion.Version.ToString();
+            }
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
+            DotNetTasks.DotNetBuild(_ => _
+                .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetConfiguration("Release"));
+            DotNetTasks.DotNetPack(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetConfiguration("Release")
+                .SetNoRestore(true)
+                .SetNoBuild(true)
+                .SetIncludeSymbols(true)
+                .SetSymbolPackageFormat("snupkg")
+                .SetVersion(version)
+                .SetPackageReleaseNotes(releaseNotes)
+                .SetOutputDirectory(OutputDirectory / "try 2"));
+        });
+
     PublishEntry NugetBuildHelpersPublish => _ => _
         .AppId("nuget_build_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)

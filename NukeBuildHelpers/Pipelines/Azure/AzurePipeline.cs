@@ -250,7 +250,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(buildJob);
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
             var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
-            AddJobStepInputs(uploadBuildStep, "artifact", entryDefinition.AppId + " - " + entryDefinition.Id);
+            AddJobStepInputs(uploadBuildStep, "artifact", entryDefinition.AppId + "-" + entryDefinition.Id);
             AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
             AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
             buildNeeds.Add(entryDefinition.Id);
@@ -269,7 +269,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id);
             AddJobStepCheckout(publishJob);
             var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPublishStep, "pattern", entryDefinition.AppId + " - *");
+            AddJobStepInputs(downloadPublishStep, "pattern", entryDefinition.AppId + "-*");
             AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
