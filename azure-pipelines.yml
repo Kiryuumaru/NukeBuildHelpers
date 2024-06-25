@@ -55,7 +55,6 @@ jobs:
     displayName: Custom azure step test 2
   dependsOn:
   - pre_setup
-  condition: and(succeeded(), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
     NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME'] ]
@@ -88,7 +87,6 @@ jobs:
     displayName: Run Nuke PipelineTest
   dependsOn:
   - pre_setup
-  condition: and(succeeded(), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
     NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME'] ]
