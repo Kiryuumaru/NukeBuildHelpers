@@ -1,5 +1,6 @@
 ﻿using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Identity.Client;
+using Newtonsoft.Json.Linq;
 using Nuke.Common;
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
@@ -21,6 +22,7 @@ using System.Text.Json;
 using System.Xml.Linq;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Tokens;
+using static Azure.Core.HttpHeader;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
 
@@ -114,15 +116,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await ExportEnvVarRuntime(entryId, "CACHE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\" | \"{runIdentifier}\"");
             await ExportEnvVarRuntime(entryId, "CACHE_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\"");
             await ExportEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"main\"");
-
-            Log.Information("NAME: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_NAME"));
-            Log.Information("CONDITION: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CONDITION"));
-            Log.Information("POOL_NAME: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_POOL_NAME"));
-            Log.Information("POOL_VM_IMAGE: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_POOL_VM_IMAGE"));
-            Log.Information("RUN_SCRIPT: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT"));
-            Log.Information("CACHE_KEY: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CACHE_KEY"));
-            Log.Information("CACHE_RESTORE_KEY: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CACHE_RESTORE_KEY"));
-            Log.Information("CACHE_MAIN_RESTORE_KEY: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CACHE_MAIN_RESTORE_KEY"));
         }
 
         foreach (var entryId in pipelinePreSetup.TestEntries)
@@ -166,7 +159,9 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
-        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT");
+        var nukePreSetupJson = JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption);
+        Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP]{nukePreSetupJson}");
+        Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP;isOutput=true]{nukePreSetupJson}");
     }
 
     public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
