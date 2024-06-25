@@ -22,7 +22,6 @@ using System.Text.Json;
 using System.Xml.Linq;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Tokens;
-using static Azure.Core.HttpHeader;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
 
@@ -108,14 +107,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             runClassification = runClassification.Replace("-", ".");
             runIdentifier = runIdentifier.Replace("-", ".");
 
-            await ExportEnvVarRuntime(entryId, "NAME", name);
-            await ExportEnvVarRuntime(entryId, "CONDITION", condition ? "true" : "false");
-            await ExportEnvVarRuntime(entryId, "POOL_NAME", poolName);
-            await ExportEnvVarRuntime(entryId, "POOL_VM_IMAGE", poolVmImage);
-            await ExportEnvVarRuntime(entryId, "RUN_SCRIPT", runsScript);
-            await ExportEnvVarRuntime(entryId, "CACHE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\" | \"{runIdentifier}\"");
-            await ExportEnvVarRuntime(entryId, "CACHE_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\"");
-            await ExportEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"main\"");
+            await ExportPreSetupEnvVarRuntime(entryId, "NAME", name);
+            await ExportPreSetupEnvVarRuntime(entryId, "CONDITION", condition ? "true" : "false");
+            await ExportPreSetupEnvVarRuntime(entryId, "POOL_NAME", poolName);
+            await ExportPreSetupEnvVarRuntime(entryId, "POOL_VM_IMAGE", poolVmImage);
+            await ExportPreSetupEnvVarRuntime(entryId, "RUN_SCRIPT", runsScript);
+            await ExportPreSetupEnvVarRuntime(entryId, "CACHE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\" | \"{runIdentifier}\"");
+            await ExportPreSetupEnvVarRuntime(entryId, "CACHE_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\"");
+            await ExportPreSetupEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"main\"");
         }
 
         foreach (var entryId in pipelinePreSetup.TestEntries)
@@ -159,9 +158,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
-        var nukePreSetupJson = JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption);
-        Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP]{nukePreSetupJson}");
-        Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP;isOutput=true]{nukePreSetupJson}");
+        await ExportEnvVarRuntime("NUKE_PRE_SETUP", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption));
     }
 
     public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
@@ -347,13 +344,18 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
     }
 
-    private static Task ExportEnvVarRuntime(string entryId, string name, string? value)
+    private static Task ExportEnvVarRuntime(string name, string? value)
     {
         return Task.Run(() =>
         {
-            Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name}]{value}");
-            Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name};isOutput=true]{value}");
+            Console.WriteLine($"##vso[task.setvariable variable={name}]{value}");
+            Console.WriteLine($"##vso[task.setvariable variable={name};isOutput=true]{value}");
         });
+    }
+
+    private static Task ExportPreSetupEnvVarRuntime(string entryId, string name, string? value)
+    {
+        return ExportEnvVarRuntime($"NUKE_PRE_SETUP_{entryId}_{name}", value);
     }
 
     private static string GetImportedEnvVarName(string name)
