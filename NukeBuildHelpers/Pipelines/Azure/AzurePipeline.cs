@@ -424,7 +424,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJobStepCache(Dictionary<string, object> job)
     {
-        var step = AddJobStep(job, displayName: "Cache Test", task: "Cache@2", condition: "ne(variables['nuke_entry_id'], 'skip')");
+        var step = AddJobStep(job, displayName: "Cache Run", task: "Cache@2");
         AddJobStepInputs(step, "path", "./.nuke/cache");
         AddJobStepInputs(step, "key", $"""
             {GetImportedEnvVarExpression("CACHE_KEY")}

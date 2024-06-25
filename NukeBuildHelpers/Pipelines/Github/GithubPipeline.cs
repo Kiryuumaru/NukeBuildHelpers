@@ -416,7 +416,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJobStepCache(Dictionary<string, object> job, string entryId)
     {
-        var step = AddJobStep(job, name: "Cache Test", uses: "actions/cache@v4");
+        var step = AddJobStep(job, name: "Cache Run", uses: "actions/cache@v4");
         AddJobStepWith(step, "path", "./.nuke/cache");
         AddJobStepWith(step, "key", $"""
             {GetImportedEnvVarExpression(entryId, "CACHE_KEY")}

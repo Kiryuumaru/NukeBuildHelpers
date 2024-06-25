@@ -36,8 +36,7 @@ jobs:
   - checkout: self
     persistCredentials: true
   - task: Cache@2
-    displayName: Cache Test
-    condition: ne(variables['nuke_entry_id'], 'skip')
+    displayName: Cache Run
     inputs:
       path: ./.nuke/cache
       key: $(NUKE_PRE_SETUP_CACHE_KEY)
@@ -74,8 +73,7 @@ jobs:
   - checkout: self
     persistCredentials: true
   - task: Cache@2
-    displayName: Cache Test
-    condition: ne(variables['nuke_entry_id'], 'skip')
+    displayName: Cache Run
     inputs:
       path: ./.nuke/cache
       key: $(NUKE_PRE_SETUP_CACHE_KEY)
@@ -106,8 +104,7 @@ jobs:
   - checkout: self
     persistCredentials: true
   - task: Cache@2
-    displayName: Cache Test
-    condition: ne(variables['nuke_entry_id'], 'skip')
+    displayName: Cache Run
     inputs:
       path: ./.nuke/cache
       key: $(NUKE_PRE_SETUP_CACHE_KEY)
@@ -146,8 +143,7 @@ jobs:
   - checkout: self
     persistCredentials: true
   - task: Cache@2
-    displayName: Cache Test
-    condition: ne(variables['nuke_entry_id'], 'skip')
+    displayName: Cache Run
     inputs:
       path: ./.nuke/cache
       key: $(NUKE_PRE_SETUP_CACHE_KEY)
@@ -186,8 +182,7 @@ jobs:
   - checkout: self
     persistCredentials: true
   - task: Cache@2
-    displayName: Cache Test
-    condition: ne(variables['nuke_entry_id'], 'skip')
+    displayName: Cache Run
     inputs:
       path: ./.nuke/cache
       key: $(NUKE_PRE_SETUP_CACHE_KEY)
@@ -232,8 +227,7 @@ jobs:
       path: ./.nuke/output
       continueOnError: true
   - task: Cache@2
-    displayName: Cache Test
-    condition: ne(variables['nuke_entry_id'], 'skip')
+    displayName: Cache Run
     inputs:
       path: ./.nuke/cache
       key: $(NUKE_PRE_SETUP_CACHE_KEY)
