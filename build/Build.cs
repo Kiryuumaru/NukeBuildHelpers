@@ -164,7 +164,7 @@ class Build : BaseNukeBuildHelpers
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
                 .SetPackageReleaseNotes(releaseNotes)
-                .SetOutputDirectory(OutputDirectory / "try"));
+                .SetOutputDirectory(OutputDirectory / "try" / "awdawd"));
         });
 
     BuildEntry NugetBuildHelpersBuild3 => _ => _
