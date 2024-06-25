@@ -58,7 +58,6 @@ jobs:
   condition: and(succeeded(), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
-    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION'] ]
     NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_NAME'] ]
     NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_VM_IMAGE'] ]
@@ -91,7 +90,6 @@ jobs:
   condition: and(succeeded(), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
-    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION'] ]
     NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_NAME'] ]
     NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_VM_IMAGE'] ]
@@ -132,7 +130,6 @@ jobs:
   condition: and(succeeded(), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
-    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION'] ]
     NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_NAME'] ]
     NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_VM_IMAGE'] ]
@@ -173,7 +170,6 @@ jobs:
   condition: and(succeeded(), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
-    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION'] ]
     NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_NAME'] ]
     NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_VM_IMAGE'] ]
@@ -220,7 +216,6 @@ jobs:
   condition: and(succeeded(), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
-    NUKE_PRE_SETUP_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION'] ]
     NUKE_PRE_SETUP_POOL_NAME: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_NAME'] ]
     NUKE_PRE_SETUP_POOL_VM_IMAGE: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_VM_IMAGE'] ]

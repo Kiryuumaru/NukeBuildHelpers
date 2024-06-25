@@ -47,7 +47,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NugetBuildHelpersTest1 => _ => _
         .AppId("nuget_build_helpers")
-        .Name("Test try 1")
+        .DisplayName("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .WorkflowBuilder(builder =>
         {
@@ -92,7 +92,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NugetBuildHelpersTest2 => _ => _
         .AppId("nuget_build_helpers")
-        .Name("Test try 2")
+        .DisplayName("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
         {
@@ -104,7 +104,7 @@ class Build : BaseNukeBuildHelpers
 
     BuildEntry NugetBuildHelpersBuild1 => _ => _
         .AppId("nuget_build_helpers")
-        .Name("Build main")
+        .DisplayName("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context => {
             string version = "0.0.0";
@@ -137,7 +137,7 @@ class Build : BaseNukeBuildHelpers
 
     BuildEntry NugetBuildHelpersBuild2 => _ => _
         .AppId("nuget_build_helpers")
-        .Name("Build try")
+        .DisplayName("Build try")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(context => {
             string version = "0.0.0";

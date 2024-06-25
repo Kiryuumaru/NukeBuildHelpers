@@ -23,6 +23,7 @@ using System.Text.Json;
 using System.Xml.Linq;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Tokens;
+using static Azure.Core.HttpHeader;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
 
@@ -98,7 +99,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
-        async Task ExportEnvVarEntryRuntime(string entryId, string name, bool condition, string? poolName, string? poolVmImage, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
+        async Task ExportEnvVarEntryRuntime(string entryId, bool condition, string? poolName, string? poolVmImage, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
         {
             cacheFamily = cacheFamily.Replace("-", ".");
             osName = osName.Replace("-", ".");
@@ -108,7 +109,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             runClassification = runClassification.Replace("-", ".");
             runIdentifier = runIdentifier.Replace("-", ".");
 
-            await ExportPreSetupEnvVarRuntime(entryId, "NAME", name);
             await ExportPreSetupEnvVarRuntime(entryId, "CONDITION", condition ? "true" : "false");
             await ExportPreSetupEnvVarRuntime(entryId, "POOL_NAME", poolName);
             await ExportPreSetupEnvVarRuntime(entryId, "POOL_VM_IMAGE", poolVmImage);
@@ -131,7 +131,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
             RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
 
         foreach (var entryId in pipelinePreSetup.BuildEntries)
@@ -143,7 +143,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
             RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
 
         foreach (var entryId in pipelinePreSetup.PublishEntries)
@@ -155,7 +155,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
             RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "publish", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "publish", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
@@ -222,11 +222,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             ["jobs"] = new List<object>()
         };
 
-        IRunContext runContext = new LocalContext()
-        {
-            RunType = RunType.Local
-        };
-
         // ██████████████████████████████████████
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
@@ -245,8 +240,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            entryDefinition.RunContext = runContext;
-            var testJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetName(), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. needs], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
+            var testJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. needs], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
             AddJobEnvVarFromNeeds(testJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id);
             AddJobStepCheckout(testJob);
@@ -262,8 +256,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            entryDefinition.RunContext = runContext;
-            var buildJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetName(), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. testNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
+            var buildJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. testNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
             AddJobEnvVarFromNeeds(buildJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id);
             AddJobStepCheckout(buildJob);
@@ -283,8 +276,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            entryDefinition.RunContext = runContext;
-            var publishJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetName(), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. buildNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
+            var publishJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. buildNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
             AddJobEnvVarFromNeeds(publishJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id);
             AddJobStepCheckout(publishJob);
@@ -343,7 +335,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         foreach (var varName in new string[]
         {
-            "NAME",
             "CONDITION",
             "POOL_NAME",
             "POOL_VM_IMAGE",
@@ -353,7 +344,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             "CACHE_MAIN_RESTORE_KEY",
         })
         {
-            AddJobEnvVar(job, $"NUKE_PRE_SETUP_{varName}", $"$[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_{entryId}_{varName}'] ]");
+            AddJobEnvVar(job, GetImportedEnvVarName(varName), $"$[ dependencies.pre_setup.outputs['NUKE_RUN.{GetImportedEnvVarName(entryId + "_" + varName)}'] ]");
         }
     }
 
@@ -368,7 +359,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Task ExportPreSetupEnvVarRuntime(string entryId, string name, string? value)
     {
-        return ExportEnvVarRuntime($"NUKE_PRE_SETUP_{entryId}_{name}", value);
+        return ExportEnvVarRuntime(GetImportedEnvVarName($"{entryId}_{name}"), value);
     }
 
     private static string GetImportedEnvVarName(string name)
@@ -378,7 +369,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static string GetImportedEnvVarExpression(string name)
     {
-        return "$(NUKE_PRE_SETUP_" + name + ")";
+        return "$(" + GetImportedEnvVarName(name) + ")";
     }
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string? poolName, string? poolVMImage, IEnumerable<string>? needs = null, string condition = "")

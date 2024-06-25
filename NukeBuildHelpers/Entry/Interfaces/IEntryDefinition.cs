@@ -18,7 +18,7 @@ public interface IEntryDefinition
 
     internal Func<IWorkflowBuilder, Task>? WorkflowBuilder { get; set; }
 
-    internal Func<IRunContext, Task<string>> Name { get; set; }
+    internal Func<IWorkflowBuilder, Task<string>> DisplayName { get; set; }
 
     internal Func<IRunContext, Task<bool>> Condition { get; set; }
 
@@ -34,7 +34,7 @@ public interface IEntryDefinition
 
     internal Task GetWorkflowBuilder(IWorkflowBuilder workflowBuilder) => WorkflowBuilder?.Invoke(workflowBuilder) ?? Task.CompletedTask;
 
-    internal async Task<string> GetName() => ValueHelpers.GetOrNullFail(await Name(ValueHelpers.GetOrNullFail(RunContext)));
+    internal async Task<string> GetDisplayName(IWorkflowBuilder workflowBuilder) => ValueHelpers.GetOrNullFail(await DisplayName(workflowBuilder));
 
     internal Task<bool> GetCondition() => Condition.Invoke(ValueHelpers.GetOrNullFail(RunContext));
 

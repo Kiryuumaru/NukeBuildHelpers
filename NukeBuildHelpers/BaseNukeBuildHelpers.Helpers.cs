@@ -485,7 +485,6 @@ partial class BaseNukeBuildHelpers
             EntrySetup setup = new()
             {
                 Id = entry.Id,
-                Name = await entry.GetName(),
                 Condition = await entry.GetCondition(),
                 CacheInvalidator = await entry.GetCacheInvalidator(),
                 CachePaths = flatCachePaths.ToArray(),

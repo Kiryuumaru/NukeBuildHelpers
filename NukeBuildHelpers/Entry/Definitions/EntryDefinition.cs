@@ -16,7 +16,7 @@ internal abstract class EntryDefinition : IEntryDefinition
 {
     public required virtual string Id { get; set; }
 
-    Func<IRunContext, Task<string>>? name = null;
+    Func<IWorkflowBuilder, Task<string>>? name = null;
 
     Func<IRunContext, Task<bool>>? condition = null;
 
@@ -30,19 +30,19 @@ internal abstract class EntryDefinition : IEntryDefinition
         set => Id = value;
     }
 
-    Func<IRunContext, Task<string>> IEntryDefinition.Name
+    Func<IWorkflowBuilder, Task<string>> IEntryDefinition.DisplayName
     {
         get => name ?? (_ => Task.FromResult(GetDefaultName()));
         set => name = value;
     }
+
+    Func<IWorkflowBuilder, Task>? IEntryDefinition.WorkflowBuilder { get; set; }
 
     Func<IRunContext, Task<bool>> IEntryDefinition.Condition
     {
         get => condition ?? (runContext => GetDefaultCondition(runContext));
         set => condition = value;
     }
-
-    Func<IWorkflowBuilder, Task>? IEntryDefinition.WorkflowBuilder { get; set; }
 
     Func<IRunContext, Task<string>> IEntryDefinition.CacheInvalidator { get; set; } = _ => Task.FromResult("0");
 

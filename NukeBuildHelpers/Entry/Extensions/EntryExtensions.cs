@@ -33,24 +33,24 @@ public static class EntryExtensions
         return definition;
     }
 
-    public static TEntryDefinition Name<TEntryDefinition>(this TEntryDefinition definition, string name)
+    public static TEntryDefinition DisplayName<TEntryDefinition>(this TEntryDefinition definition, string displayName)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Name = _ => Task.Run(() => name);
+        definition.DisplayName = _ => Task.Run(() => displayName);
         return definition;
     }
 
-    public static TEntryDefinition Name<TEntryDefinition>(this TEntryDefinition definition, Func<string> name)
+    public static TEntryDefinition DisplayName<TEntryDefinition>(this TEntryDefinition definition, Func<string> displayName)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Name = _ => Task.Run(() => name());
+        definition.DisplayName = _ => Task.Run(() => displayName());
         return definition;
     }
 
-    public static TEntryDefinition Name<TEntryDefinition>(this TEntryDefinition definition, Func<Task<string>> name)
+    public static TEntryDefinition DisplayName<TEntryDefinition>(this TEntryDefinition definition, Func<Task<string>> displayName)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Name = _ => Task.Run(async () => await name());
+        definition.DisplayName = _ => Task.Run(async () => await displayName());
         return definition;
     }
 

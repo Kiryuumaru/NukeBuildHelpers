@@ -100,7 +100,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
-        async Task ExportEnvVarEntryRuntime(string entryId, string name, bool condition, string runsOn, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
+        async Task ExportEnvVarEntryRuntime(string entryId, bool condition, string runsOn, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
         {
             cacheFamily = cacheFamily.Replace("-", ".");
             osName = osName.Replace("-", ".");
@@ -110,7 +110,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             runClassification = runClassification.Replace("-", ".");
             runIdentifier = runIdentifier.Replace("-", ".");
 
-            await ExportEnvVarRuntime(entryId, "NAME", name);
             await ExportEnvVarRuntime(entryId, "CONDITION", condition ? "true" : "false");
             await ExportEnvVarRuntime(entryId, "RUNS_ON", runsOn);
             await ExportEnvVarRuntime(entryId, "RUN_SCRIPT", runsScript);
@@ -129,7 +128,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             string runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn! : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
 
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
 
         foreach (var entryId in pipelinePreSetup.BuildEntries)
@@ -142,7 +141,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             string runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn! : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
 
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
 
         foreach (var entryId in pipelinePreSetup.PublishEntries)
@@ -155,7 +154,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             string runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn! : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
 
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Name, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "publish", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "publish", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
@@ -236,7 +235,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "NAME");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "CONDITION");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "RUNS_ON");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id, "RUN_SCRIPT");
@@ -254,7 +252,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var testJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarExpression(entryDefinition.Id, "NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "RUNS_ON"), needs: [.. needs], _if: "success() && " + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + " == 'true'");
+            var testJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id, "RUNS_ON"), needs: [.. needs], _if: "success() && " + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + " == 'true'");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "pre_setup");
             AddJobStepCheckout(testJob);
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "PipelineTest");
@@ -269,7 +267,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var buildJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarExpression(entryDefinition.Id, "NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "RUNS_ON"), needs: [.. testNeeds], _if: "success() && " + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + " == 'true'");
+            var buildJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id, "RUNS_ON"), needs: [.. testNeeds], _if: "success() && " + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + " == 'true'");
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "pre_setup");
             AddJobStepCheckout(buildJob);
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
@@ -289,7 +287,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var publishJob = AddJob(workflow, entryDefinition.Id, GetImportedEnvVarExpression(entryDefinition.Id, "NAME"), GetImportedEnvVarExpression(entryDefinition.Id, "RUNS_ON"), needs: [.. buildNeeds], _if: "success() && " + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + " == 'true'");
+            var publishJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id, "RUNS_ON"), needs: [.. buildNeeds], _if: "success() && " + GetImportedEnvVarName(entryDefinition.Id, "CONDITION") + " == 'true'");
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "pre_setup");
             AddJobStepCheckout(publishJob);
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
