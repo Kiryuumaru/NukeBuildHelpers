@@ -30,8 +30,8 @@ jobs:
 - job: NugetBuildHelpersTest1
   displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: $(variables.NUKE_PRE_SETUP_POOL_NAME)
-    vmImage: $(variables.NUKE_PRE_SETUP_POOL_VM_IMAGE)
+    name: $(NUKE_PRE_SETUP_POOL_NAME)
+    vmImage: $(NUKE_PRE_SETUP_POOL_VM_IMAGE)
   steps:
   - checkout: self
     persistCredentials: true
@@ -68,8 +68,8 @@ jobs:
 - job: NugetBuildHelpersTest2
   displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: $(variables.NUKE_PRE_SETUP_POOL_NAME)
-    vmImage: $(variables.NUKE_PRE_SETUP_POOL_VM_IMAGE)
+    name: $(NUKE_PRE_SETUP_POOL_NAME)
+    vmImage: $(NUKE_PRE_SETUP_POOL_VM_IMAGE)
   steps:
   - checkout: self
     persistCredentials: true
