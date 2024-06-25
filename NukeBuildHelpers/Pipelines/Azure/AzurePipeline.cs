@@ -301,7 +301,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 runResultScript += "\n";
             }
-            runResultScript += "echo \"##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id + "]$[ dependencies." + entryDefinition.Id + ".result ]\"";
+            runResultScript += "echo \"##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id + "]$(dependencies." + entryDefinition.Id + ".result)\"";
         }
         AddJobStep(postSetupJob, name: "NUKE_RUN_RESULT", displayName: $"Resolve NUKE_RUN_RESULT", script: runResultScript);
         var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
