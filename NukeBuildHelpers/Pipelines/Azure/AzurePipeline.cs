@@ -356,22 +356,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static string GetImportedEnvVarExpression(string entryId, string name)
     {
-        return $"${{{{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_{entryId}_{name} }}}}";
-    }
-
-    private static void AddJobMatrixInclude(Dictionary<string, object> job, string matrixInclude)
-    {
-        if (!job.TryGetValue("strategy", out object? value))
-        {
-            value = new Dictionary<string, object>();
-            job["strategy"] = value;
-        }
-        ((Dictionary<string, object>)value)["matrix"] = matrixInclude;
-    }
-
-    private static void AddJobMatrixIncludeFromPreSetup(Dictionary<string, object> job, string outputName)
-    {
-        AddJobMatrixInclude(job, $"$[ dependencies.pre_setup.outputs['{outputName}.{outputName}'] ]");
+        return $"${{{{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_{entryId}_{name}'] }}}}";
     }
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string? poolName, string? poolVMImage, IEnumerable<string>? needs = null, string condition = "")
@@ -524,23 +509,5 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static void AddJobEnvVarFromNeeds(Dictionary<string, object> job, string needsId, string stepName, string envVarName)
     {
         AddJobEnvVar(job, envVarName, $"$[ dependencies.{needsId}.outputs['{stepName}.{envVarName}'] ]");
-    }
-
-    private static void AddStepEnvVarFromSecretMap(Dictionary<string, object> step, Dictionary<string, (Type EntryType, List<(MemberInfo MemberInfo, SecretVariableAttribute Secret)> Secrets)> secretMap)
-    {
-        foreach (var map in secretMap)
-        {
-            foreach (var secret in map.Value.Secrets)
-            {
-                var envVarName = string.IsNullOrEmpty(secret.Secret.EnvironmentVariableName) ? $"NUKE_{secret.Secret.SecretVariableName}" : secret.Secret.EnvironmentVariableName;
-                AddStepEnvVar(step, envVarName, $"$({secret.Secret.SecretVariableName})");
-            }
-        }
-    }
-
-    private static void AddJobOutputFromFile(Dictionary<string, object> job, string envVarName, string filename)
-    {
-        AddJobStep(job, name: envVarName, displayName: $"Output {envVarName}",
-            script: $"echo \"##vso[task.setvariable variable={envVarName}]$(cat {filename})\" && echo \"##vso[task.setvariable variable={envVarName};isOutput=true]$(cat {filename})\"");
     }
 }
