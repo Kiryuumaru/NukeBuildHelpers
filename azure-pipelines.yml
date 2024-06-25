@@ -68,7 +68,7 @@ jobs:
 - job: NugetBuildHelpersTest2
   displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_NAME'] ]
     vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
@@ -100,7 +100,7 @@ jobs:
 - job: NugetBuildHelpersBuild1
   displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_NAME'] ]
     vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
@@ -141,7 +141,7 @@ jobs:
 - job: NugetBuildHelpersBuild2
   displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_NAME'] ]
     vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
@@ -182,7 +182,7 @@ jobs:
 - job: NugetBuildHelpersPublish
   displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_NAME'] ]
     vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
