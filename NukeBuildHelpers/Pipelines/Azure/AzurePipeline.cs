@@ -352,10 +352,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
     }
 
-    private static async Task ExportEnvVarRuntime(string entryId, string name, string? value)
+    private static Task ExportEnvVarRuntime(string entryId, string name, string? value)
     {
-        Log.Information(await CliHelpers.RunOnce($"echo \"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name}]{value}\""));
-        Log.Information(await CliHelpers.RunOnce($"echo \"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name};isOutput=true]{value}\""));
+        return Task.Run(() =>
+        {
+            Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name}]{value}");
+            Console.WriteLine($"##vso[task.setvariable variable=NUKE_PRE_SETUP_{entryId}_{name};isOutput=true]{value}");
+        });
     }
 
     private static string GetImportedEnvVarName(string name)
