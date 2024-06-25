@@ -1,4 +1,5 @@
 ﻿using Nuke.Common;
+using Nuke.Common.Utilities;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry.Definitions;
@@ -11,6 +12,7 @@ using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
+using System.Linq;
 using System.Text.Json;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
@@ -269,7 +271,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id);
             AddJobStepCheckout(publishJob);
             var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPublishStep, "pattern", entryDefinition.AppId + "-*");
+            AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId + "-@(" + allEntry.BuildEntryDefinitionMap.Values.Where(i => i.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)).Select(i => i.Id).Join("|") + ")");
             AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
