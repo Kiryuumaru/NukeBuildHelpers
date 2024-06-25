@@ -271,7 +271,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id);
             AddJobStepCheckout(publishJob);
             var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId + "--@(" + allEntry.BuildEntryDefinitionMap.Values.Where(i => i.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)).Select(i => i.Id).Join("|") + ")/**");
+            AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId + "--*");
             AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
