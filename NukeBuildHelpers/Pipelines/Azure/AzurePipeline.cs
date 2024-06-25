@@ -363,7 +363,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static string GetImportedEnvVarExpression(string name)
     {
-        return "${{ variables.NUKE_PRE_SETUP_" + name + " }}";
+        return "$(NUKE_PRE_SETUP_" + name + ")";
     }
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string? poolName, string? poolVMImage, IEnumerable<string>? needs = null, string condition = "")
