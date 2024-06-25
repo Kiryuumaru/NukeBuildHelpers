@@ -1,20 +1,6 @@
 ﻿using Nuke.Common;
-using Nuke.Common.IO;
-using Nuke.Common.Tooling;
-using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common;
-using NukeBuildHelpers.Common.Enums;
-using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
-using NukeBuildHelpers.Entry.Models;
-using NukeBuildHelpers.Pipelines.Azure;
-using NukeBuildHelpers.Pipelines.Common;
-using NukeBuildHelpers.Pipelines.Common.Interfaces;
-using NukeBuildHelpers.Pipelines.Common.Models;
-using NukeBuildHelpers.Pipelines.Github;
-using Semver;
-using Serilog;
-using System.Text.Json;
 
 namespace NukeBuildHelpers;
 

@@ -1,11 +1,4 @@
-﻿using NukeBuildHelpers.Runner.Abstraction;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NukeBuildHelpers.Pipelines.Azure.Models;
+﻿namespace NukeBuildHelpers.Pipelines.Azure.Models;
 
 /// <summary>
 /// Represents the Azure pipeline-specific operating system.

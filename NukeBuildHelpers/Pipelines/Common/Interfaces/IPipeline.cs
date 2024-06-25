@@ -1,5 +1,4 @@
-﻿using NukeBuildHelpers.Common.Models;
-using NukeBuildHelpers.Entry.Models;
+﻿using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Models;
 
 namespace NukeBuildHelpers.Pipelines.Common.Interfaces;

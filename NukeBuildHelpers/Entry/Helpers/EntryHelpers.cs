@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyModel;
-using Microsoft.VisualBasic;
-using Nuke.Common;
+﻿using Nuke.Common;
 using Nuke.Common.Tooling;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
@@ -8,14 +6,8 @@ using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
-using Octokit;
 using Semver;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NukeBuildHelpers.Entry.Helpers;
 

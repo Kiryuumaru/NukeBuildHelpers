@@ -206,14 +206,6 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/output
-    - id: NUKE_RUN_RESULT
-      name: Resolve NUKE_RUN_RESULT
-      run: |-
-        echo "NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest1=${{ needs.NugetBuildHelpersTest1.result }}" >> $GITHUB_ENV
-        echo "NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersTest2=${{ needs.NugetBuildHelpersTest2.result }}" >> $GITHUB_ENV
-        echo "NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild1=${{ needs.NugetBuildHelpersBuild1.result }}" >> $GITHUB_ENV
-        echo "NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersBuild2=${{ needs.NugetBuildHelpersBuild2.result }}" >> $GITHUB_ENV
-        echo "NUKE_RUN_RESULT_GITHUB_NugetBuildHelpersPublish=${{ needs.NugetBuildHelpersPublish.result }}" >> $GITHUB_ENV
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
@@ -228,6 +220,11 @@ jobs:
     if: success() || failure() || always()
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest1: ${{ needs.NugetBuildHelpersTest1.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest2: ${{ needs.NugetBuildHelpersTest2.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild1: ${{ needs.NugetBuildHelpersBuild1.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild2: ${{ needs.NugetBuildHelpersBuild2.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersPublish: ${{ needs.NugetBuildHelpersPublish.result }}
 env:
   NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
   NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,7 +1,4 @@
-﻿using NukeBuildHelpers.Entry.Models;
-using Semver;
-
-namespace NukeBuildHelpers.Common.Models;
+﻿namespace NukeBuildHelpers.Common.Models;
 
 internal class AppRunEntry
 {

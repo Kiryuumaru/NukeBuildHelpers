@@ -1,11 +1,4 @@
-﻿using NukeBuildHelpers.Runner.Abstraction;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NukeBuildHelpers.Pipelines.Github.Models;
+﻿namespace NukeBuildHelpers.Pipelines.Github.Models;
 
 /// <summary>
 /// Represents the GitHub pipeline-specific operating system.

@@ -1,6 +1,4 @@
-﻿using Semver;
-
-namespace NukeBuildHelpers.Entry.Models;
+﻿namespace NukeBuildHelpers.Entry.Models;
 
 public class PullRequestReleaseVersion : AppVersion
 {

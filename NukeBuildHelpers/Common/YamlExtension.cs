@@ -1,7 +1,6 @@
 ﻿using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.EventEmitters;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace NukeBuildHelpers.Common;
 

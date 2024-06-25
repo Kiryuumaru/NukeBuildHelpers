@@ -1,12 +1,7 @@
-﻿using ICSharpCode.SharpZipLib.Zip;
-using Microsoft.Identity.Client;
-using Newtonsoft.Json.Linq;
-using Nuke.Common;
-using Nuke.Common.IO;
+﻿using Nuke.Common;
 using NukeBuildHelpers.Common;
-using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Common.Enums;
-using NukeBuildHelpers.Common.Models;
+using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Azure.Interfaces;
@@ -14,16 +9,9 @@ using NukeBuildHelpers.Pipelines.Azure.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
-using NukeBuildHelpers.RunContext.Interfaces;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
-using System;
-using System.Reflection;
 using System.Text.Json;
-using System.Xml.Linq;
-using YamlDotNet.Core;
-using YamlDotNet.Core.Tokens;
-using static Azure.Core.HttpHeader;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
 
@@ -280,14 +268,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(publishJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id);
             AddJobStepCheckout(publishJob);
-            foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values
-                .Where(i => i.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts - " + buildEntryDefinition.Id, task: "DownloadPipelineArtifact@2");
-                AddJobStepInputs(downloadPublishStep, "artifact", buildEntryDefinition.AppId + " - " + buildEntryDefinition.Id);
-                AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
-                AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
-            }
+            var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
+            AddJobStepInputs(downloadPublishStep, "pattern", entryDefinition.AppId + " - *");
+            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
+            AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
             publishNeeds.Add(entryDefinition.Id);
         }
@@ -301,21 +285,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
         var postSetupJob = AddJob(workflow, "post_setup", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. postNeeds], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
+        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        {
+            AddJobEnvVar(postSetupJob, "NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id, $"$[ dependencies.{entryDefinition.Id}.result ]");
+        }
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
         AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/output");
         AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
         AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
-        string runResultScript = "";
-        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
-        {
-            if (!string.IsNullOrEmpty(runResultScript))
-            {
-                runResultScript += "\n";
-            }
-            runResultScript += "echo \"##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id + "]$(dependencies." + entryDefinition.Id + ".result)\"";
-        }
-        AddJobStep(postSetupJob, name: "NUKE_RUN_RESULT", displayName: $"Resolve NUKE_RUN_RESULT", script: runResultScript);
         var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
         AddStepEnvVar(nukePostSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
 

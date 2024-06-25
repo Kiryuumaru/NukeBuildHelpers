@@ -4,15 +4,14 @@ using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Common.Enums;
-using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Pipelines.Azure.Extensions;
 using NukeBuildHelpers.Pipelines.Github.Extensions;
 using NukeBuildHelpers.RunContext.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
-using Semver;
 using Serilog;
+using System.Collections.Generic;
 using System.Linq;
 
 class Build : BaseNukeBuildHelpers
@@ -53,13 +52,13 @@ class Build : BaseNukeBuildHelpers
         {
             if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
             {
-                githubWorkflowBuilder.AddPostExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                githubWorkflowBuilder.AddPostExecuteStep(new Dictionary<string, object>()
                 {
                     { "id", "test_github_2" },
                     { "name", "Custom github step test 2" },
                     { "run", "echo \"Test github 2\"" },
                 });
-                githubWorkflowBuilder.AddPreExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                githubWorkflowBuilder.AddPreExecuteStep(new Dictionary<string, object>()
                 {
                     { "id", "test_github_1" },
                     { "name", "Custom github step test 1" },
@@ -68,13 +67,13 @@ class Build : BaseNukeBuildHelpers
             }
             if (builder.TryGetAzureWorkflowBuilder(out var azureWorkflowBuilder))
             {
-                azureWorkflowBuilder.AddPostExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                azureWorkflowBuilder.AddPostExecuteStep(new Dictionary<string, object>()
                 {
                     { "script", "echo \"Test azure 2\"" },
                     { "name", "test_azure_2" },
                     { "displayName", "Custom azure step test 2" },
                 });
-                azureWorkflowBuilder.AddPreExecuteStep(new System.Collections.Generic.Dictionary<string, object>()
+                azureWorkflowBuilder.AddPreExecuteStep(new Dictionary<string, object>()
                 {
                     { "script", "echo \"Test azure 1\"" },
                     { "name", "test_azure_1" },

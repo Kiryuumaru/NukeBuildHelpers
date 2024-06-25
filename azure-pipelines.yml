@@ -186,15 +186,9 @@ jobs:
   - checkout: self
     persistCredentials: true
   - task: DownloadPipelineArtifact@2
-    displayName: Download Artifacts - NugetBuildHelpersBuild1
+    displayName: Download Artifacts
     inputs:
-      artifact: nuget_build_helpers - NugetBuildHelpersBuild1
-      path: ./.nuke/output
-      continueOnError: true
-  - task: DownloadPipelineArtifact@2
-    displayName: Download Artifacts - NugetBuildHelpersBuild2
-    inputs:
-      artifact: nuget_build_helpers - NugetBuildHelpersBuild2
+      pattern: nuget_build_helpers - *
       path: ./.nuke/output
       continueOnError: true
   - task: Cache@2
@@ -237,14 +231,6 @@ jobs:
       path: ./.nuke/output
       patterns: '**'
       continueOnError: true
-  - script: |-
-      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest1]$(dependencies.NugetBuildHelpersTest1.result)"
-      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest2]$(dependencies.NugetBuildHelpersTest2.result)"
-      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild1]$(dependencies.NugetBuildHelpersBuild1.result)"
-      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild2]$(dependencies.NugetBuildHelpersBuild2.result)"
-      echo "##vso[task.setvariable variable=NUKE_RUN_RESULT_AZURE_NugetBuildHelpersPublish]$(dependencies.NugetBuildHelpersPublish.result)"
-    name: NUKE_RUN_RESULT
-    displayName: Resolve NUKE_RUN_RESULT
   - script: chmod +x ./build.sh && ./build.sh PipelinePostSetup
     displayName: Run Nuke PipelinePostSetup
     env:
@@ -259,3 +245,8 @@ jobs:
   condition: always()
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
+    NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest1: $[ dependencies.NugetBuildHelpersTest1.result ]
+    NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest2: $[ dependencies.NugetBuildHelpersTest2.result ]
+    NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild1: $[ dependencies.NugetBuildHelpersBuild1.result ]
+    NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild2: $[ dependencies.NugetBuildHelpersBuild2.result ]
+    NUKE_RUN_RESULT_AZURE_NugetBuildHelpersPublish: $[ dependencies.NugetBuildHelpersPublish.result ]
