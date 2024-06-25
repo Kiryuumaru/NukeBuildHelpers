@@ -223,7 +223,7 @@ jobs:
   - task: DownloadPipelineArtifact@2
     displayName: Download Artifacts
     inputs:
-      itemPattern: nuget_build_helpers--*
+      itemPattern: nuget_build_helpers--*/**
       path: ./.nuke/output
       continueOnError: true
   - task: Cache@2
