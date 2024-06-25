@@ -28,10 +28,10 @@ jobs:
     env:
       GITHUB_TOKEN: $(GITHUB_TOKEN)
 - job: NugetBuildHelpersTest1
-  displayName: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME'] }}
+  displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_NAME'] }}
-    vmImage: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_VM_IMAGE'] }}
+    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
     persistCredentials: true
@@ -40,14 +40,14 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY'] }}
+      key: ${{ variables.NUKE_PRE_SETUP_CACHE_KEY }}
       restoreKeys: |-
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY'] }}
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY'] }}
+        ${{ variables.NUKE_PRE_SETUP_CACHE_RESTORE_KEY }}
+        ${{ variables.NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY }}
   - script: echo "Test azure 1"
     name: test_azure_1
     displayName: Custom azure step test 1
-  - script: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT'] }} PipelineTest --args "NugetBuildHelpersTest1"
+  - script: ${{ variables.NUKE_PRE_SETUP_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest1"
     name: NUKE_RUN
     displayName: Run Nuke PipelineTest
   - script: echo "Test azure 2"
@@ -67,10 +67,10 @@ jobs:
     NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY'] ]
     NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersTest2
-  displayName: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME'] }}
+  displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_NAME'] }}
-    vmImage: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_VM_IMAGE'] }}
+    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
     persistCredentials: true
@@ -79,11 +79,11 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY'] }}
+      key: ${{ variables.NUKE_PRE_SETUP_CACHE_KEY }}
       restoreKeys: |-
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY'] }}
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY'] }}
-  - script: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT'] }} PipelineTest --args "NugetBuildHelpersTest2"
+        ${{ variables.NUKE_PRE_SETUP_CACHE_RESTORE_KEY }}
+        ${{ variables.NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY }}
+  - script: ${{ variables.NUKE_PRE_SETUP_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest2"
     name: NUKE_RUN
     displayName: Run Nuke PipelineTest
   dependsOn:
@@ -100,10 +100,10 @@ jobs:
     NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY'] ]
     NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersBuild1
-  displayName: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_NAME'] }}
+  displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_NAME'] }}
-    vmImage: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_POOL_VM_IMAGE'] }}
+    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
     persistCredentials: true
@@ -112,11 +112,11 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY'] }}
+      key: ${{ variables.NUKE_PRE_SETUP_CACHE_KEY }}
       restoreKeys: |-
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY'] }}
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY'] }}
-  - script: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT'] }} PipelineBuild --args "NugetBuildHelpersBuild1"
+        ${{ variables.NUKE_PRE_SETUP_CACHE_RESTORE_KEY }}
+        ${{ variables.NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY }}
+  - script: ${{ variables.NUKE_PRE_SETUP_RUN_SCRIPT }} PipelineBuild --args "NugetBuildHelpersBuild1"
     name: NUKE_RUN
     displayName: Run Nuke PipelineBuild
   - task: PublishPipelineArtifact@1
@@ -141,10 +141,10 @@ jobs:
     NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY'] ]
     NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersBuild2
-  displayName: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_NAME'] }}
+  displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_NAME'] }}
-    vmImage: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_POOL_VM_IMAGE'] }}
+    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
     persistCredentials: true
@@ -153,11 +153,11 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY'] }}
+      key: ${{ variables.NUKE_PRE_SETUP_CACHE_KEY }}
       restoreKeys: |-
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY'] }}
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY'] }}
-  - script: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT'] }} PipelineBuild --args "NugetBuildHelpersBuild2"
+        ${{ variables.NUKE_PRE_SETUP_CACHE_RESTORE_KEY }}
+        ${{ variables.NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY }}
+  - script: ${{ variables.NUKE_PRE_SETUP_RUN_SCRIPT }} PipelineBuild --args "NugetBuildHelpersBuild2"
     name: NUKE_RUN
     displayName: Run Nuke PipelineBuild
   - task: PublishPipelineArtifact@1
@@ -182,10 +182,10 @@ jobs:
     NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY'] ]
     NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersPublish
-  displayName: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_NAME'] }}
+  displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
   pool:
-    name: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_NAME'] }}
-    vmImage: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_POOL_VM_IMAGE'] }}
+    name: ${{ variables.NUKE_PRE_SETUP_POOL_NAME }}
+    vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
   steps:
   - checkout: self
     persistCredentials: true
@@ -200,11 +200,11 @@ jobs:
     condition: ne(variables['nuke_entry_id'], 'skip')
     inputs:
       path: ./.nuke/cache
-      key: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY'] }}
+      key: ${{ variables.NUKE_PRE_SETUP_CACHE_KEY }}
       restoreKeys: |-
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_RESTORE_KEY'] }}
-        ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY'] }}
-  - script: ${{ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT'] }} PipelinePublish --args "NugetBuildHelpersPublish"
+        ${{ variables.NUKE_PRE_SETUP_CACHE_RESTORE_KEY }}
+        ${{ variables.NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY }}
+  - script: ${{ variables.NUKE_PRE_SETUP_RUN_SCRIPT }} PipelinePublish --args "NugetBuildHelpersPublish"
     name: NUKE_RUN
     displayName: Run Nuke PipelinePublish
   dependsOn:
