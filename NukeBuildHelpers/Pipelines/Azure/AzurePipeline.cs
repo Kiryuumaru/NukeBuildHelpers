@@ -114,6 +114,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await ExportEnvVarRuntime(entryId, "CACHE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\" | \"{runIdentifier}\"");
             await ExportEnvVarRuntime(entryId, "CACHE_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"{runClassification}\"");
             await ExportEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"main\"");
+
+            Log.Information("NAME: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_NAME"));
+            Log.Information("CONDITION: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CONDITION"));
+            Log.Information("POOL_NAME: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_POOL_NAME"));
+            Log.Information("POOL_VM_IMAGE: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_POOL_VM_IMAGE"));
+            Log.Information("RUN_SCRIPT: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_RUN_SCRIPT"));
+            Log.Information("CACHE_KEY: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CACHE_KEY"));
+            Log.Information("CACHE_RESTORE_KEY: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CACHE_RESTORE_KEY"));
+            Log.Information("CACHE_MAIN_RESTORE_KEY: {val}", Environment.GetEnvironmentVariable($"NUKE_PRE_SETUP_{entryId}_CACHE_MAIN_RESTORE_KEY"));
         }
 
         foreach (var entryId in pipelinePreSetup.TestEntries)

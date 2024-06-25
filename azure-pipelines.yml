@@ -28,7 +28,7 @@ jobs:
     env:
       GITHUB_TOKEN: $(GITHUB_TOKEN)
 - job: NugetBuildHelpersTest1
-  displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
+  displayName: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_NAME'] ]
   pool:
     name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_POOL_NAME'] ]
     vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
@@ -66,7 +66,7 @@ jobs:
     NUKE_PRE_SETUP_CACHE_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY'] ]
     NUKE_PRE_SETUP_CACHE_MAIN_RESTORE_KEY: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY'] ]
 - job: NugetBuildHelpersTest2
-  displayName: ${{ variables.NUKE_PRE_SETUP_NAME }}
+  displayName: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_NAME'] ]
   pool:
     name: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP_NugetBuildHelpersTest2_POOL_NAME'] ]
     vmImage: ${{ variables.NUKE_PRE_SETUP_POOL_VM_IMAGE }}
