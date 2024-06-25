@@ -170,6 +170,7 @@ class Build : BaseNukeBuildHelpers
     PublishEntry NugetBuildHelpersPublish => _ => _
         .AppId("nuget_build_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .Condition(true)
         .Execute(context =>
         {
             foreach (var path in OutputDirectory.GetFiles("**", 99))
