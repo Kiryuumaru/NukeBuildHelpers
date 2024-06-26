@@ -4,6 +4,9 @@ using Nuke.Common.Tooling;
 
 namespace NukeBuildHelpers;
 
+/// <summary>
+/// Provides an interface for Nuke build helpers.
+/// </summary>
 public partial interface INukeBuildHelpers : INukeBuild
 {
     /// <summary>

@@ -8,6 +8,9 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    /// <summary>
+    /// Deletes all origin tags, with --args "{appid}".
+    /// </summary>
     public Target DeleteOriginTags => _ => _
         .Unlisted()
         .Description("Delete all origin tags, with --args \"{appid}\"")

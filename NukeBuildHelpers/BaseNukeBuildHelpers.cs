@@ -6,6 +6,7 @@ using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 
 namespace NukeBuildHelpers;
+
 /// <summary>
 /// Represents the base class for Nuke build helpers with common properties and methods.
 /// </summary>
@@ -37,11 +38,6 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
     /// Gets the main environment branch.
     /// </summary>
     public virtual string MainEnvironmentBranch { get; } = "main";
-
-    /// <summary>
-    /// Gets the workflow strategy of the pipeline.
-    /// </summary>
-    public virtual WorkflowStrategyType WorkflowStrategy { get; } = WorkflowStrategyType.SynchronousEntryType;
 
     /// <inheritdoc cref="INukeBuildHelpers.Repository"/>
     protected internal GitRepository Repository => (this as INukeBuildHelpers).Repository;

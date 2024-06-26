@@ -1,6 +1,6 @@
 ﻿namespace NukeBuildHelpers.Common;
 
-public static class GuidEncoder
+internal static class GuidEncoder
 {
     public static string Encode(string guidText)
     {

@@ -1,7 +1,8 @@
-﻿using NukeBuildHelpers.RunContext.Interfaces;
+﻿namespace NukeBuildHelpers.RunContext.Interfaces;
 
-namespace NukeBuildHelpers.RunContext.Models;
-
+/// <summary>
+/// Represents a context that includes information specific to commit runs.
+/// </summary>
 public interface ICommitContext : IPipelineContext
 {
 }
