@@ -177,16 +177,19 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         return Task.Run(() =>
         {
-            bool hasArtifactMerged = false;
-            foreach (var entryDefinition in entriesToRunMap.Values)
+            if ((BaseNukeBuildHelpers.TemporaryDirectory / "artifacts").DirectoryExists())
             {
-                if (!hasArtifactMerged && entryDefinition is IPublishEntryDefinition)
+                bool hasArtifactMerged = false;
+                foreach (var entryDefinition in entriesToRunMap.Values)
                 {
-                    foreach (var artifact in (BaseNukeBuildHelpers.TemporaryDirectory / "artifacts").GetDirectories())
+                    if (!hasArtifactMerged && entryDefinition is IPublishEntryDefinition)
                     {
-                        artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory);
+                        foreach (var artifact in (BaseNukeBuildHelpers.TemporaryDirectory / "artifacts").GetDirectories())
+                        {
+                            artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory);
+                        }
+                        hasArtifactMerged = true;
                     }
-                    hasArtifactMerged = true;
                 }
             }
         });
