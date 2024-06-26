@@ -50,6 +50,7 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Ubuntu2204)
         .WorkflowBuilder(builder =>
         {
+            throw new System.Exception("CSCSC");
             if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
             {
                 githubWorkflowBuilder.AddPostExecuteStep(new Dictionary<string, object>()
