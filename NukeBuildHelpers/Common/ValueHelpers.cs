@@ -1,15 +1,19 @@
 ﻿using Nuke.Common;
-using NukeBuildHelpers.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using NukeBuildHelpers.Entry.Models;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace NukeBuildHelpers.Common;
 
 internal static class ValueHelpers
 {
+    internal static T GetOrNullFail<T>([NotNull] T? val, [CallerArgumentExpression(nameof(val))] string? paramName = null)
+        where T : class
+    {
+        ArgumentNullException.ThrowIfNull(val, paramName);
+        return val;
+    }
+
     internal static void GetOrFail<T>(Func<T> valFactory, out T valOut)
     {
         try
@@ -23,29 +27,21 @@ internal static class ValueHelpers
         }
     }
 
-    internal static void GetOrFail(string appId, Dictionary<string, AppEntryConfig> appEntryConfigs, out string appIdOut, out AppEntryConfig appEntryConfig)
+    internal static void GetOrFail(string appId, AllEntry allEntries, out AppEntry appEntry)
     {
         try
         {
-            if (string.IsNullOrEmpty(appId) && !appEntryConfigs.Any(ae => ae.Value.Entry.MainRelease))
+            if (string.IsNullOrEmpty(appId))
             {
-                throw new InvalidOperationException($"App entries has no main release, appId should not be empty");
+                throw new InvalidOperationException($"AppId should not be empty");
             }
 
-            if (!string.IsNullOrEmpty(appId))
+            if (!allEntries.AppEntryMap.TryGetValue(appId, out AppEntry? appEntryFromMap))
             {
-                if (!appEntryConfigs.TryGetValue(appId.ToLowerInvariant(), out var aec) || aec == null)
-                {
-                    throw new InvalidOperationException($"App id \"{appId}\" does not exists");
-                }
-                appEntryConfig = aec;
-            }
-            else
-            {
-                appEntryConfig = appEntryConfigs.Where(ae => ae.Value.Entry.MainRelease).First().Value;
+                throw new InvalidOperationException($"App id \"{appId}\" does not exists");
             }
 
-            appIdOut = appEntryConfig.Entry.Id;
+            appEntry = appEntryFromMap;
         }
         catch (Exception ex)
         {

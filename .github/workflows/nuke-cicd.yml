@@ -20,173 +20,224 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Run Nuke PipelinePreSetup
-      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup --args "github"
-    - id: NUKE_PRE_SETUP_HAS_RELEASE
-      name: Output NUKE_PRE_SETUP_HAS_RELEASE
-      run: echo "NUKE_PRE_SETUP_HAS_RELEASE=$(cat ./.nuke/temp/pre_setup_has_release.txt)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_HAS_ENTRIES
-      name: Output NUKE_PRE_SETUP_HAS_ENTRIES
-      run: echo "NUKE_PRE_SETUP_HAS_ENTRIES=$(cat ./.nuke/temp/pre_setup_has_entries.txt)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_HAS_TEST
-      name: Output NUKE_PRE_SETUP_HAS_TEST
-      run: echo "NUKE_PRE_SETUP_HAS_TEST=$(cat ./.nuke/temp/pre_setup_has_test.txt)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_HAS_BUILD
-      name: Output NUKE_PRE_SETUP_HAS_BUILD
-      run: echo "NUKE_PRE_SETUP_HAS_BUILD=$(cat ./.nuke/temp/pre_setup_has_build.txt)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_HAS_PUBLISH
-      name: Output NUKE_PRE_SETUP_HAS_PUBLISH
-      run: echo "NUKE_PRE_SETUP_HAS_PUBLISH=$(cat ./.nuke/temp/pre_setup_has_publish.txt)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_OUTPUT
-      name: Output NUKE_PRE_SETUP_OUTPUT
-      run: echo "NUKE_PRE_SETUP_OUTPUT=$(cat ./.nuke/temp/pre_setup_output.json)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX
-      name: Output NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX
-      run: echo "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX=$(cat ./.nuke/temp/pre_setup_output_test_matrix.json)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX
-      name: Output NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX
-      run: echo "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX=$(cat ./.nuke/temp/pre_setup_output_build_matrix.json)" >> $GITHUB_OUTPUT
-    - id: NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX
-      name: Output NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX
-      run: echo "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX=$(cat ./.nuke/temp/pre_setup_output_publish_matrix.json)" >> $GITHUB_OUTPUT
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - id: NUKE_RUN
+      name: Run Nuke PipelinePreSetup
+      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
-      NUKE_PRE_SETUP_HAS_RELEASE: ${{ steps.NUKE_PRE_SETUP_HAS_RELEASE.outputs.NUKE_PRE_SETUP_HAS_RELEASE }}
-      NUKE_PRE_SETUP_HAS_ENTRIES: ${{ steps.NUKE_PRE_SETUP_HAS_ENTRIES.outputs.NUKE_PRE_SETUP_HAS_ENTRIES }}
-      NUKE_PRE_SETUP_HAS_TEST: ${{ steps.NUKE_PRE_SETUP_HAS_TEST.outputs.NUKE_PRE_SETUP_HAS_TEST }}
-      NUKE_PRE_SETUP_HAS_BUILD: ${{ steps.NUKE_PRE_SETUP_HAS_BUILD.outputs.NUKE_PRE_SETUP_HAS_BUILD }}
-      NUKE_PRE_SETUP_HAS_PUBLISH: ${{ steps.NUKE_PRE_SETUP_HAS_PUBLISH.outputs.NUKE_PRE_SETUP_HAS_PUBLISH }}
-      NUKE_PRE_SETUP_OUTPUT: ${{ steps.NUKE_PRE_SETUP_OUTPUT.outputs.NUKE_PRE_SETUP_OUTPUT }}
-      NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX }}
-      NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
-      NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
-  test:
-    name: Test - ${{ matrix.nuke_entry_name }}
-    runs-on: ${{ matrix.nuke_runs_on }}
+      NUKE_PRE_SETUP: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP }}
+      NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX }}
+      NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
+      NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CONDITION }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild3_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild3_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION }}
+      NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON }}
+      NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY }}
+  NugetBuildHelpersTest1:
+    name: Test try 1
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
-    - name: Cache Test
+    - name: Cache Run
       uses: actions/cache@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_KEY }}
         restore-keys: |-
-          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
-          test-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
-    - name: Run Nuke PipelineTest
-      run: ${{ matrix.nuke_run_script }} PipelineTest --args "${{ matrix.nuke_entry_ids_to_run }}"
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY }}
+    - id: test_github_1
+      name: Custom github step test 1
+      run: echo "Test github 1"
+    - id: NUKE_RUN
+      name: Run Nuke PipelineTest
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest1"
+    - id: test_github_2
+      name: Custom github step test 2
+      run: echo "Test github 2"
     needs:
     - pre_setup
-    if: success()
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest1_CONDITION == 'true'
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX) }}
-  build:
-    name: Build - ${{ matrix.nuke_entry_name }}
-    runs-on: ${{ matrix.nuke_runs_on }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+  NugetBuildHelpersTest2:
+    name: Test try 2
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
-    - name: Cache Build
+    - name: Cache Run
       uses: actions/cache@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_KEY }}
         restore-keys: |-
-          build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
-          build-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
-    - name: Run Nuke PipelineBuild
-      run: ${{ matrix.nuke_run_script }} PipelineBuild --args "${{ matrix.nuke_entry_ids_to_run }}"
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
-      env:
-        NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
-        NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY }}
+    - id: NUKE_RUN
+      name: Run Nuke PipelineTest
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_RUN_SCRIPT }} PipelineTest --args "NugetBuildHelpersTest2"
+    needs:
+    - pre_setup
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersTest2_CONDITION == 'true'
+    env:
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+  NugetBuildHelpersBuild1:
+    name: Build main
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUNS_ON }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Cache Run
+      uses: actions/cache@v4
+      with:
+        path: ./.nuke/cache
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_KEY }}
+        restore-keys: |-
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY }}
+    - id: NUKE_RUN
+      name: Run Nuke PipelineBuild
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_RUN_SCRIPT }} PipelineBuild --args "NugetBuildHelpersBuild1"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
-        name: ${{ matrix.nuke_entry_id }}
+        name: nuget_build_helpers--NugetBuildHelpersBuild1
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
     needs:
     - pre_setup
-    - test
-    if: success()
+    - NugetBuildHelpersTest1
+    - NugetBuildHelpersTest2
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild1_CONDITION == 'true'
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX) }}
-  publish:
-    name: Publish - ${{ matrix.nuke_entry_name }}
-    runs-on: ${{ matrix.nuke_runs_on }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+  NugetBuildHelpersBuild2:
+    name: Build try
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
-      with:
-        path: ./.nuke/output
-        pattern: ${{ matrix.nuke_entry_id }}
-        merge-multiple: true
-    - name: Cache Publish
+    - name: Cache Run
       uses: actions/cache@v4
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
       with:
         path: ./.nuke/cache
-        key: publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-${{ matrix.nuke_run_identifier }}"
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_KEY }}
         restore-keys: |-
-          publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-${{ matrix.nuke_run_classification }}-
-          publish-${{ matrix.nuke_runner_name }}-${{ matrix.nuke_entry_id }}-${{ matrix.nuke_cache_invalidator }}-${{ matrix.nuke_environment }}-main-
-    - name: Run Nuke PipelinePublish
-      run: ${{ matrix.nuke_run_script }} PipelinePublish --args "${{ matrix.nuke_entry_ids_to_run }}"
-      if: ${{ matrix.nuke_entry_id != 'skip' }}
-      env:
-        NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
-        NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY }}
+    - id: NUKE_RUN
+      name: Run Nuke PipelineBuild
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_RUN_SCRIPT }} PipelineBuild --args "NugetBuildHelpersBuild2"
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget_build_helpers--NugetBuildHelpersBuild2
+        path: ./.nuke/output/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - pre_setup
-    - test
-    - build
-    if: success()
+    - NugetBuildHelpersTest1
+    - NugetBuildHelpersTest2
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild2_CONDITION == 'true'
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX) }}
-  run_validation:
-    name: Run Validation
-    runs-on: ubuntu-22.04
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+  NugetBuildHelpersBuild3:
+    name: Build try 2
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_RUNS_ON }}
     steps:
-    - id: NUKE_RUN_SUCCESS
-      name: Resolve NUKE_RUN_SUCCESS
-      run: echo "NUKE_RUN_SUCCESS=${NUKE_RUN_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
+    - uses: actions/checkout@v4
+    - name: Cache Run
+      uses: actions/cache@v4
+      with:
+        path: ./.nuke/cache
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_KEY }}
+        restore-keys: |-
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CACHE_MAIN_RESTORE_KEY }}
+    - id: NUKE_RUN
+      name: Run Nuke PipelineBuild
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_RUN_SCRIPT }} PipelineBuild --args "NugetBuildHelpersBuild3"
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget_build_helpers2--NugetBuildHelpersBuild3
+        path: ./.nuke/output/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - pre_setup
-    - test
-    - build
-    - publish
-    if: success()
+    - NugetBuildHelpersTest1
+    - NugetBuildHelpersTest2
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersBuild3_CONDITION == 'true'
     env:
-      NUKE_RUN_SUCCESS_GITHUB: ${{ needs.publish.result }}
-    outputs:
-      NUKE_RUN_SUCCESS: ${{ steps.NUKE_RUN_SUCCESS.outputs.NUKE_RUN_SUCCESS }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+  NugetBuildHelpersPublish:
+    name: Publish - nuget_build_helpers
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUNS_ON }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/output
+        pattern: nuget_build_helpers--*
+        merge-multiple: true
+    - name: Cache Run
+      uses: actions/cache@v4
+      with:
+        path: ./.nuke/cache
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_KEY }}
+        restore-keys: |-
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY }}
+    - id: NUKE_RUN
+      name: Run Nuke PipelinePublish
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_RUN_SCRIPT }} PipelinePublish --args "NugetBuildHelpersPublish"
+    needs:
+    - pre_setup
+    - NugetBuildHelpersBuild1
+    - NugetBuildHelpersBuild2
+    - NugetBuildHelpersBuild3
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NugetBuildHelpersPublish_CONDITION == 'true'
+    env:
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   post_setup:
     name: Post Setup
     runs-on: ubuntu-22.04
     steps:
-    - id: NUKE_PUBLISH_SUCCESS
-      name: Resolve NUKE_PUBLISH_SUCCESS
-      run: echo "NUKE_PUBLISH_SUCCESS=${NUKE_PUBLISH_SUCCESS_GITHUB/success/ok}" >> $GITHUB_OUTPUT
     - uses: actions/checkout@v4
     - name: Download Artifacts
       uses: actions/download-artifact@v4
@@ -195,15 +246,24 @@ jobs:
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
-        NUKE_PUBLISH_SUCCESS: ${{ steps.NUKE_PUBLISH_SUCCESS.outputs.NUKE_PUBLISH_SUCCESS }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
-    - test
-    - build
-    - publish
-    - run_validation
+    - NugetBuildHelpersTest1
+    - NugetBuildHelpersTest2
+    - NugetBuildHelpersBuild1
+    - NugetBuildHelpersBuild2
+    - NugetBuildHelpersBuild3
+    - NugetBuildHelpersPublish
     if: success() || failure() || always()
     env:
-      NUKE_PRE_SETUP_OUTPUT: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_OUTPUT }}
-      NUKE_PUBLISH_SUCCESS_GITHUB: ${{ needs.publish.result }}
+      NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest1: ${{ needs.NugetBuildHelpersTest1.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersTest2: ${{ needs.NugetBuildHelpersTest2.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild1: ${{ needs.NugetBuildHelpersBuild1.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild2: ${{ needs.NugetBuildHelpersBuild2.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersBuild3: ${{ needs.NugetBuildHelpersBuild3.result }}
+      NUKE_RUN_RESULT_AZURE_NugetBuildHelpersPublish: ${{ needs.NugetBuildHelpersPublish.result }}
+env:
+  NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
+  NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

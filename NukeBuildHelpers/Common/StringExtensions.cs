@@ -8,8 +8,8 @@ internal static class StringExtensions
 
     public static string PadLeft(this string str, int totalWidth, int length, char paddingChar)
     {
-        if (totalWidth < 0)
-            throw new ArgumentOutOfRangeException(nameof(totalWidth));
+        ArgumentOutOfRangeException.ThrowIfNegative(totalWidth);
+
         int oldLength = length;
         int count = totalWidth - oldLength;
         if (count <= 0)
@@ -22,8 +22,8 @@ internal static class StringExtensions
 
     public static string PadRight(this string str, int totalWidth, int length, char paddingChar)
     {
-        if (totalWidth < 0)
-            throw new ArgumentOutOfRangeException(nameof(totalWidth));
+        ArgumentOutOfRangeException.ThrowIfNegative(totalWidth);
+
         int oldLength = length;
         int count = totalWidth - oldLength;
         if (count <= 0)
@@ -45,8 +45,8 @@ internal static class StringExtensions
 
     public static string PadCenter(this string str, int totalWidth, int length, char paddingChar)
     {
-        if (totalWidth < 0)
-            throw new ArgumentOutOfRangeException(nameof(totalWidth));
+        ArgumentOutOfRangeException.ThrowIfNegative(totalWidth);
+
         int oldLength = length;
         int count = totalWidth - oldLength;
         if (count <= 0)
@@ -60,10 +60,8 @@ internal static class StringExtensions
 
     public static string ToSnakeCase(this string text)
     {
-        if (text == null)
-        {
-            throw new ArgumentNullException(nameof(text));
-        }
+        ArgumentNullException.ThrowIfNull(text);
+
         if (text.Length < 2)
         {
             return text;

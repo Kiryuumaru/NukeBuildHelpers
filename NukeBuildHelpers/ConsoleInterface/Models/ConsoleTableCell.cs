@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using YamlDotNet.Core.Tokens;
-
-namespace NukeBuildHelpers.ConsoleInterface.Models;
+﻿namespace NukeBuildHelpers.ConsoleInterface.Models;
 
 internal class ConsoleTableCell
 {

@@ -1,6 +1,7 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
+using NukeBuildHelpers.Entry.Helpers;
 using Serilog;
 
 namespace NukeBuildHelpers;
@@ -27,7 +28,7 @@ partial class BaseNukeBuildHelpers
             else
             {
                 ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-                ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAppConfig(), out var appConfig);
+                ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
                 IReadOnlyCollection<Output>? lsRemote = null;
 
@@ -35,17 +36,10 @@ partial class BaseNukeBuildHelpers
                 {
                     string appId = key;
 
-                    ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
-                    ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+                    ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
+                    ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
 
-                    if (appEntry.Entry.MainRelease)
-                    {
-                        tagsToDelete.AddRange(allVersions.VersionCommitPaired.Select(i => i.Key.ToString()));
-                    }
-                    else
-                    {
-                        tagsToDelete.AddRange(allVersions.VersionCommitPaired.Select(i => appId + "/" + i.Key.ToString()));
-                    }
+                    tagsToDelete.AddRange(allVersions.VersionCommitPaired.Select(i => appId + "/" + i.Key.ToString()));
                 }
             }
 

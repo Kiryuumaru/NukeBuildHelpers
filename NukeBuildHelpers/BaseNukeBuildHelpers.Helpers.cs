@@ -1,23 +1,26 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
-using NukeBuildHelpers.Models;
 using Semver;
 using Serilog;
-using NukeBuildHelpers.Enums;
 using NukeBuildHelpers.Common;
 using Nuke.Common.Tooling;
 using Nuke.Common.Utilities;
-using Nuke.Common.CI.AzurePipelines;
-using Nuke.Common.CI.GitHubActions;
 using Sharprompt;
 using System.ComponentModel.DataAnnotations;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Models;
-using NukeBuildHelpers.Pipelines.Interfaces;
 using System.Text.Json;
-using System.IO;
-using System.Collections.Generic;
-using NukeBuildHelpers.Pipelines.Enums;
+using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.ConsoleInterface.Enums;
+using NukeBuildHelpers.Entry.Interfaces;
+using NukeBuildHelpers.RunContext.Interfaces;
+using NukeBuildHelpers.Entry.Models;
+using NukeBuildHelpers.Pipelines.Common.Models;
+using NukeBuildHelpers.Pipelines.Common.Enums;
+using NukeBuildHelpers.Pipelines.Common;
+using NukeBuildHelpers.Common.Models;
+using NukeBuildHelpers.Entry.Helpers;
+using NukeBuildHelpers.RunContext.Models;
 
 namespace NukeBuildHelpers;
 
@@ -44,20 +47,11 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    internal void SetupWorkflowBuilder(List<WorkflowBuilder> workflowBuilders, PipelineType pipelineType)
-    {
-        foreach (var workflowBuilder in workflowBuilders)
-        {
-            workflowBuilder.PipelineType = pipelineType;
-            workflowBuilder.NukeBuild = this;
-        }
-    }
-
     private static void CacheBump()
     {
-        if (!CacheDirectory.DirectoryExists())
+        if (!CommonCacheOutputDirectory.DirectoryExists())
         {
-            CacheDirectory.CreateDirectory();
+            CommonCacheOutputDirectory.CreateDirectory();
         }
 
         (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
@@ -100,12 +94,14 @@ partial class BaseNukeBuildHelpers
         catch { }
     }
 
-    private static async Task CachePreload(Entry entry)
+    private static async Task CachePreload(IEntryDefinition entry)
     {
         if (!entryCachePath.DirectoryExists())
         {
             entryCachePath.CreateDirectory();
         }
+
+        var cachePaths = entry.CachePaths == null ? [] : await entry.GetCachePaths();
 
         Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
 
@@ -122,7 +118,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var pair in cachePairs.Clone())
         {
-            if (!entry.CachePaths.Any(i => i == pair.Key))
+            if (!cachePaths.Any(i => i == pair.Key))
             {
                 cachePairs.Remove(pair.Key);
                 pair.Value.DeleteDirectory();
@@ -130,7 +126,7 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        foreach (var path in entry.CachePaths)
+        foreach (var path in cachePaths)
         {
             if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.DirectoryExists())
             {
@@ -158,13 +154,15 @@ partial class BaseNukeBuildHelpers
         SetCacheIndex(cachePairs);
     }
 
-    private static async Task CachePostload(Entry entry)
+    private static async Task CachePostload(IEntryDefinition entry)
     {
+        var cachePaths = entry.CachePaths == null ? [] : await entry.GetCachePaths();
+
         Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
 
         List<Task> tasks = [];
 
-        foreach (var path in entry.CachePaths)
+        foreach (var path in cachePaths)
         {
             if (!path.FileExists() && !path.DirectoryExists())
             {
@@ -197,299 +195,629 @@ partial class BaseNukeBuildHelpers
         SetCacheIndex(cachePairs);
     }
 
-    private void SetupWorkflowRun(List<WorkflowStep> workflowSteps, AppConfig appConfig, PreSetupOutput? preSetupOutput)
+    private void SetupTargetRunContext(ITargetEntryDefinition targetEntry, RunType runType, AppVersion? appVersion, string releaseNotes, PipelineRun pipeline)
     {
-        var appEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppEntry>();
-        var appTestEntrySecretMap = AppEntryHelpers.GetEntrySecretMap<AppTestEntry>();
-
-        PipelineType pipelineType;
-
-        IPipeline pipeline;
-        PipelineInfo pipelineInfo;
-
-        if (Host is AzurePipelines)
+        if (appVersion == null || runType == RunType.Local)
         {
-            pipelineType = PipelineType.Azure;
-            pipeline = new AzurePipeline(this);
+            targetEntry.RunContext = new LocalContext()
+            {
+                RunType = RunType.Local
+            };
         }
-        else if (Host is GitHubActions)
+        else if (runType == RunType.Bump)
         {
-            pipelineType = PipelineType.Github;
-            pipeline = new GithubPipeline(this);
+            targetEntry.RunContext = new BumpContext()
+            {
+                PipelineType = PipelineType,
+                RunType = runType,
+                AppVersion = new BumpReleaseVersion()
+                {
+                    AppId = appVersion.AppId,
+                    Environment = appVersion.Environment,
+                    Version = appVersion.Version,
+                    BuildId = appVersion.BuildId,
+                    ReleaseNotes = releaseNotes
+                }
+            };
+        }
+        else if (runType == RunType.PullRequest)
+        {
+            targetEntry.RunContext = new PullRequestContext()
+            {
+                PipelineType = PipelineType,
+                RunType = runType,
+                AppVersion = new PullRequestReleaseVersion()
+                {
+                    AppId = appVersion.AppId,
+                    Environment = appVersion.Environment,
+                    Version = appVersion.Version,
+                    BuildId = appVersion.BuildId,
+                    PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber
+                }
+            };
         }
         else
         {
-            throw new NotImplementedException();
-        }
-
-        pipelineInfo = pipeline.GetPipelineInfo();
-
-        foreach (var workflowStep in workflowSteps)
-        {
-            workflowStep.PipelineType = pipelineType;
-            workflowStep.NukeBuild = this;
-        }
-
-        foreach (var appTestEntry in appConfig.AppTestEntries.Values)
-        {
-            if (appTestEntrySecretMap.TryGetValue(appTestEntry.Id, out var testSecretMap) &&
-                testSecretMap.EntryType == appTestEntry.GetType())
+            targetEntry.RunContext = new VersionedContext()
             {
-                foreach (var (MemberInfo, Secret) in testSecretMap.Secrets)
-                {
-                    var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
-                    var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                    MemberInfo.SetValue(appTestEntry, secretValue);
-                }
-            }
-            appTestEntry.PipelineType = pipelineType;
-            appTestEntry.NukeBuild = this;
-            RunTestType runTestType = RunTestType.Local;
-            foreach (var appEntry in appConfig.AppEntries.Values)
-            {
-                if (appTestEntry.AppEntryTargets.Any(i => i == appEntry.GetType()))
-                {
-                    runTestType = RunTestType.Target;
-                    break;
-                }
-            }
-            appTestEntry.AppTestContext = new()
-            {
-                OutputDirectory = BaseHelper.OutputDirectory,
-                RunTestType = runTestType
+                PipelineType = PipelineType,
+                RunType = runType,
+                AppVersion = appVersion
             };
-        }
-
-        RunType runType = RunType.Local;
-        if (preSetupOutput != null)
-        {
-            if (preSetupOutput.TriggerType == TriggerType.PullRequest)
-            {
-                runType = RunType.PullRequest;
-            }
-            else if (preSetupOutput.TriggerType == TriggerType.Commit)
-            {
-                runType = RunType.Commit;
-            }
-            else if (preSetupOutput.TriggerType == TriggerType.Tag)
-            {
-                if (preSetupOutput.HasRelease)
-                {
-                    runType = RunType.Bump;
-                }
-                else
-                {
-                    runType = RunType.Commit;
-                }
-            }
-        }
-
-        foreach (var appEntry in appConfig.AppEntries)
-        {
-            if (appEntrySecretMap.TryGetValue(appEntry.Value.Id, out var appSecretMap) &&
-                appSecretMap.EntryType == appEntry.Value.GetType())
-            {
-                foreach (var (MemberInfo, Secret) in appSecretMap.Secrets)
-                {
-                    var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
-                    var secretValue = Environment.GetEnvironmentVariable(envVarName);
-                    MemberInfo.SetValue(appEntry.Value, secretValue);
-                }
-            }
-
-            appEntry.Value.PipelineType = pipelineType;
-            appEntry.Value.NukeBuild = this;
-
-            AppVersion? appVersion = null;
-
-            if (preSetupOutput != null &&
-                preSetupOutput.Entries.TryGetValue(appEntry.Value.Id, out var preSetupOutputVersion))
-            {
-                appVersion = new AppVersion()
-                {
-                    AppId = appEntry.Value.Id,
-                    Environment = preSetupOutputVersion.Environment,
-                    Version = SemVersion.Parse(preSetupOutputVersion.Version, SemVersionStyles.Strict),
-                    BuildId = preSetupOutput.BuildId,
-                    ReleaseNotes = preSetupOutput.ReleaseNotes
-                };
-            }
-
-            if (appVersion == null)
-            {
-                appEntry.Value.AppRunContext = new AppLocalRunContext()
-                {
-                    OutputDirectory = BaseHelper.OutputDirectory,
-                    RunType = runType,
-                };
-            }
-            else if (runType == RunType.Bump)
-            {
-                appEntry.Value.AppRunContext = new AppBumpRunContext()
-                {
-                    OutputDirectory = BaseHelper.OutputDirectory,
-                    RunType = runType,
-                    AppVersion = appVersion
-                };
-            }
-            else if (runType == RunType.PullRequest)
-            {
-                appEntry.Value.AppRunContext = new AppPullRequestRunContext()
-                {
-                    OutputDirectory = BaseHelper.OutputDirectory,
-                    RunType = runType,
-                    AppVersion = appVersion,
-                    PullRequestNumber = pipelineInfo.PullRequestNumber
-                };
-            }
-            else
-            {
-                appEntry.Value.AppRunContext = new AppCommitRunContext()
-                {
-                    OutputDirectory = BaseHelper.OutputDirectory,
-                    RunType = runType,
-                    AppVersion = appVersion
-                };
-            }
         }
     }
 
-    private Task TestAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private void SetupDependentRunContext(IDependentEntryDefinition dependentEntry, RunType runType)
     {
-        List<Func<Task>> tasks = [];
-        List<string> testAdded = [];
-
-        List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
-
-        SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
-
-        CacheBump();
-
-        foreach (var appEntry in appConfig.AppEntries)
+        if (runType == RunType.Local)
         {
-            if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
+            dependentEntry.RunContext = new LocalContext()
+            {
+                RunType = RunType.Local
+            };
+        }
+        else
+        {
+            dependentEntry.RunContext = new CommitContext()
+            {
+                PipelineType = PipelineType,
+                RunType = runType
+            };
+        }
+    }
+
+    private async Task StartPreSetup(AllEntry allEntry)
+    {
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        await pipeline.Pipeline.PreparePreSetup(allEntry);
+
+        Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
+        Log.Information("Trigger type: {branch}", pipeline.PipelineInfo.TriggerType);
+
+        EntryHelpers.SetupSecretVariables(this);
+
+        PipelineType = pipeline.PipelineType;
+
+        string env = pipeline.PipelineInfo.Branch.ToLowerInvariant();
+
+        IReadOnlyCollection<Output>? lsRemote = null;
+
+        Dictionary<string, AppRunEntry> toEntry = [];
+
+        long targetBuildId = 0;
+        long lastBuildId = 0;
+
+        foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
+        {
+            string appId = key;
+
+            ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+
+            if (allVersions.BuildIdCommitPaired.Count > 0)
+            {
+                var maxBuildId = allVersions.BuildIdCommitPaired.Select(i => i.Key).Max();
+                lastBuildId = Math.Max(maxBuildId, lastBuildId);
+            }
+
+            if (allVersions.EnvSorted.Count == 0 || !allVersions.EnvVersionGrouped.TryGetValue(env, out var versionGroup) || versionGroup.Count == 0)
             {
                 continue;
             }
-            var appEntryType = appEntry.Value.GetType();
-            foreach (var appEntryTest in appConfig.AppTestEntries.Values.Where(i => i.AppEntryTargets.Any(j => j == appEntryType)))
+
+            var lastVersionGroup = versionGroup.Last();
+
+            bool hasBumped = false;
+
+            if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out var value) || value != lastVersionGroup)
             {
-                if (idsToRun.Any() && !idsToRun.Any(i => i == appEntryTest.Id))
+                if (allVersions.VersionBump.Contains(lastVersionGroup) &&
+                    !allVersions.VersionQueue.Contains(lastVersionGroup) &&
+                    !allVersions.VersionFailed.Contains(lastVersionGroup) &&
+                    !allVersions.VersionPassed.Contains(lastVersionGroup))
                 {
-                    continue;
-                }
-                if (testAdded.Contains(appEntryTest.Name))
-                {
-                    continue;
-                }
-                testAdded.Add(appEntryTest.Name);
-                tasks.Add(() => Task.Run(async () =>
-                {
-                    await CachePreload(appEntryTest);
-                    foreach (var workflowStep in workflowSteps)
+                    allVersions.EnvLatestBuildIdPaired.TryGetValue(env, out var allVersionLastId);
+                    targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
+                    if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                     {
-                        workflowStep.TestRun(appEntryTest);
+                        hasBumped = true;
+                        Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, value?.ToString(), lastVersionGroup.ToString());
                     }
-                    appEntryTest.Run(appEntryTest.AppTestContext!);
-                    await appEntryTest.RunAsync(appEntryTest.AppTestContext!);
-                    await CachePostload(appEntryTest);
-                }));
+                }
+            }
+            else
+            {
+                if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                {
+                    Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
+                }
+            }
+
+            toEntry.Add(appId, new()
+            {
+                AppId = appEntry.AppId,
+                Environment = env,
+                Version = lastVersionGroup.ToString(),
+                HasRelease = hasBumped
+            });
+        }
+
+        foreach (var rel in toEntry.Values.Where(i => i.HasRelease))
+        {
+            Log.Information("{appId} on {env} has new version {newVersion}", rel.AppId, rel.Environment, rel.Version);
+        }
+
+        var releaseNotes = "";
+        var buildId = lastBuildId + 1;
+        var buildTag = "build." + buildId;
+        var targetBuildTag = "build." + targetBuildId;
+        var isFirstRelease = targetBuildId == 0;
+        var hasEntries = toEntry.Count != 0;
+        var hasRelease = toEntry.Any(i => i.Value.HasRelease);
+
+        string versionFactory(string version)
+        {
+            var semVersion = SemVersion.Parse(version, SemVersionStyles.Strict);
+            if (pipeline.PipelineInfo.TriggerType == TriggerType.PullRequest)
+            {
+                return SemVersion.Parse($"{semVersion.WithoutMetadata()}+build.{buildId}-pr.{pipeline.PipelineInfo.PullRequestNumber}", SemVersionStyles.Strict).ToString();
+            }
+            else
+            {
+                return SemVersion.Parse($"{semVersion.WithoutMetadata()}+build.{buildId}", SemVersionStyles.Strict).ToString();
             }
         }
 
-        return Task.Run(async () =>
+        foreach (var entry in toEntry.Values)
         {
-            foreach (var task in tasks)
+            toEntry[entry.AppId] = new()
             {
-                await task();
+                AppId = entry.AppId,
+                Environment = entry.Environment,
+                Version = versionFactory(entry.Version),
+                HasRelease = entry.HasRelease
+            };
+        }
+
+        if (hasRelease && pipeline.PipelineType != PipelineType.Local)
+        {
+            foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
+            {
+                var semVersion = SemVersion.Parse(entry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                Git.Invoke("tag -f " + entry.AppId.ToLowerInvariant() + "/" + semVersion + "-queue");
+                Git.Invoke("tag -f " + entry.AppId.ToLowerInvariant() + "/" + semVersion);
             }
-        });
+
+            Git.Invoke("tag -f " + buildTag, logger: (s, e) => Log.Debug(e));
+            Git.Invoke("tag -f " + buildTag + "-" + env, logger: (s, e) => Log.Debug(e));
+
+            Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
+
+            string ghReleaseCreateArgs = $"release create {buildTag} " +
+                $"--title {buildTag} " +
+                $"--target {pipeline.PipelineInfo.Branch} " +
+                $"--generate-notes " +
+                $"--draft";
+
+            if (!isFirstRelease)
+            {
+                ghReleaseCreateArgs += " --notes-start-tag " + targetBuildTag;
+            }
+
+            Gh.Invoke(ghReleaseCreateArgs, logger: (s, e) => Log.Debug(e));
+
+            var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+            var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
+            if (releaseNotesJsonDocument == null ||
+                !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
+                releaseNotesProp.GetString() is not string releaseNotesFromProp)
+            {
+                throw new Exception("releaseNotesJsonDocument is empty");
+            }
+            releaseNotes = releaseNotesFromProp;
+        }
+
+        foreach (var targetEntry in allEntry.TargetEntryDefinitionMap.Values)
+        {
+            if (!toEntry.TryGetValue(ValueHelpers.GetOrNullFail(targetEntry.AppId), out var entry))
+            {
+                continue;
+            }
+
+            RunType runType = pipeline.PipelineInfo.TriggerType switch
+            {
+                TriggerType.PullRequest => RunType.PullRequest,
+                TriggerType.Commit => RunType.Commit,
+                TriggerType.Tag => entry.HasRelease ? RunType.Bump : RunType.Commit,
+                TriggerType.Local => RunType.Local,
+                _ => throw new NotSupportedException()
+            };
+
+            AppVersion appVersion = new()
+            {
+                AppId = entry.AppId.NotNullOrEmpty(),
+                Environment = entry.Environment,
+                Version = SemVersion.Parse(entry.Version, SemVersionStyles.Strict),
+                BuildId = buildId
+            };
+
+            SetupTargetRunContext(targetEntry, runType, appVersion, releaseNotes, pipeline);
+        }
+
+        Dictionary<string, EntrySetup> testEntrySetupMap = [];
+        Dictionary<string, EntrySetup> buildEntrySetupMap = [];
+        Dictionary<string, EntrySetup> publishEntrySetupMap = [];
+        Dictionary<string, EntrySetup> targetEntrySetupMap = [];
+        Dictionary<string, EntrySetup> dependentEntrySetupMap = [];
+        Dictionary<string, EntrySetup> entrySetupMap = [];
+
+        async Task<EntrySetup> createEntrySetup(IEntryDefinition entry)
+        {
+            var runnerOs = await entry.GetRunnerOS();
+            var cachePaths = await entry.GetCachePaths();
+            var flatCachePaths = cachePaths.Select(i =>
+            {
+                string flatPath = i.ToString();
+                if (!flatPath.StartsWith(RootDirectory))
+                {
+                    throw new Exception("Invalid cache path");
+                }
+                return flatPath[RootDirectory.ToString().Length..];
+            });
+
+            EntrySetup setup = new()
+            {
+                Id = entry.Id,
+                Condition = await entry.GetCondition(),
+                CacheInvalidator = await entry.GetCacheInvalidator(),
+                CachePaths = flatCachePaths.ToArray(),
+                RunType = ValueHelpers.GetOrNullFail(entry.RunContext).RunType,
+                RunnerOSSetup = new()
+                {
+                    Name = runnerOs.Name,
+                    RunnerPipelineOS = JsonSerializer.Serialize(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented),
+                    RunScript = runnerOs.GetRunScript(PipelineType)
+                }
+            };
+
+            return setup;
+        }
+
+        foreach (var entry in allEntry.PublishEntryDefinitionMap.Values)
+        {
+            EntrySetup setup = await createEntrySetup(entry);
+            publishEntrySetupMap.Add(entry.Id, setup);
+            targetEntrySetupMap.Add(entry.Id, setup);
+            entrySetupMap.Add(entry.Id, setup);
+        }
+
+        foreach (var entry in allEntry.BuildEntryDefinitionMap.Values)
+        {
+            EntrySetup setup = await createEntrySetup(entry);
+            buildEntrySetupMap.Add(entry.Id, setup);
+            targetEntrySetupMap.Add(entry.Id, setup);
+            entrySetupMap.Add(entry.Id, setup);
+        }
+
+        foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)
+        {
+            List<(EntrySetup Setup, IBuildEntryDefinition Entry)> buildEntries = [];
+            List<(EntrySetup Setup, IPublishEntryDefinition Entry)> publishEntries = [];
+            List<(EntrySetup Setup, ITargetEntryDefinition Entry)> targetEntries = [];
+
+            foreach (var appId in dependentEntry.AppIds)
+            {
+                foreach (var entrySetup in entrySetupMap.Values)
+                {
+                    if (allEntry.TargetEntryDefinitionMap.TryGetValue(entrySetup.Id, out var targetEntry) &&
+                        ValueHelpers.GetOrNullFail(targetEntry.AppId).Equals(appId, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (targetEntry is IBuildEntryDefinition buildEntry)
+                        {
+                            buildEntries.Add((entrySetup, buildEntry));
+                        }
+                        else if (targetEntry is IPublishEntryDefinition publishEntry)
+                        {
+                            publishEntries.Add((entrySetup, publishEntry));
+                        }
+                    }
+                }
+            }
+
+            RunType runType = pipeline.PipelineInfo.TriggerType switch
+            {
+                TriggerType.PullRequest => RunType.PullRequest,
+                TriggerType.Commit => RunType.Commit,
+                TriggerType.Tag => targetEntries.Any(i => i.Entry.RunContext is IBumpContext) ? RunType.Bump : RunType.Commit,
+                TriggerType.Local => RunType.Local,
+                _ => throw new NotSupportedException()
+            };
+
+            if (targetEntries.Any(i => i.Setup.Condition))
+            {
+                runType |= RunType.Target;
+            }
+
+            SetupDependentRunContext(dependentEntry, runType);
+        }
+
+        foreach (var entry in allEntry.DependentEntryDefinitionMap.Values)
+        {
+            EntrySetup setup = await createEntrySetup(entry);
+            testEntrySetupMap.Add(entry.Id, setup);
+            dependentEntrySetupMap.Add(entry.Id, setup);
+            entrySetupMap.Add(entry.Id, setup);
+        }
+
+        PipelinePreSetup pipelinePreSetup = new()
+        {
+            Branch = pipeline.PipelineInfo.Branch,
+            TriggerType = pipeline.PipelineInfo.TriggerType,
+            Environment = env,
+            ReleaseNotes = releaseNotes,
+            BuildId = buildId,
+            LastBuildId = targetBuildId,
+            PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber,
+            HasRelease = hasRelease,
+            TestEntries = [.. testEntrySetupMap.Keys],
+            BuildEntries = [.. buildEntrySetupMap.Keys],
+            PublishEntries = [.. publishEntrySetupMap.Keys],
+            EntrySetupMap = entrySetupMap,
+            AppRunEntryMap = toEntry
+        };
+
+        await pipeline.Pipeline.FinalizePreSetup(allEntry, pipelinePreSetup);
     }
 
-    private Task BuildAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private void EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup pipelinePreSetup)
+    {
+        EntryHelpers.SetupSecretVariables(this);
+
+        PipelineType = pipeline.PipelineType;
+
+        foreach (var targetEntry in allEntry.TargetEntryDefinitionMap.Values)
+        {
+            if (pipelinePreSetup == null)
+            {
+                SetupTargetRunContext(targetEntry, RunType.Local, null, "", pipeline);
+                continue;
+            }
+
+            if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(ValueHelpers.GetOrNullFail(targetEntry.AppId), out var entry))
+            {
+                throw new Exception("App id not found");
+            }
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(ValueHelpers.GetOrNullFail(targetEntry.Id), out var entrySetup))
+            {
+                throw new Exception("Entry id not found");
+            }
+
+            AppVersion appVersion = new()
+            {
+                AppId = entry.AppId.NotNullOrEmpty(),
+                Environment = entry.Environment,
+                Version = SemVersion.Parse(entry.Version, SemVersionStyles.Strict),
+                BuildId = pipelinePreSetup.BuildId
+            };
+
+            SetupTargetRunContext(targetEntry, entrySetup.RunType, appVersion, pipelinePreSetup.ReleaseNotes, pipeline);
+        }
+
+        foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)
+        {
+            if (pipelinePreSetup == null)
+            {
+                SetupDependentRunContext(dependentEntry, RunType.Local);
+                continue;
+            }
+
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(ValueHelpers.GetOrNullFail(dependentEntry.Id), out var entrySetup))
+            {
+                throw new Exception("Entry id not found");
+            }
+
+            SetupDependentRunContext(dependentEntry, entrySetup.RunType);
+        }
+    }
+
+    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup pipelinePreSetup)
     {
         List<Func<Task>> tasks = [];
 
-        List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+        await pipeline.Pipeline.PrepareEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
 
-        SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
+        CacheBump();
+
+        EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
+
+        foreach (var entry in entriesToRun)
+        {
+            tasks.Add(() => Task.Run(async () =>
+            {
+                await CachePreload(entry);
+                await entry.GetExecute();
+                await CachePostload(entry);
+            }));
+        }
+
+        foreach (var task in tasks)
+        {
+            await task();
+        }
+
+        await pipeline.Pipeline.FinalizeEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
+    }
+
+    private Task TestAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
+    {
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
+
+        IEnumerable<IEntryDefinition> entriesToRun;
+
+        if (!idsToRun.Any())
+        {
+            entriesToRun = allEntry.TestEntryDefinitionMap.Values.Cast<IEntryDefinition>();
+        }
+        else
+        {
+            entriesToRun = allEntry.TestEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
+        }
+
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
+    }
+
+    private Task BuildAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
+    {
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
+
+        IEnumerable<IEntryDefinition> entriesToRun;
 
         OutputDirectory.DeleteDirectory();
         OutputDirectory.CreateDirectory();
 
-        CacheBump();
+        (OutputDirectory / "notes.md").WriteAllText(pipelinePreSetup.ReleaseNotes);
 
-        if (preSetupOutput != null)
+        if (!idsToRun.Any())
         {
-            (OutputDirectory / "notes.md").WriteAllText(preSetupOutput.ReleaseNotes);
+            entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Cast<IEntryDefinition>();
+        }
+        else
+        {
+            entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        foreach (var appEntry in appConfig.AppEntries)
-        {
-            if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
-            {
-                continue;
-            }
-            tasks.Add(() => Task.Run(async () =>
-            {
-                await CachePreload(appEntry.Value);
-                foreach (var workflowStep in workflowSteps)
-                {
-                    workflowStep.AppBuild(appEntry.Value);
-                    await workflowStep.AppBuildAsync(appEntry.Value);
-                }
-                appEntry.Value.Build(appEntry.Value.AppRunContext!);
-                await appEntry.Value.BuildAsync(appEntry.Value.AppRunContext!);
-                await CachePostload(appEntry.Value);
-            }));
-        }
-
-        return Task.Run(async () =>
-        {
-            foreach (var task in tasks)
-            {
-                await task();
-            }
-        });
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
     }
 
-    private Task PublishAppEntries(AppConfig appConfig, IEnumerable<string> idsToRun, PreSetupOutput? preSetupOutput)
+    private Task PublishAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
     {
-        List<Func<Task>> tasks = [];
+        var pipeline = PipelineHelpers.SetupPipeline(this);
 
-        List<WorkflowStep> workflowSteps = [.. ClassHelpers.GetInstances<WorkflowStep>().OrderByDescending(i => i.Priority)];
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
-        SetupWorkflowRun(workflowSteps, appConfig, preSetupOutput);
+        IEnumerable<IEntryDefinition> entriesToRun;
 
-        CacheBump();
-
-        foreach (var appEntry in appConfig.AppEntries)
+        if (!idsToRun.Any())
         {
-            if (idsToRun.Any() && !idsToRun.Any(i => i == appEntry.Key))
-            {
-                continue;
-            }
-            tasks.Add(() => Task.Run(async () =>
-            {
-                await CachePreload(appEntry.Value);
-                foreach (var workflowStep in workflowSteps)
-                {
-                    workflowStep.AppPublish(appEntry.Value);
-                    await workflowStep.AppPublishAsync(appEntry.Value);
-                }
-                appEntry.Value.Publish(appEntry.Value.AppRunContext!);
-                await appEntry.Value.PublishAsync(appEntry.Value.AppRunContext!);
-                await CachePostload(appEntry.Value);
-            }));
+            entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Cast<IEntryDefinition>();
+        }
+        else
+        {
+            entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return Task.Run(async () =>
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
+    }
+
+    private async Task StartPostSetup(AllEntry allEntry)
+    {
+        var pipeline = PipelineHelpers.SetupPipeline(this);
+
+        var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
+
+        await pipeline.Pipeline.PreparePostSetup(allEntry, pipelinePreSetup);
+
+        bool success = true;
+
+        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            foreach (var task in tasks)
+            var entryRunResult = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id);
+            Log.Information("{entryId} result: {result}", entryDefinition.Id, entryRunResult);
+            if (entryRunResult == "error" && success)
             {
-                await task();
+                success = false;
             }
-        });
+        }
+
+        if (success)
+        {
+            if (pipelinePreSetup.HasRelease)
+            {
+                foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                {
+                    if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+                    {
+                        continue;
+                    }
+                    var appIdLower = appEntry.AppId.ToLowerInvariant();
+                    var releasePath = OutputDirectory / appIdLower;
+                    if (!releasePath.DirectoryExists())
+                    {
+                        throw new Exception("No release found for " + appIdLower);
+                    }
+                    var outPath = OutputDirectory / appIdLower + "-" + appRunEntry.Version;
+                    var outPathZip = OutputDirectory / appIdLower + "-" + appRunEntry.Version + ".zip";
+                    releasePath.CopyFilesRecursively(outPath);
+                    outPath.ZipTo(outPathZip);
+                    Log.Information("Publish: {name}", appIdLower);
+                }
+
+                await Task.Run(() =>
+                {
+                    foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                    {
+                        if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+                        {
+                            continue;
+                        }
+                        var appIdLower = appEntry.AppId.ToLowerInvariant();
+                        var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                        string latestTag = "latest";
+                        if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            latestTag += "-" + appRunEntry.Environment;
+                        }
+
+                        Git.Invoke("tag -f " + appIdLower + "/" + version + "-passed");
+                        Git.Invoke("tag -f " + appIdLower + "/" + version);
+                        Git.Invoke("tag -f " + appIdLower + "/" + latestTag);
+                    }
+
+                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
+
+                    Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
+
+                    Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
+                });
+            }
+        }
+        else
+        {
+            if (pipelinePreSetup.HasRelease)
+            {
+                await Task.Run(() =>
+                {
+                    foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                    {
+                        var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                        string latestTag = "latest";
+                        if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            latestTag += "-" + appRunEntry.Environment;
+                        }
+
+                        Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version + "-failed");
+                        Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version);
+                    }
+
+                    Gh.Invoke("release delete -y build." + pipelinePreSetup.BuildId);
+
+                    Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
+                });
+            }
+        }
+
+        await pipeline.Pipeline.FinalizePostSetup(allEntry, pipelinePreSetup);
+
+        if (!success)
+        {
+            throw new Exception("Run has error(s)");
+        }
     }
 
     private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> InteractiveRelease()
@@ -505,7 +833,7 @@ partial class BaseNukeBuildHelpers
             Assert.Fail($"{Repository.Branch} is not on environment branches");
         }
 
-        ValueHelpers.GetOrFail(AppEntryHelpers.GetAppConfig, out var appConfig);
+        ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
         string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
 
@@ -513,14 +841,13 @@ partial class BaseNukeBuildHelpers
 
         List<(AppEntry? AppEntry, AllVersions? AllVersions)> appEntryVersions = [];
 
-        foreach (var pair in appConfig.AppEntryConfigs)
+        foreach (var pair in allEntry.AppEntryMap)
         {
             string appId = pair.Key;
 
-            ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntryConfig);
-            ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out var allVersions);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
 
-            appEntryVersions.Add((pair.Value.Entry, allVersions));
+            appEntryVersions.Add((pair.Value, allVersions));
         }
 
         List<string> appEntryIdHasBump = [];
@@ -533,9 +860,9 @@ partial class BaseNukeBuildHelpers
                 appEntryVersion.AllVersions.VersionCommitPaired.TryGetValue(currentEnvLatestVersion, out var currentEnvLatestVersionCommitId) &&
                 currentEnvLatestVersionCommitId == Repository.Commit)
             {
-                appEntryIdHasBump.Add(appEntryVersion.AppEntry.Id);
+                appEntryIdHasBump.Add(appEntryVersion.AppEntry.AppId);
                 Console.Write("Commit has already bumped ");
-                ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry.Id, ConsoleColor.DarkMagenta);
+                ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry.AppId, ConsoleColor.DarkMagenta);
                 Console.WriteLine();
             }
         }
@@ -549,18 +876,18 @@ partial class BaseNukeBuildHelpers
             var availableBump = appEntryVersions
                 .Where(i =>
                 {
-                    if (appEntryVersionsToBump.Any(j => j.AppEntry.Id == i.AppEntry?.Id))
+                    if (appEntryVersionsToBump.Any(j => j.AppEntry.AppId.Equals(i.AppEntry?.AppId, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         return false;
                     }
-                    if (appEntryIdHasBump.Any(j => j == i.AppEntry?.Id))
+                    if (appEntryIdHasBump.Any(j => j.Equals(i.AppEntry?.AppId, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         return false;
                     }
 
                     return true;
                 });
-            var appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.Id);
+            var appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.AppId);
 
             if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
             {
@@ -626,7 +953,7 @@ partial class BaseNukeBuildHelpers
 
                         return ValidationResult.Success;
                     })];
-            
+
             var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("New Version", validators: validators));
             var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
             appEntryVersionsToBump.Add((appEntryVersion.AppEntry, appEntryVersion.AllVersions, bumpVersion));
@@ -649,14 +976,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var appEntryVersionToBump in appEntryVersionsToBump)
         {
-            if (appEntryVersionToBump.AppEntry.MainRelease)
-            {
-                tagsToPush.Add(appEntryVersionToBump.BumpVersion.ToString() + "-bump");
-            }
-            else
-            {
-                tagsToPush.Add(appEntryVersionToBump.AppEntry.Id.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
-            }
+            tagsToPush.Add(appEntryVersionToBump.AppEntry.AppId.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
         }
 
         foreach (var tag in tagsToPush)
@@ -686,7 +1006,7 @@ partial class BaseNukeBuildHelpers
 
     private async Task StartStatusWatch(bool cancelOnDone = false, params (string AppId, string Environment)[] appIds)
     {
-        ValueHelpers.GetOrFail(AppEntryHelpers.GetAppConfig, out var appConfig);
+        ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
         ConsoleTableHeader[] headers =
             [
@@ -715,15 +1035,12 @@ partial class BaseNukeBuildHelpers
             List<(string AppId, string Environment)> appIdsPassed = [];
             List<(string AppId, string Environment)> appIdsFailed = [];
 
-            foreach (var key in appConfig.AppEntryConfigs.Select(i => i.Key))
+            foreach (var appEntry in allEntry.AppEntryMap.Values)
             {
-                string appId = key;
-
-                ValueHelpers.GetOrFail(appId, appConfig.AppEntryConfigs, out appId, out var appEntry);
                 AllVersions allVersions;
                 try
                 {
-                    ValueHelpers.GetOrFail(() => AppEntryHelpers.GetAllVersions(this, appId, appConfig.AppEntryConfigs, ref lsRemote), out allVersions);
+                    ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appEntry.AppId, ref lsRemote), out allVersions);
                 }
                 catch
                 {
@@ -746,13 +1063,13 @@ partial class BaseNukeBuildHelpers
                         {
                             published = "Run Failed";
                             statusColor = ConsoleColor.Red;
-                            appIdsFailed.Add((appId.ToLowerInvariant(), env.ToLowerInvariant()));
+                            appIdsFailed.Add((appEntry.AppId.ToLowerInvariant(), env.ToLowerInvariant()));
                         }
                         else if (allVersions.VersionPassed.Contains(bumpedVersion))
                         {
                             published = "Published";
                             statusColor = ConsoleColor.Green;
-                            appIdsPassed.Add((appId.ToLowerInvariant(), env.ToLowerInvariant()));
+                            appIdsPassed.Add((appEntry.AppId.ToLowerInvariant(), env.ToLowerInvariant()));
                         }
                         else if (allVersions.VersionQueue.Contains(bumpedVersion))
                         {
@@ -775,7 +1092,7 @@ partial class BaseNukeBuildHelpers
                         var bumpedVersionStr = SemverHelpers.IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
                         rows.Add(ConsoleTableRow.FromValue(
                             [
-                                (firstEntryRow ? appId : "", ConsoleColor.Magenta),
+                                (firstEntryRow ? appEntry.AppId : "", ConsoleColor.Magenta),
                                 (env, ConsoleColor.Magenta),
                                 (bumpedVersionStr, ConsoleColor.Magenta),
                                 (published, statusColor)
@@ -787,7 +1104,7 @@ partial class BaseNukeBuildHelpers
                 {
                     rows.Add(ConsoleTableRow.FromValue(
                         [
-                            (appId, ConsoleColor.Magenta),
+                            (appEntry.AppId, ConsoleColor.Magenta),
                             (null, ConsoleColor.Magenta),
                             (null, ConsoleColor.Magenta),
                             ("Not published", statusColor)
