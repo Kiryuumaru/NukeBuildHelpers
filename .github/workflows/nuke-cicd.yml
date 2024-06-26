@@ -205,7 +205,7 @@ jobs:
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSPUBLISH:
-    name: Publish - nuke_build_helpers
+    name: Publish - nuke_build_helpers (NukeBuildHelpersPublish)
     runs-on: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
