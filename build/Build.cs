@@ -105,6 +105,7 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .Condition(true)
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -172,6 +173,7 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers2")
         .DisplayName("Build try 2")
         .RunnerOS(RunnerOS.Windows2022)
+        .Condition(true)
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
