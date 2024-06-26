@@ -47,7 +47,7 @@ TestEntry NukeBuildHelpersTest => _ => _
     });
 ```
 
-#### Example `AppTestEntry` Implementation
+#### Example `BuildEntry` Implementation
 
 ```csharp
 BuildEntry NukeBuildHelpersBuild => _ => _
@@ -83,7 +83,7 @@ BuildEntry NukeBuildHelpersBuild => _ => _
     });
 ```
 
-#### Example `AppTestEntry` Implementation
+#### Example `PublishEntry` Implementation
 
 ```csharp
 PublishEntry NukeBuildHelpersPublish => _ => _
