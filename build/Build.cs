@@ -44,8 +44,8 @@ class Build : BaseNukeBuildHelpers
             (RootDirectory / ".vs").DeleteDirectory();
         });
 
-    TestEntry NugetBuildHelpersTest1 => _ => _
-        .AppId("nuget_build_helpers")
+    TestEntry NukeBuildHelpersTest1 => _ => _
+        .AppId("nuke_build_helpers")
         .DisplayName("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .WorkflowBuilder(builder =>
@@ -89,8 +89,8 @@ class Build : BaseNukeBuildHelpers
                 .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
         });
 
-    TestEntry NugetBuildHelpersTest2 => _ => _
-        .AppId("nuget_build_helpers")
+    TestEntry NukeBuildHelpersTest2 => _ => _
+        .AppId("nuke_build_helpers")
         .DisplayName("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
@@ -101,8 +101,8 @@ class Build : BaseNukeBuildHelpers
                 .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
         });
 
-    BuildEntry NugetBuildHelpersBuild1 => _ => _
-        .AppId("nuget_build_helpers")
+    BuildEntry NukeBuildHelpersBuild1 => _ => _
+        .AppId("nuke_build_helpers")
         .DisplayName("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Execute(context => {
@@ -134,8 +134,8 @@ class Build : BaseNukeBuildHelpers
                 .SetOutputDirectory(OutputDirectory / "main"));
         });
 
-    BuildEntry NugetBuildHelpersBuild2 => _ => _
-        .AppId("nuget_build_helpers")
+    BuildEntry NukeBuildHelpersBuild2 => _ => _
+        .AppId("nuke_build_helpers")
         .DisplayName("Build try")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(context => {
@@ -167,8 +167,8 @@ class Build : BaseNukeBuildHelpers
                 .SetOutputDirectory(OutputDirectory / "try" / "awdawd"));
         });
 
-    BuildEntry NugetBuildHelpersBuild3 => _ => _
-        .AppId("nuget_build_helpers2")
+    BuildEntry NukeBuildHelpersBuild3 => _ => _
+        .AppId("nuke_build_helpers2")
         .DisplayName("Build try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(context => {
@@ -200,8 +200,8 @@ class Build : BaseNukeBuildHelpers
                 .SetOutputDirectory(OutputDirectory / "try 2"));
         });
 
-    PublishEntry NugetBuildHelpersPublish => _ => _
-        .AppId("nuget_build_helpers")
+    PublishEntry NukeBuildHelpersPublish => _ => _
+        .AppId("nuke_build_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .Condition(true)
         .Execute(context =>
