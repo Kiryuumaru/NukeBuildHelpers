@@ -7,7 +7,7 @@ NukeBuildHelpers is a C# project build automation tool built on top of NukeBuild
 - **Multi-project and Multi-environment Support**: Handle releases for multiple projects and environments in a single repository.
 - **CI/CD Integration**: Generate GitHub Actions and Azure Pipelines workflows.
 - **Automated Versioning**: Interactive CLI for bumping project versions with validation.
-- **Flexible Build Flow**: Override abstract classes to create custom build flows.
+- **Flexible Build Flow**: Implement the target entries to create custom build flows.
 
 ## Quick Start
 
@@ -30,51 +30,83 @@ dotnet add package NukeBuildHelpers
 
 ### Creating Build Flows
 
-To create custom build flows, override the abstract classes `AppEntry` or `AppTestEntry`.
+To create custom build flows, implement the target entries `TestEntry`, `BuildEntry` or `PublishEntry`.
 
-#### Example `AppEntry` Implementation
+#### Example `TestEntry` Implementation
 
 ```csharp
-namespace _build;
-
-public class NugetBuildHelpers : AppEntry<Build>
-{
-    public override RunsOnType BuildRunsOn => RunsOnType.Ubuntu2204;
-    public override RunsOnType PublishRunsOn => RunsOnType.Ubuntu2204;
-
-    [SecretVariable("NUGET_AUTH_TOKEN")]
-    readonly string? NuGetAuthToken;
-
-    [SecretVariable("GITHUB_TOKEN")]
-    readonly string? GithubToken;
-
-    public override void Build(AppRunContext appRunContext)
+TestEntry NukeBuildHelpersTest => _ => _
+    .AppId("nuke_build_helpers")
+    .RunnerOS(RunnerOS.Ubuntu2204)
+    .Execute(() =>
     {
-        // Build logic here
-    }
-
-    public override void Publish(AppRunContext appRunContext)
-    {
-        // Publish logic here
-    }
-}
+        DotNetTasks.DotNetClean(_ => _
+            .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+        DotNetTasks.DotNetTest(_ => _
+            .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+    });
 ```
 
 #### Example `AppTestEntry` Implementation
 
 ```csharp
-namespace _build;
+BuildEntry NukeBuildHelpersBuild => _ => _
+    .AppId("nuke_build_helpers")
+    .RunnerOS(RunnerOS.Ubuntu2204)
+    .Execute(context => {
+        string version = "0.0.0";
+        string? releaseNotes = null;
+        if (context.TryGetBumpContext(out var bumpContext))
+        {
+            version = bumpContext.AppVersion.Version.ToString();
+            releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+        }
+        else if (context.TryGetPullRequestContext(out var pullRequestContext))
+        {
+            version = pullRequestContext.AppVersion.Version.ToString();
+        }
+        DotNetTasks.DotNetClean(_ => _
+            .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
+        DotNetTasks.DotNetBuild(_ => _
+            .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+            .SetConfiguration("Release"));
+        DotNetTasks.DotNetPack(_ => _
+            .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+            .SetConfiguration("Release")
+            .SetNoRestore(true)
+            .SetNoBuild(true)
+            .SetIncludeSymbols(true)
+            .SetSymbolPackageFormat("snupkg")
+            .SetVersion(version)
+            .SetPackageReleaseNotes(releaseNotes)
+            .SetOutputDirectory(OutputDirectory / "main"));
+    });
+```
 
-public class NugetBuildHelpersTest : AppTestEntry<Build>
-{
-    public override RunsOnType RunsOn => RunsOnType.WindowsLatest;
-    public override Type[] AppEntryTargets => [typeof(NugetBuildHelpers)];
+#### Example `AppTestEntry` Implementation
 
-    public override void Run(AppTestRunContext appTestRunContext)
+```csharp
+PublishEntry NukeBuildHelpersPublish => _ => _
+    .AppId("nuke_build_helpers")
+    .RunnerOS(RunnerOS.Ubuntu2204)
+    .Execute(context =>
     {
-        // Test logic here
-    }
-}
+        foreach (var path in OutputDirectory.GetFiles("**", 99))
+        {
+            Log.Information(path);
+        }
+        if (context.RunType == RunType.Bump)
+        {
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+                .SetApiKey(GithubToken)
+                .SetTargetPath(OutputDirectory / "main" / "**"));
+            DotNetTasks.DotNetNuGetPush(_ => _
+                .SetSource("https://api.nuget.org/v3/index.json")
+                .SetApiKey(NuGetAuthToken)
+                .SetTargetPath(OutputDirectory / "main" / "**"));
+        }
+    });
 ```
 
 ### Generating Workflows
