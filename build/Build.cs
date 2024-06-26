@@ -83,7 +83,6 @@ class Build : BaseNukeBuildHelpers
         })
         .Execute(() =>
         {
-            throw new System.Exception("CSCSC");
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
             DotNetTasks.DotNetTest(_ => _
