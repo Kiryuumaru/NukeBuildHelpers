@@ -161,11 +161,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
             {
-                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id) ?? "";
+                // Succeeded|SucceededWithIssues|Skipped|Failed|Canceled
+                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id.ToUpperInvariant()) ?? "";
+                result = result.Replace("Succeeded", "success");
                 result = result.Replace("SucceededWithIssues", "error");
                 result = result.Replace("Failed", "error");
                 result = result.Replace("Canceled", "error");
-                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id, result);
+                result = result.Replace("Skipped", "skipped");
+                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant(), result);
             }
 
             var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
@@ -312,7 +315,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVarFromNeeds(postSetupJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            AddJobEnvVar(postSetupJob, "NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id, $"$[ dependencies.{entryDefinition.Id}.result ]");
+            AddJobEnvVar(postSetupJob, "NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id.ToUpperInvariant(), $"$[ dependencies.{entryDefinition.Id}.result ]");
         }
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");

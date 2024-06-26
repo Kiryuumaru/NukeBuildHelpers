@@ -281,9 +281,9 @@ jobs:
   condition: always()
   variables:
     NUKE_PRE_SETUP: $[ dependencies.pre_setup.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
-    NUKE_RUN_RESULT_AZURE_NukeBuildHelpersTest1: $[ dependencies.NukeBuildHelpersTest1.result ]
-    NUKE_RUN_RESULT_AZURE_NukeBuildHelpersTest2: $[ dependencies.NukeBuildHelpersTest2.result ]
-    NUKE_RUN_RESULT_AZURE_NukeBuildHelpersBuild1: $[ dependencies.NukeBuildHelpersBuild1.result ]
-    NUKE_RUN_RESULT_AZURE_NukeBuildHelpersBuild2: $[ dependencies.NukeBuildHelpersBuild2.result ]
-    NUKE_RUN_RESULT_AZURE_NukeBuildHelpersBuild3: $[ dependencies.NukeBuildHelpersBuild3.result ]
-    NUKE_RUN_RESULT_AZURE_NukeBuildHelpersPublish: $[ dependencies.NukeBuildHelpersPublish.result ]
+    NUKE_RUN_RESULT_AZURE_NUKEBUILDHELPERSTEST1: $[ dependencies.NukeBuildHelpersTest1.result ]
+    NUKE_RUN_RESULT_AZURE_NUKEBUILDHELPERSTEST2: $[ dependencies.NukeBuildHelpersTest2.result ]
+    NUKE_RUN_RESULT_AZURE_NUKEBUILDHELPERSBUILD1: $[ dependencies.NukeBuildHelpersBuild1.result ]
+    NUKE_RUN_RESULT_AZURE_NUKEBUILDHELPERSBUILD2: $[ dependencies.NukeBuildHelpersBuild2.result ]
+    NUKE_RUN_RESULT_AZURE_NUKEBUILDHELPERSBUILD3: $[ dependencies.NukeBuildHelpersBuild3.result ]
+    NUKE_RUN_RESULT_AZURE_NUKEBUILDHELPERSPUBLISH: $[ dependencies.NukeBuildHelpersPublish.result ]

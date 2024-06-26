@@ -257,12 +257,12 @@ jobs:
     if: success() || failure() || always()
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-      NUKE_RUN_RESULT_GITHUB_NukeBuildHelpersTest1: ${{ needs.NukeBuildHelpersTest1.result }}
-      NUKE_RUN_RESULT_GITHUB_NukeBuildHelpersTest2: ${{ needs.NukeBuildHelpersTest2.result }}
-      NUKE_RUN_RESULT_GITHUB_NukeBuildHelpersBuild1: ${{ needs.NukeBuildHelpersBuild1.result }}
-      NUKE_RUN_RESULT_GITHUB_NukeBuildHelpersBuild2: ${{ needs.NukeBuildHelpersBuild2.result }}
-      NUKE_RUN_RESULT_GITHUB_NukeBuildHelpersBuild3: ${{ needs.NukeBuildHelpersBuild3.result }}
-      NUKE_RUN_RESULT_GITHUB_NukeBuildHelpersPublish: ${{ needs.NukeBuildHelpersPublish.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSTEST1: ${{ needs.NukeBuildHelpersTest1.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSTEST2: ${{ needs.NukeBuildHelpersTest2.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSBUILD1: ${{ needs.NukeBuildHelpersBuild1.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSBUILD2: ${{ needs.NukeBuildHelpersBuild2.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSBUILD3: ${{ needs.NukeBuildHelpersBuild3.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSPUBLISH: ${{ needs.NukeBuildHelpersPublish.result }}
 env:
   NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
   NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -157,10 +157,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
             {
-                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id) ?? "";
+                // success, failure, cancelled, or skipped
+                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id.ToUpperInvariant()) ?? "";
                 result = result.Replace("failure", "error");
                 result = result.Replace("cancelled", "error");
-                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id, result);
+                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant(), result);
             }
 
             var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
@@ -318,7 +319,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP", "pre_setup");
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            AddJobOrStepEnvVar(postSetupJob, "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id, $"${{{{ needs.{entryDefinition.Id}.result }}}}");
+            AddJobOrStepEnvVar(postSetupJob, "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id.ToUpperInvariant(), $"${{{{ needs.{entryDefinition.Id}.result }}}}");
         }
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
