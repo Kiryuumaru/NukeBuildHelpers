@@ -21,6 +21,7 @@ using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.RunContext.Models;
+using System.Collections;
 
 namespace NukeBuildHelpers;
 
@@ -721,6 +722,11 @@ partial class BaseNukeBuildHelpers
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         await pipeline.Pipeline.PreparePostSetup(allEntry, pipelinePreSetup);
+
+        foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
+        {
+            Log.Information("VARRRRRRRRRRRR: {k} = {v}", entry.Key, entry.Value);
+        }
 
         bool success = true;
 
