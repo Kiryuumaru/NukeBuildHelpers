@@ -50,7 +50,6 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Ubuntu2204)
         .WorkflowBuilder(builder =>
         {
-            throw new System.Exception("CSCSC");
             if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
             {
                 githubWorkflowBuilder.AddPostExecuteStep(new Dictionary<string, object>()
@@ -84,6 +83,7 @@ class Build : BaseNukeBuildHelpers
         })
         .Execute(() =>
         {
+            throw new System.Exception("CSCSC");
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
             DotNetTasks.DotNetTest(_ => _
