@@ -9,11 +9,11 @@ internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinit
     {
         if (((ITestEntryDefinition)this).AppIds.Length > 1 || ((ITestEntryDefinition)this).AppIds.Length == 0)
         {
-            return "Test - " + ((ITestEntryDefinition)this).Id;
+            return "Test - " + ((ITestEntryDefinition)this).Id + " (" + Id + ")";
         }
         else
         {
-            return "Test - " + ((ITestEntryDefinition)this).AppIds.First();
+            return "Test - " + ((ITestEntryDefinition)this).AppIds.First() + " (" + Id + ")";
         }
     }
 

@@ -7,7 +7,7 @@ internal class PublishEntryDefinition : TargetEntryDefinition, IPublishEntryDefi
 {
     protected override string GetDefaultName()
     {
-        return "Publish - " + ((IPublishEntryDefinition)this).AppId;
+        return "Publish - " + ((IPublishEntryDefinition)this).AppId + " (" + Id + ")";
     }
 
     protected override Task<bool> GetDefaultCondition(IRunContext runContext)
