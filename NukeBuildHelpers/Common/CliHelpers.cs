@@ -5,7 +5,7 @@ using System.Text;
 
 namespace NukeBuildHelpers.Common;
 
-public static class CliHelpers
+internal static class CliHelpers
 {
     public static Command BuildRun(
         string command,
