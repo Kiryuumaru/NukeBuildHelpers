@@ -1,4 +1,5 @@
 ﻿using Nuke.Common;
+using Nuke.Common.IO;
 using Nuke.Common.Utilities;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
@@ -172,12 +173,26 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return Task.CompletedTask;
     }
 
-    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
-        return Task.CompletedTask;
+        return Task.Run(() =>
+        {
+            bool hasArtifactMerged = false;
+            foreach (var entryDefinition in entriesToRunMap.Values)
+            {
+                if (!hasArtifactMerged && entryDefinition is IPublishEntryDefinition)
+                {
+                    foreach (var artifact in (BaseNukeBuildHelpers.TemporaryDirectory / "artifacts").GetDirectories())
+                    {
+                        artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory);
+                    }
+                    hasArtifactMerged = true;
+                }
+            }
+        });
     }
 
-    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         return Task.CompletedTask;
     }
@@ -272,7 +287,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(publishJob);
             var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
             AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId + "--*/**");
-            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/output");
+            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
             publishNeeds.Add(entryDefinition.Id);

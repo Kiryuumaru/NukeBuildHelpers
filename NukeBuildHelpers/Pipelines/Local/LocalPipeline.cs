@@ -1,4 +1,5 @@
 ﻿using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
@@ -46,12 +47,12 @@ internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         throw new NotImplementedException();
     }
 
-    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         throw new NotImplementedException();
     }
 
-    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         throw new NotImplementedException();
     }

@@ -625,7 +625,7 @@ partial class BaseNukeBuildHelpers
     {
         List<Func<Task>> tasks = [];
 
-        await pipeline.Pipeline.PrepareEntryRun(allEntry, pipelinePreSetup);
+        await pipeline.Pipeline.PrepareEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
 
         CacheBump();
 
@@ -646,7 +646,7 @@ partial class BaseNukeBuildHelpers
             await task();
         }
 
-        await pipeline.Pipeline.FinalizeEntryRun(allEntry, pipelinePreSetup);
+        await pipeline.Pipeline.FinalizeEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
     }
 
     private Task TestAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)

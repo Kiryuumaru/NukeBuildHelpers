@@ -224,7 +224,7 @@ jobs:
     displayName: Download Artifacts
     inputs:
       itemPattern: nuget_build_helpers--*/**
-      path: ./.nuke/output
+      path: ./.nuke/temp/artifacts
       continueOnError: true
   - task: Cache@2
     displayName: Cache Run

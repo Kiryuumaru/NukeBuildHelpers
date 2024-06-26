@@ -1,4 +1,5 @@
-﻿using NukeBuildHelpers.Entry.Models;
+﻿using NukeBuildHelpers.Entry.Interfaces;
+using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Models;
 
 namespace NukeBuildHelpers.Pipelines.Common.Interfaces;
@@ -19,9 +20,9 @@ internal interface IPipeline
 
     Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
-    Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+    Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap);
 
-    Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
+    Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap);
 
     Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry);
 }

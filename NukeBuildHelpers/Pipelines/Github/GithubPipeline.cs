@@ -167,12 +167,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return Task.CompletedTask;
     }
 
-    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         return Task.CompletedTask;
     }
 
-    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         return Task.CompletedTask;
     }
