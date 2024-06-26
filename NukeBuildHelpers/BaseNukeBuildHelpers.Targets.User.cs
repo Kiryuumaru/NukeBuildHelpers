@@ -14,6 +14,9 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    /// <summary>
+    /// Fetches git commits and tags.
+    /// </summary>
     public Target Fetch => _ => _
         .Description("Fetch git commits and tags")
         .Executes(() =>
@@ -24,6 +27,9 @@ partial class BaseNukeBuildHelpers
             Git.Invoke("fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
         });
 
+    /// <summary>
+    /// Shows the current version from all releases, with --args "{appid}".
+    /// </summary>
     public Target Version => _ => _
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
         .DependsOn(Fetch)
@@ -90,6 +96,9 @@ partial class BaseNukeBuildHelpers
             ConsoleTableHelpers.LogInfoTable(headers, [.. rows]);
         });
 
+    /// <summary>
+    /// Bumps the version by validating and tagging.
+    /// </summary>
     public Target Bump => _ => _
         .Description("Bumps the version by validating and tagging")
         .DependsOn(Version)
@@ -104,6 +113,9 @@ partial class BaseNukeBuildHelpers
             await StartStatusWatch(true, appEntryVersionsToBump.Select(i => (i.AppEntry.AppId, Repository.Branch)).ToArray());
         });
 
+    /// <summary>
+    /// Bumps and forgets the version by validating and tagging.
+    /// </summary>
     public Target BumpAndForget => _ => _
         .Description("Bumps and forget the version by validating and tagging")
         .DependsOn(Version)
@@ -114,6 +126,9 @@ partial class BaseNukeBuildHelpers
             await StartBump();
         });
 
+    /// <summary>
+    /// Shows the current version from all releases, with --args "{appid}".
+    /// </summary>
     public Target StatusWatch => _ => _
         .Description("Shows the current version from all releases, with --args \"{appid}\"")
         .Executes(async () =>
@@ -128,6 +143,9 @@ partial class BaseNukeBuildHelpers
             await StartStatusWatch(false);
         });
 
+    /// <summary>
+    /// Tests the application, with --args "{appid}".
+    /// </summary>
     public Target Test => _ => _
         .Description("Test, with --args \"{appid}\"")
         .Executes(async () =>
@@ -140,6 +158,9 @@ partial class BaseNukeBuildHelpers
             await TestAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
+    /// <summary>
+    /// Builds the application, with --args "{appid}".
+    /// </summary>
     public Target Build => _ => _
         .Description("Build, with --args \"{appid}\"")
         .DependsOn(Test)
@@ -153,6 +174,9 @@ partial class BaseNukeBuildHelpers
             await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
+    /// <summary>
+    /// Publishes the application, with --args "{appid}".
+    /// </summary>
     public Target Publish => _ => _
         .Description("Publish, with --args \"{appid}\"")
         .DependsOn(Build)
@@ -166,6 +190,9 @@ partial class BaseNukeBuildHelpers
             await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
+    /// <summary>
+    /// Builds the CICD workflow for GitHub.
+    /// </summary>
     public Target GithubWorkflow => _ => _
         .Description("Builds the cicd workflow for github")
         .Executes(async () =>
@@ -177,6 +204,9 @@ partial class BaseNukeBuildHelpers
             await PipelineHelpers.BuildWorkflow<GithubPipeline>(this, allEntry);
         });
 
+    /// <summary>
+    /// Builds the CICD workflow for Azure.
+    /// </summary>
     public Target AzureWorkflow => _ => _
         .Description("Builds the cicd workflow for azure")
         .Executes(async () =>

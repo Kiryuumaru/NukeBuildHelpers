@@ -6,6 +6,9 @@ using NukeBuildHelpers.Runner.Abstraction;
 
 namespace NukeBuildHelpers.Entry.Interfaces;
 
+/// <summary>
+/// Interface defining the definition of an entry in the build system.
+/// </summary>
 public interface IEntryDefinition
 {
     internal string Id { get; set; }
