@@ -133,7 +133,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers--NukeBuildHelpersBuild1
+        name: nuke_build_helpers___NukeBuildHelpersBuild1
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -163,7 +163,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers--NukeBuildHelpersBuild2
+        name: nuke_build_helpers___NukeBuildHelpersBuild2
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -193,7 +193,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers2--NukeBuildHelpersBuild3
+        name: nuke_build_helpers2___NukeBuildHelpersBuild3
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
@@ -212,9 +212,8 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/output
-        pattern: nuke_build_helpers--*
-        merge-multiple: true
+        path: ./.nuke/temp/artifacts
+        pattern: nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -242,7 +241,7 @@ jobs:
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/output
+        path: ./.nuke/temp/artifacts
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
