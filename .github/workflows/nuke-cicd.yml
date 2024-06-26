@@ -141,7 +141,7 @@ jobs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION == 'true'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD2:
@@ -171,7 +171,7 @@ jobs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CONDITION == 'true'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD3:
@@ -230,7 +230,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD1
     - NUKEBUILDHELPERSBUILD2
     - NUKEBUILDHELPERSBUILD3
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:

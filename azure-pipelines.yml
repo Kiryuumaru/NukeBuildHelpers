@@ -124,7 +124,7 @@ jobs:
   - PRE_SETUP
   - NUKEBUILDHELPERSTEST1
   - NUKEBUILDHELPERSTEST2
-  condition: and(not(or(failed(), canceled())), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
+  condition: and(and(and(not(or(failed(), canceled())), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true')), eq(dependencies.NUKEBUILDHELPERSTEST1result, 'Succeeded')), eq(dependencies.NUKEBUILDHELPERSTEST2result, 'Succeeded'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.PRE_SETUP.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.PRE_SETUP.outputs['NUKE_RUN.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION'] ]
@@ -163,7 +163,7 @@ jobs:
   - PRE_SETUP
   - NUKEBUILDHELPERSTEST1
   - NUKEBUILDHELPERSTEST2
-  condition: and(not(or(failed(), canceled())), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
+  condition: and(and(and(not(or(failed(), canceled())), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true')), eq(dependencies.NUKEBUILDHELPERSTEST1result, 'Succeeded')), eq(dependencies.NUKEBUILDHELPERSTEST2result, 'Succeeded'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.PRE_SETUP.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.PRE_SETUP.outputs['NUKE_RUN.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CONDITION'] ]
@@ -242,7 +242,7 @@ jobs:
   - NUKEBUILDHELPERSBUILD1
   - NUKEBUILDHELPERSBUILD2
   - NUKEBUILDHELPERSBUILD3
-  condition: and(not(or(failed(), canceled())), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true'))
+  condition: and(and(and(not(or(failed(), canceled())), eq(variables.NUKE_PRE_SETUP_CONDITION, 'true')), eq(dependencies.NUKEBUILDHELPERSTEST1result, 'Succeeded')), eq(dependencies.NUKEBUILDHELPERSTEST2result, 'Succeeded'))
   variables:
     NUKE_PRE_SETUP: $[ dependencies.PRE_SETUP.outputs['NUKE_RUN.NUKE_PRE_SETUP'] ]
     NUKE_PRE_SETUP_CONDITION: $[ dependencies.PRE_SETUP.outputs['NUKE_RUN.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION'] ]
