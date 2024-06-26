@@ -723,11 +723,6 @@ partial class BaseNukeBuildHelpers
 
         await pipeline.Pipeline.PreparePostSetup(allEntry, pipelinePreSetup);
 
-        foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
-        {
-            Log.Information("VARRRRRRRRRRRR: {k} = {v}", entry.Key, entry.Value);
-        }
-
         bool success = true;
 
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
