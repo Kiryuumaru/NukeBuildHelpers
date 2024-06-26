@@ -21,6 +21,7 @@ using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.RunContext.Models;
+using System.Collections;
 
 namespace NukeBuildHelpers;
 
@@ -726,7 +727,7 @@ partial class BaseNukeBuildHelpers
 
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            var entryRunResult = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id);
+            var entryRunResult = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant());
             Log.Information("{entryId} result: {result}", entryDefinition.Id, entryRunResult);
             if (entryRunResult == "error" && success)
             {

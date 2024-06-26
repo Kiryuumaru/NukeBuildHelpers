@@ -30,208 +30,207 @@ jobs:
       NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX }}
       NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CONDITION }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_RUNS_ON }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_RUN_SCRIPT }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CONDITION }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_RUNS_ON }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_RUN_SCRIPT }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CONDITION }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_RUNS_ON }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_RUN_SCRIPT }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CONDITION }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_RUNS_ON }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_RUN_SCRIPT }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CONDITION }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild3_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_RUNS_ON }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild3_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_RUN_SCRIPT }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_MAIN_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersPublish_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CONDITION }}
-      NUKE_PRE_SETUP_NukeBuildHelpersPublish_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_RUNS_ON }}
-      NUKE_PRE_SETUP_NukeBuildHelpersPublish_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_RUN_SCRIPT }}
-      NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_RESTORE_KEY }}
-      NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY }}
-  NukeBuildHelpersTest1:
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CONDITION }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUNS_ON }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CONDITION }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUNS_ON }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUNS_ON }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CONDITION }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUNS_ON }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CONDITION }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUNS_ON }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_MAIN_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUNS_ON: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUNS_ON }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_RESTORE_KEY }}
+      NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_MAIN_RESTORE_KEY }}
+  NUKEBUILDHELPERSTEST1:
     name: Test try 1
-    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_RUNS_ON }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
       uses: actions/cache@v4
       with:
         path: ./.nuke/cache
-        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_KEY }}
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_KEY }}
         restore-keys: |-
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_RESTORE_KEY }}
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CACHE_MAIN_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_MAIN_RESTORE_KEY }}
     - id: test_github_1
       name: Custom github step test 1
       run: echo "Test github 1"
     - id: NUKE_RUN
       name: Run Nuke PipelineTest
-      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_RUN_SCRIPT }} PipelineTest --args "NukeBuildHelpersTest1"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUN_SCRIPT }} PipelineTest --args "NukeBuildHelpersTest1"
     - id: test_github_2
       name: Custom github step test 2
       run: echo "Test github 2"
     needs:
     - pre_setup
-    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest1_CONDITION == 'true'
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-  NukeBuildHelpersTest2:
+  NUKEBUILDHELPERSTEST2:
     name: Test try 2
-    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_RUNS_ON }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
       uses: actions/cache@v4
       with:
         path: ./.nuke/cache
-        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_KEY }}
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_KEY }}
         restore-keys: |-
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_RESTORE_KEY }}
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CACHE_MAIN_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
       name: Run Nuke PipelineTest
-      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_RUN_SCRIPT }} PipelineTest --args "NukeBuildHelpersTest2"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUN_SCRIPT }} PipelineTest --args "NukeBuildHelpersTest2"
     needs:
     - pre_setup
-    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersTest2_CONDITION == 'true'
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-  NukeBuildHelpersBuild1:
+  NUKEBUILDHELPERSBUILD1:
     name: Build main
-    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_RUNS_ON }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
       uses: actions/cache@v4
       with:
         path: ./.nuke/cache
-        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_KEY }}
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_KEY }}
         restore-keys: |-
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_RESTORE_KEY }}
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CACHE_MAIN_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
       name: Run Nuke PipelineBuild
-      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_RUN_SCRIPT }} PipelineBuild --args "NukeBuildHelpersBuild1"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUN_SCRIPT }} PipelineBuild --args "NukeBuildHelpersBuild1"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers--NukeBuildHelpersBuild1
+        name: nuke_build_helpers___NUKEBUILDHELPERSBUILD1
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
     needs:
     - pre_setup
-    - NukeBuildHelpersTest1
-    - NukeBuildHelpersTest2
-    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild1_CONDITION == 'true'
+    - NUKEBUILDHELPERSTEST1
+    - NUKEBUILDHELPERSTEST2
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-  NukeBuildHelpersBuild2:
+  NUKEBUILDHELPERSBUILD2:
     name: Build try
-    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_RUNS_ON }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
       uses: actions/cache@v4
       with:
         path: ./.nuke/cache
-        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_KEY }}
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_KEY }}
         restore-keys: |-
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_RESTORE_KEY }}
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CACHE_MAIN_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
       name: Run Nuke PipelineBuild
-      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_RUN_SCRIPT }} PipelineBuild --args "NukeBuildHelpersBuild2"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUN_SCRIPT }} PipelineBuild --args "NukeBuildHelpersBuild2"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers--NukeBuildHelpersBuild2
+        name: nuke_build_helpers___NUKEBUILDHELPERSBUILD2
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
     needs:
     - pre_setup
-    - NukeBuildHelpersTest1
-    - NukeBuildHelpersTest2
-    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild2_CONDITION == 'true'
+    - NUKEBUILDHELPERSTEST1
+    - NUKEBUILDHELPERSTEST2
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-  NukeBuildHelpersBuild3:
+  NUKEBUILDHELPERSBUILD3:
     name: Build try 2
-    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_RUNS_ON }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
       uses: actions/cache@v4
       with:
         path: ./.nuke/cache
-        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_KEY }}
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_KEY }}
         restore-keys: |-
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_RESTORE_KEY }}
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CACHE_MAIN_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
       name: Run Nuke PipelineBuild
-      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_RUN_SCRIPT }} PipelineBuild --args "NukeBuildHelpersBuild3"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUN_SCRIPT }} PipelineBuild --args "NukeBuildHelpersBuild3"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers2--NukeBuildHelpersBuild3
+        name: nuke_build_helpers2___NUKEBUILDHELPERSBUILD3
         path: ./.nuke/output/*
         if-no-files-found: error
         retention-days: 1
     needs:
     - pre_setup
-    - NukeBuildHelpersTest1
-    - NukeBuildHelpersTest2
-    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersBuild3_CONDITION == 'true'
+    - NUKEBUILDHELPERSTEST1
+    - NUKEBUILDHELPERSTEST2
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-  NukeBuildHelpersPublish:
+  NUKEBUILDHELPERSPUBLISH:
     name: Publish - nuke_build_helpers
-    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_RUNS_ON }}
+    runs-on: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUNS_ON }}
     steps:
     - uses: actions/checkout@v4
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/output
-        pattern: nuke_build_helpers--*
-        merge-multiple: true
+        path: ./.nuke/temp/artifacts
+        pattern: nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
         path: ./.nuke/cache
-        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_KEY }}
+        key: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_KEY }}
         restore-keys: |-
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_RESTORE_KEY }}
-          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CACHE_MAIN_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_RESTORE_KEY }}
+          ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
       name: Run Nuke PipelinePublish
-      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_RUN_SCRIPT }} PipelinePublish --args "NukeBuildHelpersPublish"
+      run: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }} PipelinePublish --args "NukeBuildHelpersPublish"
     needs:
     - pre_setup
-    - NukeBuildHelpersBuild1
-    - NukeBuildHelpersBuild2
-    - NukeBuildHelpersBuild3
-    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NukeBuildHelpersPublish_CONDITION == 'true'
+    - NUKEBUILDHELPERSBUILD1
+    - NUKEBUILDHELPERSBUILD2
+    - NUKEBUILDHELPERSBUILD3
+    if: success() && needs.pre_setup.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true'
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
   post_setup:
@@ -242,28 +241,28 @@ jobs:
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/output
+        path: ./.nuke/temp/artifacts
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - pre_setup
-    - NukeBuildHelpersTest1
-    - NukeBuildHelpersTest2
-    - NukeBuildHelpersBuild1
-    - NukeBuildHelpersBuild2
-    - NukeBuildHelpersBuild3
-    - NukeBuildHelpersPublish
+    - NUKEBUILDHELPERSTEST1
+    - NUKEBUILDHELPERSTEST2
+    - NUKEBUILDHELPERSBUILD1
+    - NUKEBUILDHELPERSBUILD2
+    - NUKEBUILDHELPERSBUILD3
+    - NUKEBUILDHELPERSPUBLISH
     if: success() || failure() || always()
     env:
       NUKE_PRE_SETUP: ${{ needs.pre_setup.outputs.NUKE_PRE_SETUP }}
-      NUKE_RUN_RESULT_AZURE_NukeBuildHelpersTest1: ${{ needs.NukeBuildHelpersTest1.result }}
-      NUKE_RUN_RESULT_AZURE_NukeBuildHelpersTest2: ${{ needs.NukeBuildHelpersTest2.result }}
-      NUKE_RUN_RESULT_AZURE_NukeBuildHelpersBuild1: ${{ needs.NukeBuildHelpersBuild1.result }}
-      NUKE_RUN_RESULT_AZURE_NukeBuildHelpersBuild2: ${{ needs.NukeBuildHelpersBuild2.result }}
-      NUKE_RUN_RESULT_AZURE_NukeBuildHelpersBuild3: ${{ needs.NukeBuildHelpersBuild3.result }}
-      NUKE_RUN_RESULT_AZURE_NukeBuildHelpersPublish: ${{ needs.NukeBuildHelpersPublish.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSTEST1: ${{ needs.NUKEBUILDHELPERSTEST1.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSTEST2: ${{ needs.NUKEBUILDHELPERSTEST2.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSBUILD1: ${{ needs.NUKEBUILDHELPERSBUILD1.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSBUILD2: ${{ needs.NUKEBUILDHELPERSBUILD2.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSBUILD3: ${{ needs.NUKEBUILDHELPERSBUILD3.result }}
+      NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSPUBLISH: ${{ needs.NUKEBUILDHELPERSPUBLISH.result }}
 env:
   NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
   NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

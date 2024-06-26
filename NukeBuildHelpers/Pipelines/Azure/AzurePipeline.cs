@@ -20,6 +20,8 @@ namespace NukeBuildHelpers.Pipelines.Azure;
 
 internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
+    private readonly string artifactNameSeparator = "___";
+
     public BaseNukeBuildHelpers NukeBuild { get; set; } = nukeBuild;
 
     public PipelineInfo GetPipelineInfo()
@@ -159,11 +161,24 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
             {
-                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id) ?? "";
+                // Succeeded|SucceededWithIssues|Skipped|Failed|Canceled
+                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id.ToUpperInvariant()) ?? "";
+                result = result.Replace("Succeeded", "success");
                 result = result.Replace("SucceededWithIssues", "error");
                 result = result.Replace("Failed", "error");
                 result = result.Replace("Canceled", "error");
-                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id, result);
+                result = result.Replace("Skipped", "skipped");
+                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant(), result);
+            }
+
+            var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
+            if (artifactsDir.DirectoryExists())
+            {
+                foreach (var artifact in artifactsDir.GetDirectories())
+                {
+                    var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                    artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory / appId);
+                }
             }
         });
     }
@@ -241,12 +256,12 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var testJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. needs], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
+            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. needs], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
             AddJobEnvVarFromNeeds(testJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
-            AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id);
+            AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob);
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "PipelineTest");
-            testNeeds.Add(entryDefinition.Id);
+            testNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
         // ██████████████████████████████████████
@@ -257,16 +272,16 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var buildJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. testNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
+            var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. testNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
             AddJobEnvVarFromNeeds(buildJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
-            AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id);
+            AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(buildJob);
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
             var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
-            AddJobStepInputs(uploadBuildStep, "artifact", entryDefinition.AppId + "--" + entryDefinition.Id);
+            AddJobStepInputs(uploadBuildStep, "artifact", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id);
             AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
             AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
-            buildNeeds.Add(entryDefinition.Id);
+            buildNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
         // ██████████████████████████████████████
@@ -277,16 +292,16 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var publishJob = AddJob(workflow, entryDefinition.Id, await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. buildNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
+            var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression("POOL_NAME"), GetImportedEnvVarExpression("POOL_VM_IMAGE"), needs: [.. buildNeeds], condition: "and(succeeded(), eq(variables." + GetImportedEnvVarName("CONDITION") + ", 'true'))");
             AddJobEnvVarFromNeeds(publishJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
-            AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id);
+            AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(publishJob);
             var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId + "--*/**");
+            AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*/**");
             AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
-            publishNeeds.Add(entryDefinition.Id);
+            publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
         // ██████████████████████████████████████
@@ -300,11 +315,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobEnvVarFromNeeds(postSetupJob, "pre_setup", "NUKE_RUN", "NUKE_PRE_SETUP");
         foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            AddJobEnvVar(postSetupJob, "NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id, $"$[ dependencies.{entryDefinition.Id}.result ]");
+            AddJobEnvVar(postSetupJob, "NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id.ToUpperInvariant(), $"$[ dependencies.{entryDefinition.Id.ToUpperInvariant()}.result ]");
         }
         AddJobStepCheckout(postSetupJob);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/output");
+        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/artifacts");
         AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
         AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
         var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
