@@ -138,6 +138,7 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Build try")
         .RunnerOS(RunnerOS.Windows2022)
+        .Condition(true)
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
