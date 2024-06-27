@@ -820,7 +820,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> InteractiveRelease()
+    private async Task<List<(AppEntry AppEntry, SemVersion BumpVersion)>> InteractiveRelease()
     {
         Prompt.ColorSchema.Answer = ConsoleColor.Green;
         Prompt.ColorSchema.Select = ConsoleColor.DarkMagenta;
@@ -867,7 +867,7 @@ partial class BaseNukeBuildHelpers
             }
         }
 
-        List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)> appEntryVersionsToBump = [];
+        List<(AppEntry AppEntry, SemVersion BumpVersion)> appEntryVersionsToBump = [];
 
         appEntryVersions.Add((null, null));
 
@@ -956,27 +956,29 @@ partial class BaseNukeBuildHelpers
 
             var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("New Version", validators: validators));
             var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
-            appEntryVersionsToBump.Add((appEntryVersion.AppEntry, appEntryVersion.AllVersions, bumpVersion));
+            appEntryVersionsToBump.Add((appEntryVersion.AppEntry, bumpVersion));
         }
 
         return appEntryVersionsToBump;
     }
 
-    private async Task<List<(AppEntry AppEntry, AllVersions AllVersions, SemVersion BumpVersion)>> StartBump()
+    private async Task RunBump(AllEntry allEntry, Dictionary<string, SemVersion> bumpMap)
     {
-        var appEntryVersionsToBump = await InteractiveRelease();
-
-        if (appEntryVersionsToBump.Count == 0)
+        if (bumpMap.Count == 0)
         {
             Log.Information("No version selected to bump.");
-            return appEntryVersionsToBump;
         }
 
         List<string> tagsToPush = [];
 
-        foreach (var appEntryVersionToBump in appEntryVersionsToBump)
+        foreach (var bumpPair in bumpMap)
         {
-            tagsToPush.Add(appEntryVersionToBump.AppEntry.AppId.ToLowerInvariant() + "/" + appEntryVersionToBump.BumpVersion.ToString() + "-bump");
+            if (!allEntry.AppEntryMap.ContainsKey(bumpPair.Key))
+            {
+                throw new Exception("No app entry for " + bumpPair.Key);
+            }
+
+            tagsToPush.Add(bumpPair.Key.ToLowerInvariant() + "/" + bumpPair.Value.ToString() + "-bump");
         }
 
         foreach (var tag in tagsToPush)
@@ -1000,6 +1002,13 @@ partial class BaseNukeBuildHelpers
             Git.Invoke("tag --force " + bumpTag, logInvocation: false, logOutput: false);
             Git.Invoke("push origin --force " + bumpTag, logInvocation: false, logOutput: false);
         });
+    }
+
+    private async Task<List<(AppEntry AppEntry, SemVersion BumpVersion)>> StartBump(AllEntry allEntry)
+    {
+        var appEntryVersionsToBump = await InteractiveRelease();
+
+        await RunBump(allEntry, appEntryVersionsToBump.ToDictionary(i => i.AppEntry.AppId, i => i.BumpVersion));
 
         return appEntryVersionsToBump;
     }

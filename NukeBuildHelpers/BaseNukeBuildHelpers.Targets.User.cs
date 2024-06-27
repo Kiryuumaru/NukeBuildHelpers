@@ -1,5 +1,6 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Tooling;
+using Nuke.Common.Utilities;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Enums;
@@ -8,6 +9,7 @@ using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Pipelines.Azure;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Pipelines.Github;
+using Semver;
 using Serilog;
 
 namespace NukeBuildHelpers;
@@ -106,7 +108,9 @@ partial class BaseNukeBuildHelpers
         {
             CheckEnvironementBranches();
 
-            var appEntryVersionsToBump = await StartBump();
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            var appEntryVersionsToBump = await StartBump(allEntry);
 
             Console.WriteLine();
 
@@ -117,13 +121,88 @@ partial class BaseNukeBuildHelpers
     /// Bumps and forgets the version by validating and tagging.
     /// </summary>
     public Target BumpAndForget => _ => _
-        .Description("Bumps and forget the version by validating and tagging")
+        .Description("Bumps and forget the version by validating and tagging, with optional --args \"{appid=[major|minor|patch|prerelease|pre][+|>]int}\"")
         .DependsOn(Version)
         .Executes(async () =>
         {
             CheckEnvironementBranches();
 
-            await StartBump();
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
+
+            IReadOnlyCollection<Output>? lsRemote = null;
+
+            Dictionary<string, SemVersion> bumpMap = [];
+            foreach (var splitArg in splitArgs)
+            {
+                ValueHelpers.GetOrFail(splitArg.Key, allEntry, out var appEntry);
+                ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, splitArg.Key, ref lsRemote), out var allVersions);
+
+                SemVersion latestVersion = allVersions.EnvVersionGrouped[currentEnvIdentifier]?.LastOrDefault()!;
+                SemVersion bumpVersion = latestVersion.Clone();
+
+                foreach (var bumpPart in splitArg.Value.NotNullOrEmpty().Trim().ToLowerInvariant().Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    try
+                    {
+                        bool isIncrement = true;
+                        string[] bumpValue = [];
+                        if (bumpPart.Contains('+'))
+                        {
+                            isIncrement = true;
+                            bumpValue = bumpPart.Split("+");
+                        }
+                        else if (bumpPart.Contains('>'))
+                        {
+                            isIncrement = false;
+                            bumpValue = bumpPart.Split(">");
+                        }
+                        else
+                        {
+                            bumpValue = [bumpPart];
+                        }
+                        int bumpAssign = bumpValue.Length > 1 ? int.Parse(bumpValue[1]) : 1;
+                        switch (bumpValue[0])
+                        {
+                            case "major":
+                                bumpVersion = bumpVersion.WithMajor(isIncrement ? bumpVersion.Major + bumpAssign : bumpAssign);
+                                break;
+                            case "minor":
+                                bumpVersion = bumpVersion.WithMinor(isIncrement ? bumpVersion.Minor + bumpAssign : bumpAssign);
+                                break;
+                            case "patch":
+                                bumpVersion = bumpVersion.WithPatch(isIncrement ? bumpVersion.Patch + bumpAssign : bumpAssign);
+                                break;
+                            case "prerelease":
+                            case "pre":
+                                var prereleaseSplit = bumpVersion.Prerelease.Split(".");
+                                bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplit[0] + "." + (isIncrement ? int.Parse(prereleaseSplit[1]) + bumpAssign : bumpAssign));
+                                break;
+                            default:
+                                throw new ArgumentException("Invalid bump value " + splitArg.Value);
+                        }
+                    }
+                    catch
+                    {
+                        throw new ArgumentException("Invalid bump value " + splitArg.Value);
+                    }
+                }
+
+                bumpMap[splitArg.Key] = bumpVersion;
+
+                Log.Information("{appId} version {latestVersion} bumped to {bumpVersion}", splitArg.Key, latestVersion, bumpVersion);
+            }
+
+            if (bumpMap.Count == 0)
+            {
+                await StartBump(allEntry);
+            }
+            else
+            {
+                await RunBump(allEntry, bumpMap);
+            }
         });
 
     /// <summary>
