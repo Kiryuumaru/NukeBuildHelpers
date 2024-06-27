@@ -629,6 +629,11 @@ partial class BaseNukeBuildHelpers
 
         CacheBump();
 
+        if (!OutputDirectory.DirectoryExists())
+        {
+            OutputDirectory.CreateDirectory();
+        }
+
         EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
 
         foreach (var entry in entriesToRun)

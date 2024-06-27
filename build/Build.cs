@@ -11,6 +11,7 @@ using NukeBuildHelpers.Pipelines.Github.Extensions;
 using NukeBuildHelpers.RunContext.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -48,6 +49,8 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .CachePaths(RootDirectory / "testCache", RootDirectory / "testFile.txt")
+        .CacheInvalidator("1")
         .WorkflowBuilder(builder =>
         {
             if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
@@ -83,6 +86,21 @@ class Build : BaseNukeBuildHelpers
         })
         .Execute(() =>
         {
+            var testDirFilePath = RootDirectory / "testCache" / "testFile.txt";
+            var testFilePath = RootDirectory / "testFile.txt";
+            testDirFilePath.Parent.CreateDirectory();
+            testFilePath.Parent.CreateDirectory();
+            string oldValDir = testDirFilePath.FileExists() ? testDirFilePath.ReadAllText() : "";
+            string oldValFile = testFilePath.FileExists() ? testFilePath.ReadAllText() : "";
+            Log.Information("Cache old value dir: {oldVal}", oldValDir);
+            Log.Information("Cache old value file: {oldVal}", oldValFile);
+            string testDirFile = Guid.NewGuid().ToString();
+            string testFile = Guid.NewGuid().ToString();
+            Log.Information("Cache new value dir: {newVal}", testDirFile);
+            Log.Information("Cache new value file: {newVal}", testFile);
+            testDirFilePath.WriteAllText(testDirFile);
+            testFilePath.WriteAllText(testFile);
+
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
             DotNetTasks.DotNetTest(_ => _
