@@ -96,8 +96,8 @@ class Build : BaseNukeBuildHelpers
             Log.Information("Cache old value file: {oldVal}", oldValFile);
             string testDirFile = Guid.NewGuid().ToString();
             string testFile = Guid.NewGuid().ToString();
-            Log.Information("Cache new value dir: {oldVal}", testDirFile);
-            Log.Information("Cache new value file: {oldVal}", testFile);
+            Log.Information("Cache new value dir: {newVal}", testDirFile);
+            Log.Information("Cache new value file: {newVal}", testFile);
             testDirFilePath.WriteAllText(testDirFile);
             testFilePath.WriteAllText(testFile);
 
