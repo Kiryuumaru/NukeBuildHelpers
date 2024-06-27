@@ -34,6 +34,6 @@ jobs:
           ref: ${{ github.base_ref }}
       - name: Start nuke auto-bump
         if: ${{ steps.dependabot-metadata.outputs.update-type != 'version-update:semver-major' }}
-        run: chmod +x ./build.sh && ./build.sh BumpAndForget --args "patch"
+        run: chmod +x ./build.sh && ./build.sh BumpAndForget --args "nuke_build_helpers=patch"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
