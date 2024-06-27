@@ -34,5 +34,4 @@ jobs:
         if: ${{ steps.dependabot-metadata.outputs.update-type != 'version-update:semver-major' }}
         run: chmod +x ./build.sh && ./build.sh BumpAndForget --args "patch"
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
