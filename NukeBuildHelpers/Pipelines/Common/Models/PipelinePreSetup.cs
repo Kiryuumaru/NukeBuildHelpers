@@ -1,5 +1,4 @@
 ﻿using NukeBuildHelpers.Common.Enums;
-using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Models;
 
 namespace NukeBuildHelpers.Pipelines.Common.Models;

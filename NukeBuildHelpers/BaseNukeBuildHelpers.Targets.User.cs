@@ -46,12 +46,12 @@ partial class BaseNukeBuildHelpers
             Log.Information("Branch: {Value}", Repository.Branch);
 
             ConsoleTableHeader[] headers =
-                [
-                    ("App EntryId", HorizontalAlignment.Right),
-                    ("Environment", HorizontalAlignment.Center),
-                    ("Bumped Version", HorizontalAlignment.Right),
-                    ("Published", HorizontalAlignment.Center)
-                ];
+            [
+                ("App EntryId", HorizontalAlignment.Right),
+                ("Environment", HorizontalAlignment.Center),
+                ("Bumped Version", HorizontalAlignment.Right),
+                ("Published", HorizontalAlignment.Center)
+            ];
             List<ConsoleTableRow> rows = [];
 
             IReadOnlyCollection<Output>? lsRemote = null;
@@ -190,9 +190,11 @@ partial class BaseNukeBuildHelpers
                     }
                 }
 
+                ValidateBumpVersion(allVersions, bumpVersion.ToString());
+
                 bumpMap[splitArg.Key] = bumpVersion;
 
-                Log.Information("{appId} version {latestVersion} bumped to {bumpVersion}", splitArg.Key, latestVersion, bumpVersion);
+                Log.Information("Bump {appId} from {latestVersion} to {bumpVersion}", splitArg.Key, latestVersion, bumpVersion);
             }
 
             if (bumpMap.Count == 0)

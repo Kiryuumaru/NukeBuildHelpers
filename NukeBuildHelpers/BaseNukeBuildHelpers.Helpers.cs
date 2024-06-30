@@ -18,9 +18,7 @@ using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common;
-using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
-using System.Collections;
 
 namespace NukeBuildHelpers;
 
@@ -135,7 +133,7 @@ partial class BaseNukeBuildHelpers
             }
             tasks.Add(Task.Run(() =>
             {
-                var cachePathValue = cachePath / "value";
+                var cachePathValue = cachePath / "currentLatest";
                 path.Parent.CreateDirectory();
                 if (cachePathValue.FileExists())
                 {
@@ -176,7 +174,7 @@ partial class BaseNukeBuildHelpers
             }
             tasks.Add(Task.Run(() =>
             {
-                var cachePathValue = cachePath / "value";
+                var cachePathValue = cachePath / "currentLatest";
                 cachePath.CreateDirectory();
                 if (path.FileExists())
                 {
@@ -306,23 +304,36 @@ partial class BaseNukeBuildHelpers
                 continue;
             }
 
+            if (allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
+            {
+                foreach (var version in versionGroup.OrderByDescending(i => i))
+                {
+                    if (allVersions.VersionPassed.Contains(version) &&
+                        allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
+                        allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
+                    {
+                        var envBuildIdSuccessGrouped = buildIdGroup.Where(envBuildIdGrouped.Contains);
+                        targetBuildId = targetBuildId == 0 ? envBuildIdSuccessGrouped.Max() : Math.Min(envBuildIdSuccessGrouped.Max(), targetBuildId);
+                        break;
+                    }
+                }
+            }
+
             var lastVersionGroup = versionGroup.Last();
 
             bool hasBumped = false;
 
-            if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out var value) || value != lastVersionGroup)
+            if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out var currentLatest) || currentLatest != lastVersionGroup)
             {
                 if (allVersions.VersionBump.Contains(lastVersionGroup) &&
                     !allVersions.VersionQueue.Contains(lastVersionGroup) &&
                     !allVersions.VersionFailed.Contains(lastVersionGroup) &&
                     !allVersions.VersionPassed.Contains(lastVersionGroup))
                 {
-                    allVersions.EnvLatestBuildIdPaired.TryGetValue(env, out var allVersionLastId);
-                    targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
                     if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                     {
                         hasBumped = true;
-                        Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, value?.ToString(), lastVersionGroup.ToString());
+                        Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
                     }
                 }
             }
@@ -339,6 +350,7 @@ partial class BaseNukeBuildHelpers
                 AppId = appEntry.AppId,
                 Environment = env,
                 Version = lastVersionGroup.ToString(),
+                OldVersion = currentLatest?.ToString() ?? "",
                 HasRelease = hasBumped
             });
         }
@@ -376,6 +388,7 @@ partial class BaseNukeBuildHelpers
                 AppId = entry.AppId,
                 Environment = entry.Environment,
                 Version = versionFactory(entry.Version),
+                OldVersion = entry.OldVersion,
                 HasRelease = entry.HasRelease
             };
         }
@@ -415,7 +428,41 @@ partial class BaseNukeBuildHelpers
             {
                 throw new Exception("releaseNotesJsonDocument is empty");
             }
-            releaseNotes = releaseNotesFromProp;
+
+            var gitBaseUrl = Repository.HttpsUrl;
+            int lastSlashIndex = gitBaseUrl.LastIndexOf('/');
+            int lastDotIndex = gitBaseUrl.LastIndexOf('.');
+            if (lastDotIndex > lastSlashIndex)
+            {
+                gitBaseUrl = gitBaseUrl[..lastDotIndex];
+            }
+
+            var newVersionsMarkdown = "\n\n## New Versions";
+            foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
+            {
+                var appId = entry.AppId.ToLowerInvariant();
+                var oldVer = entry.OldVersion;
+                var newVer = SemVersion.Parse(entry.Version, SemVersionStyles.Strict).WithoutMetadata().ToString();
+                if (string.IsNullOrEmpty(oldVer))
+                {
+                    newVersionsMarkdown += $"\n* Bump `{appId}` to `{newVer}`. See [changelog]({gitBaseUrl}/commits/{appId}/{newVer})";
+                }
+                else
+                {
+                    newVersionsMarkdown += $"\n* Bump `{appId}` from `{oldVer}` to `{newVer}`. See [changelog]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
+                }
+            }
+            newVersionsMarkdown += "\n\n\n**Full Changelog**";
+
+            releaseNotes = releaseNotesFromProp.Replace("\n\n\n**Full Changelog**", newVersionsMarkdown);
+
+            var notesPath = TemporaryDirectory / "notes.md";
+            notesPath.WriteAllText(releaseNotes);
+
+            string ghReleaseEditArgs = $"release edit {buildTag} " +
+                $"--notes-file {notesPath}";
+
+            Gh.Invoke(ghReleaseEditArgs, logger: (s, e) => Log.Debug(e));
         }
 
         foreach (var targetEntry in allEntry.TargetEntryDefinitionMap.Values)
@@ -825,6 +872,48 @@ partial class BaseNukeBuildHelpers
         }
     }
 
+    private void ValidateBumpVersion(AllVersions allVersions, string? bumpVersion)
+    {
+        if (!SemVersion.TryParse(bumpVersion, SemVersionStyles.Strict, out var inputVersion))
+        {
+            throw new Exception("Invalid semver version");
+        }
+
+        // Fail if current branch is not on the proper bump branch
+        string env;
+        if (inputVersion.IsPrerelease)
+        {
+            if (!Repository.Branch.Equals(inputVersion.PrereleaseIdentifiers[0], StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new Exception($"{inputVersion} should bump on {inputVersion.PrereleaseIdentifiers[0]} branch");
+            }
+            env = inputVersion.PrereleaseIdentifiers[0];
+        }
+        else
+        {
+            if (!Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new Exception($"{inputVersion} should bump on {MainEnvironmentBranch.ToLowerInvariant()} branch");
+            }
+            env = MainEnvironmentBranch.ToLowerInvariant();
+        }
+
+        if (allVersions.EnvVersionGrouped.TryGetValue(env, out List<SemVersion>? value))
+        {
+            var lastVersion = value.Last();
+            // Fail if the version is already released
+            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) == 0)
+            {
+                throw new Exception($"The latest version in the {env} releases is already {inputVersion}");
+            }
+            // Fail if the version is behind the latest release
+            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) > 0)
+            {
+                throw new Exception($"{inputVersion} is behind the latest version {lastVersion} in the {env} releases");
+            }
+        }
+    }
+
     private async Task<List<(AppEntry AppEntry, SemVersion BumpVersion)>> InteractiveRelease()
     {
         Prompt.ColorSchema.Answer = ConsoleColor.Green;
@@ -915,49 +1004,22 @@ partial class BaseNukeBuildHelpers
             Console.Write("  Current latest version: ");
             ConsoleHelpers.WriteWithColor(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null", ConsoleColor.Green);
             Console.WriteLine("");
-            List<Func<object, ValidationResult?>> validators = [Validators.Required(),
-                    (input => {
-                        if (!SemVersion.TryParse(input.ToString(), SemVersionStyles.Strict, out var inputVersion))
-                        {
-                            return new ValidationResult("Invalid semver version");
-                        }
-                        
-                        // Fail if current branch is not on the proper bump branch
-                        string env;
-                        if (inputVersion.IsPrerelease)
-                        {
-                            if (!Repository.Branch.Equals(inputVersion.PrereleaseIdentifiers[0], StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                return new ValidationResult($"{inputVersion} should bump on {inputVersion.PrereleaseIdentifiers[0]} branch");
-                            }
-                            env = inputVersion.PrereleaseIdentifiers[0];
-                        }
-                        else
-                        {
-                            if (!Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                return new ValidationResult($"{inputVersion} should bump on {MainEnvironmentBranch.ToLowerInvariant()} branch");
-                            }
-                            env = MainEnvironmentBranch.ToLowerInvariant();
-                        }
+            List<Func<object, ValidationResult?>> validators =
+            [
+                Validators.Required(),
+                (input => {
+                    try
+                    {
+                        ValidateBumpVersion(appEntryVersion.AllVersions, input.ToString());
+                    }
+                    catch (Exception ex)
+                    {
+                        return new ValidationResult(ex.Message);
+                    }
 
-                        if (appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(env, out List<SemVersion>? value))
-                        {
-                            var lastVersion = value.Last();
-                            // Fail if the version is already released
-                            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) == 0)
-                            {
-                                return new ValidationResult($"The latest version in the {env} releases is already {inputVersion}");
-                            }
-                            // Fail if the version is behind the latest release
-                            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) > 0)
-                            {
-                                return new ValidationResult($"{inputVersion} is behind the latest version {lastVersion} in the {env} releases");
-                            }
-                        }
-
-                        return ValidationResult.Success;
-                    })];
+                    return ValidationResult.Success;
+                })
+            ];
 
             var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("New Version", validators: validators));
             var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
