@@ -68,6 +68,7 @@
           "items": {
             "type": "string",
             "enum": [
+              "AWD",
               "AzureWorkflow",
               "Build",
               "Bump",
@@ -94,6 +95,7 @@
           "items": {
             "type": "string",
             "enum": [
+              "AWD",
               "AzureWorkflow",
               "Build",
               "Bump",
