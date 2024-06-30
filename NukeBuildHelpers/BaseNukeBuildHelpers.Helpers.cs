@@ -429,7 +429,7 @@ partial class BaseNukeBuildHelpers
             var notesPath = TemporaryDirectory / "notes.md";
             notesPath.WriteAllText(releaseNotesFromProp);
             var releaseNotesSplit = notesPath.ReadAllLines().ToList();
-            Log.Information("xxxxxxxxxxxxxxxxxxxxxxx:\n" + releaseNotesSplit.Join('\n'));
+            Log.Information("xxxxxxxxxxxxxxxxxxxxxx:\n" + releaseNotesSplit.Join('\n'));
             var insertIndex = 0;
             for (int i = 0; i < releaseNotesSplit.Count; i++)
             {
