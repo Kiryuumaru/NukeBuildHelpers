@@ -462,8 +462,10 @@ partial class BaseNukeBuildHelpers
             notesPath.WriteAllLines(releaseNotesSplit);
             releaseNotes = notesPath.ReadAllText();
 
+            Log.Information("CCCCCCCCCCCCCCCCCCCC:\n" + releaseNotes);
+
             string ghReleaseEditArgs = $"release edit {buildTag} " +
-                $"--notes-file '{notesPath}' ";
+                $"--notes-file '{notesPath}'";
 
             Gh.Invoke(ghReleaseEditArgs, logger: (s, e) => Log.Debug(e));
         }
@@ -875,6 +877,48 @@ partial class BaseNukeBuildHelpers
         }
     }
 
+    private void ValidateBumpVersion(AllVersions allVersions, string? bumpVersion)
+    {
+        if (!SemVersion.TryParse(bumpVersion, SemVersionStyles.Strict, out var inputVersion))
+        {
+            throw new Exception("Invalid semver version");
+        }
+
+        // Fail if current branch is not on the proper bump branch
+        string env;
+        if (inputVersion.IsPrerelease)
+        {
+            if (!Repository.Branch.Equals(inputVersion.PrereleaseIdentifiers[0], StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new Exception($"{inputVersion} should bump on {inputVersion.PrereleaseIdentifiers[0]} branch");
+            }
+            env = inputVersion.PrereleaseIdentifiers[0];
+        }
+        else
+        {
+            if (!Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new Exception($"{inputVersion} should bump on {MainEnvironmentBranch.ToLowerInvariant()} branch");
+            }
+            env = MainEnvironmentBranch.ToLowerInvariant();
+        }
+
+        if (allVersions.EnvVersionGrouped.TryGetValue(env, out List<SemVersion>? value))
+        {
+            var lastVersion = value.Last();
+            // Fail if the version is already released
+            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) == 0)
+            {
+                throw new Exception($"The latest version in the {env} releases is already {inputVersion}");
+            }
+            // Fail if the version is behind the latest release
+            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) > 0)
+            {
+                throw new Exception($"{inputVersion} is behind the latest version {lastVersion} in the {env} releases");
+            }
+        }
+    }
+
     private async Task<List<(AppEntry AppEntry, SemVersion BumpVersion)>> InteractiveRelease()
     {
         Prompt.ColorSchema.Answer = ConsoleColor.Green;
@@ -965,49 +1009,22 @@ partial class BaseNukeBuildHelpers
             Console.Write("  Current latest version: ");
             ConsoleHelpers.WriteWithColor(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null", ConsoleColor.Green);
             Console.WriteLine("");
-            List<Func<object, ValidationResult?>> validators = [Validators.Required(),
-                    (input => {
-                        if (!SemVersion.TryParse(input.ToString(), SemVersionStyles.Strict, out var inputVersion))
-                        {
-                            return new ValidationResult("Invalid semver version");
-                        }
-                        
-                        // Fail if current branch is not on the proper bump branch
-                        string env;
-                        if (inputVersion.IsPrerelease)
-                        {
-                            if (!Repository.Branch.Equals(inputVersion.PrereleaseIdentifiers[0], StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                return new ValidationResult($"{inputVersion} should bump on {inputVersion.PrereleaseIdentifiers[0]} branch");
-                            }
-                            env = inputVersion.PrereleaseIdentifiers[0];
-                        }
-                        else
-                        {
-                            if (!Repository.Branch.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                return new ValidationResult($"{inputVersion} should bump on {MainEnvironmentBranch.ToLowerInvariant()} branch");
-                            }
-                            env = MainEnvironmentBranch.ToLowerInvariant();
-                        }
+            List<Func<object, ValidationResult?>> validators =
+            [
+                Validators.Required(),
+                (input => {
+                    try
+                    {
+                        ValidateBumpVersion(appEntryVersion.AllVersions, input.ToString());
+                    }
+                    catch (Exception ex)
+                    {
+                        return new ValidationResult(ex.Message);
+                    }
 
-                        if (appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(env, out List<SemVersion>? value))
-                        {
-                            var lastVersion = value.Last();
-                            // Fail if the version is already released
-                            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) == 0)
-                            {
-                                return new ValidationResult($"The latest version in the {env} releases is already {inputVersion}");
-                            }
-                            // Fail if the version is behind the latest release
-                            if (SemVersion.ComparePrecedence(lastVersion, inputVersion) > 0)
-                            {
-                                return new ValidationResult($"{inputVersion} is behind the latest version {lastVersion} in the {env} releases");
-                            }
-                        }
-
-                        return ValidationResult.Success;
-                    })];
+                    return ValidationResult.Success;
+                })
+            ];
 
             var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("New Version", validators: validators));
             var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
