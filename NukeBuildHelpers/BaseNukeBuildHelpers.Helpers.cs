@@ -454,7 +454,18 @@ partial class BaseNukeBuildHelpers
             }
             newVersionsMarkdown += "\n\n\n**Full Changelog**";
 
-            releaseNotes = releaseNotesFromProp.Replace("**Full Changelog**", newVersionsMarkdown);
+            if (releaseNotesFromProp.Contains("\n\n\n**Full Changelog**"))
+            {
+                releaseNotes = releaseNotesFromProp.Replace("\n\n\n**Full Changelog**", "\n\n" + newVersionsMarkdown);
+            }
+            else if (releaseNotesFromProp.Contains("**Full Changelog**"))
+            {
+                releaseNotes = releaseNotesFromProp.Replace("**Full Changelog**", newVersionsMarkdown);
+            }
+            else
+            {
+                releaseNotes = newVersionsMarkdown;
+            }
 
             var notesPath = TemporaryDirectory / "notes.md";
             notesPath.WriteAllText(releaseNotes);
