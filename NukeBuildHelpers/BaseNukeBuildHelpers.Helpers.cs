@@ -446,10 +446,8 @@ partial class BaseNukeBuildHelpers
             var notesPath = TemporaryDirectory / "notes.md";
             notesPath.WriteAllText(releaseNotes);
 
-            Log.Information("CCCCCCCCCCCCCCCCCCCC:\n" + notesPath.ReadAllText().Replace("\n", "\\n"));
-
             string ghReleaseEditArgs = $"release edit {buildTag} " +
-                $"--notes-file '{notesPath}'";
+                $"--notes-file {notesPath}";
 
             Gh.Invoke(ghReleaseEditArgs, logger: (s, e) => Log.Debug(e));
         }
