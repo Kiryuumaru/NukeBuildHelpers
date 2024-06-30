@@ -452,15 +452,14 @@ partial class BaseNukeBuildHelpers
                     newVersionsMarkdown += $"\n* Bump `{appId}` from `{oldVer}` to `{newVer}`. See [changelog]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
                 }
             }
-            newVersionsMarkdown += "\n\n\n**Full Changelog**";
 
             if (releaseNotesFromProp.Contains("\n\n\n**Full Changelog**"))
             {
-                releaseNotes = releaseNotesFromProp.Replace("\n\n\n**Full Changelog**", "\n\n" + newVersionsMarkdown);
+                releaseNotes = releaseNotesFromProp.Replace("\n\n\n**Full Changelog**", "\n\n" + newVersionsMarkdown + "\n\n\n**Full Changelog**");
             }
             else if (releaseNotesFromProp.Contains("**Full Changelog**"))
             {
-                releaseNotes = releaseNotesFromProp.Replace("**Full Changelog**", newVersionsMarkdown);
+                releaseNotes = releaseNotesFromProp.Replace("**Full Changelog**", newVersionsMarkdown + "\n\n\n**Full Changelog**");
             }
             else
             {
