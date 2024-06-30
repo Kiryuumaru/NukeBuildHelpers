@@ -310,13 +310,13 @@ partial class BaseNukeBuildHelpers
 
             if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out var currentLatest) || currentLatest != lastVersionGroup)
             {
+                allVersions.EnvLatestBuildIdPaired.TryGetValue(env, out var allVersionLastId);
+                targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
                 if (allVersions.VersionBump.Contains(lastVersionGroup) &&
                     !allVersions.VersionQueue.Contains(lastVersionGroup) &&
                     !allVersions.VersionFailed.Contains(lastVersionGroup) &&
                     !allVersions.VersionPassed.Contains(lastVersionGroup))
                 {
-                    allVersions.EnvLatestBuildIdPaired.TryGetValue(env, out var allVersionLastId);
-                    targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
                     if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                     {
                         hasBumped = true;
