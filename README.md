@@ -39,28 +39,27 @@ dotnet add package NukeBuildHelpers
 1. Change the base class from `NukeBuild` to `BaseNukeBuildHelpers`:
 
 ```csharp
-- class Build : NukeBuild
-+ class Build : BaseNukeBuildHelpers
-  {
-      public static int Main() => Execute<Build>();
+class Build : BaseNukeBuildHelpers
+{
+    public static int Main() => Execute<Build>();
 
-      ...
-  }
+    ...
+}
 ```
 
 2. Add your environment branches:
 
 ```csharp
-  class Build : BaseNukeBuildHelpers
-  {
-      public static int Main() => Execute<Build>();
+class Build : BaseNukeBuildHelpers
+{
+    public static int Main() => Execute<Build>();
 
-+     public override string[] EnvironmentBranches { get; } = [ "prerelease", "master" ];
+    public override string[] EnvironmentBranches { get; } = [ "prerelease", "master" ];
 
-+     public override string MainEnvironmentBranch { get; } = "master";
+    public override string MainEnvironmentBranch { get; } = "master";
 
-      ...
-  }
+    ...
+}
 ```
 
 ### Creating Build Flows
