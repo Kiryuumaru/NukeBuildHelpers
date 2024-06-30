@@ -2,6 +2,12 @@
 
 NukeBuildHelpers is a C# project build automation tool built on top of NukeBuild. It supports both GitHub Actions and Azure Pipelines for CI/CD, enabling release management across multiple projects and environments within a single repository.
 
+**NuGet**
+
+|Name|Info|
+| ------------------- | :------------------: |
+|NukeBuildHelpers|[![NuGet](https://buildstats.info/nuget/NukeBuildHelpers?includePreReleases=true)](https://www.nuget.org/packages/NukeBuildHelpers/)|
+
 ## Features
 
 - **Multi-project and Multi-environment Support**: Handle releases for multiple projects and environments in a single repository.
@@ -28,85 +34,124 @@ dotnet add package NukeBuildHelpers
 
 ## Usage
 
+### Preparing `Build` class
+
+1. Change the base class from `NukeBuild` to `BaseNukeBuildHelpers`:
+
+```csharp
+class Build : BaseNukeBuildHelpers
+{
+    ...
+}
+```
+
+2. Add your environment branches:
+
+```csharp
+class Build : BaseNukeBuildHelpers
+{
+    ...
+
+    public override string[] EnvironmentBranches { get; } = [ "prerelease", "master" ];
+
+    public override string MainEnvironmentBranch { get; } = "master";
+}
+```
+
 ### Creating Build Flows
 
-To create custom build flows, implement the target entries `TestEntry`, `BuildEntry` or `PublishEntry`.
+To create custom build flows, implement any of the target entries `TestEntry`, `BuildEntry` or `PublishEntry`.
 
 #### Example `TestEntry` Implementation
 
 ```csharp
-TestEntry NukeBuildHelpersTest => _ => _
-    .AppId("nuke_build_helpers")
-    .RunnerOS(RunnerOS.Ubuntu2204)
-    .Execute(() =>
-    {
-        DotNetTasks.DotNetClean(_ => _
-            .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
-        DotNetTasks.DotNetTest(_ => _
-            .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
-    });
+class Build : BaseNukeBuildHelpers
+{
+    ...
+
+    TestEntry NukeBuildHelpersTest => _ => _
+        .AppId("nuke_build_helpers")
+        .RunnerOS(RunnerOS.Ubuntu2204)
+        .Execute(() =>
+        {
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+            DotNetTasks.DotNetTest(_ => _
+                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+        });
+}
 ```
 
 #### Example `BuildEntry` Implementation
 
 ```csharp
-BuildEntry NukeBuildHelpersBuild => _ => _
-    .AppId("nuke_build_helpers")
-    .RunnerOS(RunnerOS.Ubuntu2204)
-    .Execute(context => {
-        string version = "0.0.0";
-        string? releaseNotes = null;
-        if (context.TryGetBumpContext(out var bumpContext))
-        {
-            version = bumpContext.AppVersion.Version.ToString();
-            releaseNotes = bumpContext.AppVersion.ReleaseNotes;
-        }
-        else if (context.TryGetPullRequestContext(out var pullRequestContext))
-        {
-            version = pullRequestContext.AppVersion.Version.ToString();
-        }
-        DotNetTasks.DotNetClean(_ => _
-            .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
-        DotNetTasks.DotNetBuild(_ => _
-            .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
-            .SetConfiguration("Release"));
-        DotNetTasks.DotNetPack(_ => _
-            .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
-            .SetConfiguration("Release")
-            .SetNoRestore(true)
-            .SetNoBuild(true)
-            .SetIncludeSymbols(true)
-            .SetSymbolPackageFormat("snupkg")
-            .SetVersion(version)
-            .SetPackageReleaseNotes(releaseNotes)
-            .SetOutputDirectory(OutputDirectory / "main"));
-    });
+class Build : BaseNukeBuildHelpers
+{
+    ...
+
+    BuildEntry NukeBuildHelpersBuild => _ => _
+        .AppId("nuke_build_helpers")
+        .RunnerOS(RunnerOS.Ubuntu2204)
+        .Execute(context => {
+            string version = "0.0.0";
+            string? releaseNotes = null;
+            if (context.TryGetBumpContext(out var bumpContext))
+            {
+                version = bumpContext.AppVersion.Version.ToString();
+                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+            }
+            else if (context.TryGetPullRequestContext(out var pullRequestContext))
+            {
+                version = pullRequestContext.AppVersion.Version.ToString();
+            }
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
+            DotNetTasks.DotNetBuild(_ => _
+                .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetConfiguration("Release"));
+            DotNetTasks.DotNetPack(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetConfiguration("Release")
+                .SetNoRestore(true)
+                .SetNoBuild(true)
+                .SetIncludeSymbols(true)
+                .SetSymbolPackageFormat("snupkg")
+                .SetVersion(version)
+                .SetPackageReleaseNotes(releaseNotes)
+                .SetOutputDirectory(OutputDirectory / "main"));
+        });
+}
 ```
 
 #### Example `PublishEntry` Implementation
 
 ```csharp
-PublishEntry NukeBuildHelpersPublish => _ => _
-    .AppId("nuke_build_helpers")
-    .RunnerOS(RunnerOS.Ubuntu2204)
-    .Execute(context =>
-    {
-        foreach (var path in OutputDirectory.GetFiles("**", 99))
+class Build : BaseNukeBuildHelpers
+{
+    ...
+
+    PublishEntry NukeBuildHelpersPublish => _ => _
+        .AppId("nuke_build_helpers")
+        .RunnerOS(RunnerOS.Ubuntu2204)
+        .Execute(context =>
         {
-            Log.Information(path);
-        }
-        if (context.RunType == RunType.Bump)
-        {
-            DotNetTasks.DotNetNuGetPush(_ => _
-                .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
-                .SetApiKey(GithubToken)
-                .SetTargetPath(OutputDirectory / "main" / "**"));
-            DotNetTasks.DotNetNuGetPush(_ => _
-                .SetSource("https://api.nuget.org/v3/index.json")
-                .SetApiKey(NuGetAuthToken)
-                .SetTargetPath(OutputDirectory / "main" / "**"));
-        }
-    });
+            foreach (var path in OutputDirectory.GetFiles("**", 99))
+            {
+                Log.Information(path);
+            }
+            if (context.RunType == RunType.Bump)
+            {
+                DotNetTasks.DotNetNuGetPush(_ => _
+                    .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
+                    .SetApiKey(GithubToken)
+                    .SetTargetPath(OutputDirectory / "main" / "**"));
+                DotNetTasks.DotNetNuGetPush(_ => _
+                    .SetSource("https://api.nuget.org/v3/index.json")
+                    .SetApiKey(NuGetAuthToken)
+                    .SetTargetPath(OutputDirectory / "main" / "**"));
+            }
+        });
+}
 ```
 
 ### Generating Workflows
@@ -149,28 +194,28 @@ build bump
 - The `Version` subcommand shows the current version from all releases. Example output from the subcommand:
 
 ```
-╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
-║        App Id        ║ Environment ║   Bumped Version   ║      Published      ║
-╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
-║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.1 ║ 2.0.0-prerelease.8* ║
-║                      ║    main     ║ 2.0.0              ║         yes         ║
-║----------------------║-------------║--------------------║---------------------║
-║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
-║                      ║    main     ║ -                  ║         no          ║
-╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
+╬═════════════════════╬═════════════╬════════════════════╬═════════════════════╬
+║        App Id       ║ Environment ║   Bumped Version   ║      Published      ║
+╬═════════════════════╬═════════════╬════════════════════╬═════════════════════╬
+║ nuke_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.1 ║ 2.0.0-prerelease.8* ║
+║                     ║   master    ║ 2.0.0              ║         yes         ║
+║---------------------║-------------║--------------------║---------------------║
+║ nuke_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
+║                     ║   master    ║ -                  ║         no          ║
+╬═════════════════════╬═════════════╬════════════════════╬═════════════════════╬
 ```
 
 - The `StatusWatch` subcommand continuously monitors the version status. Example output from the subcommand:
 ```
-╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
-║        App Id        ║ Environment ║      Version       ║    Status     ║
-╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
-║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
-║                      ║    main     ║ 2.0.0              ║   Published   ║
-║----------------------║-------------║--------------------║---------------║
-║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
-║                      ║    main     ║ -                  ║ Not published ║
-╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
+╬═════════════════════╬═════════════╬════════════════════╬═══════════════╬
+║        App Id       ║ Environment ║      Version       ║    Status     ║
+╬═════════════════════╬═════════════╬════════════════════╬═══════════════╬
+║ nuke_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
+║                     ║   master    ║ 2.0.0              ║   Published   ║
+║---------------------║-------------║--------------------║---------------║
+║ nuke_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
+║                     ║   master    ║ -                  ║ Not published ║
+╬═════════════════════╬═════════════╬════════════════════╬═══════════════╬
 ```
 
 Status types include:

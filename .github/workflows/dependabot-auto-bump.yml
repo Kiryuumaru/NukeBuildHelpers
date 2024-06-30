@@ -1,0 +1,23 @@
+﻿name: Dependabot Pull Request Bump
+
+on:
+  push:
+    branches:
+    - main
+    tags-ignore:
+    - bump-*
+
+concurrency: "dependabot-auto-bump"
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.commits[0].author.username == 'dependabot[bot]' }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GH_PAT }}
+    - name: Start nuke bump
+      run: chmod +x ./build.sh && ./build.sh BumpAndForget --args "nuke_build_helpers=patch"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
