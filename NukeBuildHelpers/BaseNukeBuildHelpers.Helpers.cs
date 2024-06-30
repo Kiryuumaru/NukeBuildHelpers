@@ -19,8 +19,6 @@ using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Entry.Helpers;
-using System.Collections;
-using System.Security.Policy;
 
 namespace NukeBuildHelpers;
 
@@ -426,23 +424,7 @@ partial class BaseNukeBuildHelpers
                 gitBaseUrl = gitBaseUrl[..lastDotIndex];
             }
 
-            var notesPath = TemporaryDirectory / "notes.md";
-            notesPath.WriteAllText(releaseNotesFromProp);
-            var releaseNotesSplit = notesPath.ReadAllLines().ToList();
-            Log.Information("xxxxxxxxxxxxxxxxxxxxxx:\n" + releaseNotesSplit.Join('\n'));
-            var insertIndex = 0;
-            for (int i = 0; i < releaseNotesSplit.Count; i++)
-            {
-                if (releaseNotesSplit[i].StartsWith("**Full Changelog**"))
-                {
-                    insertIndex = i - 1;
-                    insertIndex = insertIndex < 0 ? 0 : insertIndex;
-                    break;
-                }
-            }
-
-            releaseNotesSplit.Insert(insertIndex++, "## New Versions");
-
+            var newVersionsMarkdown = "\n\n## New Versions";
             foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
             {
                 var appId = entry.AppId.ToLowerInvariant();
@@ -450,18 +432,19 @@ partial class BaseNukeBuildHelpers
                 var newVer = SemVersion.Parse(entry.Version, SemVersionStyles.Strict).WithoutMetadata().ToString();
                 if (string.IsNullOrEmpty(oldVer))
                 {
-                    releaseNotesSplit.Insert(insertIndex++, $"Bump `{appId}` to `{newVer}`. See changelog: [`{newVer}`]({gitBaseUrl}/commits/{appId}/{newVer})");
+                    newVersionsMarkdown += $"\nBump `{appId}` to `{newVer}`. See changelog: [`{newVer}`]({gitBaseUrl}/commits/{appId}/{newVer})";
                 }
                 else
                 {
-                    releaseNotesSplit.Insert(insertIndex++, $"Bump `{appId}` from `{oldVer}` to `{newVer}`. See changelog: [`{oldVer}...{newVer}`]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})");
+                    newVersionsMarkdown += $"\nBump `{appId}` from `{oldVer}` to `{newVer}`. See changelog: [`{oldVer}...{newVer}`]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
                 }
             }
+            newVersionsMarkdown += "\n\n\n**Full Changelog**";
 
-            releaseNotesSplit.Insert(insertIndex++, "");
+            releaseNotes = releaseNotesFromProp.Replace("\n\n\n**Full Changelog**", newVersionsMarkdown);
 
-            notesPath.WriteAllLines(releaseNotesSplit);
-            releaseNotes = notesPath.ReadAllText();
+            var notesPath = TemporaryDirectory / "notes.md";
+            notesPath.WriteAllText(releaseNotes);
 
             Log.Information("CCCCCCCCCCCCCCCCCCCC:\n" + releaseNotes);
 
