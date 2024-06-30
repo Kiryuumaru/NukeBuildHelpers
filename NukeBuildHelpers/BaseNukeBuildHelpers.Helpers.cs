@@ -463,7 +463,7 @@ partial class BaseNukeBuildHelpers
             releaseNotes = notesPath.ReadAllText();
 
             string ghReleaseEditArgs = $"release edit {buildTag} " +
-                $"--notes-file \"{notesPath}\" ";
+                $"--notes-file '{notesPath}' ";
 
             Gh.Invoke(ghReleaseEditArgs, logger: (s, e) => Log.Debug(e));
         }
