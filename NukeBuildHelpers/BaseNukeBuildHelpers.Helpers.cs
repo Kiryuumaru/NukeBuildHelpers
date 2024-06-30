@@ -429,10 +429,11 @@ partial class BaseNukeBuildHelpers
             var notesPath = TemporaryDirectory / "notes.md";
             notesPath.WriteAllText(releaseNotesFromProp);
             var releaseNotesSplit = notesPath.ReadAllLines().ToList();
+            Log.Information("xxxxxxxxxxxxxxxxxxxxxxx:\n" + releaseNotesSplit.Join('\n'));
             var insertIndex = 0;
             for (int i = 0; i < releaseNotesSplit.Count; i++)
             {
-                if (releaseNotesSplit[i].Equals("**Full Changelog**"))
+                if (releaseNotesSplit[i].StartsWith("**Full Changelog**"))
                 {
                     insertIndex = i - 1;
                     insertIndex = insertIndex < 0 ? 0 : insertIndex;
@@ -453,11 +454,11 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    releaseNotesSplit.Insert(insertIndex++, $"Bump `{appId}` from `{oldVer}` to `{newVer}`. See changelog: [`{oldVer}...{newVer}`]({gitBaseUrl}/compare/{appId}/{newVer}...{appId}/{newVer})");
+                    releaseNotesSplit.Insert(insertIndex++, $"Bump `{appId}` from `{oldVer}` to `{newVer}`. See changelog: [`{oldVer}...{newVer}`]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})");
                 }
             }
 
-            releaseNotesSplit.Add("");
+            releaseNotesSplit.Insert(insertIndex++, "");
 
             notesPath.WriteAllLines(releaseNotesSplit);
             releaseNotes = notesPath.ReadAllText();
