@@ -41,8 +41,6 @@ dotnet add package NukeBuildHelpers
 ```csharp
 class Build : BaseNukeBuildHelpers
 {
-    public static int Main() => Execute<Build>();
-
     ...
 }
 ```
@@ -52,8 +50,6 @@ class Build : BaseNukeBuildHelpers
 ```csharp
 class Build : BaseNukeBuildHelpers
 {
-    public static int Main() => Execute<Build>();
-
     public override string[] EnvironmentBranches { get; } = [ "prerelease", "master" ];
 
     public override string MainEnvironmentBranch { get; } = "master";
