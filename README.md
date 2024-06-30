@@ -2,6 +2,12 @@
 
 NukeBuildHelpers is a C# project build automation tool built on top of NukeBuild. It supports both GitHub Actions and Azure Pipelines for CI/CD, enabling release management across multiple projects and environments within a single repository.
 
+**NuGet**
+
+|Name|Info|
+| ------------------- | :------------------: |
+|NukeBuildHelpers|[![NuGet](https://buildstats.info/nuget/NukeBuildHelpers?includePreReleases=true)](https://www.nuget.org/packages/NukeBuildHelpers/)|
+
 ## Features
 
 - **Multi-project and Multi-environment Support**: Handle releases for multiple projects and environments in a single repository.
