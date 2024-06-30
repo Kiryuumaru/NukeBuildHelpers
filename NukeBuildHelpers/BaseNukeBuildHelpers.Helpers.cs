@@ -432,11 +432,11 @@ partial class BaseNukeBuildHelpers
                 var newVer = SemVersion.Parse(entry.Version, SemVersionStyles.Strict).WithoutMetadata().ToString();
                 if (string.IsNullOrEmpty(oldVer))
                 {
-                    newVersionsMarkdown += $"\nBump `{appId}` to `{newVer}`. See changelog: [`{newVer}`]({gitBaseUrl}/commits/{appId}/{newVer})";
+                    newVersionsMarkdown += $"\n* Bump `{appId}` to `{newVer}`. See [changelog]({gitBaseUrl}/commits/{appId}/{newVer})";
                 }
                 else
                 {
-                    newVersionsMarkdown += $"\nBump `{appId}` from `{oldVer}` to `{newVer}`. See changelog: [`{oldVer}...{newVer}`]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
+                    newVersionsMarkdown += $"\n* Bump `{appId}` from `{oldVer}` to `{newVer}`. See [changelog]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
                 }
             }
             newVersionsMarkdown += "\n\n\n**Full Changelog**";
