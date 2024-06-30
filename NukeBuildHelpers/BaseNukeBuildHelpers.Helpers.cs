@@ -304,14 +304,18 @@ partial class BaseNukeBuildHelpers
                 continue;
             }
 
-            foreach (var version in versionGroup.OrderByDescending(i => i))
+            if (allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
             {
-                if (allVersions.VersionPassed.Contains(version) &&
-                    allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
-                    allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
+                foreach (var version in versionGroup.OrderByDescending(i => i))
                 {
-                    targetBuildId = targetBuildId == 0 ? buildIdGroup.Max() : Math.Min(buildIdGroup.Max(), targetBuildId);
-                    break;
+                    if (allVersions.VersionPassed.Contains(version) &&
+                        allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
+                        allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
+                    {
+                        var envBuildIdSuccessGrouped = buildIdGroup.Where(envBuildIdGrouped.Contains);
+                        targetBuildId = targetBuildId == 0 ? envBuildIdSuccessGrouped.Max() : Math.Min(envBuildIdSuccessGrouped.Max(), targetBuildId);
+                        break;
+                    }
                 }
             }
 
