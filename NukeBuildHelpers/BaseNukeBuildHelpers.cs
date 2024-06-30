@@ -27,17 +27,12 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
     /// <summary>
     /// Gets the list of environment branches.
     /// </summary>
-    public virtual string[] EnvironmentBranches { get; } = [
-        "alpha",
-        "beta",
-        "rc",
-        "main",
-        ];
+    public abstract string[] EnvironmentBranches { get; }
 
     /// <summary>
     /// Gets the main environment branch.
     /// </summary>
-    public virtual string MainEnvironmentBranch { get; } = "main";
+    public abstract string MainEnvironmentBranch { get; }
 
     /// <inheritdoc cref="INukeBuildHelpers.Repository"/>
     protected internal GitRepository Repository => (this as INukeBuildHelpers).Repository;
