@@ -306,14 +306,13 @@ partial class BaseNukeBuildHelpers
 
             foreach (var version in versionGroup.OrderByDescending(i => i))
             {
-                if (!allVersions.VersionPassed.Contains(version))
+                if (allVersions.VersionPassed.Contains(version) &&
+                    allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
+                    allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
                 {
-                    continue;
+                    targetBuildId = targetBuildId == 0 ? buildIdGroup.Max() : Math.Min(buildIdGroup.Max(), targetBuildId);
+                    break;
                 }
-                var lastSuccessCommit = allVersions.VersionCommitPaired[version];
-                var buildIdGroup = allVersions.CommitBuildIdGrouped[lastSuccessCommit];
-                targetBuildId = Math.Min(buildIdGroup.Max(), targetBuildId);
-                break;
             }
 
             var lastVersionGroup = versionGroup.Last();
