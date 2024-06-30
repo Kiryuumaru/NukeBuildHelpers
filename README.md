@@ -50,11 +50,11 @@ class Build : BaseNukeBuildHelpers
 ```csharp
 class Build : BaseNukeBuildHelpers
 {
+    ...
+
     public override string[] EnvironmentBranches { get; } = [ "prerelease", "master" ];
 
     public override string MainEnvironmentBranch { get; } = "master";
-
-    ...
 }
 ```
 
