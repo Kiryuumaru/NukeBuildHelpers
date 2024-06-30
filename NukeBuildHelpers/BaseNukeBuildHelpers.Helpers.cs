@@ -304,14 +304,24 @@ partial class BaseNukeBuildHelpers
                 continue;
             }
 
+            foreach (var version in versionGroup.OrderByDescending(i => i))
+            {
+                if (!allVersions.VersionPassed.Contains(version))
+                {
+                    continue;
+                }
+                var lastSuccessCommit = allVersions.VersionCommitPaired[version];
+                var buildIdGroup = allVersions.CommitBuildIdGrouped[lastSuccessCommit];
+                targetBuildId = Math.Min(buildIdGroup.Max(), targetBuildId);
+                break;
+            }
+
             var lastVersionGroup = versionGroup.Last();
 
             bool hasBumped = false;
 
             if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out var currentLatest) || currentLatest != lastVersionGroup)
             {
-                allVersions.EnvLatestBuildIdPaired.TryGetValue(env, out var allVersionLastId);
-                targetBuildId = targetBuildId == 0 ? allVersionLastId : Math.Min(allVersionLastId, targetBuildId);
                 if (allVersions.VersionBump.Contains(lastVersionGroup) &&
                     !allVersions.VersionQueue.Contains(lastVersionGroup) &&
                     !allVersions.VersionFailed.Contains(lastVersionGroup) &&
