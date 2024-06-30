@@ -2,10 +2,6 @@
 
 on: pull_request_target
 
-permissions:
-  pull-requests: write
-  contents: write
-
 jobs:
   dependabot:
     runs-on: ubuntu-latest
@@ -15,11 +11,7 @@ jobs:
         id: dependabot-metadata
         uses: dependabot/fetch-metadata@v1.1.1
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Setup git user as dependabot[bot]
-        run: |
-          git config --global user.name "dependabot[bot]"
-          git config --global user.email "49699333+dependabot[bot]@users.noreply.github.com"
+          github-token: "${{ secrets.GH_PAT }}"
       - name: Approve a PR
         run: gh pr review --approve "$PR_URL"
         env:
@@ -31,7 +23,3 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-      - name: Print GitHub context
-        run: echo "$GITHUB_CONTEXT"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
