@@ -194,28 +194,28 @@ build bump
 - The `Version` subcommand shows the current version from all releases. Example output from the subcommand:
 
 ```
-╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
-║        App Id        ║ Environment ║   Bumped Version   ║      Published      ║
-╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
-║ nuke_build_helpers   ║ prerelease  ║ 2.1.0-prerelease.1 ║ 2.0.0-prerelease.8* ║
-║                      ║   master    ║ 2.0.0              ║         yes         ║
-║----------------------║-------------║--------------------║---------------------║
-║ nuke_build_helpers2  ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
-║                      ║   master    ║ -                  ║         no          ║
-╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
+╬═════════════════════╬═════════════╬════════════════════╬═════════════════════╬
+║        App Id       ║ Environment ║   Bumped Version   ║      Published      ║
+╬═════════════════════╬═════════════╬════════════════════╬═════════════════════╬
+║ nuke_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.1 ║ 2.0.0-prerelease.8* ║
+║                     ║   master    ║ 2.0.0              ║         yes         ║
+║---------------------║-------------║--------------------║---------------------║
+║ nuke_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
+║                     ║   master    ║ -                  ║         no          ║
+╬═════════════════════╬═════════════╬════════════════════╬═════════════════════╬
 ```
 
 - The `StatusWatch` subcommand continuously monitors the version status. Example output from the subcommand:
 ```
-╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
-║        App Id        ║ Environment ║      Version       ║    Status     ║
-╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
-║ nuke_build_helpers   ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
-║                      ║   master    ║ 2.0.0              ║   Published   ║
-║----------------------║-------------║--------------------║---------------║
-║ nuke_build_helpers2  ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
-║                      ║   master    ║ -                  ║ Not published ║
-╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
+╬═════════════════════╬═════════════╬════════════════════╬═══════════════╬
+║        App Id       ║ Environment ║      Version       ║    Status     ║
+╬═════════════════════╬═════════════╬════════════════════╬═══════════════╬
+║ nuke_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
+║                     ║   master    ║ 2.0.0              ║   Published   ║
+║---------------------║-------------║--------------------║---------------║
+║ nuke_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
+║                     ║   master    ║ -                  ║ Not published ║
+╬═════════════════════╬═════════════╬════════════════════╬═══════════════╬
 ```
 
 Status types include:
