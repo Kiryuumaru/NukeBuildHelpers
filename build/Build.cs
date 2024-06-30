@@ -29,12 +29,6 @@ class Build : BaseNukeBuildHelpers
     [SecretVariable("GITHUB_TOKEN")]
     readonly string? GithubToken;
 
-    Target AWD => _ => _
-        .Executes(() =>
-        {
-            Log.Information(Repository.HttpsUrl);
-        });
-
     Target Clean => _ => _
         .Executes(() =>
         {
