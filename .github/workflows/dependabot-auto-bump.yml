@@ -18,12 +18,5 @@ jobs:
       - name: Start nuke bump
         run: chmod +x ./build.sh && ./build.sh BumpAndForget --args "nuke_build_helpers=patch"
         env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-  dependabot1:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Print GitHub context
-        run: echo "$GITHUB_CONTEXT"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
