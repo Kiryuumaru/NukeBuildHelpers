@@ -437,7 +437,7 @@ partial class BaseNukeBuildHelpers
                 gitBaseUrl = gitBaseUrl[..lastDotIndex];
             }
 
-            var newVersionsMarkdown = "\n\n## New Versions";
+            var newVersionsMarkdown = "## New Versions";
             foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
             {
                 var appId = entry.AppId.ToLowerInvariant();
@@ -454,7 +454,7 @@ partial class BaseNukeBuildHelpers
             }
             newVersionsMarkdown += "\n\n\n**Full Changelog**";
 
-            releaseNotes = releaseNotesFromProp.Replace("\n\n\n**Full Changelog**", newVersionsMarkdown);
+            releaseNotes = releaseNotesFromProp.Replace("**Full Changelog**", newVersionsMarkdown);
 
             var notesPath = TemporaryDirectory / "notes.md";
             notesPath.WriteAllText(releaseNotes);
