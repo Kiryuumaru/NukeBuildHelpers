@@ -198,10 +198,10 @@ build bump
 ║        App Id        ║ Environment ║   Bumped Version   ║      Published      ║
 ╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
 ║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.1 ║ 2.0.0-prerelease.8* ║
-║                      ║    main     ║ 2.0.0              ║         yes         ║
+║                      ║   master    ║ 2.0.0              ║         yes         ║
 ║----------------------║-------------║--------------------║---------------------║
 ║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
-║                      ║    main     ║ -                  ║         no          ║
+║                      ║   master    ║ -                  ║         no          ║
 ╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
 ```
 
@@ -211,10 +211,10 @@ build bump
 ║        App Id        ║ Environment ║      Version       ║    Status     ║
 ╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
 ║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
-║                      ║    main     ║ 2.0.0              ║   Published   ║
+║                      ║   master    ║ 2.0.0              ║   Published   ║
 ║----------------------║-------------║--------------------║---------------║
 ║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
-║                      ║    main     ║ -                  ║ Not published ║
+║                      ║   master    ║ -                  ║ Not published ║
 ╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
 ```
 
