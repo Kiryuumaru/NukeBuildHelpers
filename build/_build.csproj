@@ -14,7 +14,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Nuke.Common" Version="8.0.0" />
-		<PackageReference Include="NuGet.Packaging" Version="6.10.0" />
+		<PackageReference Include="NuGet.Packaging" Version="6.10.1" />
 	</ItemGroup>
 
 	<ItemGroup>
