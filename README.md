@@ -197,10 +197,10 @@ build bump
 ╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
 ║        App Id        ║ Environment ║   Bumped Version   ║      Published      ║
 ╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
-║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.1 ║ 2.0.0-prerelease.8* ║
+║ nuke_build_helpers   ║ prerelease  ║ 2.1.0-prerelease.1 ║ 2.0.0-prerelease.8* ║
 ║                      ║   master    ║ 2.0.0              ║         yes         ║
 ║----------------------║-------------║--------------------║---------------------║
-║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
+║ nuke_build_helpers2  ║ prerelease  ║ 0.1.0-prerelease.2 ║         no          ║
 ║                      ║   master    ║ -                  ║         no          ║
 ╬══════════════════════╬═════════════╬════════════════════╬═════════════════════╬
 ```
@@ -210,10 +210,10 @@ build bump
 ╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
 ║        App Id        ║ Environment ║      Version       ║    Status     ║
 ╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
-║ nuget_build_helpers  ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
+║ nuke_build_helpers   ║ prerelease  ║ 2.1.0-prerelease.2 ║   Published   ║
 ║                      ║   master    ║ 2.0.0              ║   Published   ║
 ║----------------------║-------------║--------------------║---------------║
-║ nuget_build_helpers2 ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
+║ nuke_build_helpers2  ║ prerelease  ║ 0.1.0-prerelease.2 ║  Run Failed   ║
 ║                      ║   master    ║ -                  ║ Not published ║
 ╬══════════════════════╬═════════════╬════════════════════╬═══════════════╬
 ```
