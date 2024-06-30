@@ -121,7 +121,7 @@ partial class BaseNukeBuildHelpers
     /// Bumps and forgets the version by validating and tagging.
     /// </summary>
     public Target BumpAndForget => _ => _
-        .Description("Bumps and forget the version by validating and tagging, with optional --args \"{appid=[major|minor|patch|prerelease|pre][+|>]int}\"")
+        .Description("Bumps and forget the version by validating and tagging, with optional --args \"{appid=[major|minor|patch|prerelease|pre][>|+]int}\"")
         .DependsOn(Version)
         .Executes(async () =>
         {
@@ -137,8 +137,18 @@ partial class BaseNukeBuildHelpers
             Dictionary<string, SemVersion> bumpMap = [];
             foreach (var splitArg in splitArgs)
             {
-                ValueHelpers.GetOrFail(splitArg.Key, allEntry, out var appEntry);
-                ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, splitArg.Key, ref lsRemote), out var allVersions);
+                string appId = splitArg.Key.ToLower();
+
+                ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
+                ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+
+                if (allVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvVersions) &&
+                    currentEnvVersions.LastOrDefault() is SemVersion currentEnvLatestVersion &&
+                    allVersions.VersionCommitPaired.TryGetValue(currentEnvLatestVersion, out var currentEnvLatestVersionCommitId) &&
+                    currentEnvLatestVersionCommitId == Repository.Commit)
+                {
+                    throw new Exception($"Commit has already bumped {appId}");
+                }
 
                 SemVersion latestVersion = allVersions.EnvVersionGrouped[currentEnvIdentifier]?.LastOrDefault()!;
                 SemVersion bumpVersion = latestVersion.Clone();
@@ -192,9 +202,9 @@ partial class BaseNukeBuildHelpers
 
                 ValidateBumpVersion(allVersions, bumpVersion.ToString());
 
-                bumpMap[splitArg.Key] = bumpVersion;
+                bumpMap[appId] = bumpVersion;
 
-                Log.Information("Bump {appId} from {latestVersion} to {bumpVersion}", splitArg.Key, latestVersion, bumpVersion);
+                Log.Information("Bump {appId} from {latestVersion} to {bumpVersion}", appId, latestVersion, bumpVersion);
             }
 
             if (bumpMap.Count == 0)
