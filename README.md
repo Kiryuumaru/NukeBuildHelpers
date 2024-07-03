@@ -162,7 +162,7 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
     build azureworkflow
     ```
 
-These commands will generate `azure-pipelines.yml` and `.github/workflows/nuke-cicd.yml` respectively.
+    These commands will generate `azure-pipelines.yml` and `.github/workflows/nuke-cicd.yml` respectively.
 
 ### Bumping Project Version
 
