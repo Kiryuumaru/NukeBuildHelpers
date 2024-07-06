@@ -311,7 +311,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Length == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
+                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                }
+            }
+            foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
+            {
+                if (buildEntryDefinition.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    condition += " && needs." + buildEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
                 }
             }
             var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. buildNeeds], _if: condition);

@@ -230,7 +230,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD1
     - NUKEBUILDHELPERSBUILD2
     - NUKEBUILDHELPERSBUILD3
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2.result == 'success'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2.result != 'failure' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:
