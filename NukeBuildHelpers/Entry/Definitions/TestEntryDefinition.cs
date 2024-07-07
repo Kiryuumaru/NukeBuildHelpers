@@ -16,9 +16,4 @@ internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinit
             return "Test - " + ((ITestEntryDefinition)this).AppIds.First() + " (" + Id + ")";
         }
     }
-
-    protected override Task<bool> GetDefaultCondition(IRunContext runContext)
-    {
-        return Task.FromResult(true);
-    }
 }

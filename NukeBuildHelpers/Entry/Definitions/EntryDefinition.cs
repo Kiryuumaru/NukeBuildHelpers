@@ -16,8 +16,6 @@ internal abstract class EntryDefinition : IEntryDefinition
 
     protected abstract string GetDefaultName();
 
-    protected abstract Task<bool> GetDefaultCondition(IRunContext runContext);
-
     string IEntryDefinition.Id
     {
         get => Id;
@@ -34,7 +32,7 @@ internal abstract class EntryDefinition : IEntryDefinition
 
     Func<IRunContext, Task<bool>> IEntryDefinition.Condition
     {
-        get => condition ?? (runContext => GetDefaultCondition(runContext));
+        get => condition ?? (runContext => Task.FromResult(true));
         set => condition = value;
     }
 
