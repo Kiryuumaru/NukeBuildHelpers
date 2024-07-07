@@ -473,6 +473,8 @@ partial class BaseNukeBuildHelpers
             {
                 if (pipelinePreSetup.HasRelease)
                 {
+                    var assetOutput = TemporaryDirectory / "assets";
+
                     foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                     {
                         if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
@@ -485,11 +487,15 @@ partial class BaseNukeBuildHelpers
                         {
                             throw new Exception("No release found for " + appIdLower);
                         }
-                        var outPath = OutputDirectory / appIdLower + "-" + appRunEntry.Version;
-                        var outPathZip = OutputDirectory / appIdLower + "-" + appRunEntry.Version + ".zip";
-                        releasePath.CopyFilesRecursively(outPath);
-                        outPath.ZipTo(outPathZip);
-                        Log.Information("Publish: {name}", appIdLower);
+                        var outPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
+                        (releasePath / "common_asset").CopyFilesRecursively(outPath);
+                        outPath.ZipTo(assetOutput / outPath.Name + ".zip");
+                        Log.Information("Publish common asset: {name}", outPath.Name + ".zip");
+                        foreach (var releaseAsset in (releasePath / "asset").GetFiles())
+                        {
+                            releaseAsset.CopyFilesRecursively(assetOutput / releaseAsset.Name);
+                            Log.Information("Publish individual asset: {name}", releaseAsset.Name);
+                        }
                     }
 
                     await Task.Run(() =>
@@ -515,7 +521,7 @@ partial class BaseNukeBuildHelpers
 
                         Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                        Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", OutputDirectory.GetFiles("*.zip").Select(i => i.ToString())));
+                        Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetOutput.GetFiles("*.*").Select(i => i.ToString())));
 
                         Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
                     });

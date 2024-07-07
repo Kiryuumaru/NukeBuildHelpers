@@ -124,6 +124,7 @@ class Build : BaseNukeBuildHelpers
         .DisplayName("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
         .CommonReleaseAsset(OutputDirectory / "main")
+        .Condition(true)
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -159,6 +160,7 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Windows2022)
         .ReleaseAsset(OutputDirectory / "try" / "test_release")
         .ReleaseAsset(OutputDirectory / "try" / "test_release.tar.gz")
+        .Condition(true)
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -194,6 +196,7 @@ class Build : BaseNukeBuildHelpers
         .DisplayName("Build try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .ReleaseAsset(OutputDirectory / "test_release 2")
+        .Condition(true)
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
