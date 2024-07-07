@@ -30,6 +30,8 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             await TestAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
@@ -45,6 +47,8 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            CheckAppEntry(allEntry);
 
             await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
@@ -62,6 +66,8 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
@@ -76,6 +82,8 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            CheckAppEntry(allEntry);
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
@@ -450,6 +458,8 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            CheckAppEntry(allEntry);
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 

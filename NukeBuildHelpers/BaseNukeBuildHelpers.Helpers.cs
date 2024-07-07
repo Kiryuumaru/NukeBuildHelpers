@@ -28,7 +28,7 @@ partial class BaseNukeBuildHelpers
     private static readonly AbsolutePath entryCachePath = CommonCacheDirectory / "entry";
     private static readonly AbsolutePath entryCacheIndexPath = CommonCacheDirectory / "entry_index";
 
-    internal void CheckEnvironementBranches()
+    private void CheckEnvironementBranches()
     {
         HashSet<string> set = [];
 
@@ -43,6 +43,14 @@ partial class BaseNukeBuildHelpers
         if (!set.Contains(MainEnvironmentBranch.ToLowerInvariant()))
         {
             throw new Exception($"MainEnvironmentBranch \"{MainEnvironmentBranch}\" does not exists in EnvironmentBranches");
+        }
+    }
+
+    private void CheckAppEntry(AllEntry allEntry)
+    {
+        if (allEntry.AppEntryMap.Count == 0)
+        {
+            throw new Exception($"No configured app entry.");
         }
     }
 

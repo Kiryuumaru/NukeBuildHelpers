@@ -41,6 +41,8 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             Log.Information("Commit: {Value}", Repository.Commit);
             Log.Information("Branch: {Value}", Repository.Branch);
 
@@ -109,6 +111,8 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             var appEntryVersionsToBump = await InteractiveRelease();
 
             await RunBump(allEntry, appEntryVersionsToBump.ToDictionary(i => i.AppEntry.AppId, i => i.BumpVersion));
@@ -131,14 +135,20 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
             Dictionary<string, string?> argsBumps = [];
 
-            if (allEntry.AppEntryMap.Count == 1 && splitArgs.Count == 1 && (!allEntry.AppEntryMap.ContainsKey(splitArgs.First().Key) || splitArgs.First().Value.IsNullOrEmpty()))
+            if (splitArgs.Count == 1 && !allEntry.AppEntryMap.ContainsKey(splitArgs.First().Key) && splitArgs.First().Value.IsNullOrEmpty())
             {
+                if (allEntry.AppEntryMap.Count != 1)
+                {
+                    throw new Exception($"Redacted appId args is not valid for multiple app entries.");
+                }
                 argsBumps[allEntry.AppEntryMap.First().Value.AppId] = splitArgs.First().Key;
             }
             else
@@ -260,6 +270,8 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             await TestAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
@@ -275,6 +287,8 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            CheckAppEntry(allEntry);
 
             await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
@@ -292,6 +306,8 @@ partial class BaseNukeBuildHelpers
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
@@ -306,6 +322,8 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
+            CheckAppEntry(allEntry);
+
             await PipelineHelpers.BuildWorkflow<GithubPipeline>(this, allEntry);
         });
 
@@ -319,6 +337,8 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            CheckAppEntry(allEntry);
 
             await PipelineHelpers.BuildWorkflow<AzurePipeline>(this, allEntry);
         });
