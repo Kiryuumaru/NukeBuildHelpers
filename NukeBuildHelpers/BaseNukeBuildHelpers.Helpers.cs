@@ -19,6 +19,7 @@ using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Entry.Helpers;
+using NukeBuildHelpers.RunContext.Extensions;
 
 namespace NukeBuildHelpers;
 
@@ -335,6 +336,11 @@ partial class BaseNukeBuildHelpers
             tasks.Add(() => Task.Run(async () =>
             {
                 await CachePreload(entry);
+                if (entry.RunContext!.TryGetVersionedContext(out var context))
+                {
+                    (OutputDirectory / "notes.md").WriteAllText(pipelinePreSetup.ReleaseNotes);
+                    (OutputDirectory / "version.txt").WriteAllText(context.AppVersion.Version.ToString());
+                }
                 await entry.GetExecute();
                 await CachePostload(entry);
             }));
@@ -378,8 +384,6 @@ partial class BaseNukeBuildHelpers
 
         OutputDirectory.DeleteDirectory();
         OutputDirectory.CreateDirectory();
-
-        (OutputDirectory / "notes.md").WriteAllText(pipelinePreSetup.ReleaseNotes);
 
         if (!idsToRun.Any())
         {
