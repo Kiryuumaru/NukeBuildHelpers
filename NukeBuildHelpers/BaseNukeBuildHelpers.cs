@@ -14,10 +14,12 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 {
     internal static AbsolutePath CommonCacheDirectory => RootDirectory / ".nuke" / "cache";
 
+    internal static AbsolutePath CommonOutputDirectory => RootDirectory / ".nuke" / "output";
+
     /// <summary>
     /// Gets the output directory path.
     /// </summary>
-    public static AbsolutePath OutputDirectory => RootDirectory / ".nuke" / "output";
+    public static AbsolutePath OutputDirectory => CommonOutputDirectory / "runtime";
 
     /// <summary>
     /// Gets the common cache directory path.

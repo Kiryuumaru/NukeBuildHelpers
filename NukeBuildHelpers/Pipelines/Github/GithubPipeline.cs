@@ -190,7 +190,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 foreach (var artifact in artifactsDir.GetDirectories())
                 {
-                    artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory);
+                    artifact.CopyFilesRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
                 }
             }
         });
