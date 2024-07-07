@@ -355,9 +355,9 @@ partial class BaseNukeBuildHelpers
             {
                 await CachePreload(entry);
                 OutputBump();
-                preExecute?.Invoke(entry);
+                if (preExecute != null) await preExecute.Invoke(entry);
                 await entry.GetExecute();
-                postExecute?.Invoke(entry);
+                if (postExecute != null) await postExecute.Invoke(entry);
                 await CachePostload(entry);
             }));
         }
