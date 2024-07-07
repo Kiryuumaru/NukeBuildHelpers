@@ -56,6 +56,16 @@ partial class BaseNukeBuildHelpers
         (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
     }
 
+    private static void OutputBump()
+    {
+        if (!CommonOutputDirectory.DirectoryExists())
+        {
+            CommonOutputDirectory.CreateDirectory();
+        }
+
+        (CommonOutputDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+    }
+
     private static Dictionary<string, AbsolutePath> GetCacheIndex()
     {
         Dictionary<string, AbsolutePath> cachePairs = [];
@@ -316,7 +326,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup pipelinePreSetup)
+    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup pipelinePreSetup, Func<IEntryDefinition, Task>? preExecute, Func<IEntryDefinition, Task>? postExecute)
     {
         List<Func<Task>> tasks = [];
 
@@ -336,12 +346,10 @@ partial class BaseNukeBuildHelpers
             tasks.Add(() => Task.Run(async () =>
             {
                 await CachePreload(entry);
-                if (entry.RunContext!.TryGetVersionedContext(out var context))
-                {
-                    (OutputDirectory / "notes.md").WriteAllText(pipelinePreSetup.ReleaseNotes);
-                    (OutputDirectory / "version.txt").WriteAllText(context.AppVersion.Version.ToString());
-                }
+                OutputBump();
+                preExecute?.Invoke(entry);
                 await entry.GetExecute();
+                postExecute?.Invoke(entry);
                 await CachePostload(entry);
             }));
         }
@@ -371,7 +379,7 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.TestEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, null, null);
     }
 
     private Task BuildAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
@@ -394,7 +402,28 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, null, async entry =>
+        {
+            IBuildEntryDefinition buildEntryDefinition = (entry as IBuildEntryDefinition)!;
+            foreach (var asset in await buildEntryDefinition.GetReleaseAssets())
+            {
+                if (asset.FileExists())
+                {
+                    asset.CopyFilesRecursively(CommonOutputDirectory / "asset" / asset.Name);
+                }
+                else if (asset.DirectoryExists())
+                {
+                    asset.ZipTo(CommonOutputDirectory / "asset" / (asset.Name + ".zip"));
+                }
+            }
+            foreach (var asset in await buildEntryDefinition.GetCommonReleaseAssets())
+            {
+                if (asset.FileExists() || asset.DirectoryExists())
+                {
+                    asset.CopyFilesRecursively(CommonOutputDirectory / "common_asset");
+                }
+            }
+        });
     }
 
     private Task PublishAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
@@ -414,7 +443,7 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, null, null);
     }
 
     private void ValidateBumpVersion(AllVersions allVersions, string? bumpVersion)

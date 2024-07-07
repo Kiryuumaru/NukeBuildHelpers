@@ -123,6 +123,7 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .CommonReleaseAsset(OutputDirectory / "main")
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -156,6 +157,8 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Build try")
         .RunnerOS(RunnerOS.Windows2022)
+        .ReleaseAsset(OutputDirectory / "try" / "test_release")
+        .ReleaseAsset(OutputDirectory / "try" / "test_release.tar.gz")
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -182,13 +185,15 @@ class Build : BaseNukeBuildHelpers
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
                 .SetPackageReleaseNotes(releaseNotes)
-                .SetOutputDirectory(OutputDirectory / "try" / "awdawd"));
+                .SetOutputDirectory(OutputDirectory / "try" / "test_release"));
+            (OutputDirectory / "try" / "test_release").TarGZipTo(OutputDirectory / "try" / "test_release.tar.gz");
         });
 
     BuildEntry NukeBuildHelpersBuild3 => _ => _
         .AppId("nuke_build_helpers2")
         .DisplayName("Build try 2")
         .RunnerOS(RunnerOS.Windows2022)
+        .ReleaseAsset(OutputDirectory / "test_release 2")
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -215,7 +220,7 @@ class Build : BaseNukeBuildHelpers
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
                 .SetPackageReleaseNotes(releaseNotes)
-                .SetOutputDirectory(OutputDirectory / "try 2"));
+                .SetOutputDirectory(OutputDirectory / "test_release 2"));
         });
 
     PublishEntry NukeBuildHelpersPublish => _ => _
