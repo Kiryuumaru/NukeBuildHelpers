@@ -149,7 +149,7 @@ class Build : BaseNukeBuildHelpers
                 .SetIncludeSymbols(true)
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
-                .SetPackageReleaseNotes(releaseNotes)
+                .SetPackageReleaseNotes(NormalizeReleaseNotes(releaseNotes))
                 .SetOutputDirectory(OutputDirectory / "main"));
         });
 
@@ -184,7 +184,7 @@ class Build : BaseNukeBuildHelpers
                 .SetIncludeSymbols(true)
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
-                .SetPackageReleaseNotes(releaseNotes)
+                .SetPackageReleaseNotes(NormalizeReleaseNotes(releaseNotes))
                 .SetOutputDirectory(OutputDirectory / "try" / "test_release"));
             (OutputDirectory / "try" / "test_release").TarGZipTo(OutputDirectory / "try" / "test_release.tar.gz");
         });
@@ -219,7 +219,7 @@ class Build : BaseNukeBuildHelpers
                 .SetIncludeSymbols(true)
                 .SetSymbolPackageFormat("snupkg")
                 .SetVersion(version)
-                .SetPackageReleaseNotes(releaseNotes)
+                .SetPackageReleaseNotes(NormalizeReleaseNotes(releaseNotes))
                 .SetOutputDirectory(OutputDirectory / "test_release 2"));
         });
 
@@ -244,4 +244,12 @@ class Build : BaseNukeBuildHelpers
                     .SetTargetPath(OutputDirectory / "main" / "**"));
             }
         });
+
+    private string? NormalizeReleaseNotes(string? releaseNotes)
+    {
+        return releaseNotes?
+            .Replace(",", "%2C")?
+            .Replace(":", "%3A")?
+            .Replace(";", "%3B");
+    }
 }
