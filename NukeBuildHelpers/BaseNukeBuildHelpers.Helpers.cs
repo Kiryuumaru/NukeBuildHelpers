@@ -423,12 +423,14 @@ partial class BaseNukeBuildHelpers
                 {
                     asset.ZipTo(CommonOutputDirectory / "asset" / (asset.Name + ".zip"));
                 }
+                Log.Information("Added {file} to release assets", asset);
             }
             foreach (var asset in await buildEntryDefinition.GetCommonReleaseAssets())
             {
                 if (asset.FileExists() || asset.DirectoryExists())
                 {
                     asset.CopyFilesRecursively(CommonOutputDirectory / "common_asset");
+                    Log.Information("Added {file} to common assets", asset);
                 }
             }
         });
