@@ -13,23 +13,21 @@ public interface IEntryDefinition
 {
     internal string Id { get; set; }
 
-    internal Func<IWorkflowBuilder, Task>? WorkflowBuilder { get; set; }
-
     internal Func<IWorkflowBuilder, Task<string>> DisplayName { get; set; }
 
     internal Func<IRunContext, Task<bool>> Condition { get; set; }
 
-    internal Func<IRunContext, Task<string>> CacheInvalidator { get; set; }
-
-    internal Func<IRunContext, Task<AbsolutePath[]>>? CachePaths { get; set; }
-
-    internal Func<IRunContext, Task>? Execute { get; set; }
-
     internal Func<IRunContext, Task<RunnerOS>>? RunnerOS { get; set; }
 
-    internal IRunContext? RunContext { get; set; }
+    internal Func<IRunContext, Task<string>> CacheInvalidator { get; set; }
 
-    internal Task GetWorkflowBuilder(IWorkflowBuilder workflowBuilder) => WorkflowBuilder?.Invoke(workflowBuilder) ?? Task.CompletedTask;
+    internal List<Func<IRunContext, Task<AbsolutePath[]>>> CachePath { get; set; }
+
+    internal List<Func<IRunContext, Task>> Execute { get; set; }
+
+    internal List<Func<IWorkflowBuilder, Task>> WorkflowBuilder { get; set; }
+
+    internal IRunContext? RunContext { get; set; }
 
     internal async Task<string> GetDisplayName(IWorkflowBuilder workflowBuilder) => ValueHelpers.GetOrNullFail(await DisplayName(workflowBuilder));
 
@@ -37,9 +35,31 @@ public interface IEntryDefinition
 
     internal async Task<string> GetCacheInvalidator() => ValueHelpers.GetOrNullFail(await CacheInvalidator(ValueHelpers.GetOrNullFail(RunContext)));
 
-    internal Task<AbsolutePath[]> GetCachePaths() => CachePaths?.Invoke(ValueHelpers.GetOrNullFail(RunContext)) ?? Task.FromResult(Array.Empty<AbsolutePath>());
-
-    internal Task GetExecute() => Execute?.Invoke(ValueHelpers.GetOrNullFail(RunContext)) ?? Task.CompletedTask;
-
     internal async Task<RunnerOS> GetRunnerOS() => ValueHelpers.GetOrNullFail(await ValueHelpers.GetOrNullFail(RunnerOS).Invoke(ValueHelpers.GetOrNullFail(RunContext)));
+
+    internal async Task<AbsolutePath[]> GetCachePaths()
+    {
+        List<AbsolutePath> cachePaths = [];
+        foreach (var cachePath in CachePath)
+        {
+            cachePaths.AddRange(await cachePath(ValueHelpers.GetOrNullFail(RunContext)));
+        }
+        return [.. cachePaths];
+    }
+
+    internal async Task GetExecute()
+    {
+        foreach (var execute in Execute)
+        {
+            await execute(ValueHelpers.GetOrNullFail(RunContext));
+        }
+    }
+
+    internal async Task GetWorkflowBuilder(IWorkflowBuilder workflowBuilder)
+    {
+        foreach (var builder in WorkflowBuilder)
+        {
+            await builder(workflowBuilder);
+        }
+    }
 }

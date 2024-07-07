@@ -110,7 +110,7 @@ partial class BaseNukeBuildHelpers
             entryCachePath.CreateDirectory();
         }
 
-        var cachePaths = entry.CachePaths == null ? [] : await entry.GetCachePaths();
+        var cachePaths = entry.CachePath == null ? [] : await entry.GetCachePaths();
 
         Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
 
@@ -165,7 +165,7 @@ partial class BaseNukeBuildHelpers
 
     private static async Task CachePostload(IEntryDefinition entry)
     {
-        var cachePaths = entry.CachePaths == null ? [] : await entry.GetCachePaths();
+        var cachePaths = entry.CachePath == null ? [] : await entry.GetCachePaths();
 
         Dictionary<string, AbsolutePath> cachePairs = GetCacheIndex();
 
