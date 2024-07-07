@@ -46,7 +46,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private void CheckAppEntry(AllEntry allEntry)
+    private static void CheckAppEntry(AllEntry allEntry)
     {
         if (allEntry.AppEntryMap.Count == 0)
         {
