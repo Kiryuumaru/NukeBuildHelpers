@@ -110,7 +110,9 @@ partial class BaseNukeBuildHelpers
 
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
-            var appEntryVersionsToBump = await StartBump(allEntry);
+            var appEntryVersionsToBump = await InteractiveRelease();
+
+            await RunBump(allEntry, appEntryVersionsToBump.ToDictionary(i => i.AppEntry.AppId, i => i.BumpVersion));
 
             Console.WriteLine();
 
@@ -209,7 +211,9 @@ partial class BaseNukeBuildHelpers
 
             if (bumpMap.Count == 0)
             {
-                await StartBump(allEntry);
+                var appEntryVersionsToBump = await InteractiveRelease();
+
+                await RunBump(allEntry, appEntryVersionsToBump.ToDictionary(i => i.AppEntry.AppId, i => i.BumpVersion));
             }
             else
             {
