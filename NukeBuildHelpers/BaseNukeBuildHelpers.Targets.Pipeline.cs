@@ -475,6 +475,11 @@ partial class BaseNukeBuildHelpers
                 {
                     var assetOutput = TemporaryDirectory / "assets";
 
+                    if (!assetOutput.DirectoryExists())
+                    {
+                        assetOutput.CreateDirectory();
+                    }
+
                     foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                     {
                         if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
@@ -521,7 +526,11 @@ partial class BaseNukeBuildHelpers
 
                         Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                        Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetOutput.GetFiles("*.*").Select(i => i.ToString())));
+                        var assetReleaseFiles = assetOutput.GetFiles("*.*");
+                        if (assetReleaseFiles.Any())
+                        {
+                            Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
+                        }
 
                         Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
                     });
