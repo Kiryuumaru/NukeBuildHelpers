@@ -16,9 +16,4 @@ internal class BuildEntryDefinition : TargetEntryDefinition, IBuildEntryDefiniti
     {
         return "Build - " + ((IBuildEntryDefinition)this).AppId + " (" + Id + ")";
     }
-
-    protected override Task<bool> GetDefaultCondition(IRunContext runContext)
-    {
-        return Task.FromResult(runContext.RunType == Common.Enums.RunType.Bump);
-    }
 }
