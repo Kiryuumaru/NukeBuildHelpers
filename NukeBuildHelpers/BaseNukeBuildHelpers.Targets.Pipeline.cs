@@ -503,17 +503,21 @@ partial class BaseNukeBuildHelpers
                             throw new Exception("No release found for " + appIdLower);
                         }
                         var commonAssetPath = releasePath / "common_asset";
-                        if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories("*").Any() || commonAssetPath.GetFiles("*.*").Any()))
+                        if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
                         {
                             var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
                             commonAssetPath.CopyFilesRecursively(commonOutPath);
                             commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
                             Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
                         }
-                        foreach (var releaseAsset in (releasePath / "asset").GetFiles())
+                        var individualAssetPath = releasePath / "asset";
+                        if (individualAssetPath.DirectoryExists() && individualAssetPath.GetFiles().Any())
                         {
-                            releaseAsset.CopyFilesRecursively(assetOutput / releaseAsset.Name);
-                            Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
+                            foreach (var releaseAsset in individualAssetPath.GetFiles())
+                            {
+                                releaseAsset.CopyFilesRecursively(assetOutput / releaseAsset.Name);
+                                Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
+                            }
                         }
                     }
 
