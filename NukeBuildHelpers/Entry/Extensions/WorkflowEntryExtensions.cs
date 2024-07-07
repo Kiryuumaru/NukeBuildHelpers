@@ -21,7 +21,7 @@ public static class WorkflowEntryExtensions
     public static TEntryDefinition WorkflowBuilder<TEntryDefinition>(this TEntryDefinition definition, Action<IWorkflowBuilder> workflowBuilder)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.WorkflowBuilder = wb => Task.Run(() => workflowBuilder(wb));
+        definition.WorkflowBuilder.Add(wb => Task.Run(() => workflowBuilder(wb)));
         return definition;
     }
 
@@ -35,7 +35,7 @@ public static class WorkflowEntryExtensions
     public static TEntryDefinition WorkflowBuilder<TEntryDefinition>(this TEntryDefinition definition, Func<IWorkflowBuilder, Task> workflowBuilder)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.WorkflowBuilder = wb => Task.Run(async () => await workflowBuilder(wb));
+        definition.WorkflowBuilder.Add(wb => Task.Run(async () => await workflowBuilder(wb)));
         return definition;
     }
 
@@ -50,7 +50,7 @@ public static class WorkflowEntryExtensions
     public static TEntryDefinition WorkflowBuilder<TEntryDefinition, T>(this TEntryDefinition definition, Func<IWorkflowBuilder, Task<T>> workflowBuilder)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.WorkflowBuilder = wb => Task.Run(async () => await workflowBuilder(wb));
+        definition.WorkflowBuilder.Add(wb => Task.Run(async () => await workflowBuilder(wb)));
         return definition;
     }
 

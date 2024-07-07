@@ -49,7 +49,7 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
-        .CachePaths(RootDirectory / "testCache", RootDirectory / "testFile.txt")
+        .CachePath(RootDirectory / "testCache", RootDirectory / "testFile.txt")
         .CacheInvalidator("1")
         .WorkflowBuilder(builder =>
         {

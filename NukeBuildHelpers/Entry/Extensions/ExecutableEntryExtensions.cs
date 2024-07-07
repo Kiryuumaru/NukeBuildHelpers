@@ -161,7 +161,7 @@ public static class ExecutableEntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition>(this TEntryDefinition definition, Action action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = _ => Task.Run(() => action());
+        definition.Execute.Add(_ => Task.Run(() => action()));
         return definition;
     }
 
@@ -176,7 +176,7 @@ public static class ExecutableEntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition, T>(this TEntryDefinition definition, Func<T> action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = _ => Task.Run(() => action());
+        definition.Execute.Add(_ => Task.Run(() => action()));
         return definition;
     }
 
@@ -190,7 +190,7 @@ public static class ExecutableEntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition>(this TEntryDefinition definition, Func<Task> action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = _ => Task.Run(async () => await action());
+        definition.Execute.Add(_ => Task.Run(async () => await action()));
         return definition;
     }
 
@@ -205,7 +205,7 @@ public static class ExecutableEntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition, T>(this TEntryDefinition definition, Func<Task<T>> action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = _ => Task.Run(async () => await action());
+        definition.Execute.Add(_ => Task.Run(async () => await action()));
         return definition;
     }
 
@@ -219,7 +219,7 @@ public static class ExecutableEntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition>(this TEntryDefinition definition, Action<IRunContext> action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = runContext => Task.Run(() => action(runContext));
+        definition.Execute.Add(runContext => Task.Run(() => action(runContext)));
         return definition;
     }
 
@@ -233,7 +233,7 @@ public static class ExecutableEntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, Task> action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = runContext => Task.Run(async () => await action(runContext));
+        definition.Execute.Add(runContext => Task.Run(async () => await action(runContext)));
         return definition;
     }
 
@@ -248,7 +248,7 @@ public static class ExecutableEntryExtensions
     public static TEntryDefinition Execute<TEntryDefinition, T>(this TEntryDefinition definition, Func<IRunContext, Task<T>> action)
         where TEntryDefinition : IEntryDefinition
     {
-        definition.Execute = runContext => Task.Run(async () => await action(runContext));
+        definition.Execute.Add(runContext => Task.Run(async () => await action(runContext)));
         return definition;
     }
 }

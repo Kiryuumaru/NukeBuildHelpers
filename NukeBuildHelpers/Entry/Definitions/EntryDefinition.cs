@@ -28,8 +28,6 @@ internal abstract class EntryDefinition : IEntryDefinition
         set => name = value;
     }
 
-    Func<IWorkflowBuilder, Task>? IEntryDefinition.WorkflowBuilder { get; set; }
-
     Func<IRunContext, Task<bool>> IEntryDefinition.Condition
     {
         get => condition ?? (runContext => Task.FromResult(true));
@@ -38,11 +36,13 @@ internal abstract class EntryDefinition : IEntryDefinition
 
     Func<IRunContext, Task<string>> IEntryDefinition.CacheInvalidator { get; set; } = _ => Task.FromResult("0");
 
-    Func<IRunContext, Task<AbsolutePath[]>>? IEntryDefinition.CachePaths { get; set; }
-
-    Func<IRunContext, Task>? IEntryDefinition.Execute { get; set; }
-
     Func<IRunContext, Task<RunnerOS>>? IEntryDefinition.RunnerOS { get; set; }
+
+    List<Func<IRunContext, Task<AbsolutePath[]>>> IEntryDefinition.CachePath { get; set; } = [];
+
+    List<Func<IRunContext, Task>> IEntryDefinition.Execute { get; set; } = [];
+
+    List<Func<IWorkflowBuilder, Task>> IEntryDefinition.WorkflowBuilder { get; set; } = [];
 
     IRunContext? IEntryDefinition.RunContext { get; set; }
 }

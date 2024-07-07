@@ -14,17 +14,17 @@ public interface IBuildEntryDefinition : ITargetEntryDefinition
 
     internal List<Func<IRunContext, Task<AbsolutePath[]>>> CommonReleaseAsset { get; }
 
-    internal Task<List<AbsolutePath>> GetReleaseAssets() => GetAssets(ReleaseAsset);
+    internal Task<AbsolutePath[]> GetReleaseAssets() => GetAssets(ReleaseAsset);
 
-    internal Task<List<AbsolutePath>> GetCommonReleaseAssets() => GetAssets(CommonReleaseAsset);
+    internal Task<AbsolutePath[]> GetCommonReleaseAssets() => GetAssets(CommonReleaseAsset);
 
-    private async Task<List<AbsolutePath>> GetAssets(List<Func<IRunContext, Task<AbsolutePath[]>>> assetFactories)
+    private async Task<AbsolutePath[]> GetAssets(List<Func<IRunContext, Task<AbsolutePath[]>>> assetFactories)
     {
         List<AbsolutePath> assets = [];
         foreach (var releaseAsset in assetFactories)
         {
             assets.AddRange(await releaseAsset(ValueHelpers.GetOrNullFail(RunContext)));
         }
-        return assets;
+        return [.. assets];
     }
 }
