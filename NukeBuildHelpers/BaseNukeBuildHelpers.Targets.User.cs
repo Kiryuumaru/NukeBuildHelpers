@@ -33,13 +33,12 @@ partial class BaseNukeBuildHelpers
     /// Shows the current version from all releases, with --args "{appid}".
     /// </summary>
     public Target Version => _ => _
-        .Description("Shows the current version from all releases, with --args \"{appid}\"")
+        .Description("Shows the current version from all releases")
         .DependsOn(Fetch)
         .Executes(() =>
         {
             CheckEnvironementBranches();
 
-            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
             ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
 
             Log.Information("Commit: {Value}", Repository.Commit);
@@ -56,7 +55,7 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : allEntry.AppEntryMap.Select(i => i.Key))
+            foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
             {
                 string appId = key;
 
@@ -136,10 +135,21 @@ partial class BaseNukeBuildHelpers
 
             IReadOnlyCollection<Output>? lsRemote = null;
 
-            Dictionary<string, SemVersion> bumpMap = [];
-            foreach (var splitArg in splitArgs)
+            Dictionary<string, string?> argsBumps = [];
+
+            if (allEntry.AppEntryMap.Count == 1 && splitArgs.Count == 1 && (!allEntry.AppEntryMap.ContainsKey(splitArgs.First().Key) || splitArgs.First().Value.IsNullOrEmpty()))
             {
-                string appId = splitArg.Key.ToLower();
+                argsBumps[allEntry.AppEntryMap.First().Value.AppId] = splitArgs.First().Key;
+            }
+            else
+            {
+                argsBumps = splitArgs.ToDictionary();
+            }
+
+            Dictionary<string, SemVersion> bumpMap = [];
+            foreach (var argsBump in argsBumps)
+            {
+                string appId = argsBump.Key.ToLower();
 
                 ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
                 ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
@@ -155,7 +165,7 @@ partial class BaseNukeBuildHelpers
                 SemVersion latestVersion = allVersions.EnvVersionGrouped[currentEnvIdentifier]?.LastOrDefault()!;
                 SemVersion bumpVersion = latestVersion.Clone();
 
-                foreach (var bumpPart in splitArg.Value.NotNullOrEmpty().Trim().ToLowerInvariant().Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                foreach (var bumpPart in argsBump.Value.NotNullOrEmpty().Trim().ToLowerInvariant().Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                 {
                     try
                     {
@@ -193,12 +203,12 @@ partial class BaseNukeBuildHelpers
                                 bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplit[0] + "." + (isIncrement ? int.Parse(prereleaseSplit[1]) + bumpAssign : bumpAssign));
                                 break;
                             default:
-                                throw new ArgumentException("Invalid bump value " + splitArg.Value);
+                                throw new ArgumentException("Invalid bump value " + argsBump.Value);
                         }
                     }
                     catch
                     {
-                        throw new ArgumentException("Invalid bump value " + splitArg.Value);
+                        throw new ArgumentException("Invalid bump value " + argsBump.Value);
                     }
                 }
 
