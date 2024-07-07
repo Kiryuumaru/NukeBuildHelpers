@@ -503,7 +503,7 @@ partial class BaseNukeBuildHelpers
                             throw new Exception("No release found for " + appIdLower);
                         }
                         var commonAssetPath = releasePath / "common_asset";
-                        if (commonAssetPath.DirectoryExists() && commonAssetPath.GetDirectories("*").Any() && commonAssetPath.GetFiles("*.*").Any())
+                        if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories("*").Any() || commonAssetPath.GetFiles("*.*").Any()))
                         {
                             var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
                             commonAssetPath.CopyFilesRecursively(commonOutPath);
