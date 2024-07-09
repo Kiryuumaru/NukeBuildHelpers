@@ -1,6 +1,6 @@
 ﻿# TestEntry Documentation
 
-This document provides an overview of the fluent API functionalities available for `TestEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`.
+This document provides an overview of the fluent API functionalities available for `TestEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`. If test entry run errors, the `BuildEntry` and `PublishEntry` configured will not run.
 
 ## Features
 
@@ -17,7 +17,7 @@ This document provides an overview of the fluent API functionalities available f
 
 ## AppId
 
-Sets the app IDs of the test to target. It can contain multiple app IDs. If this test entry run errors, the `BuildEntry` and `PublishEntry` configured will not run.
+Sets the app IDs of the test to target. It can contain multiple app IDs.
 
 ### Definitions
 
