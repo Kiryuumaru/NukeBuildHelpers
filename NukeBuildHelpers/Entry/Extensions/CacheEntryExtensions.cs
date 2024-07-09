@@ -32,7 +32,7 @@ public static class CacheEntryExtensions
     /// <param name="definition">The entry definition instance.</param>
     /// <param name="cachePaths">The function that returns the cache paths.</param>
     /// <returns>The updated entry definition instance.</returns>
-    public static TEntryDefinition CachePaths<TEntryDefinition>(this TEntryDefinition definition, Func<AbsolutePath[]> cachePaths)
+    public static TEntryDefinition CachePath<TEntryDefinition>(this TEntryDefinition definition, Func<AbsolutePath[]> cachePaths)
         where TEntryDefinition : IEntryDefinition
     {
         definition.CachePath.Add(_ => Task.Run(() => cachePaths()));
@@ -46,7 +46,7 @@ public static class CacheEntryExtensions
     /// <param name="definition">The entry definition instance.</param>
     /// <param name="cachePaths">The function that takes a run context and returns the cache paths.</param>
     /// <returns>The updated entry definition instance.</returns>
-    public static TEntryDefinition CachePaths<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, AbsolutePath[]> cachePaths)
+    public static TEntryDefinition CachePath<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, AbsolutePath[]> cachePaths)
         where TEntryDefinition : IEntryDefinition
     {
         definition.CachePath.Add(runContext => Task.Run(() => cachePaths(runContext)));
@@ -60,7 +60,7 @@ public static class CacheEntryExtensions
     /// <param name="definition">The entry definition instance.</param>
     /// <param name="cachePaths">The asynchronous function that returns the cache paths.</param>
     /// <returns>The updated entry definition instance.</returns>
-    public static TEntryDefinition CachePaths<TEntryDefinition>(this TEntryDefinition definition, Func<Task<AbsolutePath[]>> cachePaths)
+    public static TEntryDefinition CachePath<TEntryDefinition>(this TEntryDefinition definition, Func<Task<AbsolutePath[]>> cachePaths)
         where TEntryDefinition : IEntryDefinition
     {
         definition.CachePath.Add(_ => Task.Run(async () => await cachePaths()));
@@ -74,7 +74,7 @@ public static class CacheEntryExtensions
     /// <param name="definition">The entry definition instance.</param>
     /// <param name="cachePaths">The asynchronous function that takes a run context and returns the cache paths.</param>
     /// <returns>The updated entry definition instance.</returns>
-    public static TEntryDefinition CachePaths<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, Task<AbsolutePath[]>> cachePaths)
+    public static TEntryDefinition CachePath<TEntryDefinition>(this TEntryDefinition definition, Func<IRunContext, Task<AbsolutePath[]>> cachePaths)
         where TEntryDefinition : IEntryDefinition
     {
         definition.CachePath.Add(runContext => Task.Run(async () => await cachePaths(runContext)));
