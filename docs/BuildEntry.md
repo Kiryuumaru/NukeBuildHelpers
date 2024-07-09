@@ -4,16 +4,16 @@ This document provides an overview of the fluent API functionalities available f
 
 ## Features
 
-- AppId
-- RunnerOS
-- Execute
-- CachePath
-- CacheInvalidator
-- Condition
-- DisplayName
-- WorkflowBuilder
-- ReleaseAsset
-- CommonReleaseAsset
+- [AppId](#appid)
+- [RunnerOS](#runneros)
+- [Execute](#execute)
+- [CachePath](#cachepath)
+- [CacheInvalidator](#cacheinvalidator)
+- [Condition](#condition)
+- [DisplayName](#displayname)
+- [WorkflowBuilder](#workflowbuilder)
+- [ReleaseAsset](#releaseasset)
+- [CommonReleaseAsset](#commonreleaseasset)
 
 ---
 
@@ -512,3 +512,5 @@ IBuildEntryDefinition CommonReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>>
             .CommonReleaseAsset(OutputDirectory / "assets");
     }
     ```
+    
+#AppId
