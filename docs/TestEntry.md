@@ -22,7 +22,7 @@ Sets the app IDs of the test to target. It can contain multiple app IDs.
 ### Definitions
 
 ```csharp
-AppId(params string[] appIds);
+ITestEntryDefinition AppId(params string[] appIds);
 ```
 
 ### Usage
@@ -50,11 +50,11 @@ Sets the runner OS for the execution. Can choose pre-listed OS under the namespa
 ### Definitions
 
 ```csharp
-RunnerOS(RunnerOS runnerOS);
-RunnerOS(Func<RunnerOS> runnerOS);
-RunnerOS(Func<IRunContext, RunnerOS> runnerOS);
-RunnerOS(Func<Task<RunnerOS>> runnerOS);
-RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
+ITestEntryDefinition RunnerOS(RunnerOS runnerOS);
+ITestEntryDefinition RunnerOS(Func<RunnerOS> runnerOS);
+ITestEntryDefinition RunnerOS(Func<IRunContext, RunnerOS> runnerOS);
+ITestEntryDefinition RunnerOS(Func<Task<RunnerOS>> runnerOS);
+ITestEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
 ```
 
 ### Usage
