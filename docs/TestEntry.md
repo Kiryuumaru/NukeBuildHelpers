@@ -4,14 +4,14 @@ This document provides an overview of the fluent API functionalities available f
 
 ## Features
 
-- AppId
-- RunnerOS
-- Execute
-- CachePath
-- CacheInvalidator
-- Condition
-- DisplayName
-- WorkflowBuilder
+- [AppId](#appid)
+- [RunnerOS](#runneros)
+- [Execute](#execute)
+- [CachePath](#cachepath)
+- [CacheInvalidator](#cacheinvalidator)
+- [Condition](#condition)
+- [DisplayName](#displayname)
+- [WorkflowBuilder](#workflowbuilder)
 
 ---
 
