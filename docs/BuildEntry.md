@@ -512,5 +512,3 @@ IBuildEntryDefinition CommonReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>>
             .CommonReleaseAsset(OutputDirectory / "assets");
     }
     ```
-    
-#AppId
