@@ -27,7 +27,7 @@ AppId(params string[] appIds)
 
 ### Usage
 
-* Specify directly:
+* Specify directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -59,7 +59,7 @@ RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS)
 
 ### Usage
 
-* Specify to use `RunnerOS.Ubuntu2204` directly:
+* Specify to use `RunnerOS.Ubuntu2204` directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -74,7 +74,7 @@ RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS)
     }
     ```
 
-* Resolve at runtime with `IRunContext`:
+* Resolve at runtime with `IRunContext`
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -118,7 +118,7 @@ Execute(Func<IRunContext, Task<T>> action)
 
 ### Usage
 
-* Running any plain execution:
+* Running any plain execution
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -138,7 +138,7 @@ Execute(Func<IRunContext, Task<T>> action)
     }
     ```
 
-* Running with `IRunContext`:
+* Running with `IRunContext`
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -180,7 +180,7 @@ CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths)
 
 ### Usage
 
-* Specify `AbsolutePath` directly:
+* Specify `AbsolutePath` directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -195,7 +195,7 @@ CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths)
     }
     ```
 
-* Resolve at runtime with `IRunContext`:
+* Resolve at runtime with `IRunContext`
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -238,7 +238,7 @@ CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator)
 
 ### Usage
 
-* Specify the value directly:
+* Specify the value directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -252,7 +252,7 @@ CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator)
     }
     ```
 
-* Resolve at runtime with `IRunContext`:
+* Resolve at runtime with `IRunContext`
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -295,7 +295,7 @@ Condition(Func<IRunContext, Task<bool>> condition)
 
 ### Usage
 
-* Specify `bool` directly:
+* Specify `bool` directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -309,7 +309,7 @@ Condition(Func<IRunContext, Task<bool>> condition)
     }
     ```
 
-* Resolve at runtime with `IRunContext`:
+* Resolve at runtime with `IRunContext`
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -343,7 +343,7 @@ DisplayName(Func<Task<string>> displayName)
 
 ### Usage
 
-* Specify `string` directly:
+* Specify `string` directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -373,7 +373,7 @@ WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBuilder)
 
 ### Usage
 
-* Specify directly:
+* Specify directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
