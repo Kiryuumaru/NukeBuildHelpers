@@ -2,7 +2,7 @@
 
 This document provides an overview of the fluent API functionalities available for `BuildEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`.
 
-All files created on `OutputDirectory` under all `BuildEntry` with the same app ID will propagate on all `PublishEntry` run.
+All files created on `OutputDirectory` under all `BuildEntry` will propagate on all `PublishEntry` with the same app ID.
 
 ## Features
 
