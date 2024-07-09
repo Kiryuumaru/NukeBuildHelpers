@@ -108,12 +108,12 @@ Defines the execution that will run at runtime.
 ### Definitions
 
 ```csharp
-Execute(Func<T> action);
-Execute(Func<Task> action);
-Execute(Func<Task<T>> action);
-Execute(Action<IRunContext> action);
-Execute(Func<IRunContext, Task> action);
-Execute(Func<IRunContext, Task<T>> action);
+ITestEntryDefinition Execute(Func<T> action);
+ITestEntryDefinition Execute(Func<Task> action);
+ITestEntryDefinition Execute(Func<Task<T>> action);
+ITestEntryDefinition Execute(Action<IRunContext> action);
+ITestEntryDefinition Execute(Func<IRunContext, Task> action);
+ITestEntryDefinition Execute(Func<IRunContext, Task<T>> action);
 ```
 
 ### Usage
@@ -171,11 +171,11 @@ Sets the paths to cache using `AbsolutePath`.
 ### Definitions
 
 ```csharp
-CachePath(params AbsolutePath[] cachePath);
-CachePath(Func<AbsolutePath[]> cachePaths);
-CachePath(Func<IRunContext, AbsolutePath[]> cachePaths);
-CachePath(Func<Task<AbsolutePath[]>> cachePaths);
-CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths);
+ITestEntryDefinition CachePath(params AbsolutePath[] cachePath);
+ITestEntryDefinition CachePath(Func<AbsolutePath[]> cachePaths);
+ITestEntryDefinition CachePath(Func<IRunContext, AbsolutePath[]> cachePaths);
+ITestEntryDefinition CachePath(Func<Task<AbsolutePath[]>> cachePaths);
+ITestEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths);
 ```
 
 ### Usage
@@ -229,11 +229,11 @@ Sets to invalidate cache if the value is different from the last run.
 ### Definitions
 
 ```csharp
-CacheInvalidator(string cacheInvalidator);
-CacheInvalidator(Func<string> cacheInvalidator);
-CacheInvalidator(Func<IRunContext, string> cacheInvalidator);
-CacheInvalidator(Func<Task<string>> cacheInvalidator);
-CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator);
+ITestEntryDefinition CacheInvalidator(string cacheInvalidator);
+ITestEntryDefinition CacheInvalidator(Func<string> cacheInvalidator);
+ITestEntryDefinition CacheInvalidator(Func<IRunContext, string> cacheInvalidator);
+ITestEntryDefinition CacheInvalidator(Func<Task<string>> cacheInvalidator);
+ITestEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator);
 ```
 
 ### Usage
@@ -286,11 +286,11 @@ Sets the condition to run `Execute`.
 ### Definitions
 
 ```csharp
-Condition(bool condition);
-Condition(Func<bool> condition);
-Condition(Func<IRunContext, bool> condition);
-Condition(Func<Task<bool>> condition);
-Condition(Func<IRunContext, Task<bool>> condition);
+ITestEntryDefinition Condition(bool condition);
+ITestEntryDefinition Condition(Func<bool> condition);
+ITestEntryDefinition Condition(Func<IRunContext, bool> condition);
+ITestEntryDefinition Condition(Func<Task<bool>> condition);
+ITestEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
 ```
 
 ### Usage
@@ -336,9 +336,9 @@ Sets the display name of the entry. Modifying the value will need to rebuild the
 ### Definitions
 
 ```csharp
-DisplayName(string displayName);
-DisplayName(Func<string> displayName);
-DisplayName(Func<Task<string>> displayName);
+ITestEntryDefinition DisplayName(string displayName);
+ITestEntryDefinition DisplayName(Func<string> displayName);
+ITestEntryDefinition DisplayName(Func<Task<string>> displayName);
 ```
 
 ### Usage
@@ -366,9 +366,9 @@ Sets custom workflow tasks or steps on any supported pipelines. Modifying the va
 ### Definitions
 
 ```csharp
-WorkflowBuilder(Action<IWorkflowBuilder> workflowBuilder);
-WorkflowBuilder(Func<IWorkflowBuilder, Task> workflowBuilder);
-WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBuilder);
+ITestEntryDefinition WorkflowBuilder(Action<IWorkflowBuilder> workflowBuilder);
+ITestEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task> workflowBuilder);
+ITestEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBuilder);
 ```
 
 ### Usage

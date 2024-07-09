@@ -22,7 +22,7 @@ Sets the app ID of the app. All files created on `OutputDirectory` under all `Bu
 ### Definitions
 
 ```csharp
-AppId(string appId);
+IPublishEntryDefinition AppId(string appId);
 ```
 
 ### Usage
@@ -50,11 +50,11 @@ Sets the runner OS for the execution. Can choose pre-listed OS under the namespa
 ### Definitions
 
 ```csharp
-RunnerOS(RunnerOS runnerOS);
-RunnerOS(Func<RunnerOS> runnerOS);
-RunnerOS(Func<IRunContext, RunnerOS> runnerOS);
-RunnerOS(Func<Task<RunnerOS>> runnerOS);
-RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
+IPublishEntryDefinition RunnerOS(RunnerOS runnerOS);
+IPublishEntryDefinition RunnerOS(Func<RunnerOS> runnerOS);
+IPublishEntryDefinition RunnerOS(Func<IRunContext, RunnerOS> runnerOS);
+IPublishEntryDefinition RunnerOS(Func<Task<RunnerOS>> runnerOS);
+IPublishEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
 ```
 
 ### Usage
@@ -108,12 +108,12 @@ Defines the execution that will run at runtime.
 ### Definitions
 
 ```csharp
-Execute(Func<T> action);
-Execute(Func<Task> action);
-Execute(Func<Task<T>> action);
-Execute(Action<IRunContext> action);
-Execute(Func<IRunContext, Task> action);
-Execute(Func<IRunContext, Task<T>> action);
+IPublishEntryDefinition Execute(Func<T> action);
+IPublishEntryDefinition Execute(Func<Task> action);
+IPublishEntryDefinition Execute(Func<Task<T>> action);
+IPublishEntryDefinition Execute(Action<IRunContext> action);
+IPublishEntryDefinition Execute(Func<IRunContext, Task> action);
+IPublishEntryDefinition Execute(Func<IRunContext, Task<T>> action);
 ```
 
 ### Usage
@@ -171,11 +171,11 @@ Sets the paths to cache using `AbsolutePath`.
 ### Definitions
 
 ```csharp
-CachePath(params AbsolutePath[] cachePath);
-CachePath(Func<AbsolutePath[]> cachePaths);
-CachePath(Func<IRunContext, AbsolutePath[]> cachePaths);
-CachePath(Func<Task<AbsolutePath[]>> cachePaths);
-CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths);
+IPublishEntryDefinition CachePath(params AbsolutePath[] cachePath);
+IPublishEntryDefinition CachePath(Func<AbsolutePath[]> cachePaths);
+IPublishEntryDefinition CachePath(Func<IRunContext, AbsolutePath[]> cachePaths);
+IPublishEntryDefinition CachePath(Func<Task<AbsolutePath[]>> cachePaths);
+IPublishEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths);
 ```
 
 ### Usage
@@ -229,11 +229,11 @@ Sets to invalidate cache if the value is different from the last run.
 ### Definitions
 
 ```csharp
-CacheInvalidator(string cacheInvalidator);
-CacheInvalidator(Func<string> cacheInvalidator);
-CacheInvalidator(Func<IRunContext, string> cacheInvalidator);
-CacheInvalidator(Func<Task<string>> cacheInvalidator);
-CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator);
+IPublishEntryDefinition CacheInvalidator(string cacheInvalidator);
+IPublishEntryDefinition CacheInvalidator(Func<string> cacheInvalidator);
+IPublishEntryDefinition CacheInvalidator(Func<IRunContext, string> cacheInvalidator);
+IPublishEntryDefinition CacheInvalidator(Func<Task<string>> cacheInvalidator);
+IPublishEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator);
 ```
 
 ### Usage
@@ -286,11 +286,11 @@ Sets the condition to run `Execute`.
 ### Definitions
 
 ```csharp
-Condition(bool condition);
-Condition(Func<bool> condition);
-Condition(Func<IRunContext, bool> condition);
-Condition(Func<Task<bool>> condition);
-Condition(Func<IRunContext, Task<bool>> condition);
+IPublishEntryDefinition Condition(bool condition);
+IPublishEntryDefinition Condition(Func<bool> condition);
+IPublishEntryDefinition Condition(Func<IRunContext, bool> condition);
+IPublishEntryDefinition Condition(Func<Task<bool>> condition);
+IPublishEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
 ```
 
 ### Usage
@@ -336,9 +336,9 @@ Sets the display name of the entry. Modifying the value will need to rebuild the
 ### Definitions
 
 ```csharp
-DisplayName(string displayName);
-DisplayName(Func<string> displayName);
-DisplayName(Func<Task<string>> displayName);
+IPublishEntryDefinition DisplayName(string displayName);
+IPublishEntryDefinition DisplayName(Func<string> displayName);
+IPublishEntryDefinition DisplayName(Func<Task<string>> displayName);
 ```
 
 ### Usage
@@ -366,9 +366,9 @@ Sets custom workflow tasks or steps on any supported pipelines. Modifying the va
 ### Definitions
 
 ```csharp
-WorkflowBuilder(Action<IWorkflowBuilder> workflowBuilder);
-WorkflowBuilder(Func<IWorkflowBuilder, Task> workflowBuilder);
-WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBuilder);
+IPublishEntryDefinition WorkflowBuilder(Action<IWorkflowBuilder> workflowBuilder);
+IPublishEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task> workflowBuilder);
+IPublishEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBuilder);
 ```
 
 ### Usage

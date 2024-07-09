@@ -24,7 +24,7 @@ Sets the app ID of the app. All files created on `OutputDirectory` will propagat
 ### Definitions
 
 ```csharp
-AppId(string appId);
+IBuildEntryDefinition AppId(string appId);
 ```
 
 ### Usage
@@ -52,11 +52,11 @@ Sets the runner OS for the execution. Can choose pre-listed OS under the namespa
 ### Definitions
 
 ```csharp
-RunnerOS(RunnerOS runnerOS);
-RunnerOS(Func<RunnerOS> runnerOS);
-RunnerOS(Func<IRunContext, RunnerOS> runnerOS);
-RunnerOS(Func<Task<RunnerOS>> runnerOS);
-RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
+IBuildEntryDefinition RunnerOS(RunnerOS runnerOS);
+IBuildEntryDefinition RunnerOS(Func<RunnerOS> runnerOS);
+IBuildEntryDefinition RunnerOS(Func<IRunContext, RunnerOS> runnerOS);
+IBuildEntryDefinition RunnerOS(Func<Task<RunnerOS>> runnerOS);
+IBuildEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
 ```
 
 ### Usage
@@ -110,12 +110,12 @@ Defines the execution that will run at runtime.
 ### Definitions
 
 ```csharp
-Execute(Func<T> action);
-Execute(Func<Task> action);
-Execute(Func<Task<T>> action);
-Execute(Action<IRunContext> action);
-Execute(Func<IRunContext, Task> action);
-Execute(Func<IRunContext, Task<T>> action);
+IBuildEntryDefinition Execute(Func<T> action);
+IBuildEntryDefinition Execute(Func<Task> action);
+IBuildEntryDefinition Execute(Func<Task<T>> action);
+IBuildEntryDefinition Execute(Action<IRunContext> action);
+IBuildEntryDefinition Execute(Func<IRunContext, Task> action);
+IBuildEntryDefinition Execute(Func<IRunContext, Task<T>> action);
 ```
 
 ### Usage
@@ -173,11 +173,11 @@ Sets the paths to cache using `AbsolutePath`.
 ### Definitions
 
 ```csharp
-CachePath(params AbsolutePath[] cachePath);
-CachePath(Func<AbsolutePath[]> cachePaths);
-CachePath(Func<IRunContext, AbsolutePath[]> cachePaths);
-CachePath(Func<Task<AbsolutePath[]>> cachePaths);
-CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths);
+IBuildEntryDefinition CachePath(params AbsolutePath[] cachePath);
+IBuildEntryDefinition CachePath(Func<AbsolutePath[]> cachePaths);
+IBuildEntryDefinition CachePath(Func<IRunContext, AbsolutePath[]> cachePaths);
+IBuildEntryDefinition CachePath(Func<Task<AbsolutePath[]>> cachePaths);
+IBuildEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePaths);
 ```
 
 ### Usage
@@ -231,11 +231,11 @@ Sets to invalidate cache if the value is different from the last run.
 ### Definitions
 
 ```csharp
-CacheInvalidator(string cacheInvalidator);
-CacheInvalidator(Func<string> cacheInvalidator);
-CacheInvalidator(Func<IRunContext, string> cacheInvalidator);
-CacheInvalidator(Func<Task<string>> cacheInvalidator);
-CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator);
+IBuildEntryDefinition CacheInvalidator(string cacheInvalidator);
+IBuildEntryDefinition CacheInvalidator(Func<string> cacheInvalidator);
+IBuildEntryDefinition CacheInvalidator(Func<IRunContext, string> cacheInvalidator);
+IBuildEntryDefinition CacheInvalidator(Func<Task<string>> cacheInvalidator);
+IBuildEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInvalidator);
 ```
 
 ### Usage
@@ -288,11 +288,11 @@ Sets the condition to run `Execute`.
 ### Definitions
 
 ```csharp
-Condition(bool condition);
-Condition(Func<bool> condition);
-Condition(Func<IRunContext, bool> condition);
-Condition(Func<Task<bool>> condition);
-Condition(Func<IRunContext, Task<bool>> condition);
+IBuildEntryDefinition Condition(bool condition);
+IBuildEntryDefinition Condition(Func<bool> condition);
+IBuildEntryDefinition Condition(Func<IRunContext, bool> condition);
+IBuildEntryDefinition Condition(Func<Task<bool>> condition);
+IBuildEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
 ```
 
 ### Usage
@@ -338,9 +338,9 @@ Sets the display name of the entry. Modifying the value will need to rebuild the
 ### Definitions
 
 ```csharp
-DisplayName(string displayName);
-DisplayName(Func<string> displayName);
-DisplayName(Func<Task<string>> displayName);
+IBuildEntryDefinition DisplayName(string displayName);
+IBuildEntryDefinition DisplayName(Func<string> displayName);
+IBuildEntryDefinition DisplayName(Func<Task<string>> displayName);
 ```
 
 ### Usage
@@ -368,9 +368,9 @@ Sets custom workflow tasks or steps on any supported pipelines. Modifying the va
 ### Definitions
 
 ```csharp
-WorkflowBuilder(Action<IWorkflowBuilder> workflowBuilder);
-WorkflowBuilder(Func<IWorkflowBuilder, Task> workflowBuilder);
-WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBuilder);
+IBuildEntryDefinition WorkflowBuilder(Action<IWorkflowBuilder> workflowBuilder);
+IBuildEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task> workflowBuilder);
+IBuildEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBuilder);
 ```
 
 ### Usage
@@ -430,11 +430,11 @@ Sets the `AbsolutePath` to release on git release as an asset.
 ### Definitions
 
 ```csharp
-ReleaseAsset(params AbsolutePath[] assets);
-ReleaseAsset(Func<AbsolutePath[]> assets);
-ReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
-ReleaseAsset(Func<Task<AbsolutePath[]>> assets);
-ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+IBuildEntryDefinition ReleaseAsset(params AbsolutePath[] assets);
+IBuildEntryDefinition ReleaseAsset(Func<AbsolutePath[]> assets);
+IBuildEntryDefinition ReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
+IBuildEntryDefinition ReleaseAsset(Func<Task<AbsolutePath[]>> assets);
+IBuildEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
 ```
 
 ### Usage
@@ -476,11 +476,11 @@ Sets the `AbsolutePath` to release on git release as a common asset. All assets 
 ### Definitions
 
 ```csharp
-CommonReleaseAsset(params AbsolutePath[] assets);
-CommonReleaseAsset(Func<AbsolutePath[]> assets);
-CommonReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
-CommonReleaseAsset(Func<Task<AbsolutePath[]>> assets);
-CommonReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+IBuildEntryDefinition CommonReleaseAsset(params AbsolutePath[] assets);
+IBuildEntryDefinition CommonReleaseAsset(Func<AbsolutePath[]> assets);
+IBuildEntryDefinition CommonReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
+IBuildEntryDefinition CommonReleaseAsset(Func<Task<AbsolutePath[]>> assets);
+IBuildEntryDefinition CommonReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
 ```
 
 ### Usage
