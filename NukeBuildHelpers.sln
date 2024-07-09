@@ -7,7 +7,20 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NukeBuildHelpers", "NukeBui
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{96B7B107-5842-465B-BBF0-9B1354F51B69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NukeBuildHelpers.UnitTest", "NukeBuildHelpers.UnitTest\NukeBuildHelpers.UnitTest.csproj", "{26692557-F5A7-4C13-8E78-53A8FCEE30BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NukeBuildHelpers.UnitTest", "NukeBuildHelpers.UnitTest\NukeBuildHelpers.UnitTest.csproj", "{26692557-F5A7-4C13-8E78-53A8FCEE30BF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution Files", "{06DA744E-882D-406F-8EAB-F687B2D21841}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7D239E58-4C0A-4478-85DC-6CC3E2CA621A}"
+	ProjectSection(SolutionItems) = preProject
+		docs\BuildEntry.md = docs\BuildEntry.md
+		docs\PublishEntry.md = docs\PublishEntry.md
+		docs\TestEntry.md = docs\TestEntry.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +41,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7D239E58-4C0A-4478-85DC-6CC3E2CA621A} = {06DA744E-882D-406F-8EAB-F687B2D21841}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {964AA413-5EBC-439E-9711-0FA1A7B55F35}
