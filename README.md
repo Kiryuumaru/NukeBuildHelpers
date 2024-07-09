@@ -82,6 +82,8 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
     }
     ```
 
+  See documentation [here](docs/TestEntry.md)
+
 - #### Example `BuildEntry` Implementation
 
     ```csharp
@@ -123,6 +125,8 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
     }
     ```
 
+  See documentation [here](docs/BuildEntry.md)
+
 - #### Example `PublishEntry` Implementation
 
     ```csharp
@@ -149,6 +153,8 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
             });
     }
     ```
+
+  See documentation [here](docs/PublishEntry.md)
 
 ### Generating Workflows
 
