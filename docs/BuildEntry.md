@@ -17,7 +17,7 @@ This document provides an overview of the fluent API functionalities available f
 
 ---
 
-## AppId 
+## AppId
 
 Sets the app ID of the app. All files created on `OutputDirectory` will propagate on all `PublishEntry` run with the same app ID.
 
