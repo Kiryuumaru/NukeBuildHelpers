@@ -1,6 +1,8 @@
 ﻿# TestEntry Documentation
 
-This document provides an overview of the fluent API functionalities available for `TestEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`. If test entry run errors, the `BuildEntry` and `PublishEntry` configured will not run.
+This document provides an overview of the fluent API functionalities available for `TestEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`.
+
+If test entry run errors, the `BuildEntry` and `PublishEntry` configured will not run.
 
 ## Features
 

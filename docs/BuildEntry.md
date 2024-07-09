@@ -2,6 +2,8 @@
 
 This document provides an overview of the fluent API functionalities available for `BuildEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`.
 
+All files created on `OutputDirectory` under all `BuildEntry` with the same app ID will propagate on all `PublishEntry` run.
+
 ## Features
 
 - [AppId](#appid)
@@ -19,7 +21,7 @@ This document provides an overview of the fluent API functionalities available f
 
 ## AppId
 
-Sets the app ID of the app. All files created on `OutputDirectory` will propagate on all `PublishEntry` run with the same app ID.
+Sets the app ID of the app.
 
 ### Definitions
 
