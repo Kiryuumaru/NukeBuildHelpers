@@ -82,7 +82,7 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
     }
     ```
 
-  See documentation [here](docs/TestEntry.md)
+  See documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/TestEntry.md)
 
 - #### Example `BuildEntry` Implementation
 
@@ -125,7 +125,7 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
     }
     ```
 
-  See documentation [here](docs/BuildEntry.md)
+  See documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/BuildEntry.md)
 
 - #### Example `PublishEntry` Implementation
 
@@ -154,7 +154,7 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
     }
     ```
 
-  See documentation [here](docs/PublishEntry.md)
+  See documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/PublishEntry.md)
 
 ### Generating Workflows
 
