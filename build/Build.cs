@@ -121,18 +121,6 @@ class Build : BaseNukeBuildHelpers
                 .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
         });
 
-    TestEntry NukeBuildHelpersTest3 => _ => _
-        .AppId("nuke_build_helpers")
-        .DisplayName("Test try 3")
-        .RunnerOS(RunnerOSSelfUbuntu2004.Instance)
-        .Execute(() =>
-        {
-            DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
-            DotNetTasks.DotNetTest(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
-        });
-
     BuildEntry NukeBuildHelpersBuild1 => _ => _
         .AppId("nuke_build_helpers")
         .DisplayName("Build main")
@@ -265,30 +253,5 @@ class Build : BaseNukeBuildHelpers
             .Replace(",", "%2C")?
             .Replace(":", "%3A")?
             .Replace(";", "%3B");
-    }
-}
-
-internal class RunnerOSSelfUbuntu2004 : RunnerOS
-{
-    public static RunnerOSSelfUbuntu2004 Instance { get; } = new();
-
-    public override string Name { get; } = "self-ubuntu-20.04";
-
-    public override object GetPipelineOS(PipelineType pipelineType)
-    {
-        return pipelineType switch
-        {
-            PipelineType.Github => new RunnerGithubPipelineOS() { Group = "Default", RunsOnLabels = ["self-hosted", "Linux", "X64"] },
-            _ => throw new NotImplementedException()
-        };
-    }
-
-    public override string GetRunScript(PipelineType pipelineType)
-    {
-        return pipelineType switch
-        {
-            PipelineType.Github => "chmod +x ./build.sh && ./build.sh",
-            _ => throw new NotImplementedException()
-        };
     }
 }
