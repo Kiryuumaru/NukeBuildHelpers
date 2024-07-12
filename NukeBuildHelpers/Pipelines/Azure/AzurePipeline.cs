@@ -14,8 +14,10 @@ using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
+using System;
 using System.Linq;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
 
@@ -120,6 +122,23 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
 
             RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
+
+            var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
+            var entryIdNorm = entryId.Replace("-", ".");
+            var environmentNorm = pipelinePreSetup.Environment.Replace("-", ".");
+            var cacheFamilyNorm  = cacheFamily.Replace("-", ".");
+            var cacheInvalidatorNorm = entrySetup.CacheInvalidator.Replace("-", ".");
+            var runClassificationNorm = runClassification.Replace("-", ".");
+            var runIdentifierNorm = runIdentifier.Replace("-", ".");
+
+            await ExportPreSetupEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
+            await ExportPreSetupEnvVarRuntime(entryIdNorm, "POOL_NAME", runnerPipelineOS.PoolName);
+            await ExportPreSetupEnvVarRuntime(entryIdNorm, "POOL_VM_IMAGE", runnerPipelineOS.PoolVMImage);
+            await ExportPreSetupEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
+            await ExportPreSetupEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"\"{cacheFamilyNorm}\" | \"{osName}\" | \"{entryIdNorm}\" | \"{cacheInvalidatorNorm}\" | \"{environmentNorm}\" | \"{runClassificationNorm}\" | \"{runIdentifierNorm}\"");
+            await ExportPreSetupEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"\"{cacheFamilyNorm}\" | \"{osName}\" | \"{entryIdNorm}\" | \"{cacheInvalidatorNorm}\" | \"{environmentNorm}\" | \"{runClassificationNorm}\"");
+            await ExportPreSetupEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"\"{cacheFamilyNorm}\" | \"{osName}\" | \"{entryIdNorm}\" | \"{cacheInvalidatorNorm}\" | \"{environmentNorm}\" | \"main\"");
+
 
             await exportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }

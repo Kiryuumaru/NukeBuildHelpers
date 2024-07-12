@@ -68,7 +68,7 @@ jobs:
       NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_MAIN_RESTORE_KEY: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_MAIN_RESTORE_KEY }}
   NUKEBUILDHELPERSTEST1:
     name: Test try 1
-    runs-on: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUNS_ON }}
+    runs-on: ${{ fromJson(needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUNS_ON) }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
@@ -95,7 +95,7 @@ jobs:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSTEST2:
     name: Test try 2
-    runs-on: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUNS_ON }}
+    runs-on: ${{ fromJson(needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2_RUNS_ON) }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
@@ -116,7 +116,7 @@ jobs:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD1:
     name: Build main
-    runs-on: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUNS_ON }}
+    runs-on: ${{ fromJson(needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUNS_ON) }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
@@ -146,7 +146,7 @@ jobs:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD2:
     name: Build try
-    runs-on: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUNS_ON }}
+    runs-on: ${{ fromJson(needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2_RUNS_ON) }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
@@ -176,7 +176,7 @@ jobs:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD3:
     name: Build try 2
-    runs-on: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUNS_ON }}
+    runs-on: ${{ fromJson(needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUNS_ON) }}
     steps:
     - uses: actions/checkout@v4
     - name: Cache Run
@@ -206,7 +206,7 @@ jobs:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSPUBLISH:
     name: Publish - nuke_build_helpers (NukeBuildHelpersPublish)
-    runs-on: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUNS_ON }}
+    runs-on: ${{ fromJson(needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUNS_ON) }}
     steps:
     - uses: actions/checkout@v4
     - name: Download artifacts

@@ -12,7 +12,9 @@ using NukeBuildHelpers.Pipelines.Github.Interfaces;
 using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
+using System;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace NukeBuildHelpers.Pipelines.Github;
 
@@ -90,61 +92,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
-        async Task exportEnvVarEntryRuntime(string entryId, bool condition, string runsOn, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
-        {
-            cacheFamily = cacheFamily.Replace("-", ".");
-            osName = osName.Replace("-", ".");
-            entryId = entryId.Replace("-", ".");
-            cacheInvalidator = cacheInvalidator.Replace("-", ".");
-            environment = environment.Replace("-", ".");
-            runClassification = runClassification.Replace("-", ".");
-            runIdentifier = runIdentifier.Replace("-", ".");
-
-            await ExportEnvVarRuntime(entryId, "CONDITION", condition ? "true" : "false");
-            await ExportEnvVarRuntime(entryId, "RUNS_ON", runsOn);
-            await ExportEnvVarRuntime(entryId, "RUN_SCRIPT", runsScript);
-            await ExportEnvVarRuntime(entryId, "CACHE_KEY", $"{cacheFamily}-{osName}-{entryId}-{cacheInvalidator}-{environment}-{runClassification}-{runIdentifier}");
-            await ExportEnvVarRuntime(entryId, "CACHE_RESTORE_KEY", $"{cacheFamily}-{osName}-{entryId}-{cacheInvalidator}-{environment}-{runClassification}-");
-            await ExportEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamily}-{osName}-{entryId}-{cacheInvalidator}-{environment}-main-");
-        }
-
-        string getRunsOn(RunnerGithubPipelineOS runnerPipelineOS)
-        {
-            if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
-            {
-                return JsonSerializer.Serialize(runnerPipelineOS.RunsOn);
-            }
-            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
-            {
-                var runsOnObj = new
-                {
-                    labels = runnerPipelineOS.RunsOnLabels,
-                    group = runnerPipelineOS.Group,
-                };
-                return JsonSerializer.Serialize(runsOnObj);
-            }
-            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
-            {
-                var runsOnObj = new
-                {
-                    labels = runnerPipelineOS.RunsOnLabels
-                };
-                return JsonSerializer.Serialize(runsOnObj);
-            }
-            else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
-            {
-                var runsOnObj = new
-                {
-                    group = runnerPipelineOS.Group
-                };
-                return JsonSerializer.Serialize(runsOnObj);
-            }
-            else
-            {
-                return JsonSerializer.Serialize("");
-            }
-        }
-
         async Task setupEntryEnv(string entryId, string cacheFamily)
         {
             if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
@@ -153,9 +100,56 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            string runsOn = getRunsOn(runnerPipelineOS);
+            
+            string runsOn;
+            if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
+            {
+                runsOn = JsonSerializer.Serialize(runnerPipelineOS.RunsOn);
+            }
+            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
+            {
+                var runsOnObj = new
+                {
+                    labels = runnerPipelineOS.RunsOnLabels,
+                    group = runnerPipelineOS.Group,
+                };
+                runsOn = JsonSerializer.Serialize(runsOnObj);
+            }
+            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
+            {
+                var runsOnObj = new
+                {
+                    labels = runnerPipelineOS.RunsOnLabels
+                };
+                runsOn = JsonSerializer.Serialize(runsOnObj);
+            }
+            else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
+            {
+                var runsOnObj = new
+                {
+                    group = runnerPipelineOS.Group
+                };
+                runsOn = JsonSerializer.Serialize(runsOnObj);
+            }
+            else
+            {
+                runsOn = JsonSerializer.Serialize("");
+            }
 
-            await exportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, cacheFamily, entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
+            var entryIdNorm = entryId.Replace("-", ".");
+            var environmentNorm = pipelinePreSetup.Environment.Replace("-", ".");
+            var cacheFamilyNorm = cacheFamily.Replace("-", ".");
+            var cacheInvalidatorNorm = entrySetup.CacheInvalidator.Replace("-", ".");
+            var runClassificationNorm = runClassification.Replace("-", ".");
+            var runIdentifierNorm = runIdentifier.Replace("-", ".");
+
+            await ExportEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
+            await ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", runsOn);
+            await ExportEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
+            await ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
+            await ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
+            await ExportEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-main-");
         }
 
         var entries = new List<(string entryId, string cacheFamily)>();
@@ -283,7 +277,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. needs], _if: "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'");
+            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. needs], _if: "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(testJob);
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "PipelineTest");
@@ -306,7 +300,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                 }
             }
-            var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. testNeeds], _if: condition);
+            var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. testNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(buildJob);
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
@@ -341,7 +335,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     condition += " && needs." + buildEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
                 }
             }
-            var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. buildNeeds], _if: condition);
+            var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. buildNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(publishJob);
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
@@ -401,6 +395,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static string GetImportedEnvVarExpression(string entryId, string name)
     {
         return "${{ " + GetImportedEnvVarName(entryId, name) + " }}";
+    }
+
+    private static string GetImportedEnvVarFromJsonExpression(string entryId, string name)
+    {
+        return "${{ fromJson(" + GetImportedEnvVarName(entryId, name) + ") }}";
     }
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string>? needs = null, string _if = "")
