@@ -106,7 +106,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 var runsOnObj = new
                 {
-                    labels = runnerPipelineOS.RunsOn,
+                    labels = new string[] { runnerPipelineOS.RunsOn },
                 };
                 runsOn = JsonSerializer.Serialize(runsOnObj);
             }
