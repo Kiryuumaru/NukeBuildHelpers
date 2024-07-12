@@ -125,7 +125,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 var runsOnObj = new
                 {
-                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels) + " ]",
+                    labels = runnerPipelineOS.RunsOnLabels,
                     group = runnerPipelineOS.Group,
                 };
                 runsOn = JsonSerializer.Serialize(runsOnObj);
@@ -134,7 +134,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 var runsOnObj = new
                 {
-                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels) + " ]"
+                    labels = runnerPipelineOS.RunsOnLabels
                 };
                 runsOn = JsonSerializer.Serialize(runsOnObj);
             }
