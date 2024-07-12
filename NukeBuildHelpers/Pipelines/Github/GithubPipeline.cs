@@ -108,18 +108,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await ExportEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamily}-{osName}-{entryId}-{cacheInvalidator}-{environment}-main-");
         }
 
-        foreach (var entryId in pipelinePreSetup.TestEntries)
+        string getRunsOn(RunnerGithubPipelineOS runnerPipelineOS)
         {
-            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
-            {
-                continue;
-            }
-            
-            RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            string runsOn;
             if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
             {
-                runsOn = JsonSerializer.Serialize(runnerPipelineOS.RunsOn);
+                return JsonSerializer.Serialize(runnerPipelineOS.RunsOn);
             }
             else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
             {
@@ -128,7 +121,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     labels = runnerPipelineOS.RunsOnLabels,
                     group = runnerPipelineOS.Group,
                 };
-                runsOn = JsonSerializer.Serialize(runsOnObj);
+                return JsonSerializer.Serialize(runsOnObj);
             }
             else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
             {
@@ -136,7 +129,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     labels = runnerPipelineOS.RunsOnLabels
                 };
-                runsOn = JsonSerializer.Serialize(runsOnObj);
+                return JsonSerializer.Serialize(runsOnObj);
             }
             else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
             {
@@ -144,12 +137,23 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     group = runnerPipelineOS.Group
                 };
-                runsOn = JsonSerializer.Serialize(runsOnObj);
+                return JsonSerializer.Serialize(runsOnObj);
             }
             else
             {
-                runsOn = JsonSerializer.Serialize("");
+                return JsonSerializer.Serialize("");
             }
+        }
+
+        foreach (var entryId in pipelinePreSetup.TestEntries)
+        {
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
+            {
+                continue;
+            }
+            
+            RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
+            string runsOn = getRunsOn(runnerPipelineOS);
 
             await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
@@ -162,7 +166,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            string runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn! : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
+            string runsOn = getRunsOn(runnerPipelineOS);
 
             await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
@@ -175,7 +179,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            string runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn! : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
+            string runsOn = getRunsOn(runnerPipelineOS);
 
             await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "publish", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
