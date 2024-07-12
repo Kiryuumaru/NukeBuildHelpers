@@ -104,7 +104,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             string runsOn;
             if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
             {
-                runsOn = "\\\"" + runnerPipelineOS.RunsOn + "\\\"";
+                var runsOnObj = new
+                {
+                    labels = runnerPipelineOS.RunsOn,
+                };
+                runsOn = JsonSerializer.Serialize(runsOnObj);
             }
             else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
             {
