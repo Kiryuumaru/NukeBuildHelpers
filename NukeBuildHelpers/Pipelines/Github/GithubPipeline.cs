@@ -95,7 +95,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
-        async Task setupEntryEnv(string entryId, string cacheFamily)
+        void setupEntryEnv(string entryId, string cacheFamily)
         {
             if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
             {
@@ -167,7 +167,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         entries.AddRange(pipelinePreSetup.PublishEntries.Select(i => (i, "publish")));
         foreach (var (entryId, cacheFamily) in entries)
         {
-            await setupEntryEnv(entryId, cacheFamily);
+            setupEntryEnv(entryId, cacheFamily);
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
