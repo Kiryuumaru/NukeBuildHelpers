@@ -125,7 +125,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 var runsOnObj = new
                 {
-                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]",
+                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels) + " ]",
                     group = runnerPipelineOS.Group,
                 };
                 runsOn = JsonSerializer.Serialize(runsOnObj);
@@ -134,7 +134,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 var runsOnObj = new
                 {
-                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]"
+                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels) + " ]"
                 };
                 runsOn = JsonSerializer.Serialize(runsOnObj);
             }
@@ -142,7 +142,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 var runsOnObj = new
                 {
-                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]"
+                    group = runnerPipelineOS.Group
                 };
                 runsOn = JsonSerializer.Serialize(runsOnObj);
             }
@@ -397,6 +397,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static async Task ExportEnvVarRuntime(string entryId, string name, string? value)
     {
+        Log.Information($"NUKE_PRE_SETUP_{entryId}_{name}={value}");
         await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_{name}={value}\" >> $GITHUB_OUTPUT");
     }
 
