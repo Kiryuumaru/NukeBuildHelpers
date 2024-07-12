@@ -171,9 +171,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
         AbsolutePath.Create(Environment.GetEnvironmentVariable("GITHUB_OUTPUT")).AppendAllText($"\nNUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption)}");
-
-        Log.Information("OUT: {preSetup}", AbsolutePath.Create(Environment.GetEnvironmentVariable("GITHUB_OUTPUT")).ReadAllText());
-        //await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT");
     }
 
     public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
