@@ -14,6 +14,7 @@ using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
 using System;
 using System.Text.Json;
+using System.Web;
 using System.Xml.Linq;
 
 namespace NukeBuildHelpers.Pipelines.Github;
@@ -139,8 +140,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 runsOn = JsonSerializer.Serialize("");
             }
-
-            runsOn = runsOn.Replace("\"", "\\\"");
+            
+            runsOn = HttpUtility.JavaScriptStringEncode(runsOn);
 
             var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
             var entryIdNorm = entryId.Replace("-", ".");
