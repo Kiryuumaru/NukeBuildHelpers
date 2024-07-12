@@ -11,6 +11,7 @@ using NukeBuildHelpers.Pipelines.Azure.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
+using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
 using System.Linq;
@@ -92,7 +93,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
-        async Task ExportEnvVarEntryRuntime(string entryId, bool condition, string? poolName, string? poolVmImage, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
+        async Task exportEnvVarEntryRuntime(string entryId, bool condition, string? poolName, string? poolVmImage, string runsScript, string cacheFamily, string osName, string cacheInvalidator, string environment)
         {
             cacheFamily = cacheFamily.Replace("-", ".");
             osName = osName.Replace("-", ".");
@@ -111,44 +112,25 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await ExportPreSetupEnvVarRuntime(entryId, "CACHE_MAIN_RESTORE_KEY", $"\"{cacheFamily}\" | \"{osName}\" | \"{entryId}\" | \"{cacheInvalidator}\" | \"{environment}\" | \"main\"");
         }
 
-        foreach (var entryId in pipelinePreSetup.TestEntries)
+        async Task setupEntryEnv(string entryId, string cacheFamily)
         {
-            if (!allEntry.TestEntryDefinitionMap.TryGetValue(entryId, out var appEntryDefinition))
-            {
-                continue;
-            }
             if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
             {
-                continue;
+                return;
             }
 
             RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+
+            await exportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }
 
-        foreach (var entryId in pipelinePreSetup.BuildEntries)
+        var entries = new List<(string entryId, string cacheFamily)>();
+        entries.AddRange(pipelinePreSetup.TestEntries.Select(i => (i, "test")));
+        entries.AddRange(pipelinePreSetup.BuildEntries.Select(i => (i, "build")));
+        entries.AddRange(pipelinePreSetup.PublishEntries.Select(i => (i, "publish")));
+        foreach (var (entryId, cacheFamily) in entries)
         {
-            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
-            {
-                continue;
-            }
-
-            RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "build", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
-        }
-
-        foreach (var entryId in pipelinePreSetup.PublishEntries)
-        {
-            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
-            {
-                continue;
-            }
-
-            RunnerAzurePipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerAzurePipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            
-            await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runnerPipelineOS.PoolName, runnerPipelineOS.PoolVMImage, entrySetup.RunnerOSSetup.RunScript, "publish", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
+            await setupEntryEnv(entryId, cacheFamily);
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
