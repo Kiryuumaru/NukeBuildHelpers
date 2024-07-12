@@ -106,7 +106,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 var runsOnObj = new
                 {
-                    labels = new string[] { runnerPipelineOS.RunsOn },
+                    labels = runnerPipelineOS.RunsOn,
                 };
                 runsOn = JsonSerializer.Serialize(runsOnObj);
             }
@@ -139,6 +139,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 runsOn = JsonSerializer.Serialize("");
             }
+
+            runsOn = runsOn.Replace("\"", "\\\"");
 
             var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
             var entryIdNorm = entryId.Replace("-", ".");
