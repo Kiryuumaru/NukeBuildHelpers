@@ -109,7 +109,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     labels = runnerPipelineOS.RunsOn,
                 };
-                runsOn = JsonSerializer.Serialize(runsOnObj, JsonExtension.SnakeCaseNamingOptionIndented);
+                runsOn = JsonSerializer.Serialize(runsOnObj);
             }
             else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
             {
@@ -118,7 +118,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     labels = runnerPipelineOS.RunsOnLabels,
                     group = runnerPipelineOS.Group,
                 };
-                runsOn = JsonSerializer.Serialize(runsOnObj, JsonExtension.SnakeCaseNamingOptionIndented);
+                runsOn = JsonSerializer.Serialize(runsOnObj);
             }
             else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
             {
@@ -126,7 +126,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     labels = runnerPipelineOS.RunsOnLabels
                 };
-                runsOn = JsonSerializer.Serialize(runsOnObj, JsonExtension.SnakeCaseNamingOptionIndented);
+                runsOn = JsonSerializer.Serialize(runsOnObj);
             }
             else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
             {
@@ -134,14 +134,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     group = runnerPipelineOS.Group
                 };
-                runsOn = JsonSerializer.Serialize(runsOnObj, JsonExtension.SnakeCaseNamingOptionIndented);
+                runsOn = JsonSerializer.Serialize(runsOnObj);
             }
             else
             {
-                runsOn = JsonSerializer.Serialize("", JsonExtension.SnakeCaseNamingOptionIndented);
+                runsOn = JsonSerializer.Serialize("");
             }
             
-            //runsOn = HttpUtility.JavaScriptStringEncode(HttpUtility.JavaScriptStringEncode(HttpUtility.JavaScriptStringEncode(runsOn)));
+            runsOn = HttpUtility.JavaScriptStringEncode(HttpUtility.JavaScriptStringEncode(HttpUtility.JavaScriptStringEncode(HttpUtility.JavaScriptStringEncode(runsOn))));
 
             var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
             var entryIdNorm = entryId.Replace("-", ".");
