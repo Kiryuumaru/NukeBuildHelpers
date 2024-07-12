@@ -116,7 +116,40 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
             
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            string runsOn = runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0 ? runnerPipelineOS.RunsOn! : "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]";
+            string runsOn;
+            if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
+            {
+                runsOn = JsonSerializer.Serialize(runnerPipelineOS.RunsOn);
+            }
+            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
+            {
+                var runsOnObj = new
+                {
+                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]",
+                    group = runnerPipelineOS.Group,
+                };
+                runsOn = JsonSerializer.Serialize(runsOnObj);
+            }
+            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
+            {
+                var runsOnObj = new
+                {
+                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]"
+                };
+                runsOn = JsonSerializer.Serialize(runsOnObj);
+            }
+            else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
+            {
+                var runsOnObj = new
+                {
+                    labels = "[ " + string.Join(", ", runnerPipelineOS.RunsOnLabels!) + " ]"
+                };
+                runsOn = JsonSerializer.Serialize(runsOnObj);
+            }
+            else
+            {
+                runsOn = JsonSerializer.Serialize("");
+            }
 
             await ExportEnvVarEntryRuntime(entryId, entrySetup.Condition, runsOn, entrySetup.RunnerOSSetup.RunScript, "test", entrySetup.RunnerOSSetup.Name, entrySetup.CacheInvalidator, pipelinePreSetup.Environment);
         }

@@ -14,4 +14,9 @@ public class RunnerGithubPipelineOS
     /// Gets or sets the labels of the runners that the job will run on.
     /// </summary>
     public virtual string[]? RunsOnLabels { get; init; }
+
+    /// <summary>
+    /// Gets or sets the runner group that the job will run on.
+    /// </summary>
+    public virtual string? Group { get; init; }
 }
