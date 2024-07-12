@@ -143,8 +143,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 runsOn = JsonSerializer.Serialize("");
             }
-            
-            runsOn = HttpUtility.JavaScriptStringEncode(runsOn);
 
             var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
             var entryIdNorm = entryId.Replace("-", ".");
