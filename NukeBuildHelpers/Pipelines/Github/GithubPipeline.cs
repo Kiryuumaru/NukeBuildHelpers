@@ -1,5 +1,4 @@
-﻿using CliWrap;
-using Nuke.Common;
+﻿using Nuke.Common;
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
@@ -18,6 +17,8 @@ using System.Collections;
 using System.Text.Json;
 using System.Web;
 using System.Xml.Linq;
+using static Azure.Core.HttpHeader;
+using YamlDotNet.Core.Tokens;
 
 namespace NukeBuildHelpers.Pipelines.Github;
 
@@ -95,7 +96,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
-        void setupEntryEnv(string entryId, string cacheFamily)
+        async Task setupEntryEnv(string entryId, string cacheFamily)
         {
             if (!pipelinePreSetup.EntrySetupMap.TryGetValue(entryId, out var entrySetup))
             {
@@ -153,12 +154,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var runClassificationNorm = runClassification.Replace("-", ".");
             var runIdentifierNorm = runIdentifier.Replace("-", ".");
 
-            ExportEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
-            ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", runsOn);
-            ExportEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
-            ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
-            ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
-            ExportEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-main-");
+            await ExportEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
+            await ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", runsOn);
+            await ExportEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
+            await ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
+            await ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
+            await ExportEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-main-");
         }
 
         var entries = new List<(string entryId, string cacheFamily)>();
@@ -167,11 +168,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         entries.AddRange(pipelinePreSetup.PublishEntries.Select(i => (i, "publish")));
         foreach (var (entryId, cacheFamily) in entries)
         {
-            setupEntryEnv(entryId, cacheFamily);
+            await setupEntryEnv(entryId, cacheFamily);
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
-        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT");
+        AbsolutePath.Create(Environment.GetEnvironmentVariable("GITHUB_OUTPUT")).AppendAllText($"\nNUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption)}");
+        //await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).Replace("\"", "\\\\\"")}\" >> $GITHUB_OUTPUT");
     }
 
     public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
@@ -385,10 +387,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         Log.Information("Workflow built at " + workflowPath.ToString());
     }
 
-    private static void ExportEnvVarRuntime(string entryId, string name, string? value)
+    private static Task ExportEnvVarRuntime(string entryId, string name, string? value)
     {
-        Log.Information($"NUKE_PRE_SETUP_{entryId}_{name}={value}");
-        AbsolutePath.Create(Environment.GetEnvironmentVariable("GITHUB_OUTPUT")).AppendAllText($"\nNUKE_PRE_SETUP_{entryId}_{name}={value}");
+        return Task.Run(() =>
+        {
+            AbsolutePath.Create(Environment.GetEnvironmentVariable("GITHUB_OUTPUT")).AppendAllText($"\nNUKE_PRE_SETUP_{entryId}_{name}={value}");
+        });
     }
 
     private static void ImportEnvVarWorkflow(Dictionary<string, object> job, string entryId, string name)
