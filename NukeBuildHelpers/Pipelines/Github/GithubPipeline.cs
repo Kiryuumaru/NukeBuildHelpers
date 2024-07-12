@@ -14,6 +14,7 @@ using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
 using System;
+using System.Collections;
 using System.Text.Json;
 using System.Web;
 using System.Xml.Linq;
@@ -167,6 +168,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var (entryId, cacheFamily) in entries)
         {
             await setupEntryEnv(entryId, cacheFamily);
+        }
+
+        foreach (DictionaryEntry e in System.Environment.GetEnvironmentVariables())
+        {
+            Console.WriteLine(e.Key + ":" + e.Value);
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
@@ -388,8 +394,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         Log.Information($"NUKE_PRE_SETUP_{entryId}_{name}={value}");
         Console.WriteLine();
-        await Cli.Wrap($"echo \"NUKE_PRE_SETUP_{entryId}_{name}={value}\" >> $GITHUB_OUTPUT").ExecuteAsync();
-        //await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_{name}={value}\" >> $GITHUB_OUTPUT");
+        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_{name}={value}\" >> $GITHUB_OUTPUT");
     }
 
     private static void ImportEnvVarWorkflow(Dictionary<string, object> job, string entryId, string name)
