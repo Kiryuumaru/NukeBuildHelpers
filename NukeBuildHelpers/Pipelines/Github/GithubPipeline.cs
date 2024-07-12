@@ -153,12 +153,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var runClassificationNorm = runClassification.Replace("-", ".");
             var runIdentifierNorm = runIdentifier.Replace("-", ".");
 
-            await ExportEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
-            await ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", runsOn);
-            await ExportEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
-            await ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
-            await ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
-            await ExportEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-main-");
+            ExportEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
+            ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", runsOn);
+            ExportEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
+            ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
+            ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
+            ExportEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-main-");
         }
 
         var entries = new List<(string entryId, string cacheFamily)>();
@@ -168,11 +168,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var (entryId, cacheFamily) in entries)
         {
             await setupEntryEnv(entryId, cacheFamily);
-        }
-
-        foreach (DictionaryEntry e in System.Environment.GetEnvironmentVariables())
-        {
-            Console.WriteLine(e.Key + ":" + e.Value);
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
@@ -390,11 +385,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         Log.Information("Workflow built at " + workflowPath.ToString());
     }
 
-    private static async Task ExportEnvVarRuntime(string entryId, string name, string? value)
+    private static void ExportEnvVarRuntime(string entryId, string name, string? value)
     {
         Log.Information($"NUKE_PRE_SETUP_{entryId}_{name}={value}");
-        Console.WriteLine();
-        await CliHelpers.RunOnce($"echo \"NUKE_PRE_SETUP_{entryId}_{name}={value}\" >> $GITHUB_OUTPUT");
+        AbsolutePath.Create(Environment.GetEnvironmentVariable("GITHUB_OUTPUT")).AppendAllText($"\nNUKE_PRE_SETUP_{entryId}_{name}={value}");
     }
 
     private static void ImportEnvVarWorkflow(Dictionary<string, object> job, string entryId, string name)
