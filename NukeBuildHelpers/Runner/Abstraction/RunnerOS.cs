@@ -19,6 +19,11 @@ public abstract class RunnerOS
     public static RunnerOS Ubuntu2204 { get; } = new RunnerOSUbuntu2204();
 
     /// <summary>
+    /// Gets the Ubuntu 20.04 runner OS.
+    /// </summary>
+    public static RunnerOS Ubuntu2004 { get; } = new RunnerOSUbuntu2004();
+
+    /// <summary>
     /// Gets the latest Windows runner OS.
     /// </summary>
     public static RunnerOS WindowsLatest { get; } = new RunnerOSWindowsLatest();
@@ -27,6 +32,11 @@ public abstract class RunnerOS
     /// Gets the Windows 2022 runner OS.
     /// </summary>
     public static RunnerOS Windows2022 { get; } = new RunnerOSWindows2022();
+
+    /// <summary>
+    /// Gets the Windows 2019 runner OS.
+    /// </summary>
+    public static RunnerOS Windows2019 { get; } = new RunnerOSWindows2019();
 
     /// <summary>
     /// Gets the name of the runner.
