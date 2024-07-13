@@ -17,7 +17,7 @@ public static class DependentEntryExtensions
     public static TDependentEntryDefinition AppId<TDependentEntryDefinition>(this TDependentEntryDefinition definition, params string[] appIds)
         where TDependentEntryDefinition : ITestEntryDefinition
     {
-        definition.AppIds = appIds;
+        definition.AppIds.AddRange(appIds);
         return definition;
     }
 }

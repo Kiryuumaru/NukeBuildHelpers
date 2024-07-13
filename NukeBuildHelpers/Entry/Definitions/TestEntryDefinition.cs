@@ -7,7 +7,7 @@ internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinit
 {
     protected override string GetDefaultName()
     {
-        if (((ITestEntryDefinition)this).AppIds.Length > 1 || ((ITestEntryDefinition)this).AppIds.Length == 0)
+        if (((ITestEntryDefinition)this).AppIds.Count > 1 || ((ITestEntryDefinition)this).AppIds.Count == 0)
         {
             return "Test - " + ((ITestEntryDefinition)this).Id + " (" + Id + ")";
         }

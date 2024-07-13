@@ -5,5 +5,5 @@
 /// </summary>
 public interface IDependentEntryDefinition : IEntryDefinition
 {
-    internal string[] AppIds { get; set; }
+    internal List<string> AppIds { get; set; }
 }
