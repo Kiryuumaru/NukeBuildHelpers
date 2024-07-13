@@ -12,6 +12,20 @@ namespace NukeBuildHelpers.Entry.Extensions;
 public static class WorkflowEntryExtensions
 {
     /// <summary>
+    /// Sets the workflow id for this entry definition.
+    /// </summary>
+    /// <typeparam name="TEntryDefinition">The type of entry definition.</typeparam>
+    /// <param name="definition">The entry definition instance.</param>
+    /// <param name="workflowId">The workflow id to set.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TEntryDefinition WorkflowId<TEntryDefinition>(this TEntryDefinition definition, string workflowId)
+        where TEntryDefinition : IEntryDefinition
+    {
+        definition.Id = workflowId;
+        return definition;
+    }
+
+    /// <summary>
     /// Configures the workflow builder function for this entry definition.
     /// </summary>
     /// <typeparam name="TEntryDefinition">The type of entry definition.</typeparam>

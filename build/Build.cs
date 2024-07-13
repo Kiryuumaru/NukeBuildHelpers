@@ -111,6 +111,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NukeBuildHelpersTest2 => _ => _
         .AppId("nuke_build_helpers")
+        .WorkflowId("NukeBuildHelpersTest2CustomId")
         .DisplayName("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
@@ -165,6 +166,7 @@ class Build : BaseNukeBuildHelpers
         {
             definition1.Matrix(new[] { ("Mat3", 1), ("Mat4", 1) }, (definition2, matrix2) =>
             {
+                definition2.WorkflowId($"NukeBuildHelpersBuild2{matrix1.Item1}{matrix2.Item1}");
                 definition2.DisplayName("Build try " + matrix1.Item1 + " sub " + matrix2.Item1);
                 definition2.Execute(() =>
                 {

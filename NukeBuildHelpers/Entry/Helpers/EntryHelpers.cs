@@ -8,6 +8,7 @@ using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using Semver;
 using System.Reflection;
+using static NuGet.Client.ManagedCodeConventions;
 
 namespace NukeBuildHelpers.Entry.Helpers;
 
@@ -17,34 +18,37 @@ internal static class EntryHelpers
     {
         Dictionary<string, AppEntry> appEntryMap = [];
 
-        List<IEntryDefinition> definedEntryDefinitions = [];
+        List<(IEntryDefinition Definition, string PropertyName)> definedEntryDefinitions = [];
 
         foreach (var property in nukeBuildHelpers.GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
         {
             if (property.PropertyType == typeof(TestEntry))
             {
                 var testEntry = (TestEntry)property.GetValue(nukeBuildHelpers)!;
-                definedEntryDefinitions.Add(testEntry.Invoke(new TestEntryDefinition() { Id = property.Name }));
+                definedEntryDefinitions.Add((testEntry.Invoke(new TestEntryDefinition() { Id = "_" }), property.Name));
             }
             else if (property.PropertyType == typeof(BuildEntry))
             {
                 var buildEntry = (BuildEntry)property.GetValue(nukeBuildHelpers)!;
-                definedEntryDefinitions.Add(buildEntry.Invoke(new BuildEntryDefinition() { Id = property.Name }));
+                definedEntryDefinitions.Add((buildEntry.Invoke(new BuildEntryDefinition() { Id = "_" }), property.Name));
             }
             else if (property.PropertyType == typeof(PublishEntry))
             {
                 var publishEntry = (PublishEntry)property.GetValue(nukeBuildHelpers)!;
-                definedEntryDefinitions.Add(publishEntry.Invoke(new PublishEntryDefinition() { Id = property.Name }));
+                definedEntryDefinitions.Add((publishEntry.Invoke(new PublishEntryDefinition() { Id = "_" }), property.Name));
             }
         }
 
         List<IEntryDefinition> entryDefinitions = [];
 
-        async Task append(IEntryDefinition definition, string id)
+        async Task append(IEntryDefinition definition, string defaultId)
         {
             if (definition.Matrix.Count == 0)
             {
-                definition.Id = id;
+                if (definition.Id.Equals("_"))
+                {
+                    definition.Id = defaultId;
+                }
                 entryDefinitions.Add(definition);
             }
             else
@@ -55,15 +59,15 @@ internal static class EntryHelpers
                     foreach (var createdDefinition in await mat(definition.Clone()))
                     {
                         index++;
-                        await append(createdDefinition, id + "_" + index.ToString());
+                        await append(createdDefinition, defaultId + "_" + index.ToString());
                     }
                 }
             }
         }
 
-        foreach (var definition in definedEntryDefinitions)
+        foreach (var defined in definedEntryDefinitions)
         {
-            await append(definition, definition.Id);
+            await append(defined.Definition, defined.PropertyName);
         }
 
         List<IDependentEntryDefinition> dependentEntryDefinitions = [];
