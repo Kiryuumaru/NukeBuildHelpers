@@ -288,7 +288,7 @@ IBuildEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInva
 
 ## CheckoutFetchDepth
 
-Sets the number of commits to fetch. 0 indicates all history for all branches and tags. Default value is 1.
+Sets the number of commits to fetch. 0 indicates all history for all branches and tags. Default value is `1`.
 
 ### Definitions
 
@@ -345,7 +345,7 @@ IBuildEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFe
 
 ## CheckoutFetchTags
 
-Sets <c>true</c> whether to fetch tags, even if fetch-depth > 0, otherwise <c>false</c>. Default is <c>false</c>.
+Sets `true` whether to fetch tags, even if fetch-depth > 0, otherwise `false`. Default is `false`.
 
 ### Definitions
 
