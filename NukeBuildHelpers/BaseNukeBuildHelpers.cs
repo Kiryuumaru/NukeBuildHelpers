@@ -12,19 +12,16 @@ namespace NukeBuildHelpers;
 /// </summary>
 public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
-    internal static AbsolutePath CommonCacheDirectory => RootDirectory / ".nuke" / "cache";
+    internal static AbsolutePath CommonCacheDirectory { get; } = RootDirectory / ".nuke" / "cache";
 
-    internal static AbsolutePath CommonOutputDirectory => RootDirectory / ".nuke" / "output";
+    internal static AbsolutePath CommonCacheOutputDirectory { get; } = CommonCacheDirectory / "output";
+
+    internal static AbsolutePath CommonOutputDirectory { get; } = RootDirectory / ".nuke" / "output";
 
     /// <summary>
     /// Gets the output directory path.
     /// </summary>
     public static AbsolutePath OutputDirectory => CommonOutputDirectory / "runtime";
-
-    /// <summary>
-    /// Gets the common cache directory path.
-    /// </summary>
-    public static AbsolutePath CommonCacheOutputDirectory => CommonCacheDirectory / "output";
 
     /// <summary>
     /// Gets the list of environment branches.

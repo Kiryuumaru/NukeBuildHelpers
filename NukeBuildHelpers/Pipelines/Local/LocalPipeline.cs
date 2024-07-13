@@ -4,7 +4,7 @@ using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
 
-namespace NukeBuildHelpers.Pipelines.Github;
+namespace NukeBuildHelpers.Pipelines.Local;
 
 internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
@@ -22,39 +22,39 @@ internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    public PipelinePreSetup GetPipelinePreSetup()
+    public PipelinePreSetup? GetPipelinePreSetup()
     {
-        throw new NotImplementedException();
+        return null;
     }
 
     public Task PreparePreSetup(AllEntry allEntry)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
-    public Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
-    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
-    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
-    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
-    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 
     public Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)

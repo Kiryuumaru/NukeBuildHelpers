@@ -7,6 +7,7 @@ using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Github;
+using NukeBuildHelpers.Pipelines.Local;
 
 namespace NukeBuildHelpers.Pipelines.Common;
 

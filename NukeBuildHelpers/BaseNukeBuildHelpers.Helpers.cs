@@ -283,7 +283,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private void EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup pipelinePreSetup)
+    private void EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup? pipelinePreSetup)
     {
         EntryHelpers.SetupSecretVariables(this);
 
@@ -334,7 +334,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup pipelinePreSetup, Func<IEntryDefinition, Task>? preExecute, Func<IEntryDefinition, Task>? postExecute)
+    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup? pipelinePreSetup, Func<IEntryDefinition, Task>? preExecute, Func<IEntryDefinition, Task>? postExecute)
     {
         List<Func<Task>> tasks = [];
 
@@ -370,10 +370,8 @@ partial class BaseNukeBuildHelpers
         await pipeline.Pipeline.FinalizeEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
     }
 
-    private Task TestAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
+    private Task TestAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
     {
-        var pipeline = PipelineHelpers.SetupPipeline(this);
-
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         IEnumerable<IEntryDefinition> entriesToRun;
@@ -390,10 +388,8 @@ partial class BaseNukeBuildHelpers
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, null, null);
     }
 
-    private Task BuildAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
+    private Task BuildAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
     {
-        var pipeline = PipelineHelpers.SetupPipeline(this);
-
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         IEnumerable<IEntryDefinition> entriesToRun;
@@ -421,7 +417,12 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (asset.DirectoryExists())
                 {
-                    asset.ZipTo(CommonOutputDirectory / "asset" / (asset.Name + ".zip"));
+                    var destinationPath = CommonOutputDirectory / "asset" / (asset.Name + ".zip");
+                    if (destinationPath.FileExists())
+                    {
+                        destinationPath.DeleteFile();
+                    }
+                    asset.ZipTo(destinationPath);
                 }
                 Log.Information("Added {file} to release assets", asset);
             }
@@ -436,10 +437,8 @@ partial class BaseNukeBuildHelpers
         });
     }
 
-    private Task PublishAppEntries(AllEntry allEntry, IEnumerable<string> idsToRun)
+    private Task PublishAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
     {
-        var pipeline = PipelineHelpers.SetupPipeline(this);
-
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         IEnumerable<IEntryDefinition> entriesToRun;

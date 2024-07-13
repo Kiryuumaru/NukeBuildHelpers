@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /.nuke/temp
 /nuke_output
+/.nuke/cache
+/.nuke/output

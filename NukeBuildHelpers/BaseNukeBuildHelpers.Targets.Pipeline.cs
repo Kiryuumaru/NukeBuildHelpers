@@ -18,9 +18,9 @@ namespace NukeBuildHelpers;
 partial class BaseNukeBuildHelpers
 {
     /// <summary>
-    /// Target for running tests in the pipeline.
+    /// Target for running entries in the pipeline.
     /// </summary>
-    public Target PipelineTest => _ => _
+    public Target PipelineRunEntry => _ => _
         .Unlisted()
         .Description("To be used by pipeline")
         .Executes(async () =>
@@ -32,43 +32,40 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            await TestAppEntries(allEntry, splitArgs.Select(i => i.Key));
-        });
+            List<string> ids = [];
+            if (splitArgs.TryGetValue("idsToRun", out var idsToRun))
+            {
+                ids = [.. idsToRun.NotNullOrWhiteSpace().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
+            }
+            else
+            {
+                throw new ArgumentNullException(idsToRun);
+            }
 
-    /// <summary>
-    /// Target for building in the pipeline.
-    /// </summary>
-    public Target PipelineBuild => _ => _
-        .Unlisted()
-        .Description("To be used by pipeline")
-        .Executes(async () =>
-        {
-            CheckEnvironementBranches();
+            var pipeline = PipelineHelpers.SetupPipeline(this);
 
-            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+            if (splitArgs.TryGetValue("run", out var run))
+            {
+                switch (run.NotNullOrEmpty().ToLowerInvariant())
+                {
+                    case "test":
+                        await TestAppEntries(allEntry, pipeline, ids);
+                        break;
+                    case "build":
+                        await BuildAppEntries(allEntry, pipeline, ids);
+                        break;
+                    case "publish":
+                        await PublishAppEntries(allEntry, pipeline, ids);
+                        break;
+                    default:
+                        throw new NotImplementedException(splitArgs["run"]);
+                }
+            }
+            else
+            {
+                throw new ArgumentNullException(run);
+            }
 
-            CheckAppEntry(allEntry);
-
-            await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key));
-        });
-
-    /// <summary>
-    /// Target for publishing in the pipeline.
-    /// </summary>
-    public Target PipelinePublish => _ => _
-        .Unlisted()
-        .Description("To be used by pipeline")
-        .Executes(async () =>
-        {
-            CheckEnvironementBranches();
-
-            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
-
-            CheckAppEntry(allEntry);
-
-            await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key));
         });
 
     /// <summary>
@@ -481,51 +478,20 @@ partial class BaseNukeBuildHelpers
                     success = false;
                 }
             }
-
-            if (success)
+            
+            if (pipelinePreSetup != null)
             {
-                if (pipelinePreSetup.HasRelease)
+                if (success)
                 {
-                    var assetOutput = TemporaryDirectory / "assets";
-
-                    if (!assetOutput.DirectoryExists())
+                    if (pipelinePreSetup.HasRelease)
                     {
-                        assetOutput.CreateDirectory();
-                    }
+                        var assetOutput = TemporaryDirectory / "assets";
 
-                    foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
-                    {
-                        if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+                        if (!assetOutput.DirectoryExists())
                         {
-                            continue;
+                            assetOutput.CreateDirectory();
                         }
-                        var appIdLower = appEntry.AppId.ToLowerInvariant();
-                        var releasePath = OutputDirectory / appIdLower;
-                        if (!releasePath.DirectoryExists())
-                        {
-                            throw new Exception("No release found for " + appIdLower);
-                        }
-                        var commonAssetPath = releasePath / "common_asset";
-                        if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
-                        {
-                            var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
-                            commonAssetPath.CopyFilesRecursively(commonOutPath);
-                            commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
-                            Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
-                        }
-                        var individualAssetPath = releasePath / "asset";
-                        if (individualAssetPath.DirectoryExists() && individualAssetPath.GetFiles().Any())
-                        {
-                            foreach (var releaseAsset in individualAssetPath.GetFiles())
-                            {
-                                releaseAsset.CopyFilesRecursively(assetOutput / releaseAsset.Name);
-                                Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
-                            }
-                        }
-                    }
 
-                    await Task.Run(() =>
-                    {
                         foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                         {
                             if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
@@ -533,53 +499,87 @@ partial class BaseNukeBuildHelpers
                                 continue;
                             }
                             var appIdLower = appEntry.AppId.ToLowerInvariant();
-                            var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
-                            string latestTag = "latest";
-                            if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                            var releasePath = OutputDirectory / appIdLower;
+                            if (!releasePath.DirectoryExists())
                             {
-                                latestTag += "-" + appRunEntry.Environment;
+                                throw new Exception("No release found for " + appIdLower);
+                            }
+                            var commonAssetPath = releasePath / "common_asset";
+                            if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
+                            {
+                                var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
+                                commonAssetPath.CopyFilesRecursively(commonOutPath);
+                                commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
+                                Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
+                            }
+                            var individualAssetPath = releasePath / "asset";
+                            if (individualAssetPath.DirectoryExists() && individualAssetPath.GetFiles().Any())
+                            {
+                                foreach (var releaseAsset in individualAssetPath.GetFiles())
+                                {
+                                    releaseAsset.CopyFilesRecursively(assetOutput / releaseAsset.Name);
+                                    Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
+                                }
+                            }
+                        }
+
+                        await Task.Run(() =>
+                        {
+                            foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                            {
+                                if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+                                {
+                                    continue;
+                                }
+                                var appIdLower = appEntry.AppId.ToLowerInvariant();
+                                var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                                string latestTag = "latest";
+                                if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    latestTag += "-" + appRunEntry.Environment;
+                                }
+
+                                Git.Invoke("tag -f " + appIdLower + "/" + version + "-passed");
+                                Git.Invoke("tag -f " + appIdLower + "/" + version);
+                                Git.Invoke("tag -f " + appIdLower + "/" + latestTag);
                             }
 
-                            Git.Invoke("tag -f " + appIdLower + "/" + version + "-passed");
-                            Git.Invoke("tag -f " + appIdLower + "/" + version);
-                            Git.Invoke("tag -f " + appIdLower + "/" + latestTag);
-                        }
+                            Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                        Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
+                            var assetReleaseFiles = assetOutput.GetFiles("*.*");
+                            if (assetReleaseFiles.Any())
+                            {
+                                Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
+                            }
 
-                        var assetReleaseFiles = assetOutput.GetFiles("*.*");
-                        if (assetReleaseFiles.Any())
-                        {
-                            Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
-                        }
-
-                        Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
-                    });
+                            Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
+                        });
+                    }
                 }
-            }
-            else
-            {
-                if (pipelinePreSetup.HasRelease)
+                else
                 {
-                    await Task.Run(() =>
+                    if (pipelinePreSetup.HasRelease)
                     {
-                        foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                        await Task.Run(() =>
                         {
-                            var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
-                            string latestTag = "latest";
-                            if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                            foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                             {
-                                latestTag += "-" + appRunEntry.Environment;
+                                var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                                string latestTag = "latest";
+                                if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    latestTag += "-" + appRunEntry.Environment;
+                                }
+
+                                Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version + "-failed");
+                                Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version);
                             }
 
-                            Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version + "-failed");
-                            Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version);
-                        }
+                            Gh.Invoke("release delete -y build." + pipelinePreSetup.BuildId);
 
-                        Gh.Invoke("release delete -y build." + pipelinePreSetup.BuildId);
-
-                        Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
-                    });
+                            Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
+                        });
+                    }
                 }
             }
 
