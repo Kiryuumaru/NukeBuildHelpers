@@ -286,7 +286,7 @@ ITestEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInval
 
 ## CheckoutFetchDepth
 
-Sets the number of commits to fetch. 0 indicates all history for all branches and tags. Default value is `1`.
+Sets the number of commits to fetch. `0` indicates all history for all branches and tags. Default value is `1`.
 
 ### Definitions
 
@@ -343,7 +343,7 @@ ITestEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFet
 
 ## CheckoutFetchTags
 
-Sets `true` whether to fetch tags, even if fetch-depth > 0, otherwise `false`. Default is `false`.
+Sets `true` whether to fetch tags, even if fetch-depth > `0`, otherwise `false`. Default is `false`.
 
 ### Definitions
 
