@@ -12,6 +12,8 @@ namespace NukeBuildHelpers.Entry.Interfaces;
 /// </summary>
 public interface IEntryDefinition
 {
+    internal IEntryDefinition Clone();
+
     internal string Id { get; set; }
 
     internal Func<IWorkflowBuilder, Task<string>> DisplayName { get; set; }
@@ -20,9 +22,9 @@ public interface IEntryDefinition
 
     internal Func<IRunContext, Task<RunnerOS>>? RunnerOS { get; set; }
 
-    internal Func<IRunContext, Task<string>> CacheInvalidator { get; set; }
-
     internal List<Func<IRunContext, Task<AbsolutePath[]>>> CachePath { get; set; }
+
+    internal Func<IRunContext, Task<string>> CacheInvalidator { get; set; }
 
     internal Func<IRunContext, Task<int>> CheckoutFetchDepth { get; set; }
 
@@ -33,6 +35,8 @@ public interface IEntryDefinition
     internal List<Func<IRunContext, Task>> Execute { get; set; }
 
     internal List<Func<IWorkflowBuilder, Task>> WorkflowBuilder { get; set; }
+
+    internal List<Func<IEntryDefinition, Task<IEntryDefinition[]>>> Matrix { get; set; }
 
     internal IRunContext? RunContext { get; set; }
 
@@ -48,7 +52,17 @@ public interface IEntryDefinition
 
     internal async Task<RunnerOS> GetRunnerOS()
     {
-        return ValueHelpers.GetOrNullFail(await ValueHelpers.GetOrNullFail(RunnerOS).Invoke(ValueHelpers.GetOrNullFail(RunContext))); ;
+        return ValueHelpers.GetOrNullFail(await ValueHelpers.GetOrNullFail(RunnerOS).Invoke(ValueHelpers.GetOrNullFail(RunContext)));
+    }
+
+    internal async Task<AbsolutePath[]> GetCachePaths()
+    {
+        List<AbsolutePath> cachePaths = [];
+        foreach (var cachePath in CachePath)
+        {
+            cachePaths.AddRange(await cachePath(ValueHelpers.GetOrNullFail(RunContext)));
+        }
+        return [.. cachePaths];
     }
 
     internal async Task<string> GetCacheInvalidator()
@@ -69,16 +83,6 @@ public interface IEntryDefinition
     internal async Task<SubmoduleCheckoutType> GetCheckoutSubmodules()
     {
         return await CheckoutSubmodules(ValueHelpers.GetOrNullFail(RunContext));
-    }
-
-    internal async Task<AbsolutePath[]> GetCachePaths()
-    {
-        List<AbsolutePath> cachePaths = [];
-        foreach (var cachePath in CachePath)
-        {
-            cachePaths.AddRange(await cachePath(ValueHelpers.GetOrNullFail(RunContext)));
-        }
-        return [.. cachePaths];
     }
 
     internal async Task GetExecute()

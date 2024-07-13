@@ -16,4 +16,14 @@ internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinit
             return "Test - " + ((ITestEntryDefinition)this).AppIds.First() + " (" + Id + ")";
         }
     }
+
+    protected override IEntryDefinition Clone()
+    {
+        var definition = new TestEntryDefinition()
+        {
+            Id = Id
+        };
+        FillClone(definition);
+        return definition;
+    }
 }

@@ -14,7 +14,7 @@ partial class BaseNukeBuildHelpers
     public Target DeleteOriginTags => _ => _
         .Unlisted()
         .Description("Delete all origin tags, with --args \"{appid}\"")
-        .Executes(() =>
+        .Executes(async () =>
         {
             CheckEnvironementBranches();
 
@@ -31,7 +31,8 @@ partial class BaseNukeBuildHelpers
             else
             {
                 ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-                ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+                var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
                 IReadOnlyCollection<Output>? lsRemote = null;
 

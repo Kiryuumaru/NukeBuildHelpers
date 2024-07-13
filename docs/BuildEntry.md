@@ -19,6 +19,7 @@ All files created on `OutputDirectory` under all `BuildEntry` will propagate on 
 - [WorkflowBuilder](#workflowbuilder)
 - [ReleaseAsset](#releaseasset)
 - [CommonReleaseAsset](#commonreleaseasset)
+- [Matrix](#matrix)
 
 ---
 
@@ -686,5 +687,40 @@ IBuildEntryDefinition CommonReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>>
 
         BuildEntry SampleBuildEntry => _ => _
             .CommonReleaseAsset(OutputDirectory / "assets");
+    }
+    ```
+    
+---
+
+## Matrix
+
+Sets the matrix of the definition to configure on each matrix element.
+
+### Definitions
+
+```csharp
+ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TEntryDefinition, TMatrix> matrixDefinition);
+```
+
+### Usage
+
+* Specify `string` directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        TestEntry SampleTestEntry => _ => _
+            .Matrix(new[] { ("Mat1", 3), ("Mat2", 4) }, (definition, matrix) => 
+            {
+                definition.DisplayName("Matrix test " + matrix.Item1 + ", " + matrix.Item2.ToString());
+                definition.Execute(() =>
+                {
+                    Log.Information("I am hereeee: {s}", matrix.Item1 + ", " + matrix.Item2.ToString());
+                });
+            })
     }
     ```

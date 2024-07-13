@@ -9,4 +9,14 @@ internal class PublishEntryDefinition : TargetEntryDefinition, IPublishEntryDefi
     {
         return "Publish - " + ((IPublishEntryDefinition)this).AppId + " (" + Id + ")";
     }
+
+    protected override IEntryDefinition Clone()
+    {
+        var definition = new PublishEntryDefinition()
+        {
+            Id = Id
+        };
+        FillClone(definition);
+        return definition;
+    }
 }

@@ -10,9 +10,9 @@ namespace NukeBuildHelpers.Entry.Interfaces;
 /// </summary>
 public interface IBuildEntryDefinition : ITargetEntryDefinition
 {
-    internal List<Func<IRunContext, Task<AbsolutePath[]>>> ReleaseAsset { get; }
+    internal List<Func<IRunContext, Task<AbsolutePath[]>>> ReleaseAsset { get; set; }
 
-    internal List<Func<IRunContext, Task<AbsolutePath[]>>> CommonReleaseAsset { get; }
+    internal List<Func<IRunContext, Task<AbsolutePath[]>>> CommonReleaseAsset { get; set; }
 
     internal Task<AbsolutePath[]> GetReleaseAssets() => GetAssets(ReleaseAsset);
 

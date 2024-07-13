@@ -27,6 +27,19 @@ internal static class ValueHelpers
         }
     }
 
+    internal static async Task<T> GetOrFail<T>(Func<Task<T>> valFactory)
+    {
+        try
+        {
+            return await valFactory();
+        }
+        catch (Exception ex)
+        {
+            Assert.Fail(ex.Message, ex);
+            throw;
+        }
+    }
+
     internal static void GetOrFail(string appId, AllEntry allEntries, out AppEntry appEntry)
     {
         try
