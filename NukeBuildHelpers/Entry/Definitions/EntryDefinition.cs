@@ -1,4 +1,5 @@
 ﻿using Nuke.Common.IO;
+using NukeBuildHelpers.Entry.Enums;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.RunContext.Interfaces;
@@ -34,11 +35,17 @@ internal abstract class EntryDefinition : IEntryDefinition
         set => condition = value;
     }
 
-    Func<IRunContext, Task<string>> IEntryDefinition.CacheInvalidator { get; set; } = _ => Task.FromResult("0");
-
     Func<IRunContext, Task<RunnerOS>>? IEntryDefinition.RunnerOS { get; set; }
 
     List<Func<IRunContext, Task<AbsolutePath[]>>> IEntryDefinition.CachePath { get; set; } = [];
+
+    Func<IRunContext, Task<string>> IEntryDefinition.CacheInvalidator { get; set; } = _ => Task.FromResult("0");
+
+    Func<IRunContext, Task<int>> IEntryDefinition.CheckoutFetchDepth { get; set; } = _ => Task.FromResult(1);
+
+    Func<IRunContext, Task<bool>> IEntryDefinition.CheckoutFetchTags { get; set; } = _ => Task.FromResult(false);
+
+    Func<IRunContext, Task<SubmoduleCheckoutType>> IEntryDefinition.CheckoutSubmodules { get; set; } = _ => Task.FromResult(SubmoduleCheckoutType.None);
 
     List<Func<IRunContext, Task>> IEntryDefinition.Execute { get; set; } = [];
 
