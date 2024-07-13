@@ -19,6 +19,7 @@ using System.Web;
 using System.Xml.Linq;
 using static Azure.Core.HttpHeader;
 using YamlDotNet.Core.Tokens;
+using NukeBuildHelpers.Entry.Enums;
 
 namespace NukeBuildHelpers.Pipelines.Github;
 
@@ -158,6 +159,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-main-");
+            await ExportEnvVarRuntime(entryIdNorm, "CHECKOUT_FETCH_DEPTH", entrySetup.CheckoutFetchDepth.ToString());
+            await ExportEnvVarRuntime(entryIdNorm, "CHECKOUT_FETCH_TAGS", entrySetup.CheckoutFetchTags ? "true" : "false");
+            await ExportEnvVarRuntime(entryIdNorm, "CHECKOUT_FETCH_SUBMODULES", GetSubmoduleCheckoutType(entrySetup.CheckoutSubmodules));
         }
 
         var entries = new List<(string entryId, string cacheFamily)>();
@@ -259,7 +263,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         List<string> needs = [];
         var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", RunnerOS.Ubuntu2204);
-        AddJobStepCheckout(preSetupJob, fetchDepth: 0);
+        AddJobStepCheckout(preSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var nukePreSetup = AddJobStepNukeRun(preSetupJob, RunnerOS.Ubuntu2204, "PipelinePreSetup", id: "NUKE_RUN");
         AddJobOrStepEnvVar(nukePreSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
@@ -287,7 +291,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
             var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. needs], _if: "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
-            AddJobStepCheckout(testJob);
+            AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "PipelineTest");
             testNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
@@ -310,7 +314,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
             var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. testNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "PRE_SETUP");
-            AddJobStepCheckout(buildJob);
+            AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
             var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadBuildStep, "name", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
@@ -345,7 +349,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
             var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. buildNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "PRE_SETUP");
-            AddJobStepCheckout(publishJob);
+            AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts");
             AddJobStepWith(downloadBuildStep, "pattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*");
@@ -366,7 +370,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             AddJobOrStepEnvVar(postSetupJob, "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id.ToUpperInvariant(), $"${{{{ needs.{entryDefinition.Id.ToUpperInvariant()}.result }}}}");
         }
-        AddJobStepCheckout(postSetupJob);
+        AddJobStepCheckout(postSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
@@ -480,13 +484,23 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
     }
 
-    private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string _if = "", int? fetchDepth = null)
+    private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, int fetchDepth, bool fetchTags, SubmoduleCheckoutType submoduleCheckoutType, string _if = "")
     {
         var step = AddJobStep(job, uses: "actions/checkout@v4", _if: _if);
-        if (fetchDepth != null)
-        {
-            AddJobStepWith(step, "fetch-depth", fetchDepth.Value.ToString());
-        }
+        AddJobStepWith(step, "fetch-depth", fetchDepth.ToString());
+        AddJobStepWith(step, "fetch-tags", fetchTags ? "true" : "false");
+        AddJobStepWith(step, "submodules", GetSubmoduleCheckoutType(submoduleCheckoutType));
+
+        return step;
+    }
+
+    private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string entryId)
+    {
+        var step = AddJobStep(job, uses: "actions/checkout@v4");
+        AddJobStepWith(step, "fetch-depth", GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_DEPTH"));
+        AddJobStepWith(step, "fetch-tags", GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_TAGS"));
+        AddJobStepWith(step, "submodules", GetImportedEnvVarExpression(entryId, "CHECKOUT_SUBMODULES"));
+
         return step;
     }
 
@@ -552,5 +566,16 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static void AddJobOrStepEnvVarFromNeeds(Dictionary<string, object> jobOrStep, string envOutName, string needsId)
     {
         AddJobOrStepEnvVar(jobOrStep, envOutName, $"${{{{ needs.{needsId}.outputs.{envOutName} }}}}");
+    }
+
+    private static string GetSubmoduleCheckoutType(SubmoduleCheckoutType submoduleCheckoutType)
+    {
+        return submoduleCheckoutType switch
+        {
+            SubmoduleCheckoutType.None => "false",
+            SubmoduleCheckoutType.SingleLevel => "true",
+            SubmoduleCheckoutType.Recursive => "recursive",
+            _ => throw new NotImplementedException(submoduleCheckoutType.ToString())
+        };
     }
 }

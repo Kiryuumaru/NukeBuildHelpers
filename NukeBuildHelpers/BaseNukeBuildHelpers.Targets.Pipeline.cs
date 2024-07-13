@@ -345,16 +345,19 @@ partial class BaseNukeBuildHelpers
                 EntrySetup setup = new()
                 {
                     Id = entry.Id,
-                    Condition = await entry.GetCondition(),
-                    CacheInvalidator = await entry.GetCacheInvalidator(),
-                    CachePaths = flatCachePaths.ToArray(),
                     RunType = ValueHelpers.GetOrNullFail(entry.RunContext).RunType,
+                    Condition = await entry.GetCondition(),
                     RunnerOSSetup = new()
                     {
                         Name = runnerOs.Name,
                         RunnerPipelineOS = JsonSerializer.Serialize(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented),
                         RunScript = runnerOs.GetRunScript(PipelineType)
-                    }
+                    },
+                    CacheInvalidator = await entry.GetCacheInvalidator(),
+                    CachePaths = flatCachePaths.ToArray(),
+                    CheckoutFetchDepth = await entry.GetCheckoutFetchDepth(),
+                    CheckoutFetchTags = await entry.GetCheckoutFetchTags(),
+                    CheckoutSubmodules = await entry.GetCheckoutSubmodules()
                 };
 
                 return setup;
