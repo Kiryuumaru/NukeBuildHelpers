@@ -161,7 +161,19 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Windows2022)
         .ReleaseAsset(OutputDirectory / "try" / "test_release")
         .ReleaseAsset(OutputDirectory / "try" / "test_release.tar.gz")
-        .Execute(context => {
+        .Matrix(new[] { ("Mat1", 1), ("Mat2", 1) }, (definition1, matrix1) =>
+        {
+            definition1.Matrix(new[] { ("Mat3", 1), ("Mat4", 1) }, (definition2, matrix2) =>
+            {
+                definition2.DisplayName("Build try " + matrix1.Item1 + " sub " + matrix2.Item1);
+                definition2.Execute(() =>
+                {
+                    Log.Information("I am hereeee: {s}", matrix1.Item1 + " sub " + matrix2.Item1);
+                });
+            });
+        })
+        .Execute(context =>
+        {
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))

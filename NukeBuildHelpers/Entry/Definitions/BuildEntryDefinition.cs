@@ -8,12 +8,29 @@ namespace NukeBuildHelpers.Entry.Definitions;
 
 internal class BuildEntryDefinition : TargetEntryDefinition, IBuildEntryDefinition
 {
-    List<Func<IRunContext, Task<AbsolutePath[]>>> IBuildEntryDefinition.ReleaseAsset { get; } = [];
+    List<Func<IRunContext, Task<AbsolutePath[]>>> IBuildEntryDefinition.ReleaseAsset { get; set; } = [];
 
-    List<Func<IRunContext, Task<AbsolutePath[]>>> IBuildEntryDefinition.CommonReleaseAsset { get; } = [];
+    List<Func<IRunContext, Task<AbsolutePath[]>>> IBuildEntryDefinition.CommonReleaseAsset { get; set; } = [];
 
     protected override string GetDefaultName()
     {
         return "Build - " + ((IBuildEntryDefinition)this).AppId + " (" + Id + ")";
+    }
+
+    protected override IEntryDefinition Clone()
+    {
+        var definition = new BuildEntryDefinition()
+        {
+            Id = Id
+        };
+        FillClone(definition);
+        return definition;
+    }
+
+    internal override void FillClone(IEntryDefinition definition)
+    {
+        base.FillClone(definition);
+        ((IBuildEntryDefinition)definition).ReleaseAsset = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IBuildEntryDefinition)this).ReleaseAsset);
+        ((IBuildEntryDefinition)definition).CommonReleaseAsset = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IBuildEntryDefinition)this).CommonReleaseAsset);
     }
 }

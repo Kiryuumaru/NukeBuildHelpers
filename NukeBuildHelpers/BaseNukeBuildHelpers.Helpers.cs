@@ -510,7 +510,7 @@ partial class BaseNukeBuildHelpers
             Assert.Fail($"{Repository.Branch} is not on environment branches");
         }
 
-        ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+        var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
         string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
 
@@ -656,7 +656,7 @@ partial class BaseNukeBuildHelpers
 
     private async Task StartStatusWatch(bool cancelOnDone = false, params (string AppId, string Environment)[] appIds)
     {
-        ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+        var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
         ConsoleTableHeader[] headers =
             [

@@ -17,6 +17,26 @@ internal abstract class EntryDefinition : IEntryDefinition
 
     protected abstract string GetDefaultName();
 
+    protected abstract IEntryDefinition Clone();
+
+    IEntryDefinition IEntryDefinition.Clone() => Clone();
+
+    internal virtual void FillClone(IEntryDefinition definition)
+    {
+        definition.Id = ((IEntryDefinition)this).Id;
+        definition.DisplayName = ((IEntryDefinition)this).DisplayName;
+        definition.Condition = ((IEntryDefinition)this).Condition;
+        definition.RunnerOS = ((IEntryDefinition)this).RunnerOS;
+        definition.CachePath = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IEntryDefinition)this).CachePath);
+        definition.CacheInvalidator = ((IEntryDefinition)this).CacheInvalidator;
+        definition.CheckoutFetchDepth = ((IEntryDefinition)this).CheckoutFetchDepth;
+        definition.CheckoutFetchTags = ((IEntryDefinition)this).CheckoutFetchTags;
+        definition.CheckoutSubmodules = ((IEntryDefinition)this).CheckoutSubmodules;
+        definition.Execute = new List<Func<IRunContext, Task>>(((IEntryDefinition)this).Execute);
+        definition.WorkflowBuilder = new List<Func<IWorkflowBuilder, Task>>(((IEntryDefinition)this).WorkflowBuilder);
+        definition.RunContext = ((IEntryDefinition)this).RunContext;
+    }
+
     string IEntryDefinition.Id
     {
         get => Id;
@@ -50,6 +70,8 @@ internal abstract class EntryDefinition : IEntryDefinition
     List<Func<IRunContext, Task>> IEntryDefinition.Execute { get; set; } = [];
 
     List<Func<IWorkflowBuilder, Task>> IEntryDefinition.WorkflowBuilder { get; set; } = [];
+
+    List<Func<IEntryDefinition, Task<IEntryDefinition[]>>> IEntryDefinition.Matrix { get; set; } = [];
 
     IRunContext? IEntryDefinition.RunContext { get; set; }
 }

@@ -28,7 +28,8 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
             CheckAppEntry(allEntry);
 
@@ -78,7 +79,7 @@ partial class BaseNukeBuildHelpers
         {
             CheckEnvironementBranches();
 
-            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+            var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
             CheckAppEntry(allEntry);
 
@@ -457,7 +458,8 @@ partial class BaseNukeBuildHelpers
             CheckEnvironementBranches();
 
             ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-            ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this), out var allEntry);
+
+            var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
             CheckAppEntry(allEntry);
 

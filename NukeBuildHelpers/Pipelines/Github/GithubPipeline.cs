@@ -315,7 +315,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             string condition = "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'";
             foreach (var testEntryDefinition in allEntry.TestEntryDefinitionMap.Values)
             {
-                if (testEntryDefinition.AppIds.Length == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                 }
@@ -343,7 +343,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             string condition = "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'";
             foreach (var testEntryDefinition in allEntry.TestEntryDefinitionMap.Values)
             {
-                if (testEntryDefinition.AppIds.Length == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
                 }

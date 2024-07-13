@@ -13,43 +13,88 @@ namespace NukeBuildHelpers.Entry.Helpers;
 
 internal static class EntryHelpers
 {
-    internal static AllEntry GetAll(BaseNukeBuildHelpers nukeBuildHelpers)
+    internal static async Task<AllEntry> GetAll(BaseNukeBuildHelpers nukeBuildHelpers)
     {
         Dictionary<string, AppEntry> appEntryMap = [];
 
-        List<ITestEntryDefinition> testEntryDefinitions = [];
-        List<IBuildEntryDefinition> buildEntryDefinitions = [];
-        List<IPublishEntryDefinition> publishEntryDefinitions = [];
+        List<IEntryDefinition> definedEntryDefinitions = [];
 
         foreach (var property in nukeBuildHelpers.GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
         {
             if (property.PropertyType == typeof(TestEntry))
             {
                 var testEntry = (TestEntry)property.GetValue(nukeBuildHelpers)!;
-                testEntryDefinitions.Add(testEntry.Invoke(new TestEntryDefinition() { Id = property.Name }));
+                definedEntryDefinitions.Add(testEntry.Invoke(new TestEntryDefinition() { Id = property.Name }));
             }
             else if (property.PropertyType == typeof(BuildEntry))
             {
                 var buildEntry = (BuildEntry)property.GetValue(nukeBuildHelpers)!;
-                buildEntryDefinitions.Add(buildEntry.Invoke(new BuildEntryDefinition() { Id = property.Name }));
+                definedEntryDefinitions.Add(buildEntry.Invoke(new BuildEntryDefinition() { Id = property.Name }));
             }
             else if (property.PropertyType == typeof(PublishEntry))
             {
                 var publishEntry = (PublishEntry)property.GetValue(nukeBuildHelpers)!;
-                publishEntryDefinitions.Add(publishEntry.Invoke(new PublishEntryDefinition() { Id = property.Name }));
+                definedEntryDefinitions.Add(publishEntry.Invoke(new PublishEntryDefinition() { Id = property.Name }));
             }
         }
 
         List<IEntryDefinition> entryDefinitions = [];
-        List<ITargetEntryDefinition> targetEntryDefinitions = [];
-        List<IDependentEntryDefinition> dependentEntryDefinitions = [];
 
-        entryDefinitions.AddRange(testEntryDefinitions);
-        entryDefinitions.AddRange(buildEntryDefinitions);
-        entryDefinitions.AddRange(publishEntryDefinitions);
-        targetEntryDefinitions.AddRange(buildEntryDefinitions);
-        targetEntryDefinitions.AddRange(publishEntryDefinitions);
-        dependentEntryDefinitions.AddRange(testEntryDefinitions);
+        async Task append(IEntryDefinition definition, string id)
+        {
+            if (definition.Matrix.Count == 0)
+            {
+                definition.Id = id;
+                entryDefinitions.Add(definition);
+            }
+            else
+            {
+                int index = 0;
+                foreach (var mat in definition.Matrix)
+                {
+                    foreach (var createdDefinition in await mat(definition.Clone()))
+                    {
+                        index++;
+                        await append(createdDefinition, id + "_" + index.ToString());
+                    }
+                }
+            }
+        }
+
+        foreach (var definition in definedEntryDefinitions)
+        {
+            await append(definition, definition.Id);
+        }
+
+        List<IDependentEntryDefinition> dependentEntryDefinitions = [];
+        List<ITargetEntryDefinition> targetEntryDefinitions = [];
+        List<ITestEntryDefinition> testEntryDefinitions = [];
+        List<IBuildEntryDefinition> buildEntryDefinitions = [];
+        List<IPublishEntryDefinition> publishEntryDefinitions = [];
+
+        foreach (var definition in entryDefinitions)
+        {
+            if (definition is IDependentEntryDefinition dependentEntryDefinition)
+            {
+                dependentEntryDefinitions.Add(dependentEntryDefinition);
+            }
+            if (definition is ITargetEntryDefinition targetEntryDefinition)
+            {
+                targetEntryDefinitions.Add(targetEntryDefinition);
+            }
+            if (definition is ITestEntryDefinition testEntryDefinition)
+            {
+                testEntryDefinitions.Add(testEntryDefinition);
+            }
+            if (definition is IBuildEntryDefinition buildEntryDefinition)
+            {
+                buildEntryDefinitions.Add(buildEntryDefinition);
+            }
+            if (definition is IPublishEntryDefinition publishEntryDefinition)
+            {
+                publishEntryDefinitions.Add(publishEntryDefinition);
+            }
+        }
 
         foreach (var testEntryDefinition in testEntryDefinitions)
         {
