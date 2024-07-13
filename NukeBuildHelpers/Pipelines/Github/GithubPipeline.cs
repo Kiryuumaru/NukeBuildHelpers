@@ -92,8 +92,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return Task.CompletedTask;
     }
 
-    public async Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public async Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
+        if (pipelinePreSetup == null)
+        {
+            return;
+        }
+
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
@@ -177,7 +182,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AbsolutePath.Create(Environment.GetEnvironmentVariable("GITHUB_OUTPUT")).AppendAllText($"\nNUKE_PRE_SETUP={JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption)}");
     }
 
-    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
         return Task.Run(() =>
         {
@@ -202,12 +207,12 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         });
     }
 
-    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
         return Task.CompletedTask;
     }
 
-    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         return Task.Run(() =>
         {
@@ -222,7 +227,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         });
     }
 
-    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         return Task.CompletedTask;
     }
@@ -295,7 +300,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. needs], _if: "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'");
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "PipelineTest");
+            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test");
             testNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
@@ -318,7 +323,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. testNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
+            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
             var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadBuildStep, "name", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
             AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
@@ -356,7 +361,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts");
             AddJobStepWith(downloadBuildStep, "pattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*");
-            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
+            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
             publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
@@ -473,14 +478,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IGithubWorkflowBuilder workflowBuilder, IEntryDefinition entryDefinition, string targetName)
+    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IGithubWorkflowBuilder workflowBuilder, IEntryDefinition entryDefinition, string runType)
     {
         AddJobStepCache(job, entryDefinition.Id.ToUpperInvariant());
         foreach (var step in workflowBuilder.PreExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
         }
-        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), targetName, id: "NUKE_RUN", args: entryDefinition.Id);
+        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "PipelineRunEntry", id: "NUKE_RUN", args: $"run={runType};idsToRun={entryDefinition.Id}");
         foreach (var step in workflowBuilder.PostExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);

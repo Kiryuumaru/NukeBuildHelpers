@@ -259,10 +259,10 @@ partial class BaseNukeBuildHelpers
         });
 
     /// <summary>
-    /// Tests the application, with --args "{appid}".
+    /// Tests the application, with --args "{idsToRun}".
     /// </summary>
     public Target Test => _ => _
-        .Description("Test, with --args \"{appid}\"")
+        .Description("Test, with --args \"{idsToRun}\"")
         .Executes(async () =>
         {
             CheckEnvironementBranches();
@@ -272,15 +272,16 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            await TestAppEntries(allEntry, splitArgs.Select(i => i.Key));
+            var pipeline = PipelineHelpers.SetupPipeline(this);
+
+            await TestAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
 
     /// <summary>
-    /// Builds the application, with --args "{appid}".
+    /// Builds the application, with --args "{idsToRun}".
     /// </summary>
     public Target Build => _ => _
-        .Description("Build, with --args \"{appid}\"")
-        .DependsOn(Test)
+        .Description("Build, with --args \"{idsToRun}\"")
         .Executes(async () =>
         {
             CheckEnvironementBranches();
@@ -290,15 +291,16 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            await BuildAppEntries(allEntry, splitArgs.Select(i => i.Key));
+            var pipeline = PipelineHelpers.SetupPipeline(this);
+
+            await BuildAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
 
     /// <summary>
-    /// Publishes the application, with --args "{appid}".
+    /// Publishes the application, with --args "{idsToRun}".
     /// </summary>
     public Target Publish => _ => _
-        .Description("Publish, with --args \"{appid}\"")
-        .DependsOn(Build)
+        .Description("Publish, with --args \"{idsToRun}\"")
         .Executes(async () =>
         {
             CheckEnvironementBranches();
@@ -308,7 +310,9 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            await PublishAppEntries(allEntry, splitArgs.Select(i => i.Key));
+            var pipeline = PipelineHelpers.SetupPipeline(this);
+
+            await PublishAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
 
     /// <summary>

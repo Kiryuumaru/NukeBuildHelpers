@@ -91,8 +91,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return Task.CompletedTask;
     }
 
-    public async Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public async Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
+        if (pipelinePreSetup == null)
+        {
+            return;
+        }
+
         var runClassification = pipelinePreSetup.TriggerType == TriggerType.PullRequest ? "pr." + pipelinePreSetup.PullRequestNumber : "main";
         var runIdentifier = Guid.NewGuid().Encode();
 
@@ -138,7 +143,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         await ExportEnvVarRuntime("NUKE_PRE_SETUP", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption));
     }
 
-    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
         return Task.Run(() =>
         {
@@ -166,12 +171,12 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         });
     }
 
-    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup)
+    public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
         return Task.CompletedTask;
     }
 
-    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         return Task.Run(() =>
         {
@@ -186,7 +191,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         });
     }
 
-    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
         return Task.CompletedTask;
     }
@@ -243,7 +248,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "PipelineTest");
+            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test");
             testNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
@@ -267,7 +272,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "PipelineBuild");
+            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
             var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
             AddJobStepInputs(uploadBuildStep, "artifact", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id);
             AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/output");
@@ -306,7 +311,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*/**");
             AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
-            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "PipelinePublish");
+            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
             publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
@@ -445,14 +450,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IAzureWorkflowBuilder workflowBuilder, IEntryDefinition entryDefinition, string targetName)
+    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IAzureWorkflowBuilder workflowBuilder, IEntryDefinition entryDefinition, string runType)
     {
         AddJobStepCache(job, entryDefinition.Id.ToUpperInvariant());
         foreach (var step in workflowBuilder.PreExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
         }
-        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), targetName, name: "NUKE_RUN", args: entryDefinition.Id);
+        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "PipelineRunEntry", name: "NUKE_RUN", args: $"run={runType};idsToRun={entryDefinition.Id}");
         foreach (var step in workflowBuilder.PostExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
