@@ -10,6 +10,6 @@ internal abstract class DependentEntryDefinition : EntryDefinition, IDependentEn
     internal override void FillClone(IEntryDefinition definition)
     {
         base.FillClone(definition);
-        ((IDependentEntryDefinition)definition).AppIds = ((IDependentEntryDefinition)this).AppIds;
+        ((IDependentEntryDefinition)definition).AppIds = [.. ((IDependentEntryDefinition)this).AppIds];
     }
 }

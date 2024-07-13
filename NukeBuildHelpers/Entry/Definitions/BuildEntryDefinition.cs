@@ -23,9 +23,14 @@ internal class BuildEntryDefinition : TargetEntryDefinition, IBuildEntryDefiniti
         {
             Id = Id
         };
-        ((IBuildEntryDefinition)definition).ReleaseAsset = ((IBuildEntryDefinition)this).ReleaseAsset;
-        ((IBuildEntryDefinition)definition).CommonReleaseAsset = ((IBuildEntryDefinition)this).CommonReleaseAsset;
         FillClone(definition);
         return definition;
+    }
+
+    internal override void FillClone(IEntryDefinition definition)
+    {
+        base.FillClone(definition);
+        ((IBuildEntryDefinition)definition).ReleaseAsset = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IBuildEntryDefinition)this).ReleaseAsset);
+        ((IBuildEntryDefinition)definition).CommonReleaseAsset = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IBuildEntryDefinition)this).CommonReleaseAsset);
     }
 }

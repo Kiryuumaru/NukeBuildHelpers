@@ -27,13 +27,13 @@ internal abstract class EntryDefinition : IEntryDefinition
         definition.DisplayName = ((IEntryDefinition)this).DisplayName;
         definition.Condition = ((IEntryDefinition)this).Condition;
         definition.RunnerOS = ((IEntryDefinition)this).RunnerOS;
-        definition.CachePath = ((IEntryDefinition)this).CachePath;
+        definition.CachePath = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IEntryDefinition)this).CachePath);
         definition.CacheInvalidator = ((IEntryDefinition)this).CacheInvalidator;
         definition.CheckoutFetchDepth = ((IEntryDefinition)this).CheckoutFetchDepth;
         definition.CheckoutFetchTags = ((IEntryDefinition)this).CheckoutFetchTags;
         definition.CheckoutSubmodules = ((IEntryDefinition)this).CheckoutSubmodules;
-        definition.Execute = ((IEntryDefinition)this).Execute;
-        definition.WorkflowBuilder = ((IEntryDefinition)this).WorkflowBuilder;
+        definition.Execute = new List<Func<IRunContext, Task>>(((IEntryDefinition)this).Execute);
+        definition.WorkflowBuilder = new List<Func<IWorkflowBuilder, Task>>(((IEntryDefinition)this).WorkflowBuilder);
         definition.RunContext = ((IEntryDefinition)this).RunContext;
     }
 
