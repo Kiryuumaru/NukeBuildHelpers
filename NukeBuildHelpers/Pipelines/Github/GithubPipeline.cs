@@ -161,7 +161,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_MAIN_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-main-");
             await ExportEnvVarRuntime(entryIdNorm, "CHECKOUT_FETCH_DEPTH", entrySetup.CheckoutFetchDepth.ToString());
             await ExportEnvVarRuntime(entryIdNorm, "CHECKOUT_FETCH_TAGS", entrySetup.CheckoutFetchTags ? "true" : "false");
-            await ExportEnvVarRuntime(entryIdNorm, "CHECKOUT_FETCH_SUBMODULES", GetSubmoduleCheckoutType(entrySetup.CheckoutSubmodules));
+            await ExportEnvVarRuntime(entryIdNorm, "CHECKOUT_SUBMODULES", GetSubmoduleCheckoutType(entrySetup.CheckoutSubmodules));
         }
 
         var entries = new List<(string entryId, string cacheFamily)>();
