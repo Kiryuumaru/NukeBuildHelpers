@@ -278,6 +278,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "CACHE_KEY");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "CACHE_RESTORE_KEY");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "CACHE_MAIN_RESTORE_KEY");
+            ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "CHECKOUT_FETCH_DEPTH");
+            ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "CHECKOUT_FETCH_TAGS");
+            ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "CHECKOUT_SUBMODULES");
         }
         needs.Add("PRE_SETUP");
 
