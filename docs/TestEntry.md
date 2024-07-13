@@ -343,7 +343,7 @@ ITestEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFet
 
 ## CheckoutFetchTags
 
-Sets `true` whether to fetch tags, even if fetch-depth > `0`, otherwise `false`. Default is `false`.
+Sets `true` whether to fetch tags, even if fetch-depth > `0`. Default is `false`.
 
 ### Definitions
 
