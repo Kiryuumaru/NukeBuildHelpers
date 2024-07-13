@@ -111,6 +111,7 @@ class Build : BaseNukeBuildHelpers
 
     TestEntry NukeBuildHelpersTest2 => _ => _
         .AppId("nuke_build_helpers")
+        .WorkflowId("NukeBuildHelpersTest2CustomId")
         .DisplayName("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(() =>
