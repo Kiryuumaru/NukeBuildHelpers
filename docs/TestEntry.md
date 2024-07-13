@@ -16,6 +16,7 @@ If test entry run errors, the `BuildEntry` and `PublishEntry` configured will no
 - [CheckoutSubmodules](#checkoutsubmodules)
 - [Condition](#condition)
 - [DisplayName](#displayname)
+- [WorkflowId](#workflowid)
 - [WorkflowBuilder](#workflowbuilder)
 - [Matrix](#matrix)
 
@@ -531,6 +532,34 @@ ITestEntryDefinition DisplayName(Func<Task<string>> displayName);
 
         TestEntry SampleTestEntry => _ => _
             .DisplayName("Test Entry Sample");
+    }
+    ```
+
+---
+
+## WorkflowId
+
+Sets the workflow id of the entry. Modifying the value will need to rebuild the workflow.
+
+### Definitions
+
+```csharp
+ITestEntryDefinition WorkflowId(string workflowId);
+```
+
+### Usage
+
+* Specify `string` directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        TestEntry SampleTestEntry => _ => _
+            .WorkflowId("id_entry_test");
     }
     ```
 

@@ -16,6 +16,7 @@ All files created on `OutputDirectory` under all `BuildEntry` will propagate on 
 - [CheckoutSubmodules](#checkoutsubmodules)
 - [Condition](#condition)
 - [DisplayName](#displayname)
+- [WorkflowId](#workflowid)
 - [WorkflowBuilder](#workflowbuilder)
 - [ReleaseAsset](#releaseasset)
 - [CommonReleaseAsset](#commonreleaseasset)
@@ -533,6 +534,34 @@ IBuildEntryDefinition DisplayName(Func<Task<string>> displayName);
 
         BuildEntry SampleBuildEntry => _ => _
             .DisplayName("Test Entry Sample");
+    }
+    ```
+
+---
+
+## WorkflowId
+
+Sets the workflow id of the entry. Modifying the value will need to rebuild the workflow.
+
+### Definitions
+
+```csharp
+IBuildEntryDefinition WorkflowId(string workflowId);
+```
+
+### Usage
+
+* Specify `string` directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        BuildEntry SampleBuildEntry => _ => _
+            .WorkflowId("id_entry_test");
     }
     ```
 
