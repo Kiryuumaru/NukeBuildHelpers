@@ -11,6 +11,9 @@ All files created on `OutputDirectory` under all `BuildEntry` will propagate on 
 - [Execute](#execute)
 - [CachePath](#cachepath)
 - [CacheInvalidator](#cacheinvalidator)
+- [CheckoutFetchDepth](#checkoutfetchdepth)
+- [CheckoutFetchTags](#checkoutfetchtags)
+- [CheckoutSubmodules](#checkoutsubmodules)
 - [Condition](#condition)
 - [DisplayName](#displayname)
 - [WorkflowBuilder](#workflowbuilder)
@@ -274,6 +277,177 @@ IPublishEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheIn
                 else
                 {
                     return "sampleValue";
+                }
+            });
+    }
+    ```
+
+---
+
+## CheckoutFetchDepth
+
+Sets the number of commits to fetch. `0` indicates all history for all branches and tags. Default value is `1`.
+
+### Definitions
+
+```csharp
+IPublishEntryDefinition CheckoutFetchDepth(int checkoutFetchDepth);
+IPublishEntryDefinition CheckoutFetchDepth(Func<int> checkoutFetchDepth);
+IPublishEntryDefinition CheckoutFetchDepth(Func<IRunContext, int> checkoutFetchDepth);
+IPublishEntryDefinition CheckoutFetchDepth(Func<Task<int>> checkoutFetchDepth);
+IPublishEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFetchDepth);
+```
+
+### Usage
+
+* Specify the value directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry SamplePublishEntry => _ => _
+            .CheckoutFetchDepth(0);
+    }
+    ```
+
+* Resolve at runtime with `IRunContext`
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+    using NukeBuildHelpers.Common.Enums;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry SamplePublishEntry => _ => _
+            .CheckoutFetchDepth(context =>
+            {
+                if (context.RunType == RunType.Bump)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            });
+    }
+    ```
+
+---
+
+## CheckoutFetchTags
+
+Sets `true` whether to fetch tags, even if fetch-depth > `0`. Default is `false`.
+
+### Definitions
+
+```csharp
+IPublishEntryDefinition CheckoutFetchTags(bool checkoutFetchTags);
+IPublishEntryDefinition CheckoutFetchTags(Func<bool> checkoutFetchTags);
+IPublishEntryDefinition CheckoutFetchTags(Func<IRunContext, bool> checkoutFetchTags);
+IPublishEntryDefinition CheckoutFetchTags(Func<Task<bool>> checkoutFetchTags);
+IPublishEntryDefinition CheckoutFetchTags(Func<IRunContext, Task<bool>> checkoutFetchTags);
+```
+
+### Usage
+
+* Specify the value directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry SamplePublishEntry => _ => _
+            .CheckoutFetchTags(true);
+    }
+    ```
+
+* Resolve at runtime with `IRunContext`
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+    using NukeBuildHelpers.Common.Enums;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry SamplePublishEntry => _ => _
+            .CheckoutFetchDepth(context =>
+            {
+                if (context.RunType == RunType.Bump)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            });
+    }
+    ```
+
+---
+
+## CheckoutSubmodule
+
+Sets value on how to checkout submodules. Whether to `SubmoduleCheckoutType.SingleLevel` to checkout submodules or `SubmoduleCheckoutType.Recursive` to checkout submodules of submodules. Default is `SubmoduleCheckoutType.None`.
+
+### Definitions
+
+```csharp
+IPublishEntryDefinition CheckoutSubmodule(SubmoduleCheckoutType checkoutSubmodule);
+IPublishEntryDefinition CheckoutSubmodule(Func<SubmoduleCheckoutType> checkoutSubmodule);
+IPublishEntryDefinition CheckoutSubmodule(Func<IRunContext, SubmoduleCheckoutType> checkoutSubmodule);
+IPublishEntryDefinition CheckoutSubmodule(Func<Task<SubmoduleCheckoutType>> checkoutSubmodule);
+IPublishEntryDefinition CheckoutSubmodule(Func<IRunContext, Task<SubmoduleCheckoutType>> checkoutSubmodule);
+```
+
+### Usage
+
+* Specify the value directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry SamplePublishEntry => _ => _
+            .CheckoutSubmodule(SubmoduleCheckoutType.Recursive);
+    }
+    ```
+
+* Resolve at runtime with `IRunContext`
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+    using NukeBuildHelpers.Common.Enums;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry SamplePublishEntry => _ => _
+            .CheckoutSubmodule(context =>
+            {
+                if (context.RunType == RunType.Bump)
+                {
+                    return SubmoduleCheckoutType.Recursive;
+                }
+                else
+                {
+                    return SubmoduleCheckoutType.None;
                 }
             });
     }
