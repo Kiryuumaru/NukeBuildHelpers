@@ -44,11 +44,19 @@ public static class AbsolutePathExtensions
 
                 allFilesAndDirectories.Add((item.AbsolutePath, item.FromLink));
 
-                allFilesAndDirectories.AddRange(Directory.GetFiles(item.AbsolutePath, "*", SearchOption.TopDirectoryOnly).Select(AbsolutePath.Create)
-                    .Select(i => (i, fromLink)));
+                try
+                {
+                    allFilesAndDirectories.AddRange(Directory.GetFiles(item.AbsolutePath, "*", SearchOption.TopDirectoryOnly).Select(AbsolutePath.Create)
+                        .Select(i => (i, fromLink)));
+                }
+                catch { }
 
-                forNextPaths.AddRange(Directory.GetDirectories(item.AbsolutePath, "*", SearchOption.TopDirectoryOnly).Select(AbsolutePath.Create)
-                    .Select(i => (i, fromLink)));
+                try
+                {
+                    forNextPaths.AddRange(Directory.GetDirectories(item.AbsolutePath, "*", SearchOption.TopDirectoryOnly).Select(AbsolutePath.Create)
+                        .Select(i => (i, fromLink)));
+                }
+                catch { }
             }
 
             nextPaths = forNextPaths;
@@ -80,7 +88,11 @@ public static class AbsolutePathExtensions
                     if (safePath.AbsolutePath.FileExists())
                     {
                         Directory.CreateDirectory(destinationPath.Parent);
-                        File.Copy(safePath.AbsolutePath, destinationPath, true);
+                        try
+                        {
+                            File.Copy(safePath.AbsolutePath, destinationPath, true);
+                        }
+                        catch { }
                     }
                     else if (safePath.AbsolutePath.DirectoryExists())
                     {
@@ -115,7 +127,11 @@ public static class AbsolutePathExtensions
                     if (safePath.AbsolutePath.FileExists())
                     {
                         Directory.CreateDirectory(destinationPath.Parent);
-                        File.Copy(safePath.AbsolutePath, destinationPath, true);
+                        try
+                        {
+                            File.Copy(safePath.AbsolutePath, destinationPath, true);
+                        }
+                        catch { }
                     }
                     else if (safePath.AbsolutePath.DirectoryExists())
                     {
@@ -126,9 +142,75 @@ public static class AbsolutePathExtensions
                 {
                     if (!safePath.FromLink && new DirectoryInfo(safePath.AbsolutePath).LinkTarget != null)
                     {
-                        Directory.Delete(safePath.AbsolutePath);
+                        try
+                        {
+                            File.Delete(safePath.AbsolutePath);
+                        }
+                        catch { }
+                        try
+                        {
+                            Directory.Delete(safePath.AbsolutePath);
+                        }
+                        catch { }
                     }
                 }
+                try
+                {
+                    Directory.Delete(path);
+                }
+                catch { }
+                try
+                {
+                    Directory.Delete(path, true);
+                }
+                catch { }
+                Directory.Delete(path, true);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Recursively deletes all files and directories from the specified path.
+    /// </summary>
+    /// <param name="path">The source path to delete.</param>
+    /// <returns>A task representing the asynchronous move operation.</returns>
+    public static Task DeleteFilesRecursively(this AbsolutePath path)
+    {
+        return Task.Run(() =>
+        {
+            if (path.FileExists())
+            {
+                File.Delete(path);
+            }
+            else
+            {
+                var allFilesAndDirectories = SafeGetAllFilesAndDirectories(path);
+                foreach (var safePath in allFilesAndDirectories)
+                {
+                    if (!safePath.FromLink && new DirectoryInfo(safePath.AbsolutePath).LinkTarget != null)
+                    {
+                        try
+                        {
+                            File.Delete(safePath.AbsolutePath);
+                        }
+                        catch { }
+                        try
+                        {
+                            Directory.Delete(safePath.AbsolutePath);
+                        }
+                        catch { }
+                    }
+                }
+                try
+                {
+                    Directory.Delete(path);
+                }
+                catch { }
+                try
+                {
+                    Directory.Delete(path, true);
+                }
+                catch { }
                 Directory.Delete(path, true);
             }
         });
