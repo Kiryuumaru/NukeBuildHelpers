@@ -150,7 +150,7 @@ partial class BaseNukeBuildHelpers
                 Log.Information("{path} cache missed", path);
                 continue;
             }
-            tasks.Add(Task.Run(() =>
+            tasks.Add(Task.Run(async () =>
             {
                 var cachePathValue = cachePath / "currentLatest";
                 path.Parent.CreateDirectory();
@@ -160,7 +160,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (cachePathValue.DirectoryExists())
                 {
-                    cachePathValue.MoveFilesRecursively(path);
+                    await cachePathValue.MoveFilesRecursively(path);
                 }
                 Log.Information("{path} cache loaded", path);
             }));
@@ -191,7 +191,7 @@ partial class BaseNukeBuildHelpers
                 cachePath = entryCachePath / Guid.NewGuid().Encode();
                 cachePairs[path.ToString()] = cachePath;
             }
-            tasks.Add(Task.Run(() =>
+            tasks.Add(Task.Run(async () =>
             {
                 var cachePathValue = cachePath / "currentLatest";
                 cachePath.CreateDirectory();
@@ -201,7 +201,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (path.DirectoryExists())
                 {
-                    path.MoveFilesRecursively(cachePathValue);
+                    await path.MoveFilesRecursively(cachePathValue);
                 }
                 Log.Information("{path} cache saved", path);
             }));
@@ -413,7 +413,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists())
                 {
-                    asset.CopyFilesRecursively(CommonOutputDirectory / "asset" / asset.Name);
+                    await asset.CopyFilesRecursively(CommonOutputDirectory / "asset" / asset.Name);
                 }
                 else if (asset.DirectoryExists())
                 {
@@ -430,7 +430,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists() || asset.DirectoryExists())
                 {
-                    asset.CopyFilesRecursively(CommonOutputDirectory / "common_asset");
+                    await asset.CopyFilesRecursively(CommonOutputDirectory / "common_asset");
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
