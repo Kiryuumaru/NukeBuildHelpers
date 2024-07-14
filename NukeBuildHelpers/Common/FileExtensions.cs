@@ -28,21 +28,24 @@ internal static class AbsolutePathExtensions
 
     public static void MoveFilesRecursively(this AbsolutePath path, AbsolutePath targetPath)
     {
-        var source = path.ToString().TrimEnd('\\', ' ');
-        var target = targetPath.ToString().TrimEnd('\\', ' ');
-        var files = Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
-                             .GroupBy(Path.GetDirectoryName);
-        foreach (var folder in files)
+        if (path.FileExists())
         {
-            var targetFolder = folder.Key!.Replace(source, target);
-            Directory.CreateDirectory(targetFolder);
-            foreach (var file in folder)
-            {
-                var targetFile = Path.Combine(targetFolder, Path.GetFileName(file));
-                if (File.Exists(targetFile)) File.Delete(targetFile);
-                File.Move(file, targetFile);
-            }
+            Directory.CreateDirectory(targetPath.Parent);
+            File.Move(path.ToString(), targetPath.ToString(), true);
         }
-        Directory.Delete(source, true);
+        else
+        {
+            foreach (string dirPath in Directory.GetDirectories(path.ToString(), "*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(dirPath.Replace(path.ToString(), targetPath));
+            }
+
+            foreach (string newPath in Directory.GetFiles(path.ToString(), "*.*", SearchOption.AllDirectories))
+            {
+                Directory.CreateDirectory(AbsolutePath.Create(newPath.Replace(path.ToString(), targetPath.ToString())).Parent);
+                File.Move(newPath, newPath.Replace(path.ToString(), targetPath.ToString()), true);
+            }
+            Directory.Delete(path, true);
+        }
     }
 }
