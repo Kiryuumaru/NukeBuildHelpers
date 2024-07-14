@@ -143,32 +143,29 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         await ExportEnvVarRuntime("NUKE_PRE_SETUP", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption));
     }
 
-    public Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
+    public async Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
-        return Task.Run(() =>
+        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
         {
-            foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
-            {
-                // Succeeded|SucceededWithIssues|Skipped|Failed|Canceled
-                string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id.ToUpperInvariant()) ?? "";
-                result = result.Replace("Succeeded", "success");
-                result = result.Replace("SucceededWithIssues", "error");
-                result = result.Replace("Failed", "error");
-                result = result.Replace("Canceled", "error");
-                result = result.Replace("Skipped", "skipped");
-                Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant(), result);
-            }
+            // Succeeded|SucceededWithIssues|Skipped|Failed|Canceled
+            string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id.ToUpperInvariant()) ?? "";
+            result = result.Replace("Succeeded", "success");
+            result = result.Replace("SucceededWithIssues", "error");
+            result = result.Replace("Failed", "error");
+            result = result.Replace("Canceled", "error");
+            result = result.Replace("Skipped", "skipped");
+            Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant(), result);
+        }
 
-            var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
-            if (artifactsDir.DirectoryExists())
+        var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
+        if (artifactsDir.DirectoryExists())
+        {
+            foreach (var artifact in artifactsDir.GetDirectories())
             {
-                foreach (var artifact in artifactsDir.GetDirectories())
-                {
-                    var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                    artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory / appId);
-                }
+                var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                await artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory / appId);
             }
-        });
+        }
     }
 
     public Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
@@ -176,19 +173,16 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return Task.CompletedTask;
     }
 
-    public Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public async Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
     {
-        return Task.Run(() =>
+        var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
+        if (artifactsDir.DirectoryExists())
         {
-            var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
-            if (artifactsDir.DirectoryExists())
+            foreach (var artifact in artifactsDir.GetDirectories())
             {
-                foreach (var artifact in artifactsDir.GetDirectories())
-                {
-                    artifact.CopyFilesRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
-                }
+                await artifact.CopyFilesRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
             }
-        });
+        }
     }
 
     public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)

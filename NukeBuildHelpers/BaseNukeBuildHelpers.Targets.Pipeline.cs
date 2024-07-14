@@ -510,7 +510,7 @@ partial class BaseNukeBuildHelpers
                             if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
                             {
                                 var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
-                                commonAssetPath.CopyFilesRecursively(commonOutPath);
+                                await commonAssetPath.CopyFilesRecursively(commonOutPath);
                                 commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
                                 Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
                             }
@@ -519,7 +519,7 @@ partial class BaseNukeBuildHelpers
                             {
                                 foreach (var releaseAsset in individualAssetPath.GetFiles())
                                 {
-                                    releaseAsset.CopyFilesRecursively(assetOutput / releaseAsset.Name);
+                                    await releaseAsset.CopyFilesRecursively(assetOutput / releaseAsset.Name);
                                     Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
                                 }
                             }
