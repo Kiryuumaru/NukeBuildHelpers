@@ -54,15 +54,18 @@ internal static class AbsolutePathExtensions
                 string linkTargetPath = linkedPath.ToString().Replace(linkedPath.Parent, targetPath);
                 foreach (string newPath in Directory.GetFiles(linkTarget, "*.*", SearchOption.AllDirectories))
                 {
-                    File.Copy(newPath, newPath.Replace(linkTarget, linkTargetPath), true);
+                    var destinationPath = AbsolutePath.Create(newPath.Replace(linkTarget, linkTargetPath));
+                    Directory.CreateDirectory(destinationPath.Parent);
+                    File.Copy(newPath, destinationPath, true);
                 }
             }
             foreach (AbsolutePath newPath in Directory.GetFiles(path.ToString(), "*.*", SearchOption.AllDirectories))
             {
                 if (!linkedPaths.Any(i => newPath == i || (newPath.ToString().StartsWith(i) && newPath.Parent != i.Parent)))
                 {
-                    Directory.CreateDirectory(AbsolutePath.Create(newPath.ToString().Replace(path.ToString(), targetPath.ToString())).Parent);
-                    File.Move(newPath, newPath.ToString().Replace(path.ToString(), targetPath.ToString()), true);
+                    var destinationPath = AbsolutePath.Create(newPath.ToString().Replace(path.ToString(), targetPath.ToString()));
+                    Directory.CreateDirectory(destinationPath.Parent);
+                    File.Move(newPath, destinationPath, true);
                 }
             }
             foreach (AbsolutePath linkedPath in linkedPaths)
