@@ -1,4 +1,5 @@
 ﻿using Nuke.Common.IO;
+using Serilog;
 
 namespace NukeBuildHelpers.Common;
 
@@ -17,7 +18,6 @@ internal static class AbsolutePathExtensions
             {
                 Directory.CreateDirectory(dirPath.Replace(path.ToString(), targetPath));
             }
-
             foreach (string newPath in Directory.GetFiles(path.ToString(), "*.*", SearchOption.AllDirectories))
             {
                 Directory.CreateDirectory(AbsolutePath.Create(newPath.Replace(path.ToString(), targetPath.ToString())).Parent);
@@ -35,15 +35,39 @@ internal static class AbsolutePathExtensions
         }
         else
         {
-            foreach (string dirPath in Directory.GetDirectories(path.ToString(), "*", SearchOption.AllDirectories))
+            List<AbsolutePath> linkedPaths = [];
+            foreach (AbsolutePath dirPath in Directory.GetDirectories(path.ToString(), "*", SearchOption.AllDirectories))
             {
-                Directory.CreateDirectory(dirPath.Replace(path.ToString(), targetPath));
+                if (new DirectoryInfo(dirPath).LinkTarget != null && !linkedPaths.Any(i => dirPath == i || (dirPath.ToString().StartsWith(i) && dirPath.Parent != i.Parent)))
+                {
+                    linkedPaths.Add(dirPath);
+                }
+                Directory.CreateDirectory(dirPath.ToString().Replace(path, targetPath));
             }
-
-            foreach (string newPath in Directory.GetFiles(path.ToString(), "*.*", SearchOption.AllDirectories))
+            foreach (AbsolutePath linkedPath in linkedPaths)
             {
-                Directory.CreateDirectory(AbsolutePath.Create(newPath.Replace(path.ToString(), targetPath.ToString())).Parent);
-                File.Move(newPath, newPath.Replace(path.ToString(), targetPath.ToString()), true);
+                var linkTarget = new DirectoryInfo(linkedPath).LinkTarget!;
+                if (!Path.IsPathRooted(linkTarget))
+                {
+                    linkTarget = Path.GetFullPath(new DirectoryInfo(linkedPath).LinkTarget!, linkedPath.Parent);
+                }
+                string linkTargetPath = linkedPath.ToString().Replace(linkedPath.Parent, targetPath);
+                foreach (string newPath in Directory.GetFiles(linkTarget, "*.*", SearchOption.AllDirectories))
+                {
+                    File.Copy(newPath, newPath.Replace(linkTarget, linkTargetPath), true);
+                }
+            }
+            foreach (AbsolutePath newPath in Directory.GetFiles(path.ToString(), "*.*", SearchOption.AllDirectories))
+            {
+                if (!linkedPaths.Any(i => newPath == i || (newPath.ToString().StartsWith(i) && newPath.Parent != i.Parent)))
+                {
+                    Directory.CreateDirectory(AbsolutePath.Create(newPath.ToString().Replace(path.ToString(), targetPath.ToString())).Parent);
+                    File.Move(newPath, newPath.ToString().Replace(path.ToString(), targetPath.ToString()), true);
+                }
+            }
+            foreach (AbsolutePath linkedPath in linkedPaths)
+            {
+                Directory.Delete(linkedPath);
             }
             Directory.Delete(path, true);
         }
