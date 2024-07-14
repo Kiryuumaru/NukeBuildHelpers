@@ -164,7 +164,16 @@ public static class AbsolutePathExtensions
                     Directory.Delete(path, true);
                 }
                 catch { }
-                Directory.Delete(path, true);
+                try
+                {
+                    Directory.Delete(path);
+                }
+                catch { }
+                try
+                {
+                    Directory.Delete(path, true);
+                }
+                catch { }
             }
         });
     }
@@ -211,7 +220,16 @@ public static class AbsolutePathExtensions
                     Directory.Delete(path, true);
                 }
                 catch { }
-                Directory.Delete(path, true);
+                try
+                {
+                    Directory.Delete(path);
+                }
+                catch { }
+                try
+                {
+                    Directory.Delete(path, true);
+                }
+                catch { }
             }
         });
     }
