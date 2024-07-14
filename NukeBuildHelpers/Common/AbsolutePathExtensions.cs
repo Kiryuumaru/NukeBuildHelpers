@@ -154,26 +154,19 @@ public static class AbsolutePathExtensions
                         catch { }
                     }
                 }
-                try
+                if (Directory.Exists(path))
                 {
-                    Directory.Delete(path);
+                    try
+                    {
+                        Directory.Delete(path);
+                    }
+                    catch { }
+                    try
+                    {
+                        Directory.Delete(path, true);
+                    }
+                    catch { }
                 }
-                catch { }
-                try
-                {
-                    Directory.Delete(path, true);
-                }
-                catch { }
-                try
-                {
-                    Directory.Delete(path);
-                }
-                catch { }
-                try
-                {
-                    Directory.Delete(path, true);
-                }
-                catch { }
             }
         });
     }
@@ -210,26 +203,19 @@ public static class AbsolutePathExtensions
                         catch { }
                     }
                 }
-                try
+                if (Directory.Exists(path))
                 {
-                    Directory.Delete(path);
+                    try
+                    {
+                        Directory.Delete(path);
+                    }
+                    catch { }
+                    try
+                    {
+                        Directory.Delete(path, true);
+                    }
+                    catch { }
                 }
-                catch { }
-                try
-                {
-                    Directory.Delete(path, true);
-                }
-                catch { }
-                try
-                {
-                    Directory.Delete(path);
-                }
-                catch { }
-                try
-                {
-                    Directory.Delete(path, true);
-                }
-                catch { }
             }
         });
     }
