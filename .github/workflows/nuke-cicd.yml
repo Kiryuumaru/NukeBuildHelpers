@@ -15,7 +15,7 @@ concurrency:
 jobs:
   PRE_SETUP:
     name: Pre Setup
-    runs-on: windows-2022
+    runs-on: ${{ fromJson('{"labels":"windows-2022"}') }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -411,7 +411,7 @@ jobs:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:
     name: Post Setup
-    runs-on: windows-2022
+    runs-on: ${{ fromJson('{"labels":"windows-2022"}') }}
     steps:
     - uses: actions/checkout@v4
       with:
