@@ -35,7 +35,7 @@ class Build : BaseNukeBuildHelpers
 
     protected override WorkflowConfigEntry WorkflowConfig => _ => _
         .PreSetupRunnerOS(RunnerOS.Windows2022)
-        .PostSetupRunnerOS(RunnerOS.Windows2022);
+        .PostSetupRunnerOS(RunnerOS.Ubuntu2204);
 
     Target Clean => _ => _
         .Executes(() =>

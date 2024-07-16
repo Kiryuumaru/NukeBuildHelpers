@@ -111,44 +111,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             
-            string runsOn;
-            if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
-            {
-                var runsOnObj = new
-                {
-                    labels = runnerPipelineOS.RunsOn,
-                };
-                runsOn = JsonSerializer.Serialize(runsOnObj);
-            }
-            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
-            {
-                var runsOnObj = new
-                {
-                    labels = runnerPipelineOS.RunsOnLabels,
-                    group = runnerPipelineOS.Group,
-                };
-                runsOn = JsonSerializer.Serialize(runsOnObj);
-            }
-            else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
-            {
-                var runsOnObj = new
-                {
-                    labels = runnerPipelineOS.RunsOnLabels
-                };
-                runsOn = JsonSerializer.Serialize(runsOnObj);
-            }
-            else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
-            {
-                var runsOnObj = new
-                {
-                    group = runnerPipelineOS.Group
-                };
-                runsOn = JsonSerializer.Serialize(runsOnObj);
-            }
-            else
-            {
-                runsOn = JsonSerializer.Serialize("");
-            }
+            string runsOn = ResolveRunsOn(runnerPipelineOS);
 
             var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
             var entryIdNorm = entryId.Replace("-", ".");
@@ -422,7 +385,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return "${{ fromJson(" + GetImportedEnvVarName(entryId, name) + ") }}";
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string>? needs = null, string _if = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, object runsOn, IEnumerable<string>? needs = null, string _if = "")
     {
         Dictionary<string, object> job = new()
         {
@@ -444,9 +407,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, IEnumerable<string>? needs = null, string _if = "")
     {
-        RunnerGithubPipelineOS skipRunnerPipelineOS = (runnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
-        string? runsOn = string.IsNullOrEmpty(skipRunnerPipelineOS.RunsOn) ? "[ " + string.Join(", ", skipRunnerPipelineOS.RunsOnLabels!) + " ]" : skipRunnerPipelineOS.RunsOn;
-        return AddJob(workflow, id, name, runsOn, needs, _if);
+        RunnerGithubPipelineOS runnerPipelineOS = (runnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
+        var job = JsonSerializer.Deserialize<Dictionary<string, string>>(ResolveRunsOn(runnerPipelineOS))!;
+        return AddJob(workflow, id, name, job, needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "", string _if = "")
@@ -583,5 +546,50 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             SubmoduleCheckoutType.Recursive => "recursive",
             _ => throw new NotImplementedException(submoduleCheckoutType.ToString())
         };
+    }
+
+    private static string ResolveRunsOn(RunnerGithubPipelineOS runnerPipelineOS)
+    {
+        string runsOn;
+
+        if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
+        {
+            var runsOnObj = new
+            {
+                labels = runnerPipelineOS.RunsOn,
+            };
+            runsOn = JsonSerializer.Serialize(runsOnObj);
+        }
+        else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
+        {
+            var runsOnObj = new
+            {
+                labels = runnerPipelineOS.RunsOnLabels,
+                group = runnerPipelineOS.Group,
+            };
+            runsOn = JsonSerializer.Serialize(runsOnObj);
+        }
+        else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
+        {
+            var runsOnObj = new
+            {
+                labels = runnerPipelineOS.RunsOnLabels
+            };
+            runsOn = JsonSerializer.Serialize(runsOnObj);
+        }
+        else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
+        {
+            var runsOnObj = new
+            {
+                group = runnerPipelineOS.Group
+            };
+            runsOn = JsonSerializer.Serialize(runsOnObj);
+        }
+        else
+        {
+            runsOn = JsonSerializer.Serialize("");
+        }
+
+        return runsOn;
     }
 }
