@@ -111,7 +111,7 @@ partial class BaseNukeBuildHelpers
         catch { }
     }
 
-    private static async Task CachePreload(IEntryDefinition entry)
+    private static async Task CachePreload(IRunEntryDefinition entry)
     {
         if (!entryCachePath.DirectoryExists())
         {
@@ -171,7 +171,7 @@ partial class BaseNukeBuildHelpers
         SetCacheIndex(cachePairs);
     }
 
-    private static async Task CachePostload(IEntryDefinition entry)
+    private static async Task CachePostload(IRunEntryDefinition entry)
     {
         var cachePaths = entry.CachePath == null ? [] : await entry.GetCachePaths();
 
@@ -334,7 +334,7 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IEntryDefinition> entriesToRun, PipelinePreSetup? pipelinePreSetup, Func<IEntryDefinition, Task>? preExecute, Func<IEntryDefinition, Task>? postExecute)
+    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IRunEntryDefinition> entriesToRun, PipelinePreSetup? pipelinePreSetup, Func<IRunEntryDefinition, Task>? preExecute, Func<IRunEntryDefinition, Task>? postExecute)
     {
         List<Func<Task>> tasks = [];
 
@@ -374,11 +374,11 @@ partial class BaseNukeBuildHelpers
     {
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
-        IEnumerable<IEntryDefinition> entriesToRun;
+        IEnumerable<IRunEntryDefinition> entriesToRun;
 
         if (!idsToRun.Any())
         {
-            entriesToRun = allEntry.TestEntryDefinitionMap.Values.Cast<IEntryDefinition>();
+            entriesToRun = allEntry.TestEntryDefinitionMap.Values.Cast<IRunEntryDefinition>();
         }
         else
         {
@@ -392,14 +392,14 @@ partial class BaseNukeBuildHelpers
     {
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
-        IEnumerable<IEntryDefinition> entriesToRun;
+        IEnumerable<IRunEntryDefinition> entriesToRun;
 
         OutputDirectory.DeleteDirectory();
         OutputDirectory.CreateDirectory();
 
         if (!idsToRun.Any())
         {
-            entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Cast<IEntryDefinition>();
+            entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Cast<IRunEntryDefinition>();
         }
         else
         {
@@ -441,11 +441,11 @@ partial class BaseNukeBuildHelpers
     {
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
-        IEnumerable<IEntryDefinition> entriesToRun;
+        IEnumerable<IRunEntryDefinition> entriesToRun;
 
         if (!idsToRun.Any())
         {
-            entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Cast<IEntryDefinition>();
+            entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Cast<IRunEntryDefinition>();
         }
         else
         {

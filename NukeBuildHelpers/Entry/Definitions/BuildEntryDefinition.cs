@@ -17,7 +17,7 @@ internal class BuildEntryDefinition : TargetEntryDefinition, IBuildEntryDefiniti
         return "Build - " + ((IBuildEntryDefinition)this).AppId + " (" + Id + ")";
     }
 
-    protected override IEntryDefinition Clone()
+    protected override IRunEntryDefinition Clone()
     {
         var definition = new BuildEntryDefinition()
         {
@@ -27,7 +27,7 @@ internal class BuildEntryDefinition : TargetEntryDefinition, IBuildEntryDefiniti
         return definition;
     }
 
-    internal override void FillClone(IEntryDefinition definition)
+    internal override void FillClone(IRunEntryDefinition definition)
     {
         base.FillClone(definition);
         ((IBuildEntryDefinition)definition).ReleaseAsset = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IBuildEntryDefinition)this).ReleaseAsset);

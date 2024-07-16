@@ -2,11 +2,11 @@
 
 namespace NukeBuildHelpers.Entry.Definitions;
 
-internal abstract class TargetEntryDefinition : EntryDefinition, ITargetEntryDefinition
+internal abstract class TargetEntryDefinition : RunEntryDefinition, ITargetEntryDefinition
 {
     string? ITargetEntryDefinition.AppId { get; set; }
 
-    internal override void FillClone(IEntryDefinition definition)
+    internal override void FillClone(IRunEntryDefinition definition)
     {
         base.FillClone(definition);
         ((ITargetEntryDefinition)definition).AppId = ((ITargetEntryDefinition)this).AppId;
