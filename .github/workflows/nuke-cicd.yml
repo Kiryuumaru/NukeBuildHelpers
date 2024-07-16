@@ -16,12 +16,7 @@ jobs:
   PRE_SETUP:
     name: Pre Setup
     runs-on:
-      labels:
-      - self-hosted
-      - linux
-      - x64
-      - low
-      group: Default
+      labels: windows-2022
     steps:
     - uses: actions/checkout@v4
       with:
@@ -30,7 +25,7 @@ jobs:
         submodules: recursive
     - id: NUKE_RUN
       name: Run Nuke PipelinePreSetup
-      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup
+      run: ./build.cmd PipelinePreSetup
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
