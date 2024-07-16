@@ -184,7 +184,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public async Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
     {
-        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
         {
             // success, failure, cancelled, or skipped
             string result = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id.ToUpperInvariant()) ?? "";
@@ -209,7 +209,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return Task.CompletedTask;
     }
 
-    public async Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public async Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap)
     {
         var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
         if (artifactsDir.DirectoryExists())
@@ -221,16 +221,20 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
     }
 
-    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IEntryDefinition> entriesToRunMap)
+    public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap)
     {
         return Task.CompletedTask;
     }
 
     public async Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
     {
+        var pipelineName = await allEntry.WorkflowConfigEntryDefinition.GetName();
+        var pipelinePreSetupOs = await allEntry.WorkflowConfigEntryDefinition.GetPreSetupRunnerOS();
+        var pipelinePostSetupOs = await allEntry.WorkflowConfigEntryDefinition.GetPostSetupRunnerOS();
+
         Dictionary<string, object> workflow = new()
         {
-            ["name"] = "Nuke CICD Pipeline",
+            ["name"] = pipelineName,
             ["on"] = new Dictionary<string, object>()
                 {
                     { "push", new Dictionary<string, object>()
@@ -261,15 +265,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         List<string> needs = [];
-        var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", RunnerOS.Ubuntu2204);
+        var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", pipelinePreSetupOs);
         AddJobStepCheckout(preSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
-        var nukePreSetup = AddJobStepNukeRun(preSetupJob, RunnerOS.Ubuntu2204, "PipelinePreSetup", id: "NUKE_RUN");
+        var nukePreSetup = AddJobStepNukeRun(preSetupJob, pipelinePreSetupOs, "PipelinePreSetup", id: "NUKE_RUN");
         AddJobOrStepEnvVar(nukePreSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_PUBLISH_MATRIX");
-        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
         {
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "CONDITION");
             ImportEnvVarWorkflow(preSetupJob, entryDefinition.Id.ToUpperInvariant(), "RUNS_ON");
@@ -366,16 +370,16 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         postNeeds.AddRange(testNeeds.Where(i => !needs.Contains(i)));
         postNeeds.AddRange(buildNeeds.Where(i => !needs.Contains(i)));
         postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
-        var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", RunnerOS.Ubuntu2204, needs: [.. postNeeds], _if: "success() || failure() || always()");
+        var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", pipelinePostSetupOs, needs: [.. postNeeds], _if: "success() || failure() || always()");
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP", "PRE_SETUP");
-        foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+        foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
         {
             AddJobOrStepEnvVar(postSetupJob, "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id.ToUpperInvariant(), $"${{{{ needs.{entryDefinition.Id.ToUpperInvariant()}.result }}}}");
         }
         AddJobStepCheckout(postSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts");
-        var nukePostSetup = AddJobStepNukeRun(postSetupJob, RunnerOS.Ubuntu2204, "PipelinePostSetup");
+        var nukePostSetup = AddJobStepNukeRun(postSetupJob, pipelinePostSetupOs, "PipelinePostSetup");
         AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 
         // ██████████████████████████████████████
@@ -472,7 +476,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IGithubWorkflowBuilder workflowBuilder, IEntryDefinition entryDefinition, string runType)
+    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IGithubWorkflowBuilder workflowBuilder, IRunEntryDefinition entryDefinition, string runType)
     {
         AddJobStepCache(job, entryDefinition.Id.ToUpperInvariant());
         foreach (var step in workflowBuilder.PreExecuteSteps)

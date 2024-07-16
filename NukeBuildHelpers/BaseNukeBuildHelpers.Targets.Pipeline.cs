@@ -326,7 +326,7 @@ partial class BaseNukeBuildHelpers
             Dictionary<string, EntrySetup> dependentEntrySetupMap = [];
             Dictionary<string, EntrySetup> entrySetupMap = [];
 
-            async Task<EntrySetup> createEntrySetup(IEntryDefinition entry)
+            async Task<EntrySetup> createEntrySetup(IRunEntryDefinition entry)
             {
                 var runnerOs = await entry.GetRunnerOS();
                 var cachePaths = await entry.GetCachePaths();
@@ -471,7 +471,7 @@ partial class BaseNukeBuildHelpers
 
             bool success = true;
 
-            foreach (var entryDefinition in allEntry.EntryDefinitionMap.Values)
+            foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
             {
                 var entryRunResult = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant());
                 Log.Information("{entryId} result: {result}", entryDefinition.Id, entryRunResult);

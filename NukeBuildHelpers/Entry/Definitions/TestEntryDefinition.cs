@@ -17,7 +17,7 @@ internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinit
         }
     }
 
-    protected override IEntryDefinition Clone()
+    protected override IRunEntryDefinition Clone()
     {
         var definition = new TestEntryDefinition()
         {

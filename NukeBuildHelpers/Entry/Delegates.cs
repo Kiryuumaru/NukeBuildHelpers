@@ -22,3 +22,10 @@ public delegate IBuildEntryDefinition BuildEntry(IBuildEntryDefinition definitio
 /// <param name="definition">The publish entry definition.</param>
 /// <returns>The publish entry definition after transformation.</returns>
 public delegate IPublishEntryDefinition PublishEntry(IPublishEntryDefinition definition);
+
+/// <summary>
+/// Delegate for defining a workflow config entry.
+/// </summary>
+/// <param name="definition">The workflow config entry definition.</param>
+/// <returns>The workflow config entry definition after transformation.</returns>
+public delegate IWorkflowConfigEntryDefinition WorkflowConfigEntry(IWorkflowConfigEntryDefinition definition);

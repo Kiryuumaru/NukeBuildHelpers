@@ -8,7 +8,6 @@ using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using Semver;
 using System.Reflection;
-using static NuGet.Client.ManagedCodeConventions;
 
 namespace NukeBuildHelpers.Entry.Helpers;
 
@@ -18,7 +17,8 @@ internal static class EntryHelpers
     {
         Dictionary<string, AppEntry> appEntryMap = [];
 
-        List<(IEntryDefinition Definition, string PropertyName)> definedEntryDefinitions = [];
+        IWorkflowConfigEntryDefinition? workflowConfigEntryDefinition = null;
+        List<(IRunEntryDefinition Definition, string PropertyName)> definedEntryDefinitions = [];
 
         foreach (var property in nukeBuildHelpers.GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
         {
@@ -37,11 +37,24 @@ internal static class EntryHelpers
                 var publishEntry = (PublishEntry)property.GetValue(nukeBuildHelpers)!;
                 definedEntryDefinitions.Add((publishEntry.Invoke(new PublishEntryDefinition() { Id = "_" }), property.Name));
             }
+            else if (property.PropertyType == typeof(WorkflowConfigEntry))
+            {
+                if (property.Name == nameof(nukeBuildHelpers.WorkflowConfig))
+                {
+                    var workflowConfigEntry = (WorkflowConfigEntry)property.GetValue(nukeBuildHelpers)!;
+                    workflowConfigEntryDefinition = workflowConfigEntry.Invoke(new WorkflowConfigEntryDefinition());
+                }
+            }
         }
 
-        List<IEntryDefinition> entryDefinitions = [];
+        if (workflowConfigEntryDefinition == null)
+        {
+            throw new Exception("WorkflowConfigEntry is not defined");
+        }
 
-        async Task append(IEntryDefinition definition, string defaultId)
+        List<IRunEntryDefinition> entryDefinitions = [];
+
+        async Task append(IRunEntryDefinition definition, string defaultId)
         {
             if (definition.Matrix.Count == 0)
             {
@@ -65,9 +78,9 @@ internal static class EntryHelpers
             }
         }
 
-        foreach (var defined in definedEntryDefinitions)
+        foreach (var (Definition, PropertyName) in definedEntryDefinitions)
         {
-            await append(defined.Definition, defined.PropertyName);
+            await append(Definition, PropertyName);
         }
 
         List<IDependentEntryDefinition> dependentEntryDefinitions = [];
@@ -151,10 +164,11 @@ internal static class EntryHelpers
         return new()
         {
             AppEntryMap = appEntryMap,
+            WorkflowConfigEntryDefinition = workflowConfigEntryDefinition,
             TestEntryDefinitionMap = testEntryDefinitions.ToDictionary(i => i.Id),
             BuildEntryDefinitionMap = buildEntryDefinitions.ToDictionary(i => i.Id),
             PublishEntryDefinitionMap = publishEntryDefinitions.ToDictionary(i => i.Id),
-            EntryDefinitionMap = entryDefinitions.ToDictionary(i => i.Id),
+            RunEntryDefinitionMap = entryDefinitions.ToDictionary(i => i.Id),
             TargetEntryDefinitionMap = targetEntryDefinitions.ToDictionary(i => i.Id),
             DependentEntryDefinitionMap = dependentEntryDefinitions.ToDictionary(i => i.Id),
         };

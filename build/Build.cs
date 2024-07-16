@@ -33,6 +33,10 @@ class Build : BaseNukeBuildHelpers
     [SecretVariable("GITHUB_TOKEN")]
     readonly string? GithubToken;
 
+    protected override WorkflowConfigEntry WorkflowConfig => _ => _
+        .PreSetupRunnerOS(RunnerOS.Windows2022)
+        .PostSetupRunnerOS(RunnerOS.Windows2022);
+
     Target Clean => _ => _
         .Executes(() =>
         {
