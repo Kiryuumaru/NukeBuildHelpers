@@ -170,6 +170,8 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
 
     These commands will generate `azure-pipelines.yml` and `.github/workflows/nuke-cicd.yml` respectively.
 
+    For advanced workflow configurations, you can utilize the `WorkflowConfigEntry` by overriding `BaseNukeBuildHelpers.WorkflowConfig`. See the documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/WorkflowConfigEntry.md) for more details on customizing your workflows.
+
 ### Bumping Project Version
 
 - Use the `build bump` command to interactively bump the project version:
