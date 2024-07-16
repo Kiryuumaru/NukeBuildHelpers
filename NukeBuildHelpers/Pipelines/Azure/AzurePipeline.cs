@@ -163,7 +163,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             foreach (var artifact in artifactsDir.GetDirectories())
             {
                 var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                await artifact.CopyFilesRecursively(BaseNukeBuildHelpers.OutputDirectory / appId);
+                await artifact.CopyRecursively(BaseNukeBuildHelpers.OutputDirectory / appId);
             }
         }
     }
@@ -180,7 +180,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             foreach (var artifact in artifactsDir.GetDirectories())
             {
-                await artifact.CopyFilesRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
+                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
             }
         }
     }

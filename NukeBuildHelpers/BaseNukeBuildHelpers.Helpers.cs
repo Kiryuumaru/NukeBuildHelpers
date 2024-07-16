@@ -160,7 +160,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (cachePathValue.DirectoryExists())
                 {
-                    await cachePathValue.MoveFilesRecursively(path);
+                    await cachePathValue.MoveRecursively(path);
                 }
                 Log.Information("{path} cache loaded", path);
             }));
@@ -201,7 +201,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (path.DirectoryExists())
                 {
-                    await path.MoveFilesRecursively(cachePathValue);
+                    await path.MoveRecursively(cachePathValue);
                 }
                 Log.Information("{path} cache saved", path);
             }));
@@ -413,7 +413,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists())
                 {
-                    await asset.CopyFilesRecursively(CommonOutputDirectory / "asset" / asset.Name);
+                    await asset.CopyRecursively(CommonOutputDirectory / "asset" / asset.Name);
                 }
                 else if (asset.DirectoryExists())
                 {
@@ -430,7 +430,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists() || asset.DirectoryExists())
                 {
-                    await asset.CopyFilesRecursively(CommonOutputDirectory / "common_asset");
+                    await asset.CopyRecursively(CommonOutputDirectory / "common_asset");
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
