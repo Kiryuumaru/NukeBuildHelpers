@@ -19,6 +19,40 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+internal class RunnerOSSelf(string os, string arch, string variant) : RunnerOS
+{
+    public override string Name => $"self-{OS}-10";
+
+    public string OS { get; } = os;
+
+    public string Arch { get; } = arch;
+
+    public string Variant { get; } = variant;
+
+    public override object GetPipelineOS(PipelineType pipelineType)
+    {
+        return pipelineType switch
+        {
+            PipelineType.Github => new RunnerGithubPipelineOS() { Group = "Default", RunsOnLabels = ["self-hosted", OS, Arch, Variant] },
+            _ => throw new NotImplementedException()
+        };
+    }
+
+    public override string GetRunScript(PipelineType pipelineType)
+    {
+        return pipelineType switch
+        {
+            PipelineType.Github => OS.ToLowerInvariant() switch
+            {
+                "windows" => "./build.cmd",
+                "linux" => "chmod +x ./build.sh && ./build.sh",
+                _ => throw new NotImplementedException()
+            },
+            _ => throw new NotImplementedException()
+        };
+    }
+}
+
 class Build : BaseNukeBuildHelpers
 {
     public static int Main() => Execute<Build>(x => x.Version);
@@ -34,7 +68,7 @@ class Build : BaseNukeBuildHelpers
     readonly string? GithubToken;
 
     protected override WorkflowConfigEntry WorkflowConfig => _ => _
-        .PreSetupRunnerOS(RunnerOS.Windows2022)
+        .PreSetupRunnerOS(new RunnerOSSelf("linux", "x64", "low"))
         .PostSetupRunnerOS(RunnerOS.Ubuntu2204);
 
     Target Clean => _ => _

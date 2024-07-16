@@ -111,8 +111,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
             
-            string runsOn = ResolveRunsOn(runnerPipelineOS);
-
             var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
             var entryIdNorm = entryId.Replace("-", ".");
             var environmentNorm = pipelinePreSetup.Environment.Replace("-", ".");
@@ -122,7 +120,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var runIdentifierNorm = runIdentifier.Replace("-", ".");
 
             await ExportEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
-            await ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", runsOn);
+            await ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", ResolveRunsOn(runnerPipelineOS, false).ToString());
             await ExportEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
@@ -408,8 +406,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, IEnumerable<string>? needs = null, string _if = "")
     {
         RunnerGithubPipelineOS runnerPipelineOS = (runnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
-        var job = JsonSerializer.Deserialize<Dictionary<string, string>>(ResolveRunsOn(runnerPipelineOS))!;
-        return AddJob(workflow, id, name, job, needs, _if);
+        return AddJob(workflow, id, name, ResolveRunsOn(runnerPipelineOS, true), needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "", string _if = "")
@@ -548,48 +545,47 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         };
     }
 
-    private static string ResolveRunsOn(RunnerGithubPipelineOS runnerPipelineOS)
+    private static object ResolveRunsOn(RunnerGithubPipelineOS runnerPipelineOS, bool asDictionary)
     {
-        string runsOn;
+        Dictionary<string, object> runsOnObj = [];
 
         if (!string.IsNullOrEmpty(runnerPipelineOS.RunsOn))
         {
-            var runsOnObj = new
+            runsOnObj = new Dictionary<string, object>()
             {
-                labels = runnerPipelineOS.RunsOn,
+                ["labels"] = runnerPipelineOS.RunsOn
             };
-            runsOn = JsonSerializer.Serialize(runsOnObj);
         }
         else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && !string.IsNullOrEmpty(runnerPipelineOS.Group))
         {
-            var runsOnObj = new
+            runsOnObj = new Dictionary<string, object>()
             {
-                labels = runnerPipelineOS.RunsOnLabels,
-                group = runnerPipelineOS.Group,
+                ["labels"] = runnerPipelineOS.RunsOnLabels,
+                ["group"] = runnerPipelineOS.Group,
             };
-            runsOn = JsonSerializer.Serialize(runsOnObj);
         }
         else if (runnerPipelineOS.RunsOnLabels != null && runnerPipelineOS.RunsOnLabels.Length != 0 && string.IsNullOrEmpty(runnerPipelineOS.Group))
         {
-            var runsOnObj = new
+            runsOnObj = new Dictionary<string, object>()
             {
-                labels = runnerPipelineOS.RunsOnLabels
+                ["labels"] = runnerPipelineOS.RunsOnLabels
             };
-            runsOn = JsonSerializer.Serialize(runsOnObj);
         }
         else if ((runnerPipelineOS.RunsOnLabels == null || runnerPipelineOS.RunsOnLabels.Length == 0) && !string.IsNullOrEmpty(runnerPipelineOS.Group))
         {
-            var runsOnObj = new
+            runsOnObj = new Dictionary<string, object>()
             {
-                group = runnerPipelineOS.Group
+                ["group"] = runnerPipelineOS.Group
             };
-            runsOn = JsonSerializer.Serialize(runsOnObj);
+        }
+
+        if (asDictionary)
+        {
+            return runsOnObj;
         }
         else
         {
-            runsOn = JsonSerializer.Serialize("");
+            return JsonSerializer.Serialize(runsOnObj);
         }
-
-        return runsOn;
     }
 }
