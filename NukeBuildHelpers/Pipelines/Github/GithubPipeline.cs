@@ -385,7 +385,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return "${{ fromJson(" + GetImportedEnvVarName(entryId, name) + ") }}";
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string runsOn, IEnumerable<string>? needs = null, string _if = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, object runsOn, IEnumerable<string>? needs = null, string _if = "")
     {
         Dictionary<string, object> job = new()
         {
@@ -408,7 +408,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, IEnumerable<string>? needs = null, string _if = "")
     {
         RunnerGithubPipelineOS runnerPipelineOS = (runnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
-        return AddJob(workflow, id, name, "${{ fromJson('" + ResolveRunsOn(runnerPipelineOS) + "') }}", needs, _if);
+        var job = JsonSerializer.Deserialize<Dictionary<string, string>>(ResolveRunsOn(runnerPipelineOS))!;
+        return AddJob(workflow, id, name, job, needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "", string _if = "")
