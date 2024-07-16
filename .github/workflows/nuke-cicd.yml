@@ -15,7 +15,7 @@ concurrency:
 jobs:
   PRE_SETUP:
     name: Pre Setup
-    runs-on: ubuntu-22.04
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
       with:
@@ -24,7 +24,7 @@ jobs:
         submodules: recursive
     - id: NUKE_RUN
       name: Run Nuke PipelinePreSetup
-      run: chmod +x ./build.sh && ./build.sh PipelinePreSetup
+      run: ./build.cmd PipelinePreSetup
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
@@ -411,7 +411,7 @@ jobs:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:
     name: Post Setup
-    runs-on: ubuntu-22.04
+    runs-on: windows-2022
     steps:
     - uses: actions/checkout@v4
       with:
@@ -423,7 +423,7 @@ jobs:
       with:
         path: ./.nuke/temp/artifacts
     - name: Run Nuke PipelinePostSetup
-      run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
+      run: ./build.cmd PipelinePostSetup
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
