@@ -3,6 +3,7 @@ using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 
 namespace NukeBuildHelpers;
@@ -88,4 +89,9 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
     public PipelineType PipelineType { get; internal set; }
 
     private IReadOnlyDictionary<string, string?>? splitArgs;
+
+    /// <summary>
+    /// The overridable workflow config entry used for generating workflows.
+    /// </summary>
+    protected internal virtual WorkflowConfigEntry WorkflowConfig => _ => _;
 }

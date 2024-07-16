@@ -728,7 +728,7 @@ Sets the matrix of the definition to configure on each matrix element.
 ### Definitions
 
 ```csharp
-ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TEntryDefinition, TMatrix> matrixDefinition);
+ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TRunEntryDefinition, TMatrix> matrixDefinition);
 ```
 
 ### Usage

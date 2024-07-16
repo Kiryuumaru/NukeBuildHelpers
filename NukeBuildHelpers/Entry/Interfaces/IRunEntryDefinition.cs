@@ -10,9 +10,9 @@ namespace NukeBuildHelpers.Entry.Interfaces;
 /// <summary>
 /// Interface defining the definition of an entry in the build system.
 /// </summary>
-public interface IEntryDefinition
+public interface IRunEntryDefinition
 {
-    internal IEntryDefinition Clone();
+    internal IRunEntryDefinition Clone();
 
     internal string Id { get; set; }
 
@@ -36,7 +36,7 @@ public interface IEntryDefinition
 
     internal List<Func<IWorkflowBuilder, Task>> WorkflowBuilder { get; set; }
 
-    internal List<Func<IEntryDefinition, Task<IEntryDefinition[]>>> Matrix { get; set; }
+    internal List<Func<IRunEntryDefinition, Task<IRunEntryDefinition[]>>> Matrix { get; set; }
 
     internal IRunContext? RunContext { get; set; }
 
