@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7D239E58-4
 		docs\BuildEntry.md = docs\BuildEntry.md
 		docs\PublishEntry.md = docs\PublishEntry.md
 		docs\TestEntry.md = docs\TestEntry.md
+		docs\WorkflowConfigEntry.md = docs\WorkflowConfigEntry.md
 	EndProjectSection
 EndProject
 Global
