@@ -110,7 +110,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
 
             RunnerGithubPipelineOS runnerPipelineOS = JsonSerializer.Deserialize<RunnerGithubPipelineOS>(entrySetup.RunnerOSSetup.RunnerPipelineOS, JsonExtension.SnakeCaseNamingOptionIndented)!;
-            
+
+            string runsOn = ResolveRunsOn(runnerPipelineOS, false).ToString()!;
+
             var osName = entrySetup.RunnerOSSetup.Name.Replace("-", ".");
             var entryIdNorm = entryId.Replace("-", ".");
             var environmentNorm = pipelinePreSetup.Environment.Replace("-", ".");
@@ -120,7 +122,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var runIdentifierNorm = runIdentifier.Replace("-", ".");
 
             await ExportEnvVarRuntime(entryIdNorm, "CONDITION", entrySetup.Condition ? "true" : "false");
-            await ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", ResolveRunsOn(runnerPipelineOS, false).ToString());
+            await ExportEnvVarRuntime(entryIdNorm, "RUNS_ON", runsOn);
             await ExportEnvVarRuntime(entryIdNorm, "RUN_SCRIPT", entrySetup.RunnerOSSetup.RunScript);
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-{runIdentifierNorm}");
             await ExportEnvVarRuntime(entryIdNorm, "CACHE_RESTORE_KEY", $"{cacheFamilyNorm}-{osName}-{entryIdNorm}-{cacheInvalidatorNorm}-{environmentNorm}-{runClassificationNorm}-");
