@@ -1,6 +1,7 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Utilities;
+using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry.Definitions;
@@ -228,7 +229,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         List<string> needs = [];
-        var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", pipelinePreSetupOs);
+        var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", pipelinePreSetupOs, timeoutMinutes: 10);
         AddJobStepCheckout(preSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, pipelinePreSetupOs, "PipelinePreSetup", name: "NUKE_RUN");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
@@ -320,7 +321,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         postNeeds.AddRange(testNeeds.Where(i => !needs.Contains(i)));
         postNeeds.AddRange(buildNeeds.Where(i => !needs.Contains(i)));
         postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
-        var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", pipelinePostSetupOs, needs: [.. postNeeds], condition: "always()");
+        var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", pipelinePostSetupOs, timeoutMinutes: 10, needs: [.. postNeeds], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
         foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
         {
@@ -390,7 +391,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return "$(" + GetImportedEnvVarName(entryId, name) + ")";
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string? poolName, string? poolVMImage, IEnumerable<string>? needs = null, string condition = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, string? poolName, string? poolVMImage, int? timeoutMinutes = null, IEnumerable<string>? needs = null, string condition = "")
     {
         Dictionary<string, object> job = new()
         {
@@ -411,14 +412,18 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             job["condition"] = condition;
         }
+        if (timeoutMinutes != null)
+        {
+            job["timeoutInMinutes"] = timeoutMinutes.Value;
+        }
         ((List<object>)workflow["jobs"]).Add(job);
         return job;
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, IEnumerable<string>? needs = null, string condition = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, int? timeoutMinutes = null, IEnumerable<string>? needs = null, string condition = "")
     {
         var azureRunnerOs = (runnerOS.GetPipelineOS(PipelineType.Azure) as RunnerAzurePipelineOS)!;
-        return AddJob(workflow, id, name, azureRunnerOs.PoolName, azureRunnerOs.PoolVMImage, needs, condition);
+        return AddJob(workflow, id, name, azureRunnerOs.PoolName, azureRunnerOs.PoolVMImage, timeoutMinutes, needs, condition);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string name = "", string displayName = "", string task = "", string script = "", string condition = "")
