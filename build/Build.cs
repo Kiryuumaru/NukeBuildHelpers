@@ -10,7 +10,6 @@ using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Pipelines.Azure.Extensions;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Github.Extensions;
-using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.RunContext.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
