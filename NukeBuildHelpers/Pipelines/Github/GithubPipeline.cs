@@ -228,7 +228,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
         List<string> needs = [];
-        var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", pipelinePreSetupOs);
+        var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", pipelinePreSetupOs, timeoutMinutes: 10);
         AddJobStepCheckout(preSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var nukePreSetup = AddJobStepNukeRun(preSetupJob, pipelinePreSetupOs, "PipelinePreSetup", id: "NUKE_RUN");
         AddJobOrStepEnvVar(nukePreSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
@@ -333,7 +333,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         postNeeds.AddRange(testNeeds.Where(i => !needs.Contains(i)));
         postNeeds.AddRange(buildNeeds.Where(i => !needs.Contains(i)));
         postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
-        var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", pipelinePostSetupOs, needs: [.. postNeeds], _if: "success() || failure() || always()");
+        var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", pipelinePostSetupOs, timeoutMinutes: 10, needs: [.. postNeeds], _if: "success() || failure() || always()");
         AddJobOrStepEnvVarFromNeeds(postSetupJob, "NUKE_PRE_SETUP", "PRE_SETUP");
         foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
         {
@@ -385,7 +385,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return "${{ fromJson(" + GetImportedEnvVarName(entryId, name) + ") }}";
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, object runsOn, IEnumerable<string>? needs = null, string _if = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, object runsOn, int? timeoutMinutes = null, IEnumerable<string>? needs = null, string _if = "")
     {
         Dictionary<string, object> job = new()
         {
@@ -401,14 +401,18 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             job["if"] = _if;
         }
+        if (timeoutMinutes != null)
+        {
+            job["timeout-minutes"] = timeoutMinutes.Value;
+        }
         ((Dictionary<string, object>)workflow["jobs"])[id] = job;
         return job;
     }
 
-    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, IEnumerable<string>? needs = null, string _if = "")
+    private static Dictionary<string, object> AddJob(Dictionary<string, object> workflow, string id, string name, RunnerOS runnerOS, int? timeoutMinutes = null, IEnumerable<string>? needs = null, string _if = "")
     {
         RunnerGithubPipelineOS runnerPipelineOS = (runnerOS.GetPipelineOS(PipelineType.Github) as RunnerGithubPipelineOS)!;
-        return AddJob(workflow, id, name, ResolveRunsOn(runnerPipelineOS, true), needs, _if);
+        return AddJob(workflow, id, name, ResolveRunsOn(runnerPipelineOS, true), timeoutMinutes, needs, _if);
     }
 
     private static Dictionary<string, object> AddJobStep(Dictionary<string, object> job, string id = "", string name = "", string uses = "", string run = "", string _if = "")
