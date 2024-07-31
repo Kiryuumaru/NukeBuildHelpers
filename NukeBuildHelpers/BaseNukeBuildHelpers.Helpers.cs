@@ -366,7 +366,7 @@ partial class BaseNukeBuildHelpers
                 await CachePreload(entry);
             }
 
-            OutputBump();   
+            OutputBump();
 
             if (preExecute != null)
             {
