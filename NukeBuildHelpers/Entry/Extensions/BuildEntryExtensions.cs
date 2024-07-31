@@ -19,7 +19,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition ReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, params AbsolutePath[] assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.ReleaseAsset.Add(_ => Task.Run(() => assets));
+        var value = definition.ReleaseAsset;
+        value.Add(_ => Task.Run(() => assets));
+        definition.ReleaseAsset = value;
         return definition;
     }
 
@@ -33,7 +35,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition ReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<AbsolutePath[]> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.ReleaseAsset.Add(_ => Task.Run(() => assets()));
+        var value = definition.ReleaseAsset;
+        value.Add(_ => Task.Run(() => assets()));
+        definition.ReleaseAsset = value;
         return definition;
     }
 
@@ -47,7 +51,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition ReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<IRunContext, AbsolutePath[]> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.ReleaseAsset.Add(runContext => Task.Run(() => assets(runContext)));
+        var value = definition.ReleaseAsset;
+        value.Add(runContext => Task.Run(() => assets(runContext)));
+        definition.ReleaseAsset = value;
         return definition;
     }
 
@@ -61,7 +67,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition ReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<Task<AbsolutePath[]>> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.ReleaseAsset.Add(_ => Task.Run(async () => await assets()));
+        var value = definition.ReleaseAsset;
+        value.Add(_ => Task.Run(async () => await assets()));
+        definition.ReleaseAsset = value;
         return definition;
     }
 
@@ -75,7 +83,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition ReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<IRunContext, Task<AbsolutePath[]>> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.ReleaseAsset.Add(runContext => Task.Run(async () => await assets(runContext)));
+        var value = definition.ReleaseAsset;
+        value.Add(runContext => Task.Run(async () => await assets(runContext)));
+        definition.ReleaseAsset = value;
         return definition;
     }
 
@@ -89,7 +99,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition CommonReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, params AbsolutePath[] assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.CommonReleaseAsset.Add(_ => Task.Run(() => assets));
+        var value = definition.CommonReleaseAsset;
+        value.Add(_ => Task.Run(() => assets));
+        definition.CommonReleaseAsset = value;
         return definition;
     }
 
@@ -103,7 +115,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition CommonReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<AbsolutePath[]> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.CommonReleaseAsset.Add(_ => Task.Run(() => assets()));
+        var value = definition.CommonReleaseAsset;
+        value.Add(_ => Task.Run(() => assets()));
+        definition.CommonReleaseAsset = value;
         return definition;
     }
 
@@ -117,7 +131,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition CommonReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<IRunContext, AbsolutePath[]> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.CommonReleaseAsset.Add(runContext => Task.Run(() => assets(runContext)));
+        var value = definition.CommonReleaseAsset;
+        value.Add(runContext => Task.Run(() => assets(runContext)));
+        definition.CommonReleaseAsset = value;
         return definition;
     }
 
@@ -131,7 +147,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition CommonReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<Task<AbsolutePath[]>> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.CommonReleaseAsset.Add(_ => Task.Run(async () => await assets()));
+        var value = definition.CommonReleaseAsset;
+        value.Add(_ => Task.Run(async () => await assets()));
+        definition.CommonReleaseAsset = value;
         return definition;
     }
 
@@ -145,7 +163,9 @@ public static class BuildEntryExtensions
     public static TBuildEntryDefinition CommonReleaseAsset<TBuildEntryDefinition>(this TBuildEntryDefinition definition, Func<IRunContext, Task<AbsolutePath[]>> assets)
         where TBuildEntryDefinition : IBuildEntryDefinition
     {
-        definition.CommonReleaseAsset.Add(runContext => Task.Run(async () => await assets(runContext)));
+        var value = definition.CommonReleaseAsset;
+        value.Add(runContext => Task.Run(async () => await assets(runContext)));
+        definition.CommonReleaseAsset = value;
         return definition;
     }
 }

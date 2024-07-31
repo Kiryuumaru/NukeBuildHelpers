@@ -25,7 +25,8 @@ public static class MatrixEntryExtensions
     public static TRunEntryDefinition Matrix<TRunEntryDefinition, TMatrix>(this TRunEntryDefinition definition, TMatrix[] matrix, Action<TRunEntryDefinition, TMatrix> matrixDefinition)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Matrix.Add(clonedDefinition => Task.Run(() =>
+        var value = definition.Matrix;
+        value.Add(clonedDefinition => Task.Run(() =>
         {
             List<IRunEntryDefinition> definitions = [];
             foreach (var mat in matrix)
@@ -36,6 +37,7 @@ public static class MatrixEntryExtensions
             }
             return definitions.ToArray();
         }));
+        definition.Matrix = value;
         return definition;
     }
 }
