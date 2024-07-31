@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
@@ -480,7 +481,7 @@ partial class BaseNukeBuildHelpers
                     success = false;
                 }
             }
-            
+
             if (pipelinePreSetup != null)
             {
                 if (success)
@@ -489,9 +490,16 @@ partial class BaseNukeBuildHelpers
                     {
                         var assetOutput = TemporaryDirectory / "assets";
 
-                        if (!assetOutput.DirectoryExists())
+                        assetOutput.CreateOrCleanDirectory();
+
+                        foreach (var artifact in CommonArtifactsDirectory.GetFiles())
                         {
-                            assetOutput.CreateDirectory();
+                            if (!artifact.HasExtension(".zip"))
+                            {
+                                continue;
+                            }
+                            var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                            artifact.UnZipTo(OutputDirectory / appId);
                         }
 
                         foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
