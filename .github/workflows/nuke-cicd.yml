@@ -127,7 +127,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CACHE_RESTORE_KEY }}
@@ -158,7 +158,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2CUSTOMID_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2CUSTOMID_CACHE_RESTORE_KEY }}
@@ -183,7 +183,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_RESTORE_KEY }}
@@ -217,7 +217,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CACHE_RESTORE_KEY }}
@@ -251,7 +251,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CACHE_RESTORE_KEY }}
@@ -285,7 +285,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CACHE_RESTORE_KEY }}
@@ -319,7 +319,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CACHE_RESTORE_KEY }}
@@ -353,7 +353,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_RESTORE_KEY }}
@@ -392,7 +392,7 @@ jobs:
     - name: Cache Run
       uses: actions/cache@v4
       with:
-        path: ./.nuke/cache
+        path: ./.nuke/temp/cache
         key: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_KEY }}
         restore-keys: |-
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_RESTORE_KEY }}
