@@ -155,6 +155,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant(), result);
         }
 
+        if (BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.DirectoryExists())
+        {
+            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
+            {
+                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonArtifactsDirectory);
+            }
+        }
+
         if (BaseNukeBuildHelpers.CommonArtifactsDirectory.DirectoryExists())
         {
             foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDirectory.GetDirectories())
