@@ -452,7 +452,14 @@ partial class BaseNukeBuildHelpers
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
-            await CommonOutputDirectory.MoveRecursively(CommonArtifactsDirectory / buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant());
+
+            var artifactName = buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
+            var artifactTempPath = TemporaryDirectory / artifactName;
+            var artifactFilePath = CommonArtifactsDirectory / $"{artifactName}.zip";
+            artifactTempPath.CreateOrCleanDirectory();
+            artifactFilePath.DeleteFile();
+            await CommonOutputDirectory.MoveRecursively(artifactTempPath);
+            artifactTempPath.ZipTo(artifactFilePath);
         });
     }
 
@@ -471,20 +478,25 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, async entry =>
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, entry =>
         {
             IPublishEntryDefinition publishEntryDefinition = (entry as IPublishEntryDefinition)!;
             if (CommonArtifactsDirectory.DirectoryExists())
             {
-                foreach (var artifact in CommonArtifactsDirectory.GetDirectories())
+                foreach (var artifact in CommonArtifactsDirectory.GetFiles())
                 {
+                    if (!artifact.HasExtension(".zip"))
+                    {
+                        continue;
+                    }
                     var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                     if (appId.Equals(publishEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        await artifact.MoveRecursively(OutputDirectory);
+                        artifact.UnZipTo(OutputDirectory);
                     }
                 }
             }
+            return Task.CompletedTask;
         }, null);
     }
 
