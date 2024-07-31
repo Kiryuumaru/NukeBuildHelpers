@@ -17,7 +17,6 @@ using System.Collections;
 using System.Text.Json;
 using System.Web;
 using System.Xml.Linq;
-using static Azure.Core.HttpHeader;
 using YamlDotNet.Core.Tokens;
 using NukeBuildHelpers.Entry.Enums;
 
@@ -156,10 +155,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             Environment.SetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant(), result);
         }
 
-        var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
-        if (artifactsDir.DirectoryExists())
+        if (BaseNukeBuildHelpers.CommonArtifactsDirectory.DirectoryExists())
         {
-            foreach (var artifact in artifactsDir.GetDirectories())
+            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDirectory.GetDirectories())
             {
                 var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                 await artifact.CopyRecursively(BaseNukeBuildHelpers.OutputDirectory / appId);
@@ -174,10 +172,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public async Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap)
     {
-        var artifactsDir = BaseNukeBuildHelpers.TemporaryDirectory / "artifacts";
-        if (artifactsDir.DirectoryExists())
+        if (BaseNukeBuildHelpers.CommonArtifactsDirectory.DirectoryExists())
         {
-            foreach (var artifact in artifactsDir.GetDirectories())
+            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDirectory.GetDirectories())
             {
                 await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
             }
@@ -287,7 +284,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
             var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadBuildStep, "name", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
-            AddJobStepWith(uploadBuildStep, "path", "./.nuke/output/*");
+            AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/artifacts/*");
             AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
             AddJobStepWith(uploadBuildStep, "retention-days", "1");
             buildNeeds.Add(entryDefinition.Id.ToUpperInvariant());

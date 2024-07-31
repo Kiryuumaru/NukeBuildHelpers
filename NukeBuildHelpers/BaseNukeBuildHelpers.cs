@@ -15,11 +15,11 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 {
     internal static AbsolutePath NukeDirectory { get; } = RootDirectory / ".nuke";
 
-    internal static AbsolutePath CommonOutputDirectory { get; } = NukeDirectory / "output";
+    internal static AbsolutePath CommonOutputDirectory { get; } = TemporaryDirectory / "output";
 
-    internal static AbsolutePath CommonArtifactsDirectory { get; } = NukeDirectory / "artifacts";
+    internal static AbsolutePath CommonArtifactsDirectory { get; } = TemporaryDirectory / "artifacts";
 
-    internal static AbsolutePath CommonCacheDirectory { get; } = NukeDirectory / "cache";
+    internal static AbsolutePath CommonCacheDirectory { get; } = TemporaryDirectory / "cache";
 
     internal static AbsolutePath CommonCacheOutputDirectory { get; } = CommonCacheDirectory / "output";
 

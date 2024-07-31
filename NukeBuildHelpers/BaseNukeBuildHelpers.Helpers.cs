@@ -25,6 +25,8 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    private readonly string artifactNameSeparator = "___";
+
     private static readonly AbsolutePath entryCachePath = CommonCacheDirectory / "entry";
     private static readonly AbsolutePath entryCacheIndexPath = CommonCacheDirectory / "entry_index";
 
@@ -357,12 +359,14 @@ partial class BaseNukeBuildHelpers
                 """);
             Console.WriteLine();
 
+            OutputDirectory.CreateOrCleanDirectory();
+
             if (!skipCache)
             {
                 await CachePreload(entry);
             }
 
-            OutputBump();
+            OutputBump();   
 
             if (preExecute != null)
             {
@@ -448,6 +452,7 @@ partial class BaseNukeBuildHelpers
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
+            await CommonOutputDirectory.MoveRecursively(CommonArtifactsDirectory / buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant());
         });
     }
 
@@ -466,7 +471,21 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, null, null);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, async entry =>
+        {
+            IPublishEntryDefinition publishEntryDefinition = (entry as IPublishEntryDefinition)!;
+            if (CommonArtifactsDirectory.DirectoryExists())
+            {
+                foreach (var artifact in CommonArtifactsDirectory.GetDirectories())
+                {
+                    var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                    if (appId.Equals(publishEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        await artifact.MoveRecursively(OutputDirectory);
+                    }
+                }
+            }
+        }, null);
     }
 
     private void ValidateBumpVersion(AllVersions allVersions, string? bumpVersion)
