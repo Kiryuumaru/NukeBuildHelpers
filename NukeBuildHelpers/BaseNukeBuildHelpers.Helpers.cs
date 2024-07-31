@@ -25,6 +25,8 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
+    private readonly string artifactNameSeparator = "___";
+
     private static readonly AbsolutePath entryCachePath = CommonCacheDirectory / "entry";
     private static readonly AbsolutePath entryCacheIndexPath = CommonCacheDirectory / "entry_index";
 
@@ -340,11 +342,6 @@ partial class BaseNukeBuildHelpers
 
         CacheBump();
 
-        if (!OutputDirectory.DirectoryExists())
-        {
-            OutputDirectory.CreateDirectory();
-        }
-
         EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
 
         foreach (var entry in entriesToRun)
@@ -356,6 +353,8 @@ partial class BaseNukeBuildHelpers
                 ───────────────────────────────────────
                 """);
             Console.WriteLine();
+
+            OutputDirectory.CreateOrCleanDirectory();
 
             if (!skipCache)
             {
@@ -408,9 +407,6 @@ partial class BaseNukeBuildHelpers
 
         IEnumerable<IRunEntryDefinition> entriesToRun;
 
-        OutputDirectory.DeleteDirectory();
-        OutputDirectory.CreateDirectory();
-
         if (!idsToRun.Any())
         {
             entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Cast<IRunEntryDefinition>();
@@ -448,6 +444,14 @@ partial class BaseNukeBuildHelpers
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
+
+            var artifactName = buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
+            var artifactTempPath = TemporaryDirectory / artifactName;
+            var artifactFilePath = CommonArtifactsDirectory / $"{artifactName}.zip";
+            artifactTempPath.CreateOrCleanDirectory();
+            artifactFilePath.DeleteFile();
+            await CommonOutputDirectory.MoveRecursively(artifactTempPath);
+            artifactTempPath.ZipTo(artifactFilePath);
         });
     }
 
@@ -466,7 +470,26 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, null, null);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, entry =>
+        {
+            IPublishEntryDefinition publishEntryDefinition = (entry as IPublishEntryDefinition)!;
+            if (CommonArtifactsDirectory.DirectoryExists())
+            {
+                foreach (var artifact in CommonArtifactsDirectory.GetFiles())
+                {
+                    if (!artifact.HasExtension(".zip"))
+                    {
+                        continue;
+                    }
+                    var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                    if (appId.Equals(publishEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        artifact.UnZipTo(CommonOutputDirectory);
+                    }
+                }
+            }
+            return Task.CompletedTask;
+        }, null);
     }
 
     private void ValidateBumpVersion(AllVersions allVersions, string? bumpVersion)
