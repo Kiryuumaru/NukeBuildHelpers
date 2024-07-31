@@ -172,11 +172,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public async Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap)
     {
-        if (BaseNukeBuildHelpers.CommonArtifactsDirectory.DirectoryExists())
+        if (BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.DirectoryExists())
         {
-            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDirectory.GetDirectories())
+            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
             {
-                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
+                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonArtifactsDirectory);
             }
         }
     }
@@ -317,7 +317,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
-            AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts");
+            AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts-download");
             AddJobStepWith(downloadBuildStep, "pattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
             publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
@@ -338,7 +338,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
         AddJobStepCheckout(postSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
-        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts");
+        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, pipelinePostSetupOs, "PipelinePostSetup");
         AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 

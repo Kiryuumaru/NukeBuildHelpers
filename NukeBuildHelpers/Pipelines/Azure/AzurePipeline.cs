@@ -175,11 +175,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     public async Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap)
     {
-        if (BaseNukeBuildHelpers.CommonArtifactsDirectory.DirectoryExists())
+        if (BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.DirectoryExists())
         {
-            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDirectory.GetDirectories())
+            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
             {
-                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonOutputDirectory);
+                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonArtifactsDirectory);
             }
         }
     }
@@ -306,7 +306,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
             var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
             AddJobStepInputs(downloadPublishStep, "itemPattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*/**");
-            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts");
+            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts-download");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
             publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
@@ -327,7 +327,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
         AddJobStepCheckout(postSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/artifacts");
+        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
         AddJobStepInputs(downloadPostSetupStep, "patterns", "**");
         AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
         var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, pipelinePostSetupOs, "PipelinePostSetup");

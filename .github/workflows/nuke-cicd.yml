@@ -387,7 +387,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts
+        path: ./.nuke/temp/artifacts-download
         pattern: nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -424,7 +424,7 @@ jobs:
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts
+        path: ./.nuke/temp/artifacts-download
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:

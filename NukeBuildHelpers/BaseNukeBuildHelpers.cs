@@ -19,6 +19,8 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 
     internal static AbsolutePath CommonArtifactsDirectory { get; } = TemporaryDirectory / "artifacts";
 
+    internal static AbsolutePath CommonArtifactsDownloadDirectory { get; } = TemporaryDirectory / "artifacts-download";
+
     internal static AbsolutePath CommonCacheDirectory { get; } = TemporaryDirectory / "cache";
 
     internal static AbsolutePath CommonCacheOutputDirectory { get; } = CommonCacheDirectory / "output";
