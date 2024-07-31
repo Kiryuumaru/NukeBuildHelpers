@@ -161,7 +161,9 @@ public static class ExecutableEntryExtensions
     public static TRunEntryDefinition Execute<TRunEntryDefinition>(this TRunEntryDefinition definition, Action action)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Execute.Add(_ => Task.Run(() => action()));
+        var value = definition.Execute;
+        value.Add(_ => Task.Run(() => action()));
+        definition.Execute = value;
         return definition;
     }
 
@@ -176,7 +178,9 @@ public static class ExecutableEntryExtensions
     public static TRunEntryDefinition Execute<TRunEntryDefinition, T>(this TRunEntryDefinition definition, Func<T> action)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Execute.Add(_ => Task.Run(() => action()));
+        var value = definition.Execute;
+        value.Add(_ => Task.Run(() => action()));
+        definition.Execute = value;
         return definition;
     }
 
@@ -190,7 +194,9 @@ public static class ExecutableEntryExtensions
     public static TRunEntryDefinition Execute<TRunEntryDefinition>(this TRunEntryDefinition definition, Func<Task> action)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Execute.Add(_ => Task.Run(async () => await action()));
+        var value = definition.Execute;
+        value.Add(_ => Task.Run(async () => await action()));
+        definition.Execute = value;
         return definition;
     }
 
@@ -205,7 +211,9 @@ public static class ExecutableEntryExtensions
     public static TRunEntryDefinition Execute<TRunEntryDefinition, T>(this TRunEntryDefinition definition, Func<Task<T>> action)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Execute.Add(_ => Task.Run(async () => await action()));
+        var value = definition.Execute;
+        value.Add(_ => Task.Run(async () => await action()));
+        definition.Execute = value;
         return definition;
     }
 
@@ -219,7 +227,9 @@ public static class ExecutableEntryExtensions
     public static TRunEntryDefinition Execute<TRunEntryDefinition>(this TRunEntryDefinition definition, Action<IRunContext> action)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Execute.Add(runContext => Task.Run(() => action(runContext)));
+        var value = definition.Execute;
+        value.Add(runContext => Task.Run(() => action(runContext)));
+        definition.Execute = value;
         return definition;
     }
 
@@ -233,7 +243,9 @@ public static class ExecutableEntryExtensions
     public static TRunEntryDefinition Execute<TRunEntryDefinition>(this TRunEntryDefinition definition, Func<IRunContext, Task> action)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Execute.Add(runContext => Task.Run(async () => await action(runContext)));
+        var value = definition.Execute;
+        value.Add(runContext => Task.Run(async () => await action(runContext)));
+        definition.Execute = value;
         return definition;
     }
 
@@ -248,7 +260,9 @@ public static class ExecutableEntryExtensions
     public static TRunEntryDefinition Execute<TRunEntryDefinition, T>(this TRunEntryDefinition definition, Func<IRunContext, Task<T>> action)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.Execute.Add(runContext => Task.Run(async () => await action(runContext)));
+        var value = definition.Execute;
+        value.Add(runContext => Task.Run(async () => await action(runContext)));
+        definition.Execute = value;
         return definition;
     }
 }

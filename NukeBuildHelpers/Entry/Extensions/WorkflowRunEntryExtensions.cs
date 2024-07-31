@@ -35,7 +35,9 @@ public static class WorkflowRunEntryExtensions
     public static TRunEntryDefinition WorkflowBuilder<TRunEntryDefinition>(this TRunEntryDefinition definition, Action<IWorkflowBuilder> workflowBuilder)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.WorkflowBuilder.Add(wb => Task.Run(() => workflowBuilder(wb)));
+        var value = definition.WorkflowBuilder;
+        value.Add(wb => Task.Run(() => workflowBuilder(wb)));
+        definition.WorkflowBuilder = value;
         return definition;
     }
 
@@ -49,7 +51,9 @@ public static class WorkflowRunEntryExtensions
     public static TRunEntryDefinition WorkflowBuilder<TRunEntryDefinition>(this TRunEntryDefinition definition, Func<IWorkflowBuilder, Task> workflowBuilder)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.WorkflowBuilder.Add(wb => Task.Run(async () => await workflowBuilder(wb)));
+        var value = definition.WorkflowBuilder;
+        value.Add(wb => Task.Run(async () => await workflowBuilder(wb)));
+        definition.WorkflowBuilder = value;
         return definition;
     }
 
@@ -64,7 +68,9 @@ public static class WorkflowRunEntryExtensions
     public static TRunEntryDefinition WorkflowBuilder<TRunEntryDefinition, T>(this TRunEntryDefinition definition, Func<IWorkflowBuilder, Task<T>> workflowBuilder)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.WorkflowBuilder.Add(wb => Task.Run(async () => await workflowBuilder(wb)));
+        var value = definition.WorkflowBuilder;
+        value.Add(wb => Task.Run(async () => await workflowBuilder(wb)));
+        definition.WorkflowBuilder = value;
         return definition;
     }
 

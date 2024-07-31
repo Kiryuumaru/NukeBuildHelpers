@@ -4,16 +4,97 @@ using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.RunContext.Interfaces;
 using NukeBuildHelpers.Runner.Abstraction;
+using System.CodeDom.Compiler;
 
 namespace NukeBuildHelpers.Entry.Definitions;
 
 internal abstract class RunEntryDefinition : IRunEntryDefinition
 {
-    public required virtual string Id { get; set; }
+    string? id = null;
+    string IRunEntryDefinition.Id
+    {
+        get => id ?? "_";
+        set => id = value;
+    }
 
-    Func<IWorkflowBuilder, Task<string>>? name = null;
+    Func<IWorkflowBuilder, Task<string>>? displayName = null;
+    Func<IWorkflowBuilder, Task<string>> IRunEntryDefinition.DisplayName
+    {
+        get => displayName ?? (_ => Task.FromResult(GetDefaultName()));
+        set => displayName = value;
+    }
 
     Func<IRunContext, Task<bool>>? condition = null;
+    Func<IRunContext, Task<bool>> IRunEntryDefinition.Condition
+    {
+        get => condition ?? (_ => Task.FromResult(true));
+        set => condition = value;
+    }
+
+    Func<IRunContext, Task<RunnerOS>>? runnerOS;
+    Func<IRunContext, Task<RunnerOS>>? IRunEntryDefinition.RunnerOS
+    {
+        get => runnerOS;
+        set => runnerOS = value;
+    }
+
+    List<Func<IRunContext, Task<AbsolutePath[]>>>? cachePath;
+    List<Func<IRunContext, Task<AbsolutePath[]>>> IRunEntryDefinition.CachePath
+    {
+        get => cachePath ?? [];
+        set => cachePath = value;
+    }
+
+    Func<IRunContext, Task<string>>? cacheInvalidator;
+    Func<IRunContext, Task<string>> IRunEntryDefinition.CacheInvalidator
+    {
+        get => cacheInvalidator ?? (_ => Task.FromResult("0"));
+        set => cacheInvalidator = value;
+    }
+
+    Func<IRunContext, Task<int>>? checkoutFetchDepth;
+    Func<IRunContext, Task<int>> IRunEntryDefinition.CheckoutFetchDepth
+    {
+        get => checkoutFetchDepth ?? (_ => Task.FromResult(1));
+        set => checkoutFetchDepth = value;
+    }
+
+    Func<IRunContext, Task<bool>>? checkoutFetchTags;
+    Func<IRunContext, Task<bool>> IRunEntryDefinition.CheckoutFetchTags
+    {
+        get => checkoutFetchTags ?? (_ => Task.FromResult(false));
+        set => checkoutFetchTags = value;
+    }
+
+    Func<IRunContext, Task<SubmoduleCheckoutType>>? checkoutSubmodules;
+    Func<IRunContext, Task<SubmoduleCheckoutType>> IRunEntryDefinition.CheckoutSubmodules
+    {
+        get => checkoutSubmodules ?? (_ => Task.FromResult(SubmoduleCheckoutType.None));
+        set => checkoutSubmodules = value;
+    }
+
+    List<Func<IRunContext, Task>>? execute;
+    List<Func<IRunContext, Task>> IRunEntryDefinition.Execute
+    {
+        get => execute ?? [];
+        set => execute = value;
+    }
+
+    List<Func<IWorkflowBuilder, Task>>? workflowBuilder;
+    List<Func<IWorkflowBuilder, Task>> IRunEntryDefinition.WorkflowBuilder
+    {
+        get => workflowBuilder ?? [];
+        set => workflowBuilder = value;
+    }
+
+    List<Func<IRunEntryDefinition, Task<IRunEntryDefinition[]>>>? matrix;
+    List<Func<IRunEntryDefinition, Task<IRunEntryDefinition[]>>> IRunEntryDefinition.Matrix
+    {
+        get => matrix ?? [];
+        set => matrix = value;
+    }
+
+    IRunContext? IRunEntryDefinition.RunContext { get; set; }
 
     protected abstract string GetDefaultName();
 
@@ -23,55 +104,19 @@ internal abstract class RunEntryDefinition : IRunEntryDefinition
 
     internal virtual void FillClone(IRunEntryDefinition definition)
     {
-        definition.Id = ((IRunEntryDefinition)this).Id;
-        definition.DisplayName = ((IRunEntryDefinition)this).DisplayName;
-        definition.Condition = ((IRunEntryDefinition)this).Condition;
-        definition.RunnerOS = ((IRunEntryDefinition)this).RunnerOS;
-        definition.CachePath = new List<Func<IRunContext, Task<AbsolutePath[]>>>(((IRunEntryDefinition)this).CachePath);
-        definition.CacheInvalidator = ((IRunEntryDefinition)this).CacheInvalidator;
-        definition.CheckoutFetchDepth = ((IRunEntryDefinition)this).CheckoutFetchDepth;
-        definition.CheckoutFetchTags = ((IRunEntryDefinition)this).CheckoutFetchTags;
-        definition.CheckoutSubmodules = ((IRunEntryDefinition)this).CheckoutSubmodules;
-        definition.Execute = new List<Func<IRunContext, Task>>(((IRunEntryDefinition)this).Execute);
-        definition.WorkflowBuilder = new List<Func<IWorkflowBuilder, Task>>(((IRunEntryDefinition)this).WorkflowBuilder);
+        if (id != null) definition.Id = id;
+        if (displayName != null) definition.DisplayName = displayName;
+        if (condition != null) definition.Condition = condition;
+        if (runnerOS != null) definition.RunnerOS = runnerOS;
+        if (cachePath != null) definition.CachePath = new List<Func<IRunContext, Task<AbsolutePath[]>>>(cachePath);
+        if (cacheInvalidator != null) definition.CacheInvalidator = cacheInvalidator;
+        if (checkoutFetchDepth != null) definition.CheckoutFetchDepth = checkoutFetchDepth;
+        if (checkoutFetchTags != null) definition.CheckoutFetchTags = checkoutFetchTags;
+        if (checkoutSubmodules != null) definition.CheckoutSubmodules = checkoutSubmodules;
+        if (execute != null) definition.Execute = new List<Func<IRunContext, Task>>(execute);
+        if (workflowBuilder != null) definition.WorkflowBuilder = new List<Func<IWorkflowBuilder, Task>>(workflowBuilder);
+        if (matrix != null) definition.Matrix = new List<Func<IRunEntryDefinition, Task<IRunEntryDefinition[]>>>(matrix);
+
         definition.RunContext = ((IRunEntryDefinition)this).RunContext;
     }
-
-    string IRunEntryDefinition.Id
-    {
-        get => Id;
-        set => Id = value;
-    }
-
-    Func<IWorkflowBuilder, Task<string>> IRunEntryDefinition.DisplayName
-    {
-        get => name ?? (_ => Task.FromResult(GetDefaultName()));
-        set => name = value;
-    }
-
-    Func<IRunContext, Task<bool>> IRunEntryDefinition.Condition
-    {
-        get => condition ?? (runContext => Task.FromResult(true));
-        set => condition = value;
-    }
-
-    Func<IRunContext, Task<RunnerOS>>? IRunEntryDefinition.RunnerOS { get; set; }
-
-    List<Func<IRunContext, Task<AbsolutePath[]>>> IRunEntryDefinition.CachePath { get; set; } = [];
-
-    Func<IRunContext, Task<string>> IRunEntryDefinition.CacheInvalidator { get; set; } = _ => Task.FromResult("0");
-
-    Func<IRunContext, Task<int>> IRunEntryDefinition.CheckoutFetchDepth { get; set; } = _ => Task.FromResult(1);
-
-    Func<IRunContext, Task<bool>> IRunEntryDefinition.CheckoutFetchTags { get; set; } = _ => Task.FromResult(false);
-
-    Func<IRunContext, Task<SubmoduleCheckoutType>> IRunEntryDefinition.CheckoutSubmodules { get; set; } = _ => Task.FromResult(SubmoduleCheckoutType.None);
-
-    List<Func<IRunContext, Task>> IRunEntryDefinition.Execute { get; set; } = [];
-
-    List<Func<IWorkflowBuilder, Task>> IRunEntryDefinition.WorkflowBuilder { get; set; } = [];
-
-    List<Func<IRunEntryDefinition, Task<IRunEntryDefinition[]>>> IRunEntryDefinition.Matrix { get; set; } = [];
-
-    IRunContext? IRunEntryDefinition.RunContext { get; set; }
 }

@@ -4,6 +4,7 @@ using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Entry.Definitions;
+using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using Semver;
@@ -25,17 +26,17 @@ internal static class EntryHelpers
             if (property.PropertyType == typeof(TestEntry))
             {
                 var testEntry = (TestEntry)property.GetValue(nukeBuildHelpers)!;
-                definedEntryDefinitions.Add((testEntry.Invoke(new TestEntryDefinition() { Id = "_" }), property.Name));
+                definedEntryDefinitions.Add((testEntry.Invoke(new TestEntryDefinition()), property.Name));
             }
             else if (property.PropertyType == typeof(BuildEntry))
             {
                 var buildEntry = (BuildEntry)property.GetValue(nukeBuildHelpers)!;
-                definedEntryDefinitions.Add((buildEntry.Invoke(new BuildEntryDefinition() { Id = "_" }), property.Name));
+                definedEntryDefinitions.Add((buildEntry.Invoke(new BuildEntryDefinition()), property.Name));
             }
             else if (property.PropertyType == typeof(PublishEntry))
             {
                 var publishEntry = (PublishEntry)property.GetValue(nukeBuildHelpers)!;
-                definedEntryDefinitions.Add((publishEntry.Invoke(new PublishEntryDefinition() { Id = "_" }), property.Name));
+                definedEntryDefinitions.Add((publishEntry.Invoke(new PublishEntryDefinition()), property.Name));
             }
             else if (property.PropertyType == typeof(WorkflowConfigEntry))
             {
@@ -69,7 +70,9 @@ internal static class EntryHelpers
                 int index = 0;
                 foreach (var mat in definition.Matrix)
                 {
-                    foreach (var createdDefinition in await mat(definition.Clone()))
+                    var definitionClone = definition.Clone();
+                    definitionClone.Matrix = [];
+                    foreach (var createdDefinition in await mat(definitionClone))
                     {
                         index++;
                         await append(createdDefinition, defaultId + "_" + index.ToString());

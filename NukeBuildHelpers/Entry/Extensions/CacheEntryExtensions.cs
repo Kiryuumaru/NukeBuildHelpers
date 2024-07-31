@@ -21,7 +21,9 @@ public static class CacheEntryExtensions
     public static TRunEntryDefinition CachePath<TRunEntryDefinition>(this TRunEntryDefinition definition, params AbsolutePath[] cachePath)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.CachePath.Add(_ => Task.Run(() => cachePath));
+        var value = definition.CachePath;
+        value.Add(_ => Task.Run(() => cachePath));
+        definition.CachePath = value;
         return definition;
     }
 
@@ -35,7 +37,9 @@ public static class CacheEntryExtensions
     public static TRunEntryDefinition CachePath<TRunEntryDefinition>(this TRunEntryDefinition definition, Func<AbsolutePath[]> cachePaths)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.CachePath.Add(_ => Task.Run(() => cachePaths()));
+        var value = definition.CachePath;
+        value.Add(_ => Task.Run(() => cachePaths()));
+        definition.CachePath = value;
         return definition;
     }
 
@@ -49,7 +53,9 @@ public static class CacheEntryExtensions
     public static TRunEntryDefinition CachePath<TRunEntryDefinition>(this TRunEntryDefinition definition, Func<IRunContext, AbsolutePath[]> cachePaths)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.CachePath.Add(runContext => Task.Run(() => cachePaths(runContext)));
+        var value = definition.CachePath;
+        value.Add(runContext => Task.Run(() => cachePaths(runContext)));
+        definition.CachePath = value;
         return definition;
     }
 
@@ -63,7 +69,9 @@ public static class CacheEntryExtensions
     public static TRunEntryDefinition CachePath<TRunEntryDefinition>(this TRunEntryDefinition definition, Func<Task<AbsolutePath[]>> cachePaths)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.CachePath.Add(_ => Task.Run(async () => await cachePaths()));
+        var value = definition.CachePath;
+        value.Add(_ => Task.Run(async () => await cachePaths()));
+        definition.CachePath = value;
         return definition;
     }
 
@@ -77,7 +85,9 @@ public static class CacheEntryExtensions
     public static TRunEntryDefinition CachePath<TRunEntryDefinition>(this TRunEntryDefinition definition, Func<IRunContext, Task<AbsolutePath[]>> cachePaths)
         where TRunEntryDefinition : IRunEntryDefinition
     {
-        definition.CachePath.Add(runContext => Task.Run(async () => await cachePaths(runContext)));
+        var value = definition.CachePath;
+        value.Add(runContext => Task.Run(async () => await cachePaths(runContext)));
+        definition.CachePath = value;
         return definition;
     }
 

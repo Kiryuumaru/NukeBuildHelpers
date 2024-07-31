@@ -7,15 +7,12 @@ internal class PublishEntryDefinition : TargetEntryDefinition, IPublishEntryDefi
 {
     protected override string GetDefaultName()
     {
-        return "Publish - " + ((IPublishEntryDefinition)this).AppId + " (" + Id + ")";
+        return "Publish - " + ((IPublishEntryDefinition)this).AppId + " (" + ((IPublishEntryDefinition)this).Id + ")";
     }
 
     protected override IRunEntryDefinition Clone()
     {
-        var definition = new PublishEntryDefinition()
-        {
-            Id = Id
-        };
+        var definition = new PublishEntryDefinition();
         FillClone(definition);
         return definition;
     }
