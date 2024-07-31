@@ -342,11 +342,6 @@ partial class BaseNukeBuildHelpers
 
         CacheBump();
 
-        if (!OutputDirectory.DirectoryExists())
-        {
-            OutputDirectory.CreateDirectory();
-        }
-
         EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
 
         foreach (var entry in entriesToRun)
@@ -411,9 +406,6 @@ partial class BaseNukeBuildHelpers
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
         IEnumerable<IRunEntryDefinition> entriesToRun;
-
-        OutputDirectory.DeleteDirectory();
-        OutputDirectory.CreateDirectory();
 
         if (!idsToRun.Any())
         {
