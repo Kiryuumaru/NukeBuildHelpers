@@ -492,7 +492,7 @@ partial class BaseNukeBuildHelpers
                     var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                     if (appId.Equals(publishEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        artifact.UnZipTo(OutputDirectory);
+                        artifact.UnZipTo(CommonOutputDirectory);
                     }
                 }
             }
