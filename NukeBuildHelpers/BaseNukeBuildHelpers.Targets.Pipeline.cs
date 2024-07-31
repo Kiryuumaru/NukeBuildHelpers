@@ -50,13 +50,13 @@ partial class BaseNukeBuildHelpers
                 switch (run.NotNullOrEmpty().ToLowerInvariant())
                 {
                     case "test":
-                        await TestAppEntries(allEntry, pipeline, ids);
+                        await TestAppEntries(allEntry, pipeline, ids, false);
                         break;
                     case "build":
-                        await BuildAppEntries(allEntry, pipeline, ids);
+                        await BuildAppEntries(allEntry, pipeline, ids, false);
                         break;
                     case "publish":
-                        await PublishAppEntries(allEntry, pipeline, ids);
+                        await PublishAppEntries(allEntry, pipeline, ids, false);
                         break;
                     default:
                         throw new NotImplementedException(splitArgs["run"]);

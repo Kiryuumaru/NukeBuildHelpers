@@ -334,10 +334,8 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IRunEntryDefinition> entriesToRun, PipelinePreSetup? pipelinePreSetup, Func<IRunEntryDefinition, Task>? preExecute, Func<IRunEntryDefinition, Task>? postExecute)
+    private async Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IRunEntryDefinition> entriesToRun, PipelinePreSetup? pipelinePreSetup, bool skipCache, Func<IRunEntryDefinition, Task>? preExecute, Func<IRunEntryDefinition, Task>? postExecute)
     {
-        List<Func<Task>> tasks = [];
-
         await pipeline.Pipeline.PrepareEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
 
         CacheBump();
@@ -351,26 +349,42 @@ partial class BaseNukeBuildHelpers
 
         foreach (var entry in entriesToRun)
         {
-            tasks.Add(() => Task.Run(async () =>
+            Console.WriteLine();
+            Console.WriteLine($"""
+                ═══════════════════════════════════════
+                {entry.Id}
+                ───────────────────────────────────────
+                """);
+            Console.WriteLine();
+
+            if (!skipCache)
             {
                 await CachePreload(entry);
-                OutputBump();
-                if (preExecute != null) await preExecute.Invoke(entry);
-                await entry.GetExecute();
-                if (postExecute != null) await postExecute.Invoke(entry);
-                await CachePostload(entry);
-            }));
-        }
+            }
 
-        foreach (var task in tasks)
-        {
-            await task();
+            OutputBump();
+
+            if (preExecute != null)
+            {
+                await preExecute.Invoke(entry);
+            }
+
+            await entry.GetExecute();
+
+            if (postExecute != null)
+            {
+                await postExecute.Invoke(entry);
+            }
+            if (!skipCache)
+            {
+                await CachePostload(entry);
+            }
         }
 
         await pipeline.Pipeline.FinalizeEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
     }
 
-    private Task TestAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
+    private Task TestAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun, bool skipCache)
     {
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
@@ -385,10 +399,10 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.TestEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, null, null);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, null, null);
     }
 
-    private Task BuildAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
+    private Task BuildAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun, bool skipCache)
     {
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
@@ -406,7 +420,7 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.BuildEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, null, async entry =>
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, null, async entry =>
         {
             IBuildEntryDefinition buildEntryDefinition = (entry as IBuildEntryDefinition)!;
             foreach (var asset in await buildEntryDefinition.GetReleaseAssets())
@@ -437,7 +451,7 @@ partial class BaseNukeBuildHelpers
         });
     }
 
-    private Task PublishAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
+    private Task PublishAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun, bool skipCache)
     {
         var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
 
@@ -452,7 +466,7 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.PublishEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, null, null);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, null, null);
     }
 
     private void ValidateBumpVersion(AllVersions allVersions, string? bumpVersion)
