@@ -13,11 +13,15 @@ namespace NukeBuildHelpers;
 /// </summary>
 public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelpers
 {
-    internal static AbsolutePath CommonCacheDirectory { get; } = RootDirectory / ".nuke" / "cache";
+    internal static AbsolutePath NukeDirectory { get; } = RootDirectory / ".nuke";
+
+    internal static AbsolutePath CommonOutputDirectory { get; } = NukeDirectory / "output";
+
+    internal static AbsolutePath CommonArtifactsDirectory { get; } = NukeDirectory / "artifacts";
+
+    internal static AbsolutePath CommonCacheDirectory { get; } = NukeDirectory / "cache";
 
     internal static AbsolutePath CommonCacheOutputDirectory { get; } = CommonCacheDirectory / "output";
-
-    internal static AbsolutePath CommonOutputDirectory { get; } = RootDirectory / ".nuke" / "output";
 
     /// <summary>
     /// Gets the output directory path.

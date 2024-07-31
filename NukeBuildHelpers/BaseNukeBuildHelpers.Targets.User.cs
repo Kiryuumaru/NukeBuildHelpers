@@ -260,6 +260,60 @@ partial class BaseNukeBuildHelpers
         });
 
     /// <summary>
+    /// Run the entry, with --args "{idsToRun}".
+    /// </summary>
+    public Target Run => _ => _
+        .Description("Run, with --args \"{idsToRun}\"")
+        .Executes(async () =>
+        {
+            CheckEnvironementBranches();
+
+            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+
+            var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
+
+            CheckAppEntry(allEntry);
+
+            var pipeline = PipelineHelpers.SetupPipeline(this);
+
+            var idsToRun = splitArgs.Select(i => i.Key);
+
+            if (idsToRun.Any())
+            {
+                foreach (var id in idsToRun)
+                {
+                    if (!allEntry.RunEntryDefinitionMap.Any(i => i.Value.Id.Equals(id, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        throw new ArgumentException($"Id {id} does not exists");
+                    }
+                }
+
+                var testAppEntries = allEntry.TestEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id, StringComparison.InvariantCultureIgnoreCase))).Select(i => i.Id);
+                var buildAppEntries = allEntry.BuildEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id, StringComparison.InvariantCultureIgnoreCase))).Select(i => i.Id);
+                var publishAppEntries = allEntry.PublishEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id, StringComparison.InvariantCultureIgnoreCase))).Select(i => i.Id);
+
+                if (testAppEntries.Any())
+                {
+                    await TestAppEntries(allEntry, pipeline, testAppEntries, true);
+                }
+                if (buildAppEntries.Any())
+                {
+                    await BuildAppEntries(allEntry, pipeline, buildAppEntries, true);
+                }
+                if (publishAppEntries.Any())
+                {
+                    await PublishAppEntries(allEntry, pipeline, publishAppEntries, true);
+                }
+            }
+            else
+            {
+                await TestAppEntries(allEntry, pipeline, [], true);
+                await BuildAppEntries(allEntry, pipeline, [], true);
+                await PublishAppEntries(allEntry, pipeline, [], true);
+            }
+        });
+
+    /// <summary>
     /// Tests the application, with --args "{idsToRun}".
     /// </summary>
     public Target Test => _ => _
@@ -276,7 +330,7 @@ partial class BaseNukeBuildHelpers
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
-            await TestAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
+            await TestAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), true);
         });
 
     /// <summary>
@@ -296,7 +350,7 @@ partial class BaseNukeBuildHelpers
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
-            await BuildAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
+            await BuildAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), true);
         });
 
     /// <summary>
@@ -316,7 +370,7 @@ partial class BaseNukeBuildHelpers
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
-            await PublishAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
+            await PublishAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), true);
         });
 
     /// <summary>
