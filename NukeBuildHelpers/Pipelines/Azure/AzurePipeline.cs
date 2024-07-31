@@ -163,15 +163,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
             {
                 await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonArtifactsDirectory);
+                Console.WriteLine(artifact);
             }
-        }
-
-        if (BaseNukeBuildHelpers.CommonArtifactsDirectory.DirectoryExists())
-        {
             foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDirectory.GetDirectories())
             {
                 var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                 await artifact.CopyRecursively(BaseNukeBuildHelpers.OutputDirectory / appId);
+                Console.WriteLine(artifact);
             }
         }
     }
