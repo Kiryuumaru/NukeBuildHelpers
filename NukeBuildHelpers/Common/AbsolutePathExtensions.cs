@@ -247,16 +247,14 @@ public static class AbsolutePathExtensions
                     FileInfo fileInfo = new(item);
                     if (fileInfo.LinkTarget != null)
                     {
-                        string linkTarget = fileInfo.LinkTarget;
+                        string linkTarget;
                         if (!Path.IsPathRooted(fileInfo.LinkTarget))
                         {
                             linkTarget = item.Parent / fileInfo.LinkTarget;
-                            Log.Information("fil1 linkTarget: {linkTarget}", linkTarget);
                         }
                         else
                         {
                             linkTarget = fileInfo.LinkTarget;
-                            Log.Information("fil2 linkTarget: {linkTarget}", linkTarget);
                         }
                         symbolicLinks.Add((item, linkTarget));
                     }
@@ -270,16 +268,14 @@ public static class AbsolutePathExtensions
                     DirectoryInfo directoryInfo = new(item);
                     if (directoryInfo.LinkTarget != null)
                     {
-                        string linkTarget = directoryInfo.LinkTarget;
+                        string linkTarget;
                         if (!Path.IsPathRooted(directoryInfo.LinkTarget))
                         {
                             linkTarget = item.Parent / directoryInfo.LinkTarget;
-                            Log.Information("dir1 linkTarget: {linkTarget}", linkTarget);
                         }
                         else
                         {
                             linkTarget = directoryInfo.LinkTarget;
-                            Log.Information("dir2 linkTarget: {linkTarget}", linkTarget);
                         }
                         symbolicLinks.Add((item, linkTarget));
                     }
