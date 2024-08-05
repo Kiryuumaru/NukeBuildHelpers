@@ -247,7 +247,7 @@ public static class AbsolutePathExtensions
                     FileInfo fileInfo = new(item);
                     if (fileInfo.LinkTarget != null)
                     {
-                        var linkTarget = fileInfo.LinkTarget;
+                        string linkTarget = fileInfo.LinkTarget;
                         if (!Path.IsPathRooted(fileInfo.LinkTarget))
                         {
                             linkTarget = Path.GetFullPath(fileInfo.LinkTarget, path.Parent);
@@ -256,10 +256,12 @@ public static class AbsolutePathExtensions
                         {
                             linkTarget = fileInfo.LinkTarget;
                         }
+                        Log.Information("fil linkTarget: {linkTarget}", linkTarget);
                         symbolicLinks.Add((item, linkTarget));
                     }
                     else
                     {
+                        Log.Information("fil add item: {item}", item);
                         files.Add(item);
                     }
                 }
@@ -268,7 +270,7 @@ public static class AbsolutePathExtensions
                     DirectoryInfo directoryInfo = new(item);
                     if (directoryInfo.LinkTarget != null)
                     {
-                        var linkTarget = directoryInfo.LinkTarget;
+                        string linkTarget = directoryInfo.LinkTarget;
                         if (!Path.IsPathRooted(directoryInfo.LinkTarget))
                         {
                             linkTarget = Path.GetFullPath(directoryInfo.LinkTarget, item.Parent);
@@ -277,10 +279,12 @@ public static class AbsolutePathExtensions
                         {
                             linkTarget = directoryInfo.LinkTarget;
                         }
+                        Log.Information("dir linkTarget: {linkTarget}", linkTarget);
                         symbolicLinks.Add((item, linkTarget));
                     }
                     else
                     {
+                        Log.Information("dir add item: {item}", item);
                         folders.Add(item);
 
                         hasNext = true;
