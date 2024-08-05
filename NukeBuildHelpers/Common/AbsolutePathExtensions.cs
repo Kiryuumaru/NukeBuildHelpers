@@ -250,18 +250,16 @@ public static class AbsolutePathExtensions
                         string linkTarget = fileInfo.LinkTarget;
                         if (!Path.IsPathRooted(fileInfo.LinkTarget))
                         {
-                            linkTarget = Path.GetFullPath(fileInfo.LinkTarget, path.Parent);
+                            linkTarget = item.Parent / fileInfo.LinkTarget;
                         }
                         else
                         {
                             linkTarget = fileInfo.LinkTarget;
                         }
-                        Log.Information("fil linkTarget: {linkTarget}", linkTarget);
                         symbolicLinks.Add((item, linkTarget));
                     }
                     else
                     {
-                        Log.Information("fil add item: {item}", item);
                         files.Add(item);
                     }
                 }
@@ -273,18 +271,16 @@ public static class AbsolutePathExtensions
                         string linkTarget = directoryInfo.LinkTarget;
                         if (!Path.IsPathRooted(directoryInfo.LinkTarget))
                         {
-                            linkTarget = Path.GetFullPath(directoryInfo.LinkTarget, item.Parent);
+                            linkTarget = item.Parent / directoryInfo.LinkTarget;
                         }
                         else
                         {
                             linkTarget = directoryInfo.LinkTarget;
                         }
-                        Log.Information("dir linkTarget: {linkTarget}", linkTarget);
                         symbolicLinks.Add((item, linkTarget));
                     }
                     else
                     {
-                        Log.Information("dir add item: {item}", item);
                         folders.Add(item);
 
                         hasNext = true;
