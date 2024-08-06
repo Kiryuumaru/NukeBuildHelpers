@@ -1,10 +1,7 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
-using Nuke.Common.Utilities;
-using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
-using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Enums;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
@@ -13,13 +10,9 @@ using NukeBuildHelpers.Pipelines.Azure.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
-using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
-using System;
-using System.Linq;
 using System.Text.Json;
-using System.Xml.Linq;
 
 namespace NukeBuildHelpers.Pipelines.Azure;
 

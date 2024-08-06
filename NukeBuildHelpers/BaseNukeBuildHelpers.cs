@@ -2,7 +2,6 @@
 using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 

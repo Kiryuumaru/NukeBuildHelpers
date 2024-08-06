@@ -1,5 +1,4 @@
-﻿using NukeBuildHelpers.Entry.Extensions;
-using NukeBuildHelpers.Entry.Interfaces;
+﻿using NukeBuildHelpers.Entry.Interfaces;
 
 namespace NukeBuildHelpers.Entry.Definitions;
 

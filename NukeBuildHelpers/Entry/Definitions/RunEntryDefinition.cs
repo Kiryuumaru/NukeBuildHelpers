@@ -4,7 +4,6 @@ using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.RunContext.Interfaces;
 using NukeBuildHelpers.Runner.Abstraction;
-using System.CodeDom.Compiler;
 
 namespace NukeBuildHelpers.Entry.Definitions;
 

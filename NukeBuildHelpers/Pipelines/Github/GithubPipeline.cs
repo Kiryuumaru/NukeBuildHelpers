@@ -12,12 +12,7 @@ using NukeBuildHelpers.Pipelines.Github.Interfaces;
 using NukeBuildHelpers.Pipelines.Github.Models;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
-using System;
-using System.Collections;
 using System.Text.Json;
-using System.Web;
-using System.Xml.Linq;
-using YamlDotNet.Core.Tokens;
 using NukeBuildHelpers.Entry.Enums;
 
 namespace NukeBuildHelpers.Pipelines.Github;

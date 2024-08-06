@@ -1,12 +1,7 @@
-﻿using Nuke.Common;
-using Nuke.Common.IO;
+﻿using Nuke.Common.IO;
 using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common.Models;
 using Serilog;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using static NuGet.Packaging.PackagingConstants;
 
 namespace NukeBuildHelpers.Common;
 
@@ -105,23 +100,23 @@ public static class AbsolutePathExtensions
                 Directory.CreateDirectory(target.Parent);
                 File.Copy(file, target, true);
             }
-            foreach (var symbolicLink in fileMap.SymbolicLinks)
+            foreach (var (Link, Target) in fileMap.SymbolicLinks)
             {
-                AbsolutePath newLink = symbolicLink.Link.ToString().Replace(path, targetPath);
+                AbsolutePath newLink = Link.ToString().Replace(path, targetPath);
                 AbsolutePath newTarget;
-                if (path.IsParentOf(symbolicLink.Target))
+                if (path.IsParentOf(Target))
                 {
-                    newTarget = symbolicLink.Target.ToString().Replace(path, targetPath);
+                    newTarget = Target.ToString().Replace(path, targetPath);
                 }
                 else
                 {
-                    newTarget = symbolicLink.Target;
+                    newTarget = Target;
                 }
 
                 await newLink.DeleteRecursively();
                 Directory.CreateDirectory(newLink.Parent);
 
-                if (symbolicLink.Target.DirectoryExists() || symbolicLink.Link.DirectoryExists())
+                if (Target.DirectoryExists() || Link.DirectoryExists())
                 {
                     Directory.CreateSymbolicLink(newLink, newTarget);
                 }
@@ -162,23 +157,23 @@ public static class AbsolutePathExtensions
                 Directory.CreateDirectory(target.Parent);
                 File.Move(file, target, true);
             }
-            foreach (var symbolicLink in fileMap.SymbolicLinks)
+            foreach (var (Link, Target) in fileMap.SymbolicLinks)
             {
-                AbsolutePath newLink = symbolicLink.Link.ToString().Replace(path, targetPath);
+                AbsolutePath newLink = Link.ToString().Replace(path, targetPath);
                 AbsolutePath newTarget;
-                if (path.IsParentOf(symbolicLink.Target))
+                if (path.IsParentOf(Target))
                 {
-                    newTarget = symbolicLink.Target.ToString().Replace(path, targetPath);
+                    newTarget = Target.ToString().Replace(path, targetPath);
                 }
                 else
                 {
-                    newTarget = symbolicLink.Target;
+                    newTarget = Target;
                 }
 
                 await newLink.DeleteRecursively();
                 Directory.CreateDirectory(newLink.Parent);
 
-                if (symbolicLink.Target.DirectoryExists() || symbolicLink.Link.DirectoryExists())
+                if (Target.DirectoryExists() || Link.DirectoryExists())
                 {
                     Directory.CreateSymbolicLink(newLink, newTarget);
                 }
@@ -209,15 +204,15 @@ public static class AbsolutePathExtensions
             {
                 var fileMap = GetFileMap(path);
 
-                foreach (var symbolicLink in fileMap.SymbolicLinks)
+                foreach (var (Link, Target) in fileMap.SymbolicLinks)
                 {
-                    if (symbolicLink.Link.DirectoryExists())
+                    if (Link.DirectoryExists())
                     {
-                        Directory.Delete(symbolicLink.Link);
+                        Directory.Delete(Link);
                     }
                     else
                     {
-                        File.Delete(symbolicLink.Link);
+                        File.Delete(Link);
                     }
                 }
 
