@@ -103,7 +103,7 @@ public static class AbsolutePathExtensions
             foreach (var (Link, Target) in fileMap.SymbolicLinks)
             {
                 AbsolutePath newLink = Link.ToString().Replace(path, targetPath);
-                AbsolutePath newTarget;
+                string newTarget;
                 if (path.IsParentOf(Target))
                 {
                     newTarget = Target.ToString().Replace(path, targetPath);
@@ -160,7 +160,7 @@ public static class AbsolutePathExtensions
             foreach (var (Link, Target) in fileMap.SymbolicLinks)
             {
                 AbsolutePath newLink = Link.ToString().Replace(path, targetPath);
-                AbsolutePath newTarget;
+                string newTarget;
                 if (path.IsParentOf(Target))
                 {
                     newTarget = Target.ToString().Replace(path, targetPath);
@@ -253,6 +253,10 @@ public static class AbsolutePathExtensions
                             linkTarget = fileInfo.LinkTarget;
                             Log.Information("fil2 linkTarget: {linkTarget}", linkTarget);
                         }
+                        if (linkTarget.StartsWith("\\??\\"))
+                        {
+                            linkTarget = linkTarget[4..];
+                        }
                         symbolicLinks.Add((item, linkTarget));
                     }
                     else
@@ -275,6 +279,10 @@ public static class AbsolutePathExtensions
                         {
                             linkTarget = directoryInfo.LinkTarget;
                             Log.Information("dir2 linkTarget: {linkTarget}", linkTarget);
+                        }
+                        if (linkTarget.StartsWith("\\??\\"))
+                        {
+                            linkTarget = linkTarget[4..];
                         }
                         symbolicLinks.Add((item, linkTarget));
                     }
