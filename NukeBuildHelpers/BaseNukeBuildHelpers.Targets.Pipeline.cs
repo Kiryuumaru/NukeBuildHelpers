@@ -572,28 +572,19 @@ partial class BaseNukeBuildHelpers
                                     throw new Exception("releaseNotesJsonDocument is empty");
                                 }
 
-                                releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset |";
-                                foreach (var fileHash in FileHashesToCreate)
-                                {
-                                    releaseNotes += $" {fileHash.Name} |";
-                                }
-                                releaseNotes += "\n|---|";
-                                foreach (var fileHash in FileHashesToCreate)
-                                {
-                                    releaseNotes += "---|";
-                                }
+                                releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
                                 releaseNotes += "\n";
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
-                                    releaseNotes += $"| **{assetFile.Name}** |";
+                                    releaseNotes += $"| **{assetFile.Name}** | <details><summary>Click to expand</summary> ";
                                     foreach (var fileHash in FileHashesToCreate)
                                     {
                                         using var stream = File.OpenRead(assetFile);
                                         byte[] hashBytes = fileHash.HashAlgorithm.ComputeHash(stream);
                                         var hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-                                        releaseNotes += $" `{hash}` |";
+                                        releaseNotes += $"**{fileHash.Name}:** `{hash}`<br> ";
                                     }
-                                    releaseNotes += "\n";
+                                    releaseNotes += "</details> |\n";
                                 }
 
                                 var notesPath = TemporaryDirectory / "notes.md";

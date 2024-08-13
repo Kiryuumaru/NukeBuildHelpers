@@ -33,7 +33,7 @@ partial class BaseNukeBuildHelpers
         (MD5.Create(), "MD5"),
         (SHA1.Create(), "SHA-1"),
         (SHA256.Create(), "SHA-256"),
-        (SHA512.Create(), "SHA-512"),
+        (SHA512.Create(), "SHA-512")
     ];
 
     private void CheckEnvironementBranches()
