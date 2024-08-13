@@ -246,12 +246,10 @@ public static class AbsolutePathExtensions
                         if (!Path.IsPathRooted(fileInfo.LinkTarget))
                         {
                             linkTarget = item.Parent / fileInfo.LinkTarget;
-                            Log.Information("fil1 linkTarget: {linkTarget}", linkTarget);
                         }
                         else
                         {
                             linkTarget = fileInfo.LinkTarget;
-                            Log.Information("fil2 linkTarget: {linkTarget}", linkTarget);
                         }
                         if (linkTarget.StartsWith("\\??\\"))
                         {
@@ -273,12 +271,10 @@ public static class AbsolutePathExtensions
                         if (!Path.IsPathRooted(directoryInfo.LinkTarget))
                         {
                             linkTarget = item.Parent / directoryInfo.LinkTarget;
-                            Log.Information("dir1 linkTarget: {linkTarget}", linkTarget);
                         }
                         else
                         {
                             linkTarget = directoryInfo.LinkTarget;
-                            Log.Information("dir2 linkTarget: {linkTarget}", linkTarget);
                         }
                         if (linkTarget.StartsWith("\\??\\"))
                         {
