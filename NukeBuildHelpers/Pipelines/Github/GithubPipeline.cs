@@ -458,6 +458,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(step, "fetch-depth", fetchDepth.ToString());
         AddJobStepWith(step, "fetch-tags", fetchTags ? "true" : "false");
         AddJobStepWith(step, "submodules", GetSubmoduleCheckoutType(submoduleCheckoutType));
+        AddJobStepWith(step, "persist-credentials", "true");
 
         return step;
     }
@@ -468,6 +469,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(step, "fetch-depth", GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_DEPTH"));
         AddJobStepWith(step, "fetch-tags", GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_TAGS"));
         AddJobStepWith(step, "submodules", GetImportedEnvVarExpression(entryId, "CHECKOUT_SUBMODULES"));
+        AddJobStepWith(step, "persist-credentials", "true");
 
         return step;
     }
