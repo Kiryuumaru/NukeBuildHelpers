@@ -4,7 +4,6 @@ using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Entry.Definitions;
-using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using Semver;

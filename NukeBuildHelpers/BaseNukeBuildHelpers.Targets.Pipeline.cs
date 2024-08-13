@@ -3,7 +3,6 @@ using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
-using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
