@@ -271,7 +271,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
             var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
             AddJobStepInputs(uploadBuildStep, "artifact", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id);
-            AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/output");
+            AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/artifacts");
             AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
             buildNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
