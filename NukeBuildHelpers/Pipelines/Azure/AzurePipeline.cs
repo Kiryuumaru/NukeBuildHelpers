@@ -485,6 +485,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         step["fetchDepth"] = fetchDepth.ToString();
         step["fetchTags"] = fetchTags ? "true" : "false";
         step["submodules"] = GetSubmoduleCheckoutType(submoduleCheckoutType);
+        step["persistCredentials"] = "true";
         if (!string.IsNullOrEmpty(condition))
         {
             step["condition"] = condition;
@@ -499,6 +500,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         step["fetchDepth"] = GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_DEPTH");
         step["fetchTags"] = GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_TAGS");
         step["submodules"] = GetImportedEnvVarExpression(entryId, "CHECKOUT_SUBMODULES");
+        step["persistCredentials"] = "true";
 
         return step;
     }
