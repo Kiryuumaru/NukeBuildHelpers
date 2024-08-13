@@ -573,7 +573,6 @@ partial class BaseNukeBuildHelpers
                                 }
 
                                 releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
-                                releaseNotes += "\n";
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
                                     releaseNotes += $"| **{assetFile.Name}** | <details><summary>Click to expand</summary> ";
