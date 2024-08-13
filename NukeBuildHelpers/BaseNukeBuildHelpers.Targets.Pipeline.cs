@@ -1,4 +1,5 @@
 ﻿using Nuke.Common;
+using Nuke.Common.ChangeLog;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
@@ -11,6 +12,8 @@ using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.RunContext.Interfaces;
 using Semver;
 using Serilog;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace NukeBuildHelpers;
@@ -559,9 +562,47 @@ partial class BaseNukeBuildHelpers
                             if (assetReleaseFiles.Any())
                             {
                                 Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
+                                
+                                var releaseNotesJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                                var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
+                                if (releaseNotesJsonDocument == null ||
+                                    !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
+                                    releaseNotesProp.GetString() is not string releaseNotes)
+                                {
+                                    throw new Exception("releaseNotesJsonDocument is empty");
+                                }
+
+                                releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset |";
+                                foreach (var fileHash in FileHashesToCreate)
+                                {
+                                    releaseNotes += $" {fileHash.Name} |";
+                                }
+                                releaseNotes += "\n|---|";
+                                foreach (var fileHash in FileHashesToCreate)
+                                {
+                                    releaseNotes += "---|";
+                                }
+                                releaseNotes += "\n";
+                                foreach (var assetFile in assetReleaseFiles)
+                                {
+                                    releaseNotes += $"| **{assetFile.Name}** |";
+                                    foreach (var fileHash in FileHashesToCreate)
+                                    {
+                                        using var stream = File.OpenRead(assetFile);
+                                        byte[] hashBytes = fileHash.HashAlgorithm.ComputeHash(stream);
+                                        var hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                                        releaseNotes += $" `{hash}` |";
+                                    }
+                                    releaseNotes += "\n";
+                                }
+
+                                var notesPath = TemporaryDirectory / "notes.md";
+                                notesPath.WriteAllText(releaseNotes);
+
+                                Gh.Invoke($"release edit --notes-file={notesPath} build.{pipelinePreSetup.BuildId}");
                             }
 
-                            Gh.Invoke("release edit --draft=false build." + pipelinePreSetup.BuildId);
+                            Gh.Invoke($"release edit --draft=false build.{pipelinePreSetup.BuildId}");
                         });
                     }
                 }

@@ -17,6 +17,8 @@ using NukeBuildHelpers.RunContext.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
+using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace NukeBuildHelpers;
 
@@ -26,6 +28,13 @@ partial class BaseNukeBuildHelpers
 
     private static readonly AbsolutePath entryCachePath = CommonCacheDirectory / "entry";
     private static readonly AbsolutePath entryCacheIndexPath = CommonCacheDirectory / "entry_index";
+    private static readonly List<(HashAlgorithm HashAlgorithm, string Name)> FileHashesToCreate =
+    [
+        (MD5.Create(), "MD5"),
+        (SHA1.Create(), "SHA-1"),
+        (SHA256.Create(), "SHA-256"),
+        (SHA512.Create(), "SHA-512"),
+    ];
 
     private void CheckEnvironementBranches()
     {
