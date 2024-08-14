@@ -542,12 +542,10 @@ partial class BaseNukeBuildHelpers
                             var repoViewJsonDocument = JsonSerializer.Deserialize<JsonDocument>(repoViewJson);
                             if (repoViewJsonDocument == null ||
                                 !repoViewJsonDocument.RootElement.TryGetProperty("url", out var baseUrlJsonProp) ||
-                                baseUrlJsonProp.GetString() is not string baseUriStr)
+                                baseUrlJsonProp.GetString() is not string baseUri)
                             {
                                 throw new Exception("repoViewJson is invalid");
                             }
-
-                            Uri baseUri = new(baseUriStr);
 
                             foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                             {
@@ -587,7 +585,7 @@ partial class BaseNukeBuildHelpers
                                 releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
-                                    var url = new Uri(baseUri, $"releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}");
+                                    var url = baseUri.Trim('/') + $"/releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}";
                                     releaseNotes += $"| **[{assetFile.Name}]({url})** | <details><summary>Click to expand</summary> ";
                                     foreach (var fileHash in FileHashesToCreate)
                                     {
