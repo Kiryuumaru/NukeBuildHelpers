@@ -585,7 +585,7 @@ partial class BaseNukeBuildHelpers
                                 releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
-                                    var url = baseUri.Trim('/') + $"/releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}";
+                                    var url = new Uri(baseUri.Trim('/') + $"/releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}");
                                     releaseNotes += $"| **[{assetFile.Name}]({url})** | <details><summary>Click to expand</summary> ";
                                     foreach (var fileHash in FileHashesToCreate)
                                     {
