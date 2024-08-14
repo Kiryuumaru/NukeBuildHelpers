@@ -563,19 +563,23 @@ partial class BaseNukeBuildHelpers
                             {
                                 Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
                                 
-                                var releaseNotesJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
-                                var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
-                                if (releaseNotesJsonDocument == null ||
-                                    !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
-                                    releaseNotesProp.GetString() is not string releaseNotes)
+                                var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body,assets", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                                var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
+                                if (releaseJsonDocument == null ||
+                                    !releaseJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
+                                    !releaseJsonDocument.RootElement.TryGetProperty("assets", out var assetsProp) ||
+                                    releaseNotesProp.GetString() is not string releaseNotes ||
+                                    assetsProp.ValueKind == JsonValueKind.Array ||
+                                    assetsProp.EnumerateArray().Select(i => (i.GetProperty("name").GetString(), i.GetProperty("url").GetString())) is not IEnumerable<(string Name, string Url)> assets)
                                 {
-                                    throw new Exception("releaseNotesJsonDocument is empty");
+                                    throw new Exception("releaseJsonDocument is invalid");
                                 }
 
                                 releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
-                                    releaseNotes += $"| **{assetFile.Name}** | <details><summary>Click to expand</summary> ";
+                                    var (_, url) = assets.FirstOrDefault(i => i.Name == assetFile.Name);
+                                    releaseNotes += $"| **[{assetFile.Name}]({url})** | <details><summary>Click to expand</summary> ";
                                     foreach (var fileHash in FileHashesToCreate)
                                     {
                                         using var stream = File.OpenRead(assetFile);
