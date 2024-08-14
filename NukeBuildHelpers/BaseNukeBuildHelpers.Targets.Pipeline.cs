@@ -569,7 +569,7 @@ partial class BaseNukeBuildHelpers
                                     !releaseJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
                                     !releaseJsonDocument.RootElement.TryGetProperty("assets", out var assetsProp) ||
                                     releaseNotesProp.GetString() is not string releaseNotes ||
-                                    assetsProp.ValueKind == JsonValueKind.Array ||
+                                    assetsProp.ValueKind != JsonValueKind.Array ||
                                     assetsProp.EnumerateArray().Select(i => (i.GetProperty("name").GetString(), i.GetProperty("url").GetString())) is not IEnumerable<(string Name, string Url)> assets)
                                 {
                                     throw new Exception("releaseJsonDocument is invalid");
