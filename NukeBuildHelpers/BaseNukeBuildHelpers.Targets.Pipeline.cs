@@ -14,6 +14,7 @@ using Semver;
 using Serilog;
 using System.IO;
 using System.Security.Cryptography;
+using System.Security.Policy;
 using System.Text.Json;
 
 namespace NukeBuildHelpers;
@@ -537,6 +538,17 @@ partial class BaseNukeBuildHelpers
 
                         await Task.Run(() =>
                         {
+                            var repoViewJson = Gh.Invoke($"repo view --json url", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                            var repoViewJsonDocument = JsonSerializer.Deserialize<JsonDocument>(repoViewJson);
+                            if (repoViewJsonDocument == null ||
+                                !repoViewJsonDocument.RootElement.TryGetProperty("url", out var baseUrlJsonProp) ||
+                                baseUrlJsonProp.GetString() is not string baseUriStr)
+                            {
+                                throw new Exception("repoViewJson is invalid");
+                            }
+
+                            Uri baseUri = new(baseUriStr);
+
                             foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                             {
                                 if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
@@ -563,14 +575,11 @@ partial class BaseNukeBuildHelpers
                             {
                                 Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
                                 
-                                var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body,assets", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                                var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
                                 var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
                                 if (releaseJsonDocument == null ||
                                     !releaseJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
-                                    !releaseJsonDocument.RootElement.TryGetProperty("assets", out var assetsProp) ||
-                                    releaseNotesProp.GetString() is not string releaseNotes ||
-                                    assetsProp.ValueKind != JsonValueKind.Array ||
-                                    assetsProp.EnumerateArray().Select(i => (i.GetProperty("name").GetString(), i.GetProperty("url").GetString())) is not IEnumerable<(string Name, string Url)> assets)
+                                    releaseNotesProp.GetString() is not string releaseNotes)
                                 {
                                     throw new Exception("releaseJsonDocument is invalid");
                                 }
@@ -578,7 +587,7 @@ partial class BaseNukeBuildHelpers
                                 releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
-                                    var (_, url) = assets.FirstOrDefault(i => i.Name == assetFile.Name);
+                                    var url = new Uri(baseUri, $"releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}");
                                     releaseNotes += $"| **[{assetFile.Name}]({url})** | <details><summary>Click to expand</summary> ";
                                     foreach (var fileHash in FileHashesToCreate)
                                     {
