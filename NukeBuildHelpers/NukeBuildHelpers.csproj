@@ -29,6 +29,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="NuGet.Packaging" Version="6.11.0" />
 		<PackageReference Include="Nuke.Common" Version="8.0.0" />
 		<PackageReference Include="Semver" Version="2.3.0" />
 		<PackageReference Include="Sharprompt" Version="2.4.5" />
