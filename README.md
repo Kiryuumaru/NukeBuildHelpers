@@ -24,6 +24,14 @@ To quickly set up a new project, use the [NukeBuildTemplate](https://github.com/
 1. Clone the template repository.
 2. Follow the setup instructions in the template.
 
+### Installing via One-Line Script
+
+For a fast installation, you can also use the following one-liner in windows cmd or powershell:
+
+```
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell -c "& ([ScriptBlock]::Create((irm https://raw.githubusercontent.com/Kiryuumaru/NukeBuildTemplate/main/init.ps1)))"
+```
+
 ### Installing via NuGet
 
 If you already have a NukeBuild setup, you can install NukeBuildHelpers via NuGet:
