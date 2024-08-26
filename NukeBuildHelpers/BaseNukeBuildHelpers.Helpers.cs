@@ -697,6 +697,118 @@ partial class BaseNukeBuildHelpers
         });
     }
 
+    private async Task<Dictionary<string, SemVersion>> RunBumpArgsOrInteractive()
+    {
+        CheckEnvironementBranches();
+
+        ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
+
+        var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
+
+        CheckAppEntry(allEntry);
+
+        string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
+
+        IReadOnlyCollection<Output>? lsRemote = null;
+
+        Dictionary<string, string?> argsBumps = [];
+
+        if (splitArgs.Count == 1 && !allEntry.AppEntryMap.ContainsKey(splitArgs.First().Key) && splitArgs.First().Value.IsNullOrEmpty())
+        {
+            if (allEntry.AppEntryMap.Count != 1)
+            {
+                throw new Exception($"Redacted appId args is not valid for multiple app entries.");
+            }
+            argsBumps[allEntry.AppEntryMap.First().Value.AppId] = splitArgs.First().Key;
+        }
+        else
+        {
+            argsBumps = splitArgs.ToDictionary();
+        }
+
+        Dictionary<string, SemVersion> bumpMap = [];
+        foreach (var argsBump in argsBumps)
+        {
+            string appId = argsBump.Key.ToLower();
+
+            ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
+            ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+
+            if (allVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvVersions) &&
+                currentEnvVersions.LastOrDefault() is SemVersion currentEnvLatestVersion &&
+                allVersions.VersionCommitPaired.TryGetValue(currentEnvLatestVersion, out var currentEnvLatestVersionCommitId) &&
+                currentEnvLatestVersionCommitId == Repository.Commit)
+            {
+                throw new Exception($"Commit has already bumped {appId}");
+            }
+
+            SemVersion latestVersion = allVersions.EnvVersionGrouped[currentEnvIdentifier]?.LastOrDefault()!;
+            SemVersion bumpVersion = latestVersion.Clone();
+
+            foreach (var bumpPart in argsBump.Value.NotNullOrEmpty().Trim().ToLowerInvariant().Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                try
+                {
+                    bool isIncrement = true;
+                    string[] bumpValue = [];
+                    if (bumpPart.Contains('+'))
+                    {
+                        isIncrement = true;
+                        bumpValue = bumpPart.Split("+");
+                    }
+                    else if (bumpPart.Contains('>'))
+                    {
+                        isIncrement = false;
+                        bumpValue = bumpPart.Split(">");
+                    }
+                    else
+                    {
+                        bumpValue = [bumpPart];
+                    }
+                    int bumpAssign = bumpValue.Length > 1 ? int.Parse(bumpValue[1]) : 1;
+                    switch (bumpValue[0])
+                    {
+                        case "major":
+                            bumpVersion = bumpVersion.WithMajor(isIncrement ? bumpVersion.Major + bumpAssign : bumpAssign);
+                            break;
+                        case "minor":
+                            bumpVersion = bumpVersion.WithMinor(isIncrement ? bumpVersion.Minor + bumpAssign : bumpAssign);
+                            break;
+                        case "patch":
+                            bumpVersion = bumpVersion.WithPatch(isIncrement ? bumpVersion.Patch + bumpAssign : bumpAssign);
+                            break;
+                        case "prerelease":
+                        case "pre":
+                            var prereleaseSplit = bumpVersion.Prerelease.Split(".");
+                            bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplit[0] + "." + (isIncrement ? int.Parse(prereleaseSplit[1]) + bumpAssign : bumpAssign));
+                            break;
+                        default:
+                            throw new ArgumentException("Invalid bump value " + argsBump.Value);
+                    }
+                }
+                catch
+                {
+                    throw new ArgumentException("Invalid bump value " + argsBump.Value);
+                }
+            }
+
+            ValidateBumpVersion(allVersions, bumpVersion.ToString());
+
+            bumpMap[appId] = bumpVersion;
+
+            Log.Information("Bump {appId} from {latestVersion} to {bumpVersion}", appId, latestVersion, bumpVersion);
+        }
+
+        if (bumpMap.Count == 0)
+        {
+            bumpMap = (await InteractiveRelease()).ToDictionary(i => i.AppEntry.AppId, i => i.BumpVersion);
+        }
+
+        await RunBump(allEntry, bumpMap);
+
+        return bumpMap;
+    }
+
     private async Task StartStatusWatch(bool cancelOnDone = false, params (string AppId, string Environment)[] appIds)
     {
         var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
