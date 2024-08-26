@@ -143,6 +143,22 @@ class Build : BaseNukeBuildHelpers
                 .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
         });
 
+    TestEntry NukeBuildHelpersTest4 => _ => _
+        .AppId("nuke_build_helpers2")
+        .DisplayName("Test try 4")
+        .RunnerOS(RunnerOS.Windows2022)
+        .Execute(() =>
+        {
+            foreach (var path in OutputDirectory.GetFiles("**", 99))
+            {
+                Log.Information(path);
+            }
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+            DotNetTasks.DotNetTest(_ => _
+                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+        });
+
     BuildEntry NukeBuildHelpersBuild1 => _ => _
         .AppId("nuke_build_helpers")
         .DisplayName("Build main")
