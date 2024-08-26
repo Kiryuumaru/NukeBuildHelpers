@@ -4,6 +4,13 @@ namespace NukeBuildHelpers.Entry.Definitions;
 
 internal class TestEntryDefinition : DependentEntryDefinition, ITestEntryDefinition
 {
+    Func<Task<bool>>? executeBeforeBuild = null;
+    Func<Task<bool>> ITestEntryDefinition.ExecuteBeforeBuild
+    {
+        get => executeBeforeBuild ?? (() => Task.FromResult(false));
+        set => executeBeforeBuild = value;
+    }
+
     protected override string GetDefaultName()
     {
         if (((ITestEntryDefinition)this).AppIds.Count > 1 || ((ITestEntryDefinition)this).AppIds.Count == 0)

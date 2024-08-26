@@ -28,7 +28,7 @@ class Build : BaseNukeBuildHelpers
 
 ## Name
 
-Sets the display name for the workflow to generate.
+Sets the display name for the workflow to generate. Default is `Nuke CICD Pipeline`.
 
 ### Definitions
 
@@ -72,7 +72,7 @@ IWorkflowConfigEntryDefinition Name(Func<Task<string>> name)
 
 ## PreSetupRunnerOS
 
-Sets the pre-setup runner OS for the workflow to generate.
+Sets the pre-setup runner OS for the workflow to generate. Default is `RunnerOS.Ubuntu2204`.
 
 ### Definitions
 
@@ -118,7 +118,7 @@ IWorkflowConfigEntryDefinition PreSetupRunnerOS(Func<Task<RunnerOS>> runnerOS)
 
 ## PostSetupRunnerOS
 
-Sets the post-setup runner OS for the workflow to generate.
+Sets the post-setup runner OS for the workflow to generate. Default is `RunnerOS.Ubuntu2204`.
 
 ### Definitions
 
@@ -164,7 +164,7 @@ IWorkflowConfigEntryDefinition PostSetupRunnerOS(Func<Task<RunnerOS>> runnerOS)
 
 ## AppendReleaseNotesAssetHashes
 
-Configures whether to append release notes asset hashes in the workflow.
+Configures whether to append release notes asset hashes in the workflow. Default is `true`.
 
 ### Definitions
 

@@ -19,6 +19,7 @@ using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using System.Security.Cryptography;
 using System.Collections.Generic;
+using NukeBuildHelpers.Entry.Extensions;
 
 namespace NukeBuildHelpers;
 
@@ -404,7 +405,26 @@ partial class BaseNukeBuildHelpers
             entriesToRun = allEntry.TestEntryDefinitionMap.Values.Where(i => idsToRun.Any(j => j.Equals(i.Id)));
         }
 
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, null, null);
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, entry =>
+        {
+            ITestEntryDefinition testEntryDefinition = (entry as ITestEntryDefinition)!;
+            if (CommonArtifactsDirectory.DirectoryExists())
+            {
+                foreach (var artifact in CommonArtifactsDirectory.GetFiles())
+                {
+                    if (!artifact.HasExtension(".zip"))
+                    {
+                        continue;
+                    }
+                    var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                    if (testEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        artifact.UnZipTo(CommonOutputDirectory);
+                    }
+                }
+            }
+            return Task.CompletedTask;
+        }, null);
     }
 
     private Task BuildAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun, bool skipCache)

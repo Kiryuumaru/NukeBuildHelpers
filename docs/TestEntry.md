@@ -2,13 +2,14 @@
 
 This document provides an overview of the fluent API functionalities available for `TestEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`.
 
-If test entry run errors, the `BuildEntry` and `PublishEntry` configured will not run.
+If test entry run errors, the `PublishEntry` configured will not run. `BuildEntry` will also not run if the `TestEntry` is configured `ExecuteBeforeBuild` as `true`.
 
 ## Features
 
 - [AppId](#appid)
 - [RunnerOS](#runneros)
 - [Execute](#execute)
+- [ExecuteBeforeBuild](#executebeforebuild)
 - [CachePath](#cachepath)
 - [CacheInvalidator](#cacheinvalidator)
 - [CheckoutFetchDepth](#checkoutfetchdepth)
@@ -166,6 +167,50 @@ ITestEntryDefinition Execute(Func<IRunContext, Task<T>> action);
                         .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
                 }
             });
+    }
+    ```
+    
+---
+
+## ExecuteBeforeBuild
+
+Configures whether to execute a task before the build in the workflow. Default is `false`.
+
+### Definitions
+
+```csharp
+ITestEntryDefinition ExecuteBeforeBuild(bool executeBeforeBuild)
+ITestEntryDefinition ExecuteBeforeBuild(Func<bool> executeBeforeBuild)
+ITestEntryDefinition ExecuteBeforeBuild(Func<Task<bool>> executeBeforeBuild)
+```
+
+### Usage
+
+* Specify directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        TestEntry SampleTestEntry => _ => _
+            .ExecuteBeforeBuild(true);
+    }
+    ```
+
+* Use an asynchronous function
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        TestEntry SampleTestEntry => _ => _
+            .ExecuteBeforeBuild(async () => await Task.FromResult(true));
     }
     ```
 

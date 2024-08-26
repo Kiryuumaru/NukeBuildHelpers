@@ -68,29 +68,7 @@ dotnet add package NukeBuildHelpers
 
 ### Creating Build Flows
 
-To create custom build flows, implement any of the target entries `TestEntry`, `BuildEntry` or `PublishEntry`.
-
-- #### Example `TestEntry` Implementation
-
-    ```csharp
-    class Build : BaseNukeBuildHelpers
-    {
-        ...
-
-        TestEntry NukeBuildHelpersTest => _ => _
-            .AppId("nuke_build_helpers")
-            .RunnerOS(RunnerOS.Ubuntu2204)
-            .Execute(() =>
-            {
-                DotNetTasks.DotNetClean(_ => _
-                    .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
-                DotNetTasks.DotNetTest(_ => _
-                    .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
-            });
-    }
-    ```
-
-  See documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/TestEntry.md)
+To create custom build flows, implement any of the target entries `BuildEntry`, `TestEntry` or `PublishEntry`.
 
 - #### Example `BuildEntry` Implementation
 
@@ -134,6 +112,28 @@ To create custom build flows, implement any of the target entries `TestEntry`, `
     ```
 
   See documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/BuildEntry.md)
+
+- #### Example `TestEntry` Implementation
+
+    ```csharp
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        TestEntry NukeBuildHelpersTest => _ => _
+            .AppId("nuke_build_helpers")
+            .RunnerOS(RunnerOS.Ubuntu2204)
+            .Execute(() =>
+            {
+                DotNetTasks.DotNetClean(_ => _
+                    .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                DotNetTasks.DotNetTest(_ => _
+                    .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+            });
+    }
+    ```
+
+  See documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/TestEntry.md)
 
 - #### Example `PublishEntry` Implementation
 
