@@ -212,9 +212,9 @@ Configures whether to enable prerelease on GitHub release if the environment is 
 ### Definitions
 
 ```csharp
-IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(bool enablePrereleaseOnReleases)
-IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(Func<bool> enablePrereleaseOnReleases)
-IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(Func<Task<bool>> enablePrereleaseOnReleases)
+IWorkflowConfigEntryDefinition EnablePrereleaseOnRelease(bool enablePrereleaseOnRelease)
+IWorkflowConfigEntryDefinition EnablePrereleaseOnRelease(Func<bool> enablePrereleaseOnRelease)
+IWorkflowConfigEntryDefinition EnablePrereleaseOnRelease(Func<Task<bool>> enablePrereleaseOnRelease)
 ```
 
 ### Usage
@@ -229,7 +229,7 @@ IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(Func<Task<bool>> enabl
         ...
         
         WorkflowConfigEntry SampleConfigEntry => _ => _
-            .EnablePrereleaseOnReleases(true);
+            .EnablePrereleaseOnRelease(true);
     }
     ```
 
@@ -243,6 +243,6 @@ IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(Func<Task<bool>> enabl
         ...
         
         WorkflowConfigEntry SampleConfigEntry => _ => _
-            .EnablePrereleaseOnReleases(async () => await Task.FromResult(true));
+            .EnablePrereleaseOnRelease(async () => await Task.FromResult(true));
     }
     ```
