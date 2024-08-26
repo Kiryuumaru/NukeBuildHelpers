@@ -54,7 +54,7 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
-        .ExecuteBeforeBuild(false)
+        .ExecuteBeforeBuild(true)
         .CachePath(RootDirectory / "testCache", RootDirectory / "testFile.txt")
         .CacheInvalidator("1")
         .WorkflowBuilder(builder =>
@@ -118,7 +118,7 @@ class Build : BaseNukeBuildHelpers
         .WorkflowId("NukeBuildHelpersTest2CustomId")
         .DisplayName("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
-        .ExecuteBeforeBuild(false)
+        .ExecuteBeforeBuild(true)
         .Execute(() =>
         {
             DotNetTasks.DotNetClean(_ => _
