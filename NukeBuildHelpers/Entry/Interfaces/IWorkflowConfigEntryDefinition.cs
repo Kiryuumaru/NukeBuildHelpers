@@ -18,6 +18,8 @@ public interface IWorkflowConfigEntryDefinition
 
     internal Func<Task<bool>> AppendReleaseNotesAssetHashes { get; set; }
 
+    internal Func<Task<bool>> EnablePrereleaseOnRelease { get; set; }
+
     internal async Task<string> GetName()
     {
         return ValueHelpers.GetOrNullFail(await Name());
@@ -36,5 +38,10 @@ public interface IWorkflowConfigEntryDefinition
     internal async Task<bool> GetAppendReleaseNotesAssetHashes()
     {
         return await AppendReleaseNotesAssetHashes();
+    }
+
+    internal async Task<bool> GetEnablePrereleaseOnReleases()
+    {
+        return await EnablePrereleaseOnRelease();
     }
 }

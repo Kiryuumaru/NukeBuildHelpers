@@ -175,4 +175,46 @@ public static class WorkflowConfigEntryExtensions
         definition.AppendReleaseNotesAssetHashes = () => Task.Run(async () => await appendReleaseNotesAssetHashes());
         return definition;
     }
+
+    /// <summary>
+    /// Configures whether to enable prerelease on GitHub release if the environment is not on the main branch.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="enablePrereleaseOnRelease">A value indicating whether to enable prerelease on releases.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition EnablePrereleaseOnRelease<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, bool enablePrereleaseOnRelease)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.EnablePrereleaseOnRelease = () => Task.Run(() => enablePrereleaseOnRelease);
+        return definition;
+    }
+
+    /// <summary>
+    /// Configures whether to enable prerelease on GitHub release if the environment is not on the main branch using a function.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="enablePrereleaseOnRelease">A function that returns a value indicating whether to enable prerelease on releases.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition EnablePrereleaseOnRelease<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<bool> enablePrereleaseOnRelease)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.EnablePrereleaseOnRelease = () => Task.Run(() => enablePrereleaseOnRelease());
+        return definition;
+    }
+
+    /// <summary>
+    /// Configures whether to enable prerelease on GitHub release if the environment is not on the main branch using an asynchronous function.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="enablePrereleaseOnRelease">An asynchronous function that returns a value indicating whether to enable prerelease on releases.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition EnablePrereleaseOnRelease<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<Task<bool>> enablePrereleaseOnRelease)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.EnablePrereleaseOnRelease = () => Task.Run(async () => await enablePrereleaseOnRelease());
+        return definition;
+    }
 }

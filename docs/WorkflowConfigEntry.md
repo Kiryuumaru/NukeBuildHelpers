@@ -23,6 +23,7 @@ class Build : BaseNukeBuildHelpers
 - [PreSetupRunnerOS](#presetuprunneros)
 - [PostSetupRunnerOS](#postsetuprunneros)
 - [AppendReleaseNotesAssetHashes](#appendreleasenotesassethashes)
+- [EnablePrereleaseOnRelease](#enableprereleaseonrelease)
 
 ---
 
@@ -201,5 +202,47 @@ IWorkflowConfigEntryDefinition AppendReleaseNotesAssetHashes(Func<Task<bool>> ap
         
         WorkflowConfigEntry SampleConfigEntry => _ => _
             .AppendReleaseNotesAssetHashes(async () => await Task.FromResult(true));
+    }
+    ```
+    
+## EnablePrereleaseOnRelease
+
+Configures whether to enable prerelease on GitHub release if the environment is not on the main branch. Default is `true`.
+
+### Definitions
+
+```csharp
+IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(bool enablePrereleaseOnReleases)
+IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(Func<bool> enablePrereleaseOnReleases)
+IWorkflowConfigEntryDefinition EnablePrereleaseOnReleases(Func<Task<bool>> enablePrereleaseOnReleases)
+```
+
+### Usage
+
+* Specify directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        WorkflowConfigEntry SampleConfigEntry => _ => _
+            .EnablePrereleaseOnReleases(true);
+    }
+    ```
+
+* Use an asynchronous function
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        WorkflowConfigEntry SampleConfigEntry => _ => _
+            .EnablePrereleaseOnReleases(async () => await Task.FromResult(true));
     }
     ```
