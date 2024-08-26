@@ -33,6 +33,13 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
         set => appendReleaseNotesAssetHashes = value;
     }
 
+    Func<Task<bool>>? enablePrereleaseOnReleases = null;
+    Func<Task<bool>> IWorkflowConfigEntryDefinition.EnablePrereleaseOnRelease
+    {
+        get => enablePrereleaseOnReleases ?? (() => Task.FromResult(true));
+        set => enablePrereleaseOnReleases = value;
+    }
+
     IWorkflowConfigEntryDefinition IWorkflowConfigEntryDefinition.Clone()
     {
         var definition = new WorkflowConfigEntryDefinition();
@@ -40,6 +47,7 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
         if (preSetupRunnerOS != null) ((IWorkflowConfigEntryDefinition)this).PreSetupRunnerOS = preSetupRunnerOS;
         if (postSetupRunnerOS != null) ((IWorkflowConfigEntryDefinition)this).PostSetupRunnerOS = postSetupRunnerOS;
         if (appendReleaseNotesAssetHashes != null) ((IWorkflowConfigEntryDefinition)this).AppendReleaseNotesAssetHashes = appendReleaseNotesAssetHashes;
+        if (enablePrereleaseOnReleases != null) ((IWorkflowConfigEntryDefinition)this).EnablePrereleaseOnRelease = enablePrereleaseOnReleases;
         return definition;
     }
 }
