@@ -234,6 +234,11 @@ partial class BaseNukeBuildHelpers
                     $"--generate-notes " +
                     $"--draft";
 
+                if (!env.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    ghReleaseCreateArgs += " --prerelease";
+                }
+
                 if (!isFirstRelease)
                 {
                     ghReleaseCreateArgs += " --notes-start-tag " + targetBuildTag;
