@@ -22,6 +22,7 @@ class Build : BaseNukeBuildHelpers
 - [Name](#name)
 - [PreSetupRunnerOS](#presetuprunneros)
 - [PostSetupRunnerOS](#postsetuprunneros)
+- [AppendReleaseNotesAssetHashes](#appendreleasenotesassethashes)
 
 ---
 
@@ -156,5 +157,49 @@ IWorkflowConfigEntryDefinition PostSetupRunnerOS(Func<Task<RunnerOS>> runnerOS)
 
         WorkflowConfigEntry SampleConfigEntry => _ => _
             .PostSetupRunnerOS(async () => await Task.FromResult(RunnerOS.Windows2022));
+    }
+    ```
+
+---
+
+## AppendReleaseNotesAssetHashes
+
+Configures whether to append release notes asset hashes in the workflow.
+
+### Definitions
+
+```csharp
+IWorkflowConfigEntryDefinition AppendReleaseNotesAssetHashes(bool appendReleaseNotesAssetHashes)
+IWorkflowConfigEntryDefinition AppendReleaseNotesAssetHashes(Func<bool> appendReleaseNotesAssetHashes)
+IWorkflowConfigEntryDefinition AppendReleaseNotesAssetHashes(Func<Task<bool>> appendReleaseNotesAssetHashes)
+```
+
+### Usage
+
+* Specify directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        WorkflowConfigEntry SampleConfigEntry => _ => _
+            .AppendReleaseNotesAssetHashes(true);
+    }
+    ```
+
+* Use an asynchronous function
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        WorkflowConfigEntry SampleConfigEntry => _ => _
+            .AppendReleaseNotesAssetHashes(async () => await Task.FromResult(true));
     }
     ```

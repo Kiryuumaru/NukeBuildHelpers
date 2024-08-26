@@ -536,43 +536,43 @@ partial class BaseNukeBuildHelpers
                             }
                         }
 
-                        await Task.Run(() =>
+                        var repoViewJson = Gh.Invoke($"repo view --json url", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                        var repoViewJsonDocument = JsonSerializer.Deserialize<JsonDocument>(repoViewJson);
+                        if (repoViewJsonDocument == null ||
+                            !repoViewJsonDocument.RootElement.TryGetProperty("url", out var baseUrlJsonProp) ||
+                            baseUrlJsonProp.GetString() is not string baseUri)
                         {
-                            var repoViewJson = Gh.Invoke($"repo view --json url", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
-                            var repoViewJsonDocument = JsonSerializer.Deserialize<JsonDocument>(repoViewJson);
-                            if (repoViewJsonDocument == null ||
-                                !repoViewJsonDocument.RootElement.TryGetProperty("url", out var baseUrlJsonProp) ||
-                                baseUrlJsonProp.GetString() is not string baseUri)
+                            throw new Exception("repoViewJson is invalid");
+                        }
+
+                        foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                        {
+                            if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
                             {
-                                throw new Exception("repoViewJson is invalid");
+                                continue;
+                            }
+                            var appIdLower = appEntry.AppId.ToLowerInvariant();
+                            var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                            string latestTag = "latest";
+                            if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                latestTag += "-" + appRunEntry.Environment;
                             }
 
-                            foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
-                            {
-                                if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
-                                {
-                                    continue;
-                                }
-                                var appIdLower = appEntry.AppId.ToLowerInvariant();
-                                var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
-                                string latestTag = "latest";
-                                if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    latestTag += "-" + appRunEntry.Environment;
-                                }
+                            Git.Invoke("tag -f " + appIdLower + "/" + version + "-passed");
+                            Git.Invoke("tag -f " + appIdLower + "/" + version);
+                            Git.Invoke("tag -f " + appIdLower + "/" + latestTag);
+                        }
 
-                                Git.Invoke("tag -f " + appIdLower + "/" + version + "-passed");
-                                Git.Invoke("tag -f " + appIdLower + "/" + version);
-                                Git.Invoke("tag -f " + appIdLower + "/" + latestTag);
-                            }
+                        Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                            Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
-
+                        if (await allEntry.WorkflowConfigEntryDefinition.GetAppendReleaseNotesAssetHashes())
+                        {
                             var assetReleaseFiles = assetOutput.GetFiles("*.*");
                             if (assetReleaseFiles.Any())
                             {
                                 Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
-                                
+
                                 var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
                                 var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
                                 if (releaseJsonDocument == null ||
@@ -602,34 +602,31 @@ partial class BaseNukeBuildHelpers
 
                                 Gh.Invoke($"release edit --notes-file={notesPath} build.{pipelinePreSetup.BuildId}");
                             }
+                        }
 
-                            Gh.Invoke($"release edit --draft=false build.{pipelinePreSetup.BuildId}");
-                        });
+                        Gh.Invoke($"release edit --draft=false build.{pipelinePreSetup.BuildId}");
                     }
                 }
                 else
                 {
                     if (pipelinePreSetup.HasRelease)
                     {
-                        await Task.Run(() =>
+                        foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
                         {
-                            foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+                            var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
+                            string latestTag = "latest";
+                            if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                var version = SemVersion.Parse(appRunEntry.Version, SemVersionStyles.Strict).WithoutMetadata();
-                                string latestTag = "latest";
-                                if (!appRunEntry.Environment.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    latestTag += "-" + appRunEntry.Environment;
-                                }
-
-                                Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version + "-failed");
-                                Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version);
+                                latestTag += "-" + appRunEntry.Environment;
                             }
 
-                            Gh.Invoke("release delete -y build." + pipelinePreSetup.BuildId);
+                            Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version + "-failed");
+                            Git.Invoke("tag -f " + appRunEntry.AppId + "/" + version);
+                        }
 
-                            Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
-                        });
+                        Gh.Invoke("release delete -y build." + pipelinePreSetup.BuildId);
+
+                        Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
                     }
                 }
             }

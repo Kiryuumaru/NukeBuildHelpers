@@ -133,4 +133,46 @@ public static class WorkflowConfigEntryExtensions
         definition.PostSetupRunnerOS = () => Task.Run(async () => await runnerOS());
         return definition;
     }
+
+    /// <summary>
+    /// Configures whether to append release notes asset hashes in the workflow.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="appendReleaseNotesAssetHashes">A value indicating whether to append release notes asset hashes.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition AppendReleaseNotesAssetHashes<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, bool appendReleaseNotesAssetHashes)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.AppendReleaseNotesAssetHashes = () => Task.Run(() => appendReleaseNotesAssetHashes);
+        return definition;
+    }
+
+    /// <summary>
+    /// Configures whether to append release notes asset hashes in the workflow using a function.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="appendReleaseNotesAssetHashes">A function that returns a value indicating whether to append release notes asset hashes.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition AppendReleaseNotesAssetHashes<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<bool> appendReleaseNotesAssetHashes)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.AppendReleaseNotesAssetHashes = () => Task.Run(() => appendReleaseNotesAssetHashes());
+        return definition;
+    }
+
+    /// <summary>
+    /// Configures whether to append release notes asset hashes in the workflow using an asynchronous function.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="appendReleaseNotesAssetHashes">An asynchronous function that returns a value indicating whether to append release notes asset hashes.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition AppendReleaseNotesAssetHashes<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<Task<bool>> appendReleaseNotesAssetHashes)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.AppendReleaseNotesAssetHashes = () => Task.Run(async () => await appendReleaseNotesAssetHashes());
+        return definition;
+    }
 }
