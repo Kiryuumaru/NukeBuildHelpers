@@ -326,7 +326,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             List<string> publishNeeds = ["PRE_SETUP"];
             string condition = "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))";
-            foreach (var testEntryDefinition in allEntry.TestEntryDefinitionMap.Values)
+            foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
@@ -340,6 +340,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 {
                     condition = "and(" + condition + ", " + "ne(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
                     publishNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
+                }
+            }
+            foreach (var testEntryDefinition in postTestEntryDefinitionMap.Values)
+            {
+                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
@@ -359,7 +367,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // █████████████ Post Setup █████████████
         // ██████████████████████████████████████
         List<string> postNeeds = ["PRE_SETUP"];
-        foreach (var testEntryDefinition in allEntry.TestEntryDefinitionMap.Values)
+        foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
         {
             postNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
         }
@@ -367,9 +375,13 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             postNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
         }
-        foreach (var buildEntryDefinition in allEntry.PublishEntryDefinitionMap.Values)
+        foreach (var testEntryDefinition in postTestEntryDefinitionMap.Values)
         {
-            postNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
+            postNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
+        }
+        foreach (var publishEntryDefinition in allEntry.PublishEntryDefinitionMap.Values)
+        {
+            postNeeds.Add(publishEntryDefinition.Id.ToUpperInvariant());
         }
         var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", pipelinePostSetupOs, timeoutMinutes: 10, needs: [.. postNeeds], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
