@@ -345,7 +345,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'success'";
+                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                     publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
