@@ -221,9 +221,9 @@ jobs:
         if-no-files-found: error
         retention-days: 1
     needs:
-    - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
+    - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
@@ -256,9 +256,9 @@ jobs:
         if-no-files-found: error
         retention-days: 1
     needs:
-    - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
+    - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
@@ -291,9 +291,9 @@ jobs:
         if-no-files-found: error
         retention-days: 1
     needs:
-    - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
+    - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
@@ -326,9 +326,9 @@ jobs:
         if-no-files-found: error
         retention-days: 1
     needs:
-    - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
+    - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
@@ -361,9 +361,9 @@ jobs:
         if-no-files-found: error
         retention-days: 1
     needs:
-    - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
+    - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
@@ -426,15 +426,13 @@ jobs:
       name: Run Nuke PipelineRunEntry
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_RUN_SCRIPT }} PipelineRunEntry --args "run=test;idsToRun=NukeBuildHelpersTest3"
     needs:
-    - PRE_SETUP
-    - NUKEBUILDHELPERSTEST1
-    - NUKEBUILDHELPERSTEST2CUSTOMID
     - NUKEBUILDHELPERSBUILD1
     - NUKEBUILDHELPERSBUILD2MAT1MAT3
     - NUKEBUILDHELPERSBUILD2MAT1MAT4
     - NUKEBUILDHELPERSBUILD2MAT2MAT3
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result != 'failure'"
+    - PRE_SETUP
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CONDITION == 'true' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSTEST4:
@@ -463,8 +461,8 @@ jobs:
       name: Run Nuke PipelineRunEntry
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_RUN_SCRIPT }} PipelineRunEntry --args "run=test;idsToRun=NukeBuildHelpersTest4"
     needs:
-    - PRE_SETUP
     - NUKEBUILDHELPERSBUILD3
+    - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_CONDITION == 'true' && needs.NUKEBUILDHELPERSBUILD3.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
@@ -495,16 +493,13 @@ jobs:
       name: Run Nuke PipelineRunEntry
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }} PipelineRunEntry --args "run=publish;idsToRun=NukeBuildHelpersPublish"
     needs:
-    - PRE_SETUP
-    - NUKEBUILDHELPERSTEST1
-    - NUKEBUILDHELPERSTEST2CUSTOMID
-    - NUKEBUILDHELPERSTEST3
     - NUKEBUILDHELPERSBUILD1
     - NUKEBUILDHELPERSBUILD2MAT1MAT3
     - NUKEBUILDHELPERSBUILD2MAT1MAT4
     - NUKEBUILDHELPERSBUILD2MAT2MAT3
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure' && needs.NUKEBUILDHELPERSTEST3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result != 'failure'"
+    - PRE_SETUP
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result != 'failure'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:

@@ -277,7 +277,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         foreach (var entryDefinition in allEntry.BuildEntryDefinitionMap.Values)
         {
-            List<string> buildNeeds = ["PRE_SETUP"];
+            List<string> buildNeeds = [];
             string condition = "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'";
             foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
             {
@@ -287,6 +287,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     buildNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
+            buildNeeds.Add("PRE_SETUP");
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
             var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. buildNeeds], _if: condition);
@@ -305,16 +306,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         foreach (var entryDefinition in postTestEntryDefinitionMap.Values)
         {
-            List<string> postTestNeeds = ["PRE_SETUP"];
+            List<string> postTestNeeds = [];
             string condition = "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'";
-            foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
-            {
-                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
-                {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
-                    postTestNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
-                }
-            }
             foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
             {
                 if (entryDefinition.AppIds.Any(i => i.Equals(buildEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
@@ -323,6 +316,18 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     postTestNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
+            if (postTestNeeds.Count == 0)
+            {
+                foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
+                {
+                    if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
+                    {
+                        condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                        postTestNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
+                    }
+                }
+            }
+            postTestNeeds.Add("PRE_SETUP");
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
             var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. postTestNeeds], _if: condition);
@@ -338,16 +343,8 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         foreach (var entryDefinition in allEntry.PublishEntryDefinitionMap.Values)
         {
-            List<string> publishNeeds = ["PRE_SETUP"];
+            List<string> publishNeeds = [];
             string condition = "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'";
-            foreach (var testEntryDefinition in allEntry.TestEntryDefinitionMap.Values)
-            {
-                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
-                    publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
-                }
-            }
             foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
             {
                 if (buildEntryDefinition.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
@@ -356,6 +353,29 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     publishNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
+            if (publishNeeds.Count == 0)
+            {
+                foreach (var testEntryDefinition in postTestEntryDefinitionMap.Values)
+                {
+                    if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                        publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
+                    }
+                }
+            }
+            if (publishNeeds.Count == 0)
+            {
+                foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
+                {
+                    if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                        publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
+                    }
+                }
+            }
+            publishNeeds.Add("PRE_SETUP");
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
             var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. publishNeeds], _if: condition);
