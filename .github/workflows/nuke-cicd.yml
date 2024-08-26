@@ -552,7 +552,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
     - NUKEBUILDHELPERSTEST3
     - NUKEBUILDHELPERSTEST5
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSTEST3.result == 'success' && needs.NUKEBUILDHELPERSTEST5.result == 'success'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSTEST3.result == 'success' && needs.NUKEBUILDHELPERSTEST5.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:
