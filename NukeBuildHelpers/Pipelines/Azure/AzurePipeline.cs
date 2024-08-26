@@ -235,46 +235,44 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         // ██████████████████████████████████████
         // ██████████████ Pre Setup █████████████
         // ██████████████████████████████████████
-        List<string> needs = [];
         var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", pipelinePreSetupOs, timeoutMinutes: 10);
         AddJobStepCheckout(preSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var nukePreSetupStep = AddJobStepNukeRun(preSetupJob, pipelinePreSetupOs, "PipelinePreSetup", name: "NUKE_RUN");
         AddStepEnvVar(nukePreSetupStep, "GITHUB_TOKEN", "$(GITHUB_TOKEN)");
-        needs.Add("PRE_SETUP");
 
         // ██████████████████████████████████████
         // ██████████████ Pre Test ██████████████
         // ██████████████████████████████████████
-        List<string> preTestNeeds = [.. needs];
         foreach (var entryDefinition in preTestEntryDefinitionMap.Values)
         {
+            List<string> preTestNeeds = ["PRE_SETUP"];
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. needs], condition: "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))");
+            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. preTestNeeds], condition: "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))");
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test");
-            preTestNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
         // ██████████████████████████████████████
         // ███████████████ Build ████████████████
         // ██████████████████████████████████████
-        List<string> buildNeeds = [.. needs];
         foreach (var entryDefinition in allEntry.BuildEntryDefinitionMap.Values)
         {
-            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
-            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            List<string> buildNeeds = ["PRE_SETUP"];
             string condition = "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))";
             foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    buildNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
-            var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. preTestNeeds], condition: condition);
+            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
+            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. buildNeeds], condition: condition);
             AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
@@ -283,23 +281,21 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepInputs(uploadBuildStep, "artifact", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id);
             AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/artifacts");
             AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
-            buildNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
         // ██████████████████████████████████████
         // █████████████ Post Test ██████████████
         // ██████████████████████████████████████
-        List<string> postTestNeeds = [.. needs];
         foreach (var entryDefinition in postTestEntryDefinitionMap.Values)
         {
-            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
-            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            List<string> postTestNeeds = ["PRE_SETUP"];
             string condition = "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))";
             foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
                     condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    postTestNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
             foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
@@ -307,9 +303,12 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 if (entryDefinition.AppIds.Any(i => i.Equals(buildEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     condition = "and(" + condition + ", " + "ne(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    postTestNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
-            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. buildNeeds], condition: condition);
+            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
+            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. postTestNeeds], condition: condition);
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
@@ -318,23 +317,21 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepInputs(downloadPostTestStep, "patterns", "**");
             AddJobStepInputs(downloadPostTestStep, "continueOnError", "true");
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test");
-            postTestNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
         // ██████████████████████████████████████
         // ██████████████ Publish ███████████████
         // ██████████████████████████████████████
-        List<string> publishNeeds = [.. needs];
         foreach (var entryDefinition in allEntry.PublishEntryDefinitionMap.Values)
         {
-            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
-            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            List<string> publishNeeds = ["PRE_SETUP"];
             string condition = "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))";
             foreach (var testEntryDefinition in allEntry.TestEntryDefinitionMap.Values)
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
             foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
@@ -342,9 +339,12 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 if (buildEntryDefinition.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
                 {
                     condition = "and(" + condition + ", " + "ne(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    publishNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
-            var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. postTestNeeds], condition: condition);
+            IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
+            await entryDefinition.GetWorkflowBuilder(workflowBuilder);
+            var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. publishNeeds], condition: condition);
             AddJobEnvVarFromNeeds(publishJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
@@ -353,17 +353,24 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts-download");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
-            publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
         }
 
         // ██████████████████████████████████████
         // █████████████ Post Setup █████████████
         // ██████████████████████████████████████
-        List<string> postNeeds = [.. needs];
-        postNeeds.AddRange(preTestNeeds.Where(i => !needs.Contains(i)));
-        postNeeds.AddRange(buildNeeds.Where(i => !needs.Contains(i)));
-        postNeeds.AddRange(postTestNeeds.Where(i => !needs.Contains(i)));
-        postNeeds.AddRange(publishNeeds.Where(i => !needs.Contains(i)));
+        List<string> postNeeds = ["PRE_SETUP"];
+        foreach (var testEntryDefinition in allEntry.TestEntryDefinitionMap.Values)
+        {
+            postNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
+        }
+        foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
+        {
+            postNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
+        }
+        foreach (var buildEntryDefinition in allEntry.PublishEntryDefinitionMap.Values)
+        {
+            postNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
+        }
         var postSetupJob = AddJob(workflow, "POST_SETUP", $"Post Setup", pipelinePostSetupOs, timeoutMinutes: 10, needs: [.. postNeeds], condition: "always()");
         AddJobEnvVarFromNeeds(postSetupJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
         foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
