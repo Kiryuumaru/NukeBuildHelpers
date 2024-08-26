@@ -32,8 +32,7 @@ class Build : BaseNukeBuildHelpers
 
     protected override WorkflowConfigEntry WorkflowConfig => _ => _
         .PreSetupRunnerOS(RunnerOS.Windows2022)
-        .PostSetupRunnerOS(RunnerOS.Ubuntu2204)
-        .AppendReleaseNotesAssetHashes(false);
+        .PostSetupRunnerOS(RunnerOS.Ubuntu2204);
 
     Target Clean => _ => _
         .Executes(() =>
@@ -55,6 +54,7 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Test try 1")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .ExecuteBeforeBuild(true)
         .CachePath(RootDirectory / "testCache", RootDirectory / "testFile.txt")
         .CacheInvalidator("1")
         .WorkflowBuilder(builder =>
@@ -118,8 +118,25 @@ class Build : BaseNukeBuildHelpers
         .WorkflowId("NukeBuildHelpersTest2CustomId")
         .DisplayName("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
+        .ExecuteBeforeBuild(true)
         .Execute(() =>
         {
+            DotNetTasks.DotNetClean(_ => _
+                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+            DotNetTasks.DotNetTest(_ => _
+                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+        });
+
+    TestEntry NukeBuildHelpersTest3 => _ => _
+        .AppId("nuke_build_helpers")
+        .DisplayName("Test try 3")
+        .RunnerOS(RunnerOS.Windows2022)
+        .Execute(() =>
+        {
+            foreach (var path in OutputDirectory.GetFiles("**", 99))
+            {
+                Log.Information(path);
+            }
             DotNetTasks.DotNetClean(_ => _
                 .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
             DotNetTasks.DotNetTest(_ => _
