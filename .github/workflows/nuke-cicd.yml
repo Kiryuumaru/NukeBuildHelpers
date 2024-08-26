@@ -233,7 +233,7 @@ jobs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD2MAT1MAT3:
@@ -268,7 +268,7 @@ jobs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD2MAT1MAT4:
@@ -303,7 +303,7 @@ jobs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD2MAT2MAT3:
@@ -338,7 +338,7 @@ jobs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD2MAT2MAT4:
@@ -373,7 +373,7 @@ jobs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
     - NUKEBUILDHELPERSTEST2CUSTOMID
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSBUILD3:
@@ -443,7 +443,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD2MAT1MAT4
     - NUKEBUILDHELPERSBUILD2MAT2MAT3
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSTEST4:
@@ -474,7 +474,7 @@ jobs:
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSBUILD3
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_CONDITION == 'true' && needs.NUKEBUILDHELPERSBUILD3.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_CONDITION == 'true' && needs.NUKEBUILDHELPERSBUILD3.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSTEST5:
@@ -512,7 +512,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD2MAT2MAT3
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
     - NUKEBUILDHELPERSBUILD3
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD3.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD3.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSPUBLISH:
@@ -552,7 +552,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
     - NUKEBUILDHELPERSTEST3
     - NUKEBUILDHELPERSTEST5
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'failure' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'failure' && needs.NUKEBUILDHELPERSBUILD1.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result != 'failure' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result != 'failure' && needs.NUKEBUILDHELPERSTEST3.result != 'failure' && needs.NUKEBUILDHELPERSTEST5.result != 'failure'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result != 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result != 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSTEST3.result == 'success' && needs.NUKEBUILDHELPERSTEST5.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:

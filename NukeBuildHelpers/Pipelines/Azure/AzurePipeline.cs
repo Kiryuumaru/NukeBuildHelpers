@@ -246,9 +246,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var entryDefinition in preTestEntryDefinitionMap.Values)
         {
             List<string> preTestNeeds = ["PRE_SETUP"];
+            string condition = "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))";
             IAzureWorkflowBuilder workflowBuilder = new AzureWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. preTestNeeds], condition: "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))");
+            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_NAME"), GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "POOL_VM_IMAGE"), needs: [.. preTestNeeds], condition: condition);
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
@@ -266,7 +267,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    condition = "and(" + condition + ", " + "eq(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     buildNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -294,7 +295,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (entryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
-                    condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    condition = "and(" + condition + ", " + "eq(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     postTestNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -302,7 +303,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (entryDefinition.AppIds.Count == 0 || entryDefinition.AppIds.Any(i => i.Equals(buildEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition = "and(" + condition + ", " + "ne(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    condition = "and(" + condition + ", " + "eq(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     postTestNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -330,7 +331,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    condition = "and(" + condition + ", " + "eq(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -338,7 +339,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (buildEntryDefinition.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    condition = "and(" + condition + ", " + "ne(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    condition = "and(" + condition + ", " + "eq(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     publishNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -346,7 +347,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition = "and(" + condition + ", " + "ne(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Failed')" + ")";
+                    condition = "and(" + condition + ", " + "eq(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }

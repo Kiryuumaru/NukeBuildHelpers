@@ -264,9 +264,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var entryDefinition in preTestEntryDefinitionMap.Values)
         {
             List<string> preTestNeeds = ["PRE_SETUP"];
+            string condition = "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'";
             IGithubWorkflowBuilder workflowBuilder = new GithubWorkflowBuilder();
             await entryDefinition.GetWorkflowBuilder(workflowBuilder);
-            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. preTestNeeds], _if: "! failure() && ! cancelled() && " + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + " == 'true'");
+            var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. preTestNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test");
@@ -283,7 +284,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                     buildNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -311,7 +312,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (entryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                     postTestNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -319,7 +320,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (entryDefinition.AppIds.Count == 0 || entryDefinition.AppIds.Any(i => i.Equals(buildEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition += " && needs." + buildEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                    condition += " && needs." + buildEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                     postTestNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -344,7 +345,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'success'";
                     publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -352,7 +353,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (buildEntryDefinition.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    condition += " && needs." + buildEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                    condition += " && needs." + buildEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                     publishNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
                 }
             }
@@ -360,7 +361,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             {
                 if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result != 'failure'";
+                    condition += " && needs." + testEntryDefinition.Id.ToUpperInvariant() + ".result == 'success'";
                     publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
                 }
             }
