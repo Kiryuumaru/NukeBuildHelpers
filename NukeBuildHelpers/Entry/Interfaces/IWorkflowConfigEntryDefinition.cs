@@ -16,6 +16,8 @@ public interface IWorkflowConfigEntryDefinition
 
     internal Func<Task<RunnerOS>> PostSetupRunnerOS { get; set; }
 
+    internal Func<Task<bool>> AppendReleaseNotesAssetHashes { get; set; }
+
     internal async Task<string> GetName()
     {
         return ValueHelpers.GetOrNullFail(await Name());
@@ -29,5 +31,10 @@ public interface IWorkflowConfigEntryDefinition
     internal async Task<RunnerOS> GetPostSetupRunnerOS()
     {
         return ValueHelpers.GetOrNullFail(await PostSetupRunnerOS());
+    }
+
+    internal async Task<bool> GetAppendReleaseNotesAssetHashes()
+    {
+        return await AppendReleaseNotesAssetHashes();
     }
 }

@@ -26,12 +26,20 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
         set => postSetupRunnerOS = value;
     }
 
+    Func<Task<bool>>? appendReleaseNotesAssetHashes = null;
+    Func<Task<bool>> IWorkflowConfigEntryDefinition.AppendReleaseNotesAssetHashes
+    {
+        get => appendReleaseNotesAssetHashes ?? (() => Task.FromResult(true));
+        set => appendReleaseNotesAssetHashes = value;
+    }
+
     IWorkflowConfigEntryDefinition IWorkflowConfigEntryDefinition.Clone()
     {
         var definition = new WorkflowConfigEntryDefinition();
         if (name != null) ((IWorkflowConfigEntryDefinition)this).Name = name;
         if (preSetupRunnerOS != null) ((IWorkflowConfigEntryDefinition)this).PreSetupRunnerOS = preSetupRunnerOS;
         if (postSetupRunnerOS != null) ((IWorkflowConfigEntryDefinition)this).PostSetupRunnerOS = postSetupRunnerOS;
+        if (appendReleaseNotesAssetHashes != null) ((IWorkflowConfigEntryDefinition)this).AppendReleaseNotesAssetHashes = appendReleaseNotesAssetHashes;
         return definition;
     }
 }
