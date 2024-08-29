@@ -526,7 +526,7 @@ partial class BaseNukeBuildHelpers
                             if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
                             {
                                 var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
-                                await commonAssetPath.CopyRecursively(commonOutPath);
+                                await commonAssetPath.CopyTo(commonOutPath);
                                 commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
                                 Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
                             }
@@ -535,7 +535,7 @@ partial class BaseNukeBuildHelpers
                             {
                                 foreach (var releaseAsset in individualAssetPath.GetFiles())
                                 {
-                                    await releaseAsset.CopyRecursively(assetOutput / releaseAsset.Name);
+                                    await releaseAsset.CopyTo(assetOutput / releaseAsset.Name);
                                     Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
                                 }
                             }
@@ -594,9 +594,7 @@ partial class BaseNukeBuildHelpers
                                     releaseNotes += $"| **[{assetFile.Name}]({url})** | <details><summary>Click to expand</summary> ";
                                     foreach (var fileHash in FileHashesToCreate)
                                     {
-                                        using var stream = File.OpenRead(assetFile);
-                                        byte[] hashBytes = fileHash.HashAlgorithm.ComputeHash(stream);
-                                        var hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                                        var hash = await assetFile.GetHash(fileHash.HashAlgorithm);
                                         releaseNotes += $"**{fileHash.Name}:** `{hash}`<br> ";
                                     }
                                     releaseNotes += "</details> |\n";
