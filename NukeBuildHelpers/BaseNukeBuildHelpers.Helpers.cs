@@ -169,7 +169,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (cachePathValue.DirectoryExists())
                 {
-                    await cachePathValue.MoveRecursively(path);
+                    await cachePathValue.MoveTo(path);
                 }
                 Log.Information("{path} cache loaded", path);
             }));
@@ -210,7 +210,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else if (path.DirectoryExists())
                 {
-                    await path.MoveRecursively(cachePathValue);
+                    await path.MoveTo(cachePathValue);
                 }
                 Log.Information("{path} cache saved", path);
             }));
@@ -449,7 +449,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists())
                 {
-                    await asset.CopyRecursively(CommonOutputDirectory / "asset" / asset.Name);
+                    await asset.CopyTo(CommonOutputDirectory / "asset" / asset.Name);
                 }
                 else if (asset.DirectoryExists())
                 {
@@ -466,7 +466,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists() || asset.DirectoryExists())
                 {
-                    await asset.CopyRecursively(CommonOutputDirectory / "common_asset");
+                    await asset.CopyTo(CommonOutputDirectory / "common_asset");
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
@@ -476,7 +476,7 @@ partial class BaseNukeBuildHelpers
             var artifactFilePath = CommonArtifactsDirectory / $"{artifactName}.zip";
             artifactTempPath.CreateOrCleanDirectory();
             artifactFilePath.DeleteFile();
-            await CommonOutputDirectory.MoveRecursively(artifactTempPath);
+            await CommonOutputDirectory.MoveTo(artifactTempPath);
             artifactTempPath.ZipTo(artifactFilePath);
         });
     }

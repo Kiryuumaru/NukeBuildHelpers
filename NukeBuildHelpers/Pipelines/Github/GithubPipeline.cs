@@ -158,7 +158,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
             {
-                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonArtifactsDirectory);
+                await artifact.CopyTo(BaseNukeBuildHelpers.CommonArtifactsDirectory);
             }
         }
     }
@@ -174,7 +174,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
             {
-                await artifact.CopyRecursively(BaseNukeBuildHelpers.CommonArtifactsDirectory);
+                await artifact.CopyTo(BaseNukeBuildHelpers.CommonArtifactsDirectory);
             }
         }
     }
