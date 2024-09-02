@@ -15,7 +15,7 @@
 	<ItemGroup>
 		<PackageReference Include="Nuke.Common" Version="8.0.0" />
 		<PackageReference Include="NuGet.Packaging" Version="6.11.0" />
-		<PackageReference Include="YamlDotNet" Version="16.0.0" />
+		<PackageReference Include="YamlDotNet" Version="16.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
