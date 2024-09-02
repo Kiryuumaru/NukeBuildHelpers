@@ -29,11 +29,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Azure.Identity" Version="1.12.0" />
 		<PackageReference Include="NuGet.Packaging" Version="6.11.0" />
 		<PackageReference Include="Nuke.Common" Version="8.0.0" />
 		<PackageReference Include="Semver" Version="2.3.0" />
 		<PackageReference Include="Sharprompt" Version="2.4.5" />
-		<PackageReference Include="YamlDotNet" Version="16.0.0" />
+		<PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
+		<PackageReference Include="System.Text.Json" Version="8.0.4" />
+		<PackageReference Include="YamlDotNet" Version="16.1.0" />
 	</ItemGroup>
 
 </Project>
