@@ -38,7 +38,7 @@
 		<PackageReference Include="Nuke.Common" Version="8.1.0" />
 		<PackageReference Include="Semver" Version="2.3.0" />
 		<PackageReference Include="Sharprompt" Version="2.4.5" />
-		<PackageReference Include="YamlDotNet" Version="16.1.0" />
+		<PackageReference Include="YamlDotNet" Version="16.1.2" />
 	</ItemGroup>
 
 </Project>
