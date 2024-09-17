@@ -178,7 +178,6 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
-        .CommonReleaseAsset(OutputDirectory / "main")
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;

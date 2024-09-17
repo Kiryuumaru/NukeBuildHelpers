@@ -18,6 +18,8 @@ All files created on `OutputDirectory` under all `BuildEntry` will propagate on 
 - [DisplayName](#displayname)
 - [WorkflowId](#workflowid)
 - [WorkflowBuilder](#workflowbuilder)
+- [ReleaseAsset](#releaseasset)
+- [ReleaseCommonAsset](#releasecommonasset)
 - [Matrix](#matrix)
 
 ---
@@ -622,6 +624,98 @@ IPublishEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflow
                     });
                 }
             });
+    }
+    ```
+    
+---
+
+## ReleaseAsset
+
+Sets the `AbsolutePath` to release on git release as an asset.
+
+### Definitions
+
+```csharp
+IBuildEntryDefinition ReleaseAsset(params AbsolutePath[] assets);
+IBuildEntryDefinition ReleaseAsset(Func<AbsolutePath[]> assets);
+IBuildEntryDefinition ReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
+IBuildEntryDefinition ReleaseAsset(Func<Task<AbsolutePath[]>> assets);
+IBuildEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+```
+
+### Usage
+
+* Specify `AbsolutePath` file directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        BuildEntry SampleBuildEntry => _ => _
+            .ReleaseAsset(OutputDirectory / "fileAsset.zip");
+    }
+    ```
+
+* Specify `AbsolutePath` folder directly to zip on release
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        BuildEntry SampleBuildEntry => _ => _
+            .ReleaseAsset(OutputDirectory / "assets");
+    }
+    ```
+    
+---
+
+## ReleaseCommonAsset
+
+Sets the `AbsolutePath` to release on git release as a common asset. All assets created on all `BuildEntry` with the same app ID will be bundled together as a single zip archive named `<appId>-<version>.zip` (e.g., `nuke_build_helpers-4.0.4+build.407.zip`).
+
+### Definitions
+
+```csharp
+IBuildEntryDefinition ReleaseCommonAsset(params AbsolutePath[] assets);
+IBuildEntryDefinition ReleaseCommonAsset(Func<AbsolutePath[]> assets);
+IBuildEntryDefinition ReleaseCommonAsset(Func<IRunContext, AbsolutePath[]> assets);
+IBuildEntryDefinition ReleaseCommonAsset(Func<Task<AbsolutePath[]>> assets);
+IBuildEntryDefinition ReleaseCommonAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+```
+
+### Usage
+
+* Specify `AbsolutePath` file directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        BuildEntry SampleBuildEntry => _ => _
+            .ReleaseCommonAsset(OutputDirectory / "fileAsset.txt");
+    }
+    ```
+
+* Specify `AbsolutePath` folder directly to zip on release
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        BuildEntry SampleBuildEntry => _ => _
+            .ReleaseCommonAsset(OutputDirectory / "assets");
     }
     ```
     

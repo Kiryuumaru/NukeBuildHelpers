@@ -462,7 +462,7 @@ partial class BaseNukeBuildHelpers
                 }
                 Log.Information("Added {file} to release assets", asset);
             }
-            foreach (var asset in await buildEntryDefinition.GetCommonReleaseAssets())
+            foreach (var asset in await buildEntryDefinition.GetReleaseCommonAssets())
             {
                 if (asset.FileExists() || asset.DirectoryExists())
                 {
