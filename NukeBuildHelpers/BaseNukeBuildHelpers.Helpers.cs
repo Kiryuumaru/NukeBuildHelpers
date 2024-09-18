@@ -447,7 +447,7 @@ partial class BaseNukeBuildHelpers
             IBuildEntryDefinition buildEntryDefinition = (entry as IBuildEntryDefinition)!;
             var artifactName = "build" + ArtifactNameSeparator + buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
             var artifactTempPath = TemporaryDirectory / artifactName;
-            var artifactFilePath = CommonArtifactsDirectory / $"{artifactName}.zip";
+            var artifactFilePath = CommonArtifactsUploadDirectory / $"{artifactName}.zip";
             artifactTempPath.CreateOrCleanDirectory();
             artifactFilePath.DeleteFile();
             await CommonOutputDirectory.MoveTo(artifactTempPath);
@@ -496,11 +496,11 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists())
                 {
-                    await asset.CopyTo(CommonOutputDirectory / "asset" / asset.Name);
+                    await asset.CopyTo(CommonArtifactsUploadDirectory / "asset" / asset.Name);
                 }
                 else if (asset.DirectoryExists())
                 {
-                    var destinationPath = CommonOutputDirectory / "asset" / (asset.Name + ".zip");
+                    var destinationPath = CommonArtifactsUploadDirectory / "asset" / (asset.Name + ".zip");
                     if (destinationPath.FileExists())
                     {
                         destinationPath.DeleteFile();
@@ -517,10 +517,9 @@ partial class BaseNukeBuildHelpers
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
-
             var artifactName = "publish" + ArtifactNameSeparator + publishEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
             var artifactTempPath = TemporaryDirectory / artifactName;
-            var artifactFilePath = CommonArtifactsDirectory / $"{artifactName}.zip";
+            var artifactFilePath = CommonArtifactsUploadDirectory / $"{artifactName}.zip";
             artifactTempPath.CreateOrCleanDirectory();
             artifactFilePath.DeleteFile();
             await CommonOutputDirectory.MoveTo(artifactTempPath);

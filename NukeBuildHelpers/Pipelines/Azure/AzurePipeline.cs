@@ -278,7 +278,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
             var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
             AddJobStepInputs(uploadBuildStep, "artifact", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
-            AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/artifacts");
+            AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/artifacts-upload");
             AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
         }
 
@@ -362,7 +362,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
             var uploadPublishStep = AddJobStep(publishJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
             AddJobStepInputs(uploadPublishStep, "artifact", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
-            AddJobStepInputs(uploadPublishStep, "targetPath", "./.nuke/temp/artifacts");
+            AddJobStepInputs(uploadPublishStep, "targetPath", "./.nuke/temp/artifacts-upload");
             AddJobStepInputs(uploadPublishStep, "continueOnError", "true");
         }
 
