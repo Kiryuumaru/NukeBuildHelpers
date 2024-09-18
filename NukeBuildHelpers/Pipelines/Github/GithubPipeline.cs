@@ -294,7 +294,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
             var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadBuildStep, "name", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
-            AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/artifacts/*");
+            AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/artifacts-upload/*");
             AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
             AddJobStepWith(uploadBuildStep, "retention-days", "1");
         }
@@ -374,7 +374,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
             var uploadPublishStep = AddJobStep(publishJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadPublishStep, "name", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
-            AddJobStepWith(uploadPublishStep, "path", "./.nuke/temp/artifacts/*");
+            AddJobStepWith(uploadPublishStep, "path", "./.nuke/temp/artifacts-upload/*");
             AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
             AddJobStepWith(uploadPublishStep, "retention-days", "1");
         }

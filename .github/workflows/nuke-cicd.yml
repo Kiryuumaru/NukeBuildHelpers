@@ -226,7 +226,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD1
-        path: ./.nuke/temp/artifacts/*
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -261,7 +261,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT3
-        path: ./.nuke/temp/artifacts/*
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -296,7 +296,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT4
-        path: ./.nuke/temp/artifacts/*
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -331,7 +331,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT3
-        path: ./.nuke/temp/artifacts/*
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -366,7 +366,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT4
-        path: ./.nuke/temp/artifacts/*
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -401,7 +401,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers2___NUKEBUILDHELPERSBUILD3
-        path: ./.nuke/temp/artifacts/*
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -545,7 +545,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: publish___nuke_build_helpers___NUKEBUILDHELPERSPUBLISH
-        path: ./.nuke/temp/artifacts/*
+        path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
     needs:
