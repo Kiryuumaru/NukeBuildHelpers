@@ -23,8 +23,6 @@ namespace NukeBuildHelpers.Pipelines.Github;
 
 internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
-    private readonly string artifactNameSeparator = "___";
-
     public BaseNukeBuildHelpers NukeBuild { get; set; } = nukeBuild;
 
     public PipelineInfo GetPipelineInfo()
@@ -295,7 +293,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
             var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
-            AddJobStepWith(uploadBuildStep, "name", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
+            AddJobStepWith(uploadBuildStep, "name", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
             AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/artifacts/*");
             AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
             AddJobStepWith(uploadBuildStep, "retention-days", "1");
@@ -372,9 +370,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts-download");
-            AddJobStepWith(downloadBuildStep, "pattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*");
+            AddJobStepWith(downloadBuildStep, "pattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
-            publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
+            var uploadPublishStep = AddJobStep(publishJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
+            AddJobStepWith(uploadPublishStep, "name", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
+            AddJobStepWith(uploadPublishStep, "path", "./.nuke/temp/artifacts/*");
+            AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
+            AddJobStepWith(uploadPublishStep, "retention-days", "1");
         }
 
         // ██████████████████████████████████████
@@ -406,6 +408,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepCheckout(postSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
+        AddJobStepWith(downloadPostSetupStep, "pattern", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, pipelinePostSetupOs, "PipelinePostSetup");
         AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 

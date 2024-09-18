@@ -225,7 +225,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers___NUKEBUILDHELPERSBUILD1
+        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD1
         path: ./.nuke/temp/artifacts/*
         if-no-files-found: error
         retention-days: 1
@@ -260,7 +260,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT3
+        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT3
         path: ./.nuke/temp/artifacts/*
         if-no-files-found: error
         retention-days: 1
@@ -295,7 +295,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT4
+        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT4
         path: ./.nuke/temp/artifacts/*
         if-no-files-found: error
         retention-days: 1
@@ -330,7 +330,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT3
+        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT3
         path: ./.nuke/temp/artifacts/*
         if-no-files-found: error
         retention-days: 1
@@ -365,7 +365,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT4
+        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT4
         path: ./.nuke/temp/artifacts/*
         if-no-files-found: error
         retention-days: 1
@@ -400,7 +400,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: nuke_build_helpers2___NUKEBUILDHELPERSBUILD3
+        name: build___nuke_build_helpers2___NUKEBUILDHELPERSBUILD3
         path: ./.nuke/temp/artifacts/*
         if-no-files-found: error
         retention-days: 1
@@ -529,7 +529,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
-        pattern: nuke_build_helpers___*
+        pattern: build___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -541,6 +541,13 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelineRunEntry
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }} PipelineRunEntry --args "run=publish;idsToRun=NukeBuildHelpersPublish"
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: publish___nuke_build_helpers___NUKEBUILDHELPERSPUBLISH
+        path: ./.nuke/temp/artifacts/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
@@ -570,6 +577,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
+        pattern: publish___*
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
       env:
