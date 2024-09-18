@@ -541,6 +541,13 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelineRunEntry
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }} PipelineRunEntry --args "run=publish;idsToRun=NukeBuildHelpersPublish"
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuke_build_helpers___NUKEBUILDHELPERSPUBLISH
+        path: ./.nuke/temp/artifacts/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1

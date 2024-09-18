@@ -211,8 +211,6 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Build try")
         .RunnerOS(RunnerOS.Windows2022)
-        .ReleaseAsset(OutputDirectory / "try" / "test_release")
-        .ReleaseAsset(OutputDirectory / "try" / "test_release.tar.gz")
         .Matrix(new[] { ("Mat1", 1), ("Mat2", 1) }, (definition1, matrix1) =>
         {
             definition1.Matrix(new[] { ("Mat3", 1), ("Mat4", 1) }, (definition2, matrix2) =>
@@ -260,7 +258,6 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers2")
         .DisplayName("Build try 2")
         .RunnerOS(RunnerOS.Windows2022)
-        .ReleaseAsset(OutputDirectory / "test_release 2")
         .Execute(context => {
             string version = "0.0.0";
             string? releaseNotes = null;
@@ -293,6 +290,8 @@ class Build : BaseNukeBuildHelpers
     PublishEntry NukeBuildHelpersPublish => _ => _
         .AppId("nuke_build_helpers")
         .RunnerOS(RunnerOS.Ubuntu2204)
+        .ReleaseAsset(OutputDirectory / "try" / "test_release")
+        .ReleaseAsset(OutputDirectory / "try" / "test_release.tar.gz")
         .Execute(context =>
         {
             foreach (var path in OutputDirectory.GetFiles("**", 99))

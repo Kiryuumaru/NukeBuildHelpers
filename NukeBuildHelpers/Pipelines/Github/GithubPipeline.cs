@@ -374,7 +374,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts-download");
             AddJobStepWith(downloadBuildStep, "pattern", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + "*");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
-            publishNeeds.Add(entryDefinition.Id.ToUpperInvariant());
+            var uploadPublishStep = AddJobStep(publishJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
+            AddJobStepWith(uploadPublishStep, "name", entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
+            AddJobStepWith(uploadPublishStep, "path", "./.nuke/temp/artifacts/*");
+            AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
+            AddJobStepWith(uploadPublishStep, "retention-days", "1");
         }
 
         // ██████████████████████████████████████
