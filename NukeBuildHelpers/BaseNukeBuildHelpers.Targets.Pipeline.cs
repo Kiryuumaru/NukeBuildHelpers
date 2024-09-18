@@ -506,7 +506,7 @@ partial class BaseNukeBuildHelpers
                             {
                                 continue;
                             }
-                            var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                            var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                             artifact.UnZipTo(OutputDirectory / appId);
                         }
 

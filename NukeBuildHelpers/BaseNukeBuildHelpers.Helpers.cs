@@ -25,7 +25,7 @@ namespace NukeBuildHelpers;
 
 partial class BaseNukeBuildHelpers
 {
-    private readonly string artifactNameSeparator = "___";
+    internal const string ArtifactNameSeparator = "___";
 
     private static readonly AbsolutePath entryCachePath = CommonCacheDirectory / "entry";
     private static readonly AbsolutePath entryCacheIndexPath = CommonCacheDirectory / "entry_index";
@@ -416,7 +416,7 @@ partial class BaseNukeBuildHelpers
                     {
                         continue;
                     }
-                    var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                    var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                     if (testEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                     {
                         artifact.UnZipTo(CommonOutputDirectory);
@@ -445,7 +445,7 @@ partial class BaseNukeBuildHelpers
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, skipCache, null, async entry =>
         {
             IBuildEntryDefinition buildEntryDefinition = (entry as IBuildEntryDefinition)!;
-            var artifactName = buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
+            var artifactName = "build" + ArtifactNameSeparator + buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
             var artifactTempPath = TemporaryDirectory / artifactName;
             var artifactFilePath = CommonArtifactsDirectory / $"{artifactName}.zip";
             artifactTempPath.CreateOrCleanDirectory();
@@ -481,7 +481,7 @@ partial class BaseNukeBuildHelpers
                     {
                         continue;
                     }
-                    var appId = artifact.Name.Split(artifactNameSeparator).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                    var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                     if (appId.Equals(publishEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
                     {
                         artifact.UnZipTo(CommonOutputDirectory);
@@ -518,7 +518,7 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
-            var artifactName = publishEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + artifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
+            var artifactName = "publish" + ArtifactNameSeparator + publishEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
             var artifactTempPath = TemporaryDirectory / artifactName;
             var artifactFilePath = CommonArtifactsDirectory / $"{artifactName}.zip";
             artifactTempPath.CreateOrCleanDirectory();
