@@ -636,11 +636,11 @@ Sets the `AbsolutePath` to release on git release as an asset.
 ### Definitions
 
 ```csharp
-IBuildEntryDefinition ReleaseAsset(params AbsolutePath[] assets);
-IBuildEntryDefinition ReleaseAsset(Func<AbsolutePath[]> assets);
-IBuildEntryDefinition ReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
-IBuildEntryDefinition ReleaseAsset(Func<Task<AbsolutePath[]>> assets);
-IBuildEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+IPublishEntryDefinition ReleaseAsset(params AbsolutePath[] assets);
+IPublishEntryDefinition ReleaseAsset(Func<AbsolutePath[]> assets);
+IPublishEntryDefinition ReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
+IPublishEntryDefinition ReleaseAsset(Func<Task<AbsolutePath[]>> assets);
+IPublishEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
 ```
 
 ### Usage
@@ -654,7 +654,7 @@ IBuildEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> asset
     {
         ...
 
-        BuildEntry SampleBuildEntry => _ => _
+        PublishEntry SamplePublishEntry => _ => _
             .ReleaseAsset(OutputDirectory / "fileAsset.zip");
     }
     ```
@@ -668,7 +668,7 @@ IBuildEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> asset
     {
         ...
 
-        BuildEntry SampleBuildEntry => _ => _
+        PublishEntry SamplePublishEntry => _ => _
             .ReleaseAsset(OutputDirectory / "assets");
     }
     ```
@@ -677,16 +677,16 @@ IBuildEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> asset
 
 ## ReleaseCommonAsset
 
-Sets the `AbsolutePath` to release on git release as a common asset. All assets created on all `BuildEntry` with the same app ID will be bundled together as a single zip archive named `<appId>-<version>.zip` (e.g., `nuke_build_helpers-4.0.4+build.407.zip`).
+Sets the `AbsolutePath` to release on git release as a common asset. All common assets created on all `PublishEntry` with the same app ID will be bundled together as a single zip archive named `<appId>-<version>.zip` (e.g., `nuke_build_helpers-4.0.4+build.407.zip`).
 
 ### Definitions
 
 ```csharp
-IBuildEntryDefinition ReleaseCommonAsset(params AbsolutePath[] assets);
-IBuildEntryDefinition ReleaseCommonAsset(Func<AbsolutePath[]> assets);
-IBuildEntryDefinition ReleaseCommonAsset(Func<IRunContext, AbsolutePath[]> assets);
-IBuildEntryDefinition ReleaseCommonAsset(Func<Task<AbsolutePath[]>> assets);
-IBuildEntryDefinition ReleaseCommonAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+IPublishEntryDefinition ReleaseCommonAsset(params AbsolutePath[] assets);
+IPublishEntryDefinition ReleaseCommonAsset(Func<AbsolutePath[]> assets);
+IPublishEntryDefinition ReleaseCommonAsset(Func<IRunContext, AbsolutePath[]> assets);
+IPublishEntryDefinition ReleaseCommonAsset(Func<Task<AbsolutePath[]>> assets);
+IPublishEntryDefinition ReleaseCommonAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
 ```
 
 ### Usage
@@ -700,7 +700,7 @@ IBuildEntryDefinition ReleaseCommonAsset(Func<IRunContext, Task<AbsolutePath[]>>
     {
         ...
 
-        BuildEntry SampleBuildEntry => _ => _
+        PublishEntry SamplePublishEntry => _ => _
             .ReleaseCommonAsset(OutputDirectory / "fileAsset.txt");
     }
     ```
@@ -714,7 +714,7 @@ IBuildEntryDefinition ReleaseCommonAsset(Func<IRunContext, Task<AbsolutePath[]>>
     {
         ...
 
-        BuildEntry SampleBuildEntry => _ => _
+        PublishEntry SamplePublishEntry => _ => _
             .ReleaseCommonAsset(OutputDirectory / "assets");
     }
     ```
