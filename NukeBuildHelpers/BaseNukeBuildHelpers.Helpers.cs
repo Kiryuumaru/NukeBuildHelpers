@@ -496,11 +496,11 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists())
                 {
-                    await asset.CopyTo(CommonArtifactsUploadDirectory / "asset" / asset.Name);
+                    await asset.CopyTo(CommonOutputDirectory / "asset" / asset.Name);
                 }
                 else if (asset.DirectoryExists())
                 {
-                    var destinationPath = CommonArtifactsUploadDirectory / "asset" / (asset.Name + ".zip");
+                    var destinationPath = CommonOutputDirectory / "asset" / (asset.Name + ".zip");
                     if (destinationPath.FileExists())
                     {
                         destinationPath.DeleteFile();
