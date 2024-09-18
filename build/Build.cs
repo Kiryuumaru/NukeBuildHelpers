@@ -292,6 +292,7 @@ class Build : BaseNukeBuildHelpers
         .RunnerOS(RunnerOS.Ubuntu2204)
         .ReleaseAsset(OutputDirectory / "try" / "test_release")
         .ReleaseAsset(OutputDirectory / "try" / "test_release.tar.gz")
+        .ReleaseCommonAsset(OutputDirectory / "main")
         .Execute(context =>
         {
             foreach (var path in OutputDirectory.GetFiles("**", 99))
