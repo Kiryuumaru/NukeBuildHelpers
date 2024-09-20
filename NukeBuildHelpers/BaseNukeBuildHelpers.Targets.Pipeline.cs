@@ -1,5 +1,4 @@
 ﻿using Nuke.Common;
-using Nuke.Common.ChangeLog;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
@@ -12,9 +11,6 @@ using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.RunContext.Interfaces;
 using Semver;
 using Serilog;
-using System.IO;
-using System.Security.Cryptography;
-using System.Security.Policy;
 using System.Text.Json;
 
 namespace NukeBuildHelpers;

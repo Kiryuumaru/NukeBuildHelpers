@@ -2,9 +2,7 @@
 using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
-using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Enums;
-using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Azure.Interfaces;

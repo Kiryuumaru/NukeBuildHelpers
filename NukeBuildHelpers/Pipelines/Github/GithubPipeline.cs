@@ -14,10 +14,6 @@ using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
 using System.Text.Json;
 using NukeBuildHelpers.Entry.Enums;
-using NukeBuildHelpers.Pipelines.Azure.Interfaces;
-using NukeBuildHelpers.Pipelines.Azure.Models;
-using NukeBuildHelpers.Entry.Extensions;
-using NukeBuildHelpers.Entry.Definitions;
 
 namespace NukeBuildHelpers.Pipelines.Github;
 

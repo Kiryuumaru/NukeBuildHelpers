@@ -1,6 +1,5 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Tooling;
-using Nuke.Common.Utilities;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Enums;
@@ -9,7 +8,6 @@ using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Pipelines.Azure;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Pipelines.Github;
-using Semver;
 using Serilog;
 
 namespace NukeBuildHelpers;
