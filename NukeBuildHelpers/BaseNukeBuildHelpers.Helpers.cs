@@ -136,7 +136,7 @@ partial class BaseNukeBuildHelpers
             if (!cachePairs.Any(i => i.Value == dir))
             {
                 dir.DeleteDirectory();
-                Log.Information("{path} cache cleaned", dir);
+                Log.Information("{Path} cache cleaned", dir);
             }
         }
 
@@ -146,7 +146,7 @@ partial class BaseNukeBuildHelpers
             {
                 cachePairs.Remove(pair.Key);
                 pair.Value.DeleteDirectory();
-                Log.Information("{path} cache cleaned", pair.Key);
+                Log.Information("{Path} cache cleaned", pair.Key);
             }
         }
 
@@ -154,7 +154,7 @@ partial class BaseNukeBuildHelpers
         {
             if (!cachePairs.TryGetValue(path.ToString(), out var cachePath) || !cachePath.DirectoryExists())
             {
-                Log.Information("{path} cache missed", path);
+                Log.Information("{Path} cache missed", path);
                 continue;
             }
             tasks.Add(Task.Run(async () =>
@@ -169,7 +169,7 @@ partial class BaseNukeBuildHelpers
                 {
                     await cachePathValue.MoveTo(path);
                 }
-                Log.Information("{path} cache loaded", path);
+                Log.Information("{Path} cache loaded", path);
             }));
         }
 
@@ -190,7 +190,7 @@ partial class BaseNukeBuildHelpers
         {
             if (!path.FileExists() && !path.DirectoryExists())
             {
-                Log.Information("{path} cache missed", path);
+                Log.Information("{Path} cache missed", path);
                 continue;
             }
             if (!cachePairs.TryGetValue(path.ToString(), out var cachePath))
@@ -210,7 +210,7 @@ partial class BaseNukeBuildHelpers
                 {
                     await path.MoveTo(cachePathValue);
                 }
-                Log.Information("{path} cache saved", path);
+                Log.Information("{Path} cache saved", path);
             }));
         }
 
