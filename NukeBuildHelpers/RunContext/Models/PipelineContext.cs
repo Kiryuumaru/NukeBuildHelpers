@@ -1,6 +1,7 @@
 ﻿using NukeBuildHelpers.Pipelines.Common.Enums;
+using NukeBuildHelpers.RunContext.Interfaces;
 
-namespace NukeBuildHelpers.RunContext.Interfaces;
+namespace NukeBuildHelpers.RunContext.Models;
 
 internal abstract class PipelineContext : RunContext, IPipelineContext
 {

@@ -1,6 +1,7 @@
 ﻿using NukeBuildHelpers.Entry.Models;
+using NukeBuildHelpers.RunContext.Interfaces;
 
-namespace NukeBuildHelpers.RunContext.Interfaces;
+namespace NukeBuildHelpers.RunContext.Models;
 
 internal class VersionedContext<TAppVersion> : CommitContext, IVersionedContext
     where TAppVersion : AppVersion
