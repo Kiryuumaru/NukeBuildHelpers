@@ -20,6 +20,8 @@ public interface IWorkflowConfigEntryDefinition
 
     internal Func<Task<bool>> EnablePrereleaseOnRelease { get; set; }
 
+    internal Func<Task<long>> StartingBuildId { get; set; }
+
     internal async Task<string> GetName()
     {
         return ValueHelpers.GetOrNullFail(await Name());
@@ -43,5 +45,10 @@ public interface IWorkflowConfigEntryDefinition
     internal async Task<bool> GetEnablePrereleaseOnReleases()
     {
         return await EnablePrereleaseOnRelease();
+    }
+
+    internal async Task<long> GetStartingBuildId()
+    {
+        return await StartingBuildId();
     }
 }
