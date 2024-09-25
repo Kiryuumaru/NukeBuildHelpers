@@ -101,7 +101,7 @@ partial class BaseNukeBuildHelpers
             Dictionary<string, AppRunEntry> toEntry = [];
 
             long targetBuildId = 0;
-            long lastBuildId = await allEntry.WorkflowConfigEntryDefinition.GetStartingBuildId();
+            long lastBuildId = await allEntry.WorkflowConfigEntryDefinition.GetStartingBuildId() - 1;
 
             foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
             {
@@ -588,10 +588,10 @@ partial class BaseNukeBuildHelpers
                                 {
                                     var url = new Uri(baseUri.Trim('/') + $"/releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}");
                                     releaseNotes += $"| **[{assetFile.Name}]({url})** | <details><summary>Click to expand</summary> ";
-                                    foreach (var fileHash in FileHashesToCreate)
+                                    foreach (var (HashAlgorithm, Name) in FileHashesToCreate)
                                     {
-                                        var hash = await assetFile.GetHash(fileHash.HashAlgorithm);
-                                        releaseNotes += $"**{fileHash.Name}:** `{hash}`<br> ";
+                                        var hash = await assetFile.GetHash(HashAlgorithm);
+                                        releaseNotes += $"**{Name}:** `{hash}`<br> ";
                                     }
                                     releaseNotes += "</details> |\n";
                                 }

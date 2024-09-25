@@ -24,6 +24,7 @@ class Build : BaseNukeBuildHelpers
 - [PostSetupRunnerOS](#postsetuprunneros)
 - [AppendReleaseNotesAssetHashes](#appendreleasenotesassethashes)
 - [EnablePrereleaseOnRelease](#enableprereleaseonrelease)
+- [StartingBuildId](#startingbuildid)
 
 ---
 
@@ -244,5 +245,47 @@ IWorkflowConfigEntryDefinition EnablePrereleaseOnRelease(Func<Task<bool>> enable
         
         WorkflowConfigEntry SampleConfigEntry => _ => _
             .EnablePrereleaseOnRelease(async () => await Task.FromResult(true));
+    }
+    ```
+    
+## StartingBuildId
+
+Sets the starting build ID for the workflow. Default is `1`.
+
+### Definitions
+
+```csharp
+IWorkflowConfigEntryDefinition StartingBuildId(long startingBuildId)
+IWorkflowConfigEntryDefinition StartingBuildId(Func<long> startingBuildId)
+IWorkflowConfigEntryDefinition StartingBuildId(Func<Task<long>> startingBuildId)
+```
+
+### Usage
+
+* Specify directly
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        WorkflowConfigEntry SampleConfigEntry => _ => _
+            .StartingBuildId(123);
+    }
+    ```
+
+* Use an asynchronous function
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+        
+        WorkflowConfigEntry SampleConfigEntry => _ => _
+            .StartingBuildId(async () => await Task.FromResult(123));
     }
     ```

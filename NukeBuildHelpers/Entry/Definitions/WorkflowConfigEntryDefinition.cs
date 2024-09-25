@@ -43,7 +43,7 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
     Func<Task<long>>? startingBuildId = null;
     Func<Task<long>> IWorkflowConfigEntryDefinition.StartingBuildId
     {
-        get => startingBuildId ?? (() => Task.FromResult(0L));
+        get => startingBuildId ?? (() => Task.FromResult(1L));
         set => startingBuildId = value;
     }
 
