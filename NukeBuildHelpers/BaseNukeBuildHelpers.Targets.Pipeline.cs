@@ -101,7 +101,7 @@ partial class BaseNukeBuildHelpers
             Dictionary<string, AppRunEntry> toEntry = [];
 
             long targetBuildId = 0;
-            long lastBuildId = 0;
+            long lastBuildId = await allEntry.WorkflowConfigEntryDefinition.GetStartingBuildId();
 
             foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
             {
