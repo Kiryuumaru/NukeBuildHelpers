@@ -32,7 +32,7 @@
 		<!-- Override vulnerability warnings: https://github.com/advisories/GHSA-447r-wph3-92pm-->
 		<PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
 		
-		<PackageReference Include="NuGet.Packaging" Version="6.11.0" />
+		<PackageReference Include="NuGet.Packaging" Version="6.11.1" />
 		<PackageReference Include="Nuke.Common" Version="8.1.0" />
 		<PackageReference Include="Semver" Version="2.3.0" />
 		<PackageReference Include="Sharprompt" Version="2.4.5" />
