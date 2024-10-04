@@ -772,42 +772,104 @@ partial class BaseNukeBuildHelpers
             SemVersion latestVersion = allVersions.EnvVersionGrouped[currentEnvIdentifier]?.LastOrDefault()!;
             SemVersion bumpVersion = latestVersion.Clone();
 
-            foreach (var bumpPart in argsBump.Value.NotNullOrEmpty().Trim().ToLowerInvariant().Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            var bumps = argsBump.Value.NotNullOrEmpty().Trim().ToLowerInvariant().Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(bumpPart =>
+                {
+                    try
+                    {
+                        bool isIncrement = true;
+                        string[] bumpValue = [];
+                        if (bumpPart.Contains('+'))
+                        {
+                            isIncrement = true;
+                            bumpValue = bumpPart.Split("+");
+                        }
+                        else if (bumpPart.Contains('>'))
+                        {
+                            isIncrement = false;
+                            bumpValue = bumpPart.Split(">");
+                        }
+                        else
+                        {
+                            bumpValue = [bumpPart];
+                        }
+                        int bumpAssign = bumpValue.Length > 1 ? int.Parse(bumpValue[1]) : 1;
+                        string bumpVersionPart;
+                        int rank;
+                        switch (bumpValue[0])
+                        {
+                            case "major":
+                                bumpVersionPart = "major";
+                                rank = isIncrement ? 6 : 7;
+                                break;
+                            case "minor":
+                                bumpVersionPart = "minor";
+                                rank = isIncrement ? 4 : 5;
+                                break;
+                            case "patch":
+                                bumpVersionPart = "patch";
+                                rank = isIncrement ? 2 : 3;
+                                break;
+                            case "prerelease":
+                            case "pre":
+                                bumpVersionPart = "prerelease";
+                                rank = isIncrement ? 0 : 1;
+                                break;
+                            default:
+                                throw new ArgumentException("Invalid bump value " + argsBump.Value);
+                        }
+
+                        return new
+                        {
+                            Part = bumpVersionPart,
+                            IsIncrement = isIncrement,
+                            BumpAssign = bumpAssign,
+                            Rank = rank
+                        };
+                    }
+                    catch
+                    {
+                        throw new ArgumentException("Invalid bump value " + argsBump.Value);
+                    }
+                })
+                .OrderByDescending(i => i.Rank);
+
+            foreach (var bumpPart in bumps)
             {
                 try
                 {
-                    bool isIncrement = true;
-                    string[] bumpValue = [];
-                    if (bumpPart.Contains('+'))
-                    {
-                        isIncrement = true;
-                        bumpValue = bumpPart.Split("+");
-                    }
-                    else if (bumpPart.Contains('>'))
-                    {
-                        isIncrement = false;
-                        bumpValue = bumpPart.Split(">");
-                    }
-                    else
-                    {
-                        bumpValue = [bumpPart];
-                    }
-                    int bumpAssign = bumpValue.Length > 1 ? int.Parse(bumpValue[1]) : 1;
-                    switch (bumpValue[0])
+                    switch (bumpPart.Part)
                     {
                         case "major":
-                            bumpVersion = bumpVersion.WithMajor(isIncrement ? bumpVersion.Major + bumpAssign : bumpAssign);
+                            bumpVersion = bumpVersion.WithMajor(bumpPart.IsIncrement ? bumpVersion.Major + bumpPart.BumpAssign : bumpPart.BumpAssign);
+                            bumpVersion = bumpVersion.WithMinor(0);
+                            bumpVersion = bumpVersion.WithPatch(0);
+                            if (!string.IsNullOrEmpty(bumpVersion.Prerelease))
+                            {
+                                var prereleaseSplitFromMajor = bumpVersion.Prerelease.Split(".");
+                                bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplitFromMajor[0] + "." + 1);
+                            }
                             break;
                         case "minor":
-                            bumpVersion = bumpVersion.WithMinor(isIncrement ? bumpVersion.Minor + bumpAssign : bumpAssign);
+                            bumpVersion = bumpVersion.WithMinor(bumpPart.IsIncrement ? bumpVersion.Minor + bumpPart.BumpAssign : bumpPart.BumpAssign);
+                            bumpVersion = bumpVersion.WithPatch(0);
+                            if (!string.IsNullOrEmpty(bumpVersion.Prerelease))
+                            {
+                                var prereleaseSplitFromMajor = bumpVersion.Prerelease.Split(".");
+                                bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplitFromMajor[0] + "." + 1);
+                            }
                             break;
                         case "patch":
-                            bumpVersion = bumpVersion.WithPatch(isIncrement ? bumpVersion.Patch + bumpAssign : bumpAssign);
+                            bumpVersion = bumpVersion.WithPatch(bumpPart.IsIncrement ? bumpVersion.Patch + bumpPart.BumpAssign : bumpPart.BumpAssign);
+                            if (!string.IsNullOrEmpty(bumpVersion.Prerelease))
+                            {
+                                var prereleaseSplitFromMajor = bumpVersion.Prerelease.Split(".");
+                                bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplitFromMajor[0] + "." + 1);
+                            }
                             break;
                         case "prerelease":
-                        case "pre":
                             var prereleaseSplit = bumpVersion.Prerelease.Split(".");
-                            bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplit[0] + "." + (isIncrement ? int.Parse(prereleaseSplit[1]) + bumpAssign : bumpAssign));
+                            bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplit[0] + "." + (bumpPart.IsIncrement ? int.Parse(prereleaseSplit[1]) + bumpPart.BumpAssign : bumpPart.BumpAssign));
                             break;
                         default:
                             throw new ArgumentException("Invalid bump value " + argsBump.Value);
