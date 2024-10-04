@@ -259,7 +259,7 @@ partial class BaseNukeBuildHelpers
                     gitBaseUrl = gitBaseUrl[..lastDotIndex];
                 }
 
-                var newVersionsMarkdown = "## New Versions";
+                releaseNotes = "## New Versions";
                 foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
                 {
                     var appId = entry.AppId.ToLowerInvariant();
@@ -267,26 +267,15 @@ partial class BaseNukeBuildHelpers
                     var newVer = SemVersion.Parse(entry.Version, SemVersionStyles.Strict).WithoutMetadata().ToString();
                     if (string.IsNullOrEmpty(oldVer))
                     {
-                        newVersionsMarkdown += $"\n* Bump `{appId}` to `{newVer}`. See [changelog]({gitBaseUrl}/commits/{appId}/{newVer})";
+                        releaseNotes += $"\n* Bump `{appId}` to `{newVer}`. See [changelog]({gitBaseUrl}/commits/{appId}/{newVer})";
                     }
                     else
                     {
-                        newVersionsMarkdown += $"\n* Bump `{appId}` from `{oldVer}` to `{newVer}`. See [changelog]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
+                        releaseNotes += $"\n* Bump `{appId}` from `{oldVer}` to `{newVer}`. See [changelog]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
                     }
                 }
 
-                if (releaseNotesFromProp.Contains("\n\n\n**Full Changelog**"))
-                {
-                    releaseNotes = releaseNotesFromProp.Replace("\n\n\n**Full Changelog**", "\n\n" + newVersionsMarkdown + "\n\n\n**Full Changelog**");
-                }
-                else if (releaseNotesFromProp.Contains("**Full Changelog**"))
-                {
-                    releaseNotes = releaseNotesFromProp.Replace("**Full Changelog**", newVersionsMarkdown + "\n\n\n**Full Changelog**");
-                }
-                else
-                {
-                    releaseNotes = newVersionsMarkdown;
-                }
+                releaseNotes += "\n\n" + releaseNotesFromProp;
 
                 var notesPath = TemporaryDirectory / "notes.md";
                 notesPath.WriteAllText(releaseNotes);
