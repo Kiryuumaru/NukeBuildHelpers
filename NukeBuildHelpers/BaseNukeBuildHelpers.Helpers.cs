@@ -18,6 +18,7 @@ using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using System.Security.Cryptography;
 using NukeBuildHelpers.RunContext.Models;
+using NukeBuildHelpers.Common.Models;
 
 namespace NukeBuildHelpers;
 
@@ -653,30 +654,70 @@ partial class BaseNukeBuildHelpers
                 continue;
             }
 
-            appEntryVersion.AllVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvLatestVersion);
+            var currentEnvLatestVersion = appEntryVersion.AllVersions.EnvVersionGrouped[currentEnvIdentifier].Last();
             Console.Write("  Current latest version: ");
-            ConsoleHelpers.WriteWithColor(currentEnvLatestVersion?.LastOrDefault()?.ToString() ?? "null", ConsoleColor.Green);
+            ConsoleHelpers.WriteWithColor(currentEnvLatestVersion.ToString() ?? "null", ConsoleColor.Green);
             Console.WriteLine("");
-            List<Func<object, ValidationResult?>> validators =
-            [
-                Validators.Required(),
-                (input => {
-                    try
-                    {
-                        ValidateBumpVersion(appEntryVersion.AllVersions, input.ToString());
-                    }
-                    catch (Exception ex)
-                    {
-                        return new ValidationResult(ex.Message);
-                    }
 
-                    return ValidationResult.Success;
-                })
-            ];
+            string[] versionParts;
+            if (currentEnvIdentifier.Equals(MainEnvironmentBranch, StringComparison.InvariantCultureIgnoreCase))
+            {
+                versionParts = ["Major", "Minor", "Patch", "Manual input"];
+            }
+            else
+            {
+                versionParts = ["Major", "Minor", "Patch", "Prerelease", "Manual input"];
+            }
 
-            var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("New Version", validators: validators));
-            var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
-            appEntryVersionsToBump.Add((appEntryVersion.AppEntry, bumpVersion));
+            var versionPartToBump = Prompt.Select("Version part to bump", versionParts);
+
+            if (versionPartToBump.Equals("Manual input", StringComparison.InvariantCultureIgnoreCase))
+            {
+                List<Func<object, ValidationResult?>> validators =
+                [
+                    Validators.Required(),
+                    (input => {
+                        try
+                        {
+                            ValidateBumpVersion(appEntryVersion.AllVersions, input.ToString());
+                        }
+                        catch (Exception ex)
+                        {
+                            return new ValidationResult(ex.Message);
+                        }
+
+                        return ValidationResult.Success;
+                    })
+                ];
+
+                var bumpVersionStr = await Task.Run(() => Prompt.Input<string>("Input new version", validators: validators));
+                var bumpVersion = SemVersion.Parse(bumpVersionStr, SemVersionStyles.Strict);
+                appEntryVersionsToBump.Add((appEntryVersion.AppEntry, bumpVersion));
+            }
+            else
+            {
+                var part = versionPartToBump.ToLowerInvariant() switch
+                {
+                    "major" => VersionPart.Major,
+                    "minor" => VersionPart.Minor,
+                    "patch" => VersionPart.Patch,
+                    "prerelease" => VersionPart.Prerelease,
+                    _ => throw new NotImplementedException($"Version part {versionPartToBump} is not implemented"),
+                };
+                VersionBump versionBump = new()
+                {
+                    Part = part,
+                    IsIncrement = true,
+                    BumpAssign = 1,
+                    Rank = 0
+                };
+                var bumpVersion = currentEnvLatestVersion.ApplyBumps([versionBump]);
+                appEntryVersionsToBump.Add((appEntryVersion.AppEntry, bumpVersion));
+
+                Console.Write("  New version: ");
+                ConsoleHelpers.WriteWithColor(bumpVersion.ToString() ?? "null", ConsoleColor.Green);
+                Console.WriteLine("");
+            }
         }
 
         return appEntryVersionsToBump;
@@ -794,32 +835,32 @@ partial class BaseNukeBuildHelpers
                             bumpValue = [bumpPart];
                         }
                         int bumpAssign = bumpValue.Length > 1 ? int.Parse(bumpValue[1]) : 1;
-                        string bumpVersionPart;
+                        VersionPart bumpVersionPart;
                         int rank;
                         switch (bumpValue[0])
                         {
                             case "major":
-                                bumpVersionPart = "major";
+                                bumpVersionPart = VersionPart.Major;
                                 rank = isIncrement ? 6 : 7;
                                 break;
                             case "minor":
-                                bumpVersionPart = "minor";
+                                bumpVersionPart = VersionPart.Minor;
                                 rank = isIncrement ? 4 : 5;
                                 break;
                             case "patch":
-                                bumpVersionPart = "patch";
+                                bumpVersionPart = VersionPart.Patch;
                                 rank = isIncrement ? 2 : 3;
                                 break;
                             case "prerelease":
                             case "pre":
-                                bumpVersionPart = "prerelease";
+                                bumpVersionPart = VersionPart.Prerelease;
                                 rank = isIncrement ? 0 : 1;
                                 break;
                             default:
                                 throw new ArgumentException("Invalid bump value " + argsBump.Value);
                         }
 
-                        return new
+                        return new VersionBump()
                         {
                             Part = bumpVersionPart,
                             IsIncrement = isIncrement,
@@ -834,52 +875,7 @@ partial class BaseNukeBuildHelpers
                 })
                 .OrderByDescending(i => i.Rank);
 
-            foreach (var bumpPart in bumps)
-            {
-                try
-                {
-                    switch (bumpPart.Part)
-                    {
-                        case "major":
-                            bumpVersion = bumpVersion.WithMajor(bumpPart.IsIncrement ? bumpVersion.Major + bumpPart.BumpAssign : bumpPart.BumpAssign);
-                            bumpVersion = bumpVersion.WithMinor(0);
-                            bumpVersion = bumpVersion.WithPatch(0);
-                            if (!string.IsNullOrEmpty(bumpVersion.Prerelease))
-                            {
-                                var prereleaseSplitFromMajor = bumpVersion.Prerelease.Split(".");
-                                bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplitFromMajor[0] + "." + 1);
-                            }
-                            break;
-                        case "minor":
-                            bumpVersion = bumpVersion.WithMinor(bumpPart.IsIncrement ? bumpVersion.Minor + bumpPart.BumpAssign : bumpPart.BumpAssign);
-                            bumpVersion = bumpVersion.WithPatch(0);
-                            if (!string.IsNullOrEmpty(bumpVersion.Prerelease))
-                            {
-                                var prereleaseSplitFromMajor = bumpVersion.Prerelease.Split(".");
-                                bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplitFromMajor[0] + "." + 1);
-                            }
-                            break;
-                        case "patch":
-                            bumpVersion = bumpVersion.WithPatch(bumpPart.IsIncrement ? bumpVersion.Patch + bumpPart.BumpAssign : bumpPart.BumpAssign);
-                            if (!string.IsNullOrEmpty(bumpVersion.Prerelease))
-                            {
-                                var prereleaseSplitFromMajor = bumpVersion.Prerelease.Split(".");
-                                bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplitFromMajor[0] + "." + 1);
-                            }
-                            break;
-                        case "prerelease":
-                            var prereleaseSplit = bumpVersion.Prerelease.Split(".");
-                            bumpVersion = bumpVersion.WithPrereleaseParsedFrom(prereleaseSplit[0] + "." + (bumpPart.IsIncrement ? int.Parse(prereleaseSplit[1]) + bumpPart.BumpAssign : bumpPart.BumpAssign));
-                            break;
-                        default:
-                            throw new ArgumentException("Invalid bump value " + argsBump.Value);
-                    }
-                }
-                catch
-                {
-                    throw new ArgumentException("Invalid bump value " + argsBump.Value);
-                }
-            }
+            bumpVersion = bumpVersion.ApplyBumps(bumps);
 
             ValidateBumpVersion(allVersions, bumpVersion.ToString());
 
