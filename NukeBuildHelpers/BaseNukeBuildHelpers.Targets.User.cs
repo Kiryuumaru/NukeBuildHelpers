@@ -8,6 +8,7 @@ using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Pipelines.Azure;
 using NukeBuildHelpers.Pipelines.Common;
+using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Github;
 using Serilog;
 
@@ -63,6 +64,11 @@ partial class BaseNukeBuildHelpers
                 ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
 
                 var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
+
+                if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+                {
+                    EntryHelpers.VerifyVersionsFile(allVersions, appId, EnvironmentBranches);
+                }
 
                 bool firstEntryRow = true;
 

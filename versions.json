@@ -1,6 +1,6 @@
 {
   "nuke_build_helpers": {
-    "prerelease": "5.3.0-prerelease.0",
+    "prerelease": "6.3.0-prerelease.2",
     "main": "6.2.1"
   },
   "nuke_build_helpers2": {
