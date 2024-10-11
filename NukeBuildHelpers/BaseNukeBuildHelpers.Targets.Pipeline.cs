@@ -151,7 +151,7 @@ partial class BaseNukeBuildHelpers
                         !allVersions.VersionFailed.Contains(lastVersionGroup) &&
                         !allVersions.VersionPassed.Contains(lastVersionGroup))
                     {
-                        if (useVersionFile || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                        if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                         {
                             hasBumped = true;
                             Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
@@ -160,7 +160,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    if (useVersionFile || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                    if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                     {
                         Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                     }
