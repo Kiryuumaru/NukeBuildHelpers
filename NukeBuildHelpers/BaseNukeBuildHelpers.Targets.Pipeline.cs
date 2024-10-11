@@ -114,7 +114,7 @@ partial class BaseNukeBuildHelpers
 
                 var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
 
-                if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+                if (useVersionFile && pipeline.PipelineInfo.TriggerType != TriggerType.Tag)
                 {
                     EntryHelpers.VerifyVersionsFile(allVersions, appId, [pipeline.PipelineInfo.Branch]);
                 }
