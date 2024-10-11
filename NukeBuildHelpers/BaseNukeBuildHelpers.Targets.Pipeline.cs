@@ -104,6 +104,8 @@ partial class BaseNukeBuildHelpers
             long targetBuildId = 0;
             long lastBuildId = await allEntry.WorkflowConfigEntryDefinition.GetStartingBuildId() - 1;
 
+            bool useVersionFile = await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning();
+
             foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
             {
                 string appId = key;
@@ -149,7 +151,7 @@ partial class BaseNukeBuildHelpers
                         !allVersions.VersionFailed.Contains(lastVersionGroup) &&
                         !allVersions.VersionPassed.Contains(lastVersionGroup))
                     {
-                        if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                        if (useVersionFile || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                         {
                             hasBumped = true;
                             Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
@@ -158,7 +160,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                    if (useVersionFile || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                     {
                         Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                     }
@@ -298,7 +300,7 @@ partial class BaseNukeBuildHelpers
                 RunType runType = pipeline.PipelineInfo.TriggerType switch
                 {
                     TriggerType.PullRequest => RunType.PullRequest,
-                    TriggerType.Commit => RunType.Commit,
+                    TriggerType.Commit => useVersionFile ? (entry.HasRelease ? RunType.Bump : RunType.Commit) : RunType.Commit,
                     TriggerType.Tag => entry.HasRelease ? RunType.Bump : RunType.Commit,
                     TriggerType.Local => RunType.Local,
                     _ => throw new NotSupportedException()
