@@ -1,6 +1,7 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
+using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using Serilog;
 
@@ -34,14 +35,15 @@ partial class BaseNukeBuildHelpers
 
                 var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
-                IReadOnlyCollection<Output>? lsRemote = null;
+                ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
 
                 foreach (var key in splitArgs.Keys.Any() ? splitArgs.Keys.ToList() : [""])
                 {
                     string appId = key;
 
                     ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
-                    ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+
+                    var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
 
                     tagsToDelete.AddRange(allVersions.VersionCommitPaired.Select(i => appId + "/" + i.Key.ToString()));
                 }

@@ -1,13 +1,19 @@
-﻿using Nuke.Common;
+﻿using ICSharpCode.SharpZipLib.Zip;
+using Nuke.Common;
+using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Attributes;
+using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
+using Octokit;
 using Semver;
 using System.Reflection;
+using System.Text.Json;
 
 namespace NukeBuildHelpers.Entry.Helpers;
 
@@ -176,10 +182,18 @@ internal static class EntryHelpers
         };
     }
 
-    internal static AllVersions GetAllVersions(BaseNukeBuildHelpers nukeBuildHelpers, string appId, ref IReadOnlyCollection<Output>? lsRemoteOutput)
+    internal static async Task<AllVersions> GetAllVersions(BaseNukeBuildHelpers nukeBuildHelpers, AllEntry allEntry, string appId, ObjectHolder<IReadOnlyCollection<Output>>? lsRemoteOutputHolder)
     {
         string basePeel = "refs/tags/";
-        lsRemoteOutput ??= nukeBuildHelpers.Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
+
+        var headCommit = nukeBuildHelpers.Repository.Commit;
+
+        IReadOnlyCollection<Output> lsRemoteOutput = lsRemoteOutputHolder?.Value ?? nukeBuildHelpers.Git.Invoke("ls-remote -t -q", logOutput: false, logInvocation: false);
+
+        if (lsRemoteOutputHolder != null)
+        {
+            lsRemoteOutputHolder.Value = lsRemoteOutput;
+        }
 
         Dictionary<string, List<long>> commitBuildIdGrouped = [];
         Dictionary<string, List<SemVersion>> commitVersionGrouped = [];
@@ -350,6 +364,42 @@ internal static class EntryHelpers
             .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : nukeBuildHelpers.MainEnvironmentBranch.ToLowerInvariant())
             .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
 
+        Dictionary<string, SemVersion> envVersionFileMap = [];
+        try
+        {
+            var versionFile = GetVersionsFile(allEntry, appId);
+            envVersionFileMap = versionFile.EnvironmentVersions;
+        }
+        catch { }
+
+        if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning() && envVersionFileMap.Count > 0)
+        {
+            foreach (var env in nukeBuildHelpers.EnvironmentBranches)
+            {
+                var envLower = env.ToLowerInvariant();
+                var envVersionFile = envVersionFileMap[envLower];
+                if (!allVersionList.Any(i => i == envVersionFile))
+                {
+                    if (!commitVersionGrouped.TryGetValue(headCommit, out var pairedVersion))
+                    {
+                        pairedVersion = [];
+                        commitVersionGrouped.Add(headCommit, pairedVersion);
+                    }
+                    pairedVersion.Add(envVersionFile);
+                    versionBump.Add(envVersionFile);
+                    allVersionList.Add(envVersionFile);
+                    envVersionGrouped[envLower].Add(envVersionFile);
+                }
+            }
+        }
+
+        foreach (var env in nukeBuildHelpers.EnvironmentBranches)
+        {
+            var envLower = env.ToLowerInvariant();
+            var allVersion = envVersionGrouped[envLower];
+            allVersion.Sort(SemVersion.PrecedenceComparer);
+        }
+
         Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = [];
         foreach (var pairedLatestTag in commitLatestTagGrouped)
         {
@@ -400,11 +450,6 @@ internal static class EntryHelpers
         {
             envSorted.Add(nukeBuildHelpers.MainEnvironmentBranch.ToLowerInvariant());
         }
-        foreach (var env in envSorted)
-        {
-            var allVersion = envVersionGrouped[env];
-            allVersion.Sort(SemVersion.PrecedenceComparer);
-        }
 
         return new()
         {
@@ -422,7 +467,130 @@ internal static class EntryHelpers
             VersionQueue = versionQueue,
             VersionFailed = versionFailed,
             VersionPassed = versionPassed,
+            EnvVersionFileMap = envVersionFileMap
         };
+    }
+
+    internal static AllVersionsFile GetAllVersionsFile(AllEntry allEntry)
+    {
+        Dictionary<string, Dictionary<string, string>>? versionsMap = null;
+
+        try
+        {
+            versionsMap = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>((NukeBuild.RootDirectory / "versions.json").ReadAllText());
+        }
+        catch { }
+
+        if (versionsMap == null)
+        {
+            throw new Exception($"{NukeBuild.RootDirectory / "versions.json"} is empty");
+        }
+
+        Dictionary<string, VersionFile> versions = [];
+
+        foreach (var appVersion in versionsMap)
+        {
+            string appId = appVersion.Key;
+
+            if (!allEntry.AppEntryMap.TryGetValue(appId, out _))
+            {
+                throw new Exception($"\"{appId}\" was defined in versions.json but appId does not exists");
+            }
+
+            Dictionary<string, SemVersion> envVersionMap = [];
+
+            foreach (var envVersion in appVersion.Value)
+            {
+                envVersionMap[envVersion.Key] = SemVersion.Parse(envVersion.Value, SemVersionStyles.Strict);
+            }
+
+            versions[appId] = new()
+            {
+                AppId = appId,
+                EnvironmentVersions = envVersionMap
+            };
+        }
+
+        return new() { Versions = versions };
+    }
+
+    internal static VersionFile GetVersionsFile(AllEntry allEntry, string appId)
+    {
+        Dictionary<string, Dictionary<string, string>>? versionsMap = null;
+
+        try
+        {
+            versionsMap = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>((NukeBuild.RootDirectory / "versions.json").ReadAllText());
+        }
+        catch { }
+
+        if (versionsMap == null)
+        {
+            throw new Exception($"{NukeBuild.RootDirectory / "versions.json"} is empty");
+        }
+
+        if (!versionsMap.TryGetValue(appId.ToLowerInvariant(), out var appVersion))
+        {
+            throw new Exception($"\"{appId}\" does not exists in {NukeBuild.RootDirectory / "versions.json"}");
+        }
+
+        if (!allEntry.AppEntryMap.TryGetValue(appId, out _))
+        {
+            throw new Exception($"\"{appId}\" was defined in {NukeBuild.RootDirectory / "versions.json"} but appId does not exists");
+        }
+
+        Dictionary<string, SemVersion> envVersionMap = [];
+
+        foreach (var envVersion in appVersion)
+        {
+            envVersionMap[envVersion.Key] = SemVersion.Parse(envVersion.Value, SemVersionStyles.Strict).WithoutMetadata();
+        }
+
+        return new()
+        {
+            AppId = appId,
+            EnvironmentVersions = envVersionMap
+        };
+    }
+
+    internal static async Task GenerateAllVersionsFile(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    {
+        Dictionary<string, Dictionary<string, string>> versions = [];
+
+        ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
+
+        foreach (var appEntry in allEntry.AppEntryMap)
+        {
+            string appId = appEntry.Key;
+
+            var allVersions = await ValueHelpers.GetOrFail(() => GetAllVersions(baseNukeBuildHelpers, allEntry, appId, lsRemote));
+
+            Dictionary<string, string> envVersions = [];
+
+            foreach (var env in allVersions.EnvSorted)
+            {
+                envVersions[env] = allVersions.EnvVersionGrouped[env].Last().WithoutMetadata().ToString();
+            }
+
+            versions[appId.ToLowerInvariant()] = envVersions;
+        }
+
+        (NukeBuild.RootDirectory / "versions.json").WriteAllText(JsonSerializer.Serialize(versions, JsonExtension.OptionIndented));
+    }
+
+    internal static void VerifyVersionsFile(AllVersions allVersions, string appId, string[] envs)
+    {
+        foreach (var env in envs)
+        {
+            var envLower = env.ToLowerInvariant();
+            var envVersionFile = allVersions.EnvVersionFileMap[envLower];
+            var envVersions = allVersions.EnvVersionGrouped[envLower];
+            var latestEnvVersion = envVersions.Last();
+            if (latestEnvVersion.ComparePrecedenceTo(envVersionFile) > 0)
+            {
+                throw new Exception($"{NukeBuild.RootDirectory / "versions.json"} is invalid. \"{appId}\" {envLower} provided version is behind the actual latest version. {latestEnvVersion} > {envVersionFile}");
+            }
+        }
     }
 
     internal static List<(MemberInfo MemberInfo, SecretVariableAttribute Secret)> GetSecretVariables(BaseNukeBuildHelpers baseNukeBuildHelpers)

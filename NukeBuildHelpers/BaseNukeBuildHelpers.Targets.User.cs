@@ -1,12 +1,14 @@
 ﻿using Nuke.Common;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
+using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Enums;
 using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Pipelines.Azure;
 using NukeBuildHelpers.Pipelines.Common;
+using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Github;
 using Serilog;
 
@@ -53,14 +55,20 @@ partial class BaseNukeBuildHelpers
             ];
             List<ConsoleTableRow> rows = [];
 
-            IReadOnlyCollection<Output>? lsRemote = null;
+            ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
 
             foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
             {
                 string appId = key;
 
                 ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
-                ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+
+                var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
+
+                if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+                {
+                    EntryHelpers.VerifyVersionsFile(allVersions, appId, EnvironmentBranches);
+                }
 
                 bool firstEntryRow = true;
 

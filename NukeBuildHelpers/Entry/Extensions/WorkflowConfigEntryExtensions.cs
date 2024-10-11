@@ -259,4 +259,46 @@ public static class WorkflowConfigEntryExtensions
         definition.StartingBuildId = () => Task.Run(async () => await startingBuildId());
         return definition;
     }
+
+    /// <summary>
+    /// Configures whether to use JSON file versioning in the workflow. If enabled, a file named <c>versions.json</c> will be generated in the <see cref="Nuke.Common.NukeBuild.RootDirectory"/> on every build workflow generation.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="useJsonFileVersioning">A value indicating whether to use JSON file versioning.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition UseJsonFileVersioning<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, bool useJsonFileVersioning)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.UseJsonFileVersioning = () => Task.Run(() => useJsonFileVersioning);
+        return definition;
+    }
+
+    /// <summary>
+    /// Configures whether to use JSON file versioning in the workflow using a function. If enabled, a file named <c>versions.json</c> will be generated in the <see cref="Nuke.Common.NukeBuild.RootDirectory"/> on every build workflow generation.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="useJsonFileVersioning">A function that returns a value indicating whether to use JSON file versioning.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition UseJsonFileVersioning<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<bool> useJsonFileVersioning)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.UseJsonFileVersioning = () => Task.Run(() => useJsonFileVersioning());
+        return definition;
+    }
+
+    /// <summary>
+    /// Configures whether to use JSON file versioning in the workflow using an asynchronous function. If enabled, a file named <c>versions.json</c> will be generated in the <see cref="Nuke.Common.NukeBuild.RootDirectory"/> on every build workflow generation.
+    /// </summary>
+    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
+    /// <param name="definition">The instance of the entry definition.</param>
+    /// <param name="useJsonFileVersioning">An asynchronous function that returns a value indicating whether to use JSON file versioning.</param>
+    /// <returns>The modified entry definition instance.</returns>
+    public static TWorkflowConfigEntryDefinition UseJsonFileVersioning<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<Task<bool>> useJsonFileVersioning)
+        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
+    {
+        definition.UseJsonFileVersioning = () => Task.Run(async () => await useJsonFileVersioning());
+        return definition;
+    }
 }

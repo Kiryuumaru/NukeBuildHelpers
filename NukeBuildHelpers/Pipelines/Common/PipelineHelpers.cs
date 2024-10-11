@@ -8,15 +8,25 @@ using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Github;
 using NukeBuildHelpers.Pipelines.Local;
+using Nuke.Common.Utilities;
+using NukeBuildHelpers.Common;
+using NukeBuildHelpers.Entry.Helpers;
+using Nuke.Common.Tooling;
+using NukeBuildHelpers.Common.Models;
 
 namespace NukeBuildHelpers.Pipelines.Common;
 
 internal static class PipelineHelpers
 {
-    internal static Task BuildWorkflow<T>(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
+    internal static async Task BuildWorkflow<T>(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
         where T : IPipeline
     {
-        return (Activator.CreateInstance(typeof(T), baseNukeBuildHelpers) as IPipeline)!.BuildWorkflow(baseNukeBuildHelpers, allEntry);
+        if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+        {
+            await EntryHelpers.GenerateAllVersionsFile(baseNukeBuildHelpers, allEntry);
+        }
+
+        await (Activator.CreateInstance(typeof(T), baseNukeBuildHelpers) as IPipeline)!.BuildWorkflow(baseNukeBuildHelpers, allEntry);
     }
 
     internal static PipelineRun SetupPipeline(BaseNukeBuildHelpers baseNukeBuildHelpers)

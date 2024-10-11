@@ -15,4 +15,9 @@ internal static class JsonExtension
         WriteIndented = true
     };
 
+    public static readonly JsonSerializerOptions OptionIndented = new()
+    {
+        WriteIndented = true
+    };
+
 }

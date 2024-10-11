@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
@@ -96,19 +97,27 @@ partial class BaseNukeBuildHelpers
 
             string env = pipeline.PipelineInfo.Branch.ToLowerInvariant();
 
-            IReadOnlyCollection<Output>? lsRemote = null;
+            ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
 
             Dictionary<string, AppRunEntry> toEntry = [];
 
             long targetBuildId = 0;
             long lastBuildId = await allEntry.WorkflowConfigEntryDefinition.GetStartingBuildId() - 1;
 
+            bool useVersionFile = await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning();
+
             foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
             {
                 string appId = key;
 
                 ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
-                ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+
+                var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
+
+                if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+                {
+                    EntryHelpers.VerifyVersionsFile(allVersions, appId, [pipeline.PipelineInfo.Branch]);
+                }
 
                 if (allVersions.BuildIdCommitPaired.Count > 0)
                 {
@@ -147,7 +156,7 @@ partial class BaseNukeBuildHelpers
                         !allVersions.VersionFailed.Contains(lastVersionGroup) &&
                         !allVersions.VersionPassed.Contains(lastVersionGroup))
                     {
-                        if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                        if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                         {
                             hasBumped = true;
                             Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
@@ -156,7 +165,7 @@ partial class BaseNukeBuildHelpers
                 }
                 else
                 {
-                    if (pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                    if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                     {
                         Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                     }
@@ -296,7 +305,7 @@ partial class BaseNukeBuildHelpers
                 RunType runType = pipeline.PipelineInfo.TriggerType switch
                 {
                     TriggerType.PullRequest => RunType.PullRequest,
-                    TriggerType.Commit => RunType.Commit,
+                    TriggerType.Commit => useVersionFile ? (entry.HasRelease ? RunType.Bump : RunType.Commit) : RunType.Commit,
                     TriggerType.Tag => entry.HasRelease ? RunType.Bump : RunType.Commit,
                     TriggerType.Local => RunType.Local,
                     _ => throw new NotSupportedException()
