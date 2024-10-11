@@ -31,4 +31,6 @@ internal class AllVersions
     public required List<SemVersion> VersionFailed { get; init; }
 
     public required List<SemVersion> VersionPassed { get; init; }
+
+    public required Dictionary<string, SemVersion> EnvVersionFileMap { get; init; }
 }

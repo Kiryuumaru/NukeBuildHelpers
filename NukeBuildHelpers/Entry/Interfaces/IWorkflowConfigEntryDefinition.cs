@@ -22,6 +22,8 @@ public interface IWorkflowConfigEntryDefinition
 
     internal Func<Task<long>> StartingBuildId { get; set; }
 
+    internal Func<Task<bool>> UseJsonFileVersioning { get; set; }
+
     internal async Task<string> GetName()
     {
         return ValueHelpers.GetOrNullFail(await Name());
@@ -50,5 +52,10 @@ public interface IWorkflowConfigEntryDefinition
     internal async Task<long> GetStartingBuildId()
     {
         return await StartingBuildId();
+    }
+
+    internal async Task<bool> GetUseJsonFileVersioning()
+    {
+        return await UseJsonFileVersioning();
     }
 }
