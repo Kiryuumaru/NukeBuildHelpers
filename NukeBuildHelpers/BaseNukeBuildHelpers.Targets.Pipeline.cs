@@ -114,6 +114,11 @@ partial class BaseNukeBuildHelpers
 
                 var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
 
+                if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+                {
+                    EntryHelpers.VerifyVersionsFile(allVersions, appId, [pipeline.PipelineInfo.Branch]);
+                }
+
                 if (allVersions.BuildIdCommitPaired.Count > 0)
                 {
                     var maxBuildId = allVersions.BuildIdCommitPaired.Select(i => i.Key).Max();
