@@ -215,11 +215,10 @@ internal static class EntryHelpers
             {
                 var buildSplit = rawTag.Split('-');
                 var buildPair = buildSplit[0].Split('.');
-                if (buildPair.Length != 2)
+                if (buildPair.Length != 2 || long.TryParse(buildPair[1], out var parsedBuildId))
                 {
                     continue;
                 }
-                var parsedBuildId = long.Parse(buildPair[1]);
                 if (buildSplit.Length == 1)
                 {
                     if (!buildIdCommitPaired.ContainsKey(parsedBuildId))
