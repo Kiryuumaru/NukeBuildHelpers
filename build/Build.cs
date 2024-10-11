@@ -32,7 +32,8 @@ class Build : BaseNukeBuildHelpers
 
     protected override WorkflowConfigEntry WorkflowConfig => _ => _
         .PreSetupRunnerOS(RunnerOS.Windows2022)
-        .PostSetupRunnerOS(RunnerOS.Ubuntu2204);
+        .PostSetupRunnerOS(RunnerOS.Ubuntu2204)
+        .UseJsonFileVersioning(true);
 
     Target Clean => _ => _
         .Executes(() =>

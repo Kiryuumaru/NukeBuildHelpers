@@ -2,7 +2,7 @@
   "profiles": {
     "_build": {
       "commandName": "Project",
-      "commandLineArgs": "run --args \"NukeBuildHelpersTest1;NukeBuildHelpersTest2CustomId;NukeBuildHelpersBuild1;NukeBuildHelpersPublish\""
+      "commandLineArgs": "githubworkflow"
     }
   }
 }

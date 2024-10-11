@@ -585,7 +585,7 @@ partial class BaseNukeBuildHelpers
 
         string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
 
-        IReadOnlyCollection<Output>? lsRemote = null;
+        ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
 
         List<(AppEntry? AppEntry, AllVersions? AllVersions)> appEntryVersions = [];
 
@@ -593,7 +593,7 @@ partial class BaseNukeBuildHelpers
         {
             string appId = pair.Key;
 
-            ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+            var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
 
             appEntryVersions.Add((pair.Value, allVersions));
         }
@@ -777,7 +777,7 @@ partial class BaseNukeBuildHelpers
 
         string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
 
-        IReadOnlyCollection<Output>? lsRemote = null;
+        ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
 
         Dictionary<string, string?> argsBumps = [];
 
@@ -800,7 +800,7 @@ partial class BaseNukeBuildHelpers
             string appId = argsBump.Key.ToLower();
 
             ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
-            ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+            var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
 
             if (allVersions.EnvVersionGrouped.TryGetValue(currentEnvIdentifier, out var currentEnvVersions) &&
                 currentEnvVersions.LastOrDefault() is SemVersion currentEnvLatestVersion &&
@@ -917,7 +917,7 @@ partial class BaseNukeBuildHelpers
         {
             List<ConsoleTableRow> rows = [];
 
-            IReadOnlyCollection<Output>? lsRemote = null;
+            ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
 
             bool allDone = true;
             bool pullFailed = false;
@@ -930,7 +930,7 @@ partial class BaseNukeBuildHelpers
                 AllVersions allVersions;
                 try
                 {
-                    ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appEntry.AppId, ref lsRemote), out allVersions);
+                    allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appEntry.AppId, lsRemote));
                 }
                 catch
                 {

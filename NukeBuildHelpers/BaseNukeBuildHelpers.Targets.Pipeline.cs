@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
@@ -96,7 +97,7 @@ partial class BaseNukeBuildHelpers
 
             string env = pipeline.PipelineInfo.Branch.ToLowerInvariant();
 
-            IReadOnlyCollection<Output>? lsRemote = null;
+            ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
 
             Dictionary<string, AppRunEntry> toEntry = [];
 
@@ -108,7 +109,8 @@ partial class BaseNukeBuildHelpers
                 string appId = key;
 
                 ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
-                ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, appId, ref lsRemote), out var allVersions);
+
+                var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
 
                 if (allVersions.BuildIdCommitPaired.Count > 0)
                 {

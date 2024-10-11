@@ -47,6 +47,13 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
         set => startingBuildId = value;
     }
 
+    Func<Task<bool>>? useJsonFileVersioning = null;
+    Func<Task<bool>> IWorkflowConfigEntryDefinition.UseJsonFileVersioning
+    {
+        get => useJsonFileVersioning ?? (() => Task.FromResult(false));
+        set => useJsonFileVersioning = value;
+    }
+
     IWorkflowConfigEntryDefinition IWorkflowConfigEntryDefinition.Clone()
     {
         var definition = new WorkflowConfigEntryDefinition();
@@ -56,6 +63,7 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
         if (appendReleaseNotesAssetHashes != null) ((IWorkflowConfigEntryDefinition)this).AppendReleaseNotesAssetHashes = appendReleaseNotesAssetHashes;
         if (enablePrereleaseOnReleases != null) ((IWorkflowConfigEntryDefinition)this).EnablePrereleaseOnRelease = enablePrereleaseOnReleases;
         if (startingBuildId != null) ((IWorkflowConfigEntryDefinition)this).StartingBuildId = startingBuildId;
+        if (useJsonFileVersioning != null) ((IWorkflowConfigEntryDefinition)this).UseJsonFileVersioning = useJsonFileVersioning;
         return definition;
     }
 }
