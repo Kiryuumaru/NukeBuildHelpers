@@ -215,7 +215,7 @@ internal static class EntryHelpers
             {
                 var buildSplit = rawTag.Split('-');
                 var buildPair = buildSplit[0].Split('.');
-                if (buildPair.Length != 2 || long.TryParse(buildPair[1], out var parsedBuildId))
+                if (buildPair.Length != 2 || !long.TryParse(buildPair[1], out var parsedBuildId))
                 {
                     continue;
                 }
