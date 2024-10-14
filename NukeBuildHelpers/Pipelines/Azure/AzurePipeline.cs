@@ -73,7 +73,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             throw new Exception("NUKE_PRE_SETUP is empty");
         }
 
-        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue, JsonExtension.SnakeCaseNamingOption);
+        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue.Base64ToString(), JsonExtension.SnakeCaseNamingOption);
 
         return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
     }
@@ -132,7 +132,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         }
 
         Log.Information("NUKE_PRE_SETUP: {preSetup}", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOptionIndented));
-        await ExportEnvVarRuntime("NUKE_PRE_SETUP", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption));
+        await ExportEnvVarRuntime("NUKE_PRE_SETUP", JsonSerializer.Serialize(pipelinePreSetup, JsonExtension.SnakeCaseNamingOption).StringToBase64());
     }
 
     public async Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup)
