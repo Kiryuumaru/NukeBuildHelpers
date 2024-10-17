@@ -268,7 +268,7 @@ partial class BaseNukeBuildHelpers
                     gitBaseUrl = gitBaseUrl[..lastDotIndex];
                 }
 
-                releaseNotes = "## New Versions";
+                int newVersionCount = 0;
                 foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
                 {
                     var appId = entry.AppId.ToLowerInvariant();
@@ -282,6 +282,15 @@ partial class BaseNukeBuildHelpers
                     {
                         releaseNotes += $"\n* Bump `{appId}` from `{oldVer}` to `{newVer}`. See [changelog]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
                     }
+                    newVersionCount++;
+                }
+                if (newVersionCount > 1)
+                {
+                    releaseNotes = releaseNotes.Insert(0, "## New Versions");
+                }
+                else
+                {
+                    releaseNotes = releaseNotes.Insert(0, "## New Version");
                 }
 
                 releaseNotes += "\n\n" + releaseNotesFromProp;
