@@ -635,7 +635,20 @@ partial class BaseNukeBuildHelpers
 
                     return true;
                 });
-            var appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.AppId);
+
+            (AppEntry? AppEntry, AllVersions? AllVersions) appEntryVersion;
+
+            if (appEntryVersionsToBump.Count == 0 && appEntryVersions.Count == 2)
+            {
+                appEntryVersion = appEntryVersions.FirstOrDefault();
+                Console.Write("  App id to bump: ");
+                ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry?.AppId!, ConsoleColor.Green);
+                Console.WriteLine("");
+            }
+            else
+            {
+                appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.AppId);
+            }
 
             if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
             {
