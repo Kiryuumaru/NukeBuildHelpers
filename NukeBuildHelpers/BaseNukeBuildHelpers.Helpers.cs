@@ -638,9 +638,9 @@ partial class BaseNukeBuildHelpers
 
             (AppEntry? AppEntry, AllVersions? AllVersions) appEntryVersion = (null, null);
 
-            if (appEntryVersionsToBump.Count == 0 && appEntryVersions.Count == 2)
+            if (appEntryVersionsToBump.Count == 0 && availableBump.Count() == 2)
             {
-                appEntryVersion = appEntryVersions.FirstOrDefault();
+                appEntryVersion = availableBump.FirstOrDefault();
                 Console.Write("  App id to bump: ");
                 ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry?.AppId!, ConsoleColor.Green);
                 Console.WriteLine("");
