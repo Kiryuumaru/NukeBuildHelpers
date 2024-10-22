@@ -636,7 +636,7 @@ partial class BaseNukeBuildHelpers
                     return true;
                 });
 
-            (AppEntry? AppEntry, AllVersions? AllVersions) appEntryVersion;
+            (AppEntry? AppEntry, AllVersions? AllVersions) appEntryVersion = (null, null);
 
             if (appEntryVersionsToBump.Count == 0 && appEntryVersions.Count == 2)
             {
@@ -645,7 +645,7 @@ partial class BaseNukeBuildHelpers
                 ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry?.AppId!, ConsoleColor.Green);
                 Console.WriteLine("");
             }
-            else
+            else if (availableBump.Count() > 1)
             {
                 appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.AppId);
             }
