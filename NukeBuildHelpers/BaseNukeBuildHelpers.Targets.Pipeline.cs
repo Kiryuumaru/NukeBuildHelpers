@@ -295,6 +295,8 @@ partial class BaseNukeBuildHelpers
 
                 releaseNotes += "\n\n" + releaseNotesFromProp;
 
+                releaseNotes = releaseNotes.Replace("\n\n\n**Full Changelog**", "\n\n**Full Changelog**");
+
                 var notesPath = TemporaryDirectory / "notes.md";
                 notesPath.WriteAllText(releaseNotes);
 
@@ -590,7 +592,12 @@ partial class BaseNukeBuildHelpers
                                     throw new Exception("releaseJsonDocument is invalid");
                                 }
 
-                                releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
+                                if (releaseNotes.LastOrDefault() != '\n')
+                                {
+                                    releaseNotes += "\n";
+                                }
+                                releaseNotes += "\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
+
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
                                     var url = new Uri(baseUri.Trim('/') + $"/releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}");
