@@ -132,7 +132,7 @@ partial class BaseNukeBuildHelpers
 
                 if (allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
                 {
-                    foreach (var version in versionGroup.OrderByDescending(i => i))
+                    foreach (var version in versionGroup.OrderByDescending(i => i, SemVersion.PrecedenceComparer))
                     {
                         if (allVersions.VersionPassed.Contains(version) &&
                             allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
