@@ -313,7 +313,7 @@ internal static class EntryHelpers
                         isPassedVersion = true;
                     }
 
-                    if (SemVersion.TryParse(versionTag, SemVersionStyles.Strict, out SemVersion tagSemver))
+                    if (SemVersion.TryParse(versionTag, SemVersionStyles.Strict, out SemVersion? tagSemver))
                     {
                         if (!commitVersionGrouped.TryGetValue(commitId, out var pairedVersion))
                         {
