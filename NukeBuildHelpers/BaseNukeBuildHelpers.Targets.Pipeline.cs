@@ -576,13 +576,13 @@ partial class BaseNukeBuildHelpers
 
                         Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                        if (await allEntry.WorkflowConfigEntryDefinition.GetAppendReleaseNotesAssetHashes())
+                        var assetReleaseFiles = assetOutput.GetFiles("*.*");
+                        if (assetReleaseFiles.Any())
                         {
-                            var assetReleaseFiles = assetOutput.GetFiles("*.*");
-                            if (assetReleaseFiles.Any())
-                            {
-                                Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
+                            Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
 
+                            if (await allEntry.WorkflowConfigEntryDefinition.GetAppendReleaseNotesAssetHashes())
+                            {
                                 var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
                                 var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
                                 if (releaseJsonDocument == null ||
