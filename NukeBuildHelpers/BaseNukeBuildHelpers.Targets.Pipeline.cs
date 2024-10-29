@@ -114,7 +114,7 @@ partial class BaseNukeBuildHelpers
 
                 var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
 
-                if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+                if (useVersionFile && pipeline.PipelineInfo.TriggerType != TriggerType.Tag)
                 {
                     EntryHelpers.VerifyVersionsFile(allVersions, appId, [pipeline.PipelineInfo.Branch]);
                 }
@@ -132,7 +132,7 @@ partial class BaseNukeBuildHelpers
 
                 if (allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
                 {
-                    foreach (var version in versionGroup.OrderByDescending(i => i))
+                    foreach (var version in versionGroup.OrderByDescending(i => i, SemVersion.PrecedenceComparer))
                     {
                         if (allVersions.VersionPassed.Contains(version) &&
                             allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
@@ -268,7 +268,7 @@ partial class BaseNukeBuildHelpers
                     gitBaseUrl = gitBaseUrl[..lastDotIndex];
                 }
 
-                releaseNotes = "## New Versions";
+                int newVersionCount = 0;
                 foreach (var entry in toEntry.Values.Where(i => i.HasRelease))
                 {
                     var appId = entry.AppId.ToLowerInvariant();
@@ -282,9 +282,20 @@ partial class BaseNukeBuildHelpers
                     {
                         releaseNotes += $"\n* Bump `{appId}` from `{oldVer}` to `{newVer}`. See [changelog]({gitBaseUrl}/compare/{appId}/{oldVer}...{appId}/{newVer})";
                     }
+                    newVersionCount++;
+                }
+                if (newVersionCount > 1)
+                {
+                    releaseNotes = releaseNotes.Insert(0, "## New Versions");
+                }
+                else
+                {
+                    releaseNotes = releaseNotes.Insert(0, "## New Version");
                 }
 
                 releaseNotes += "\n\n" + releaseNotesFromProp;
+
+                releaseNotes = releaseNotes.Replace("\n\n\n**Full Changelog**", "\n\n**Full Changelog**");
 
                 var notesPath = TemporaryDirectory / "notes.md";
                 notesPath.WriteAllText(releaseNotes);
@@ -565,13 +576,13 @@ partial class BaseNukeBuildHelpers
 
                         Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                        if (await allEntry.WorkflowConfigEntryDefinition.GetAppendReleaseNotesAssetHashes())
+                        var assetReleaseFiles = assetOutput.GetFiles("*.*");
+                        if (assetReleaseFiles.Any())
                         {
-                            var assetReleaseFiles = assetOutput.GetFiles("*.*");
-                            if (assetReleaseFiles.Any())
-                            {
-                                Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
+                            Gh.Invoke("release upload --clobber build." + pipelinePreSetup.BuildId + " " + string.Join(" ", assetReleaseFiles.Select(i => i.ToString())));
 
+                            if (await allEntry.WorkflowConfigEntryDefinition.GetAppendReleaseNotesAssetHashes())
+                            {
                                 var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
                                 var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
                                 if (releaseJsonDocument == null ||
@@ -581,7 +592,12 @@ partial class BaseNukeBuildHelpers
                                     throw new Exception("releaseJsonDocument is invalid");
                                 }
 
-                                releaseNotes += "\n\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
+                                if (releaseNotes.LastOrDefault() != '\n')
+                                {
+                                    releaseNotes += "\n";
+                                }
+                                releaseNotes += "\n---\n\n## Asset Hashes\n| Asset | Hashes |\n|---|---|\n";
+
                                 foreach (var assetFile in assetReleaseFiles)
                                 {
                                     var url = new Uri(baseUri.Trim('/') + $"/releases/download/build.{pipelinePreSetup.BuildId}/{assetFile.Name}");

@@ -84,4 +84,15 @@ internal static class StringExtensions
         return sb.ToString();
     }
 
+    public static string StringToBase64(this string plainText)
+    {
+        byte[] plainTextBytes = Encoding.UTF8.GetBytes(plainText);
+        return Convert.ToBase64String(plainTextBytes);
+    }
+
+    public static string Base64ToString(this string base64Encoded)
+    {
+        byte[] base64Bytes = Convert.FromBase64String(base64Encoded);
+        return Encoding.UTF8.GetString(base64Bytes);
+    }
 }

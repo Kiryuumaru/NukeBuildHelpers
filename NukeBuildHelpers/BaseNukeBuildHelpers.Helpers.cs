@@ -491,15 +491,21 @@ partial class BaseNukeBuildHelpers
         }, async entry =>
         {
             IPublishEntryDefinition publishEntryDefinition = (entry as IPublishEntryDefinition)!;
+            var releaseAssetsDir = TemporaryDirectory / "release_assets";
+            //var releaseAssetsDir = CommonOutputDirectory;
+            var assetOutDir = releaseAssetsDir / "assets";
+            var commonAssetOutDir = releaseAssetsDir / "common_assets";
+            assetOutDir.CreateOrCleanDirectory();
+            commonAssetOutDir.CreateOrCleanDirectory();
             foreach (var asset in await publishEntryDefinition.GetReleaseAssets())
             {
                 if (asset.FileExists())
                 {
-                    await asset.CopyTo(CommonOutputDirectory / "asset" / asset.Name);
+                    await asset.CopyTo(assetOutDir / asset.Name);
                 }
                 else if (asset.DirectoryExists())
                 {
-                    var destinationPath = CommonOutputDirectory / "asset" / (asset.Name + ".zip");
+                    var destinationPath = assetOutDir / (asset.Name + ".zip");
                     if (destinationPath.FileExists())
                     {
                         destinationPath.DeleteFile();
@@ -512,7 +518,7 @@ partial class BaseNukeBuildHelpers
             {
                 if (asset.FileExists() || asset.DirectoryExists())
                 {
-                    await asset.CopyTo(CommonOutputDirectory / "common_asset");
+                    await asset.CopyTo(commonAssetOutDir);
                     Log.Information("Added {file} to common assets", asset);
                 }
             }
@@ -521,7 +527,7 @@ partial class BaseNukeBuildHelpers
             var artifactFilePath = CommonArtifactsUploadDirectory / $"{artifactName}.zip";
             artifactTempPath.CreateOrCleanDirectory();
             artifactFilePath.DeleteFile();
-            await CommonOutputDirectory.MoveTo(artifactTempPath);
+            await releaseAssetsDir.MoveTo(artifactTempPath);
             artifactTempPath.ZipTo(artifactFilePath);
         });
     }
@@ -635,7 +641,20 @@ partial class BaseNukeBuildHelpers
 
                     return true;
                 });
-            var appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.AppId);
+
+            (AppEntry? AppEntry, AllVersions? AllVersions) appEntryVersion = (null, null);
+
+            if (appEntryVersionsToBump.Count == 0 && availableBump.Count() == 2)
+            {
+                appEntryVersion = availableBump.FirstOrDefault();
+                Console.Write("  App id to bump: ");
+                ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry?.AppId!, ConsoleColor.Green);
+                Console.WriteLine("");
+            }
+            else if (availableBump.Count() > 1)
+            {
+                appEntryVersion = Prompt.Select("App id to bump", availableBump, textSelector: (appEntry) => appEntry.AppEntry == null ? "->done" : appEntry.AppEntry.AppId);
+            }
 
             if (appEntryVersion.AppEntry == null || appEntryVersion.AllVersions == null)
             {
