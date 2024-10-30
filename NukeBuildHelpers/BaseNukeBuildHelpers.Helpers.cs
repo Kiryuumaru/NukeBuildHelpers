@@ -291,11 +291,31 @@ partial class BaseNukeBuildHelpers
         }
     }
 
-    private void EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup? pipelinePreSetup)
+    private async Task EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup? pipelinePreSetup)
     {
         EntryHelpers.SetupSecretVariables(this);
 
         PipelineType = pipeline.PipelineType;
+
+        string releaseNotes = "";
+
+        if (pipelinePreSetup != null &&
+            pipelinePreSetup.HasRelease &&
+            pipeline.PipelineType != Pipelines.Common.Enums.PipelineType.Local)
+        {
+            await Task.Run(() =>
+            {
+                var releaseNotesJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
+                if (releaseNotesJsonDocument == null ||
+                    !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
+                    releaseNotesProp.GetString() is not string releaseNotesFromProp)
+                {
+                    throw new Exception("releaseNotesJsonDocument is empty");
+                }
+                releaseNotes = releaseNotesFromProp;
+            });
+        }
 
         foreach (var targetEntry in allEntry.TargetEntryDefinitionMap.Values)
         {
@@ -322,7 +342,7 @@ partial class BaseNukeBuildHelpers
                 BuildId = pipelinePreSetup.BuildId
             };
 
-            SetupTargetRunContext(targetEntry, entrySetup.RunType, appVersion, pipelinePreSetup.ReleaseNotes, pipeline);
+            SetupTargetRunContext(targetEntry, entrySetup.RunType, appVersion, releaseNotes, pipeline);
         }
 
         foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)
@@ -348,7 +368,7 @@ partial class BaseNukeBuildHelpers
 
         CacheBump();
 
-        EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
+        await EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
 
         foreach (var entry in entriesToRun)
         {

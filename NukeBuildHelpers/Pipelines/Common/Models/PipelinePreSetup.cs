@@ -9,8 +9,6 @@ internal class PipelinePreSetup
 
     public required TriggerType TriggerType { get; init; }
 
-    public required string ReleaseNotes { get; init; }
-
     public required long BuildId { get; init; }
 
     public required long LastBuildId { get; init; }
