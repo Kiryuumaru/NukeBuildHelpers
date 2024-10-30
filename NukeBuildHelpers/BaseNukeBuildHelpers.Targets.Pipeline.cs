@@ -446,7 +446,6 @@ partial class BaseNukeBuildHelpers
                 Branch = pipeline.PipelineInfo.Branch,
                 TriggerType = pipeline.PipelineInfo.TriggerType,
                 Environment = env,
-                ReleaseNotes = releaseNotes,
                 BuildId = buildId,
                 LastBuildId = targetBuildId,
                 PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber,
