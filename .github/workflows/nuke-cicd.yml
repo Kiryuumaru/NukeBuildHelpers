@@ -27,8 +27,6 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke PipelinePreSetup
       run: ./build.cmd PipelinePreSetup
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     timeout-minutes: 30
     outputs:
       NUKE_PRE_SETUP: ${{ steps.NUKE_RUN.outputs.NUKE_PRE_SETUP }}
@@ -580,8 +578,6 @@ jobs:
         pattern: publish___*
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
@@ -613,5 +609,6 @@ jobs:
       NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSBUILD3: ${{ needs.NUKEBUILDHELPERSBUILD3.result }}
       NUKE_RUN_RESULT_GITHUB_NUKEBUILDHELPERSPUBLISH: ${{ needs.NUKEBUILDHELPERSPUBLISH.result }}
 env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NUKE_NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
   NUKE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

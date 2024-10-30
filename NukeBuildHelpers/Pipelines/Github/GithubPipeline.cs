@@ -184,6 +184,19 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var pipelinePreSetupOs = await allEntry.WorkflowConfigEntryDefinition.GetPreSetupRunnerOS();
         var pipelinePostSetupOs = await allEntry.WorkflowConfigEntryDefinition.GetPostSetupRunnerOS();
 
+        Dictionary<string, object> envMap = new()
+        {
+            ["GITHUB_TOKEN"] = "${{ secrets.GITHUB_TOKEN }}"
+        };
+
+        foreach (var env in EntryHelpers.GetSecretVariables(baseNukeBuildHelpers)
+            .ToDictionary(
+                i => string.IsNullOrEmpty(i.Secret.EnvironmentVariableName) ? $"NUKE_{i.Secret.SecretVariableName}" : i.Secret.EnvironmentVariableName,
+                i => (object)$"${{{{ secrets.{i.Secret.SecretVariableName} }}}}"))
+        {
+            envMap[env.Key] = env.Value;
+        }
+
         Dictionary<string, object> workflow = new()
         {
             ["name"] = pipelineName,
@@ -207,10 +220,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                     { "cancel-in-progress", true }
                 },
             ["jobs"] = new Dictionary<string, object>(),
-            ["env"] = EntryHelpers.GetSecretVariables(baseNukeBuildHelpers)
-                .ToDictionary(
-                    i => string.IsNullOrEmpty(i.Secret.EnvironmentVariableName) ? $"NUKE_{i.Secret.SecretVariableName}" : i.Secret.EnvironmentVariableName,
-                    i => (object)$"${{{{ secrets.{i.Secret.SecretVariableName} }}}}")
+            ["env"] = envMap
         };
 
         Dictionary<string, ITestEntryDefinition> preTestEntryDefinitionMap = [];
@@ -234,7 +244,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         var preSetupJob = AddJob(workflow, "PRE_SETUP", "Pre Setup", pipelinePreSetupOs, timeoutMinutes: 30);
         AddJobStepCheckout(preSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
         var nukePreSetup = AddJobStepNukeRun(preSetupJob, pipelinePreSetupOs, "PipelinePreSetup", id: "NUKE_RUN");
-        AddJobOrStepEnvVar(nukePreSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_TEST_MATRIX");
         AddJobOutput(preSetupJob, "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX", "NUKE_RUN", "NUKE_PRE_SETUP_OUTPUT_BUILD_MATRIX");
@@ -406,7 +415,6 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
         AddJobStepWith(downloadPostSetupStep, "pattern", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, pipelinePostSetupOs, "PipelinePostSetup");
-        AddJobOrStepEnvVar(nukePostSetup, "GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}");
 
         // ██████████████████████████████████████
         // ███████████████ Write ████████████████
