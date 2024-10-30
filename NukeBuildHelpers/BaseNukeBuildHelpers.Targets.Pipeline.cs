@@ -251,7 +251,7 @@ partial class BaseNukeBuildHelpers
 
                 Gh.Invoke(ghReleaseCreateArgs, logger: (s, e) => Log.Debug(e));
 
-                var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body").FirstOrDefault().Text;
                 var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
                 if (releaseNotesJsonDocument == null ||
                     !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
@@ -296,6 +296,8 @@ partial class BaseNukeBuildHelpers
                 releaseNotes += "\n\n" + releaseNotesFromProp;
 
                 releaseNotes = releaseNotes.Replace("\n\n\n**Full Changelog**", "\n\n**Full Changelog**");
+
+                Log.Information("Generated release notes:\n{Notes}", releaseNotes);
 
                 var notesPath = TemporaryDirectory / "notes.md";
                 notesPath.WriteAllText(releaseNotes);
@@ -575,6 +577,15 @@ partial class BaseNukeBuildHelpers
 
                         Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
+                        var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body").FirstOrDefault().Text;
+                        var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
+                        if (releaseJsonDocument == null ||
+                            !releaseJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
+                            releaseNotesProp.GetString() is not string releaseNotes)
+                        {
+                            throw new Exception("releaseJsonDocument is invalid");
+                        }
+
                         var assetReleaseFiles = assetOutput.GetFiles("*.*");
                         if (assetReleaseFiles.Any())
                         {
@@ -582,15 +593,6 @@ partial class BaseNukeBuildHelpers
 
                             if (await allEntry.WorkflowConfigEntryDefinition.GetAppendReleaseNotesAssetHashes())
                             {
-                                var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
-                                var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
-                                if (releaseJsonDocument == null ||
-                                    !releaseJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
-                                    releaseNotesProp.GetString() is not string releaseNotes)
-                                {
-                                    throw new Exception("releaseJsonDocument is invalid");
-                                }
-
                                 if (releaseNotes.LastOrDefault() != '\n')
                                 {
                                     releaseNotes += "\n";
@@ -615,6 +617,8 @@ partial class BaseNukeBuildHelpers
                                 Gh.Invoke($"release edit --notes-file={notesPath} build.{pipelinePreSetup.BuildId}");
                             }
                         }
+
+                        Log.Information("Final release notes:\n{Notes}", releaseNotes);
 
                         Gh.Invoke($"release edit --draft=false build.{pipelinePreSetup.BuildId}");
                     }

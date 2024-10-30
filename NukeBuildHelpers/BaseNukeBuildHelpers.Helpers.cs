@@ -305,7 +305,7 @@ partial class BaseNukeBuildHelpers
         {
             await Task.Run(() =>
             {
-                var releaseNotesJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                var releaseNotesJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body").FirstOrDefault().Text;
                 var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
                 if (releaseNotesJsonDocument == null ||
                     !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
