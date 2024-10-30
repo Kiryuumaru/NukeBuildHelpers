@@ -501,7 +501,7 @@ partial class BaseNukeBuildHelpers
                 {
                     if (pipelinePreSetup.HasRelease)
                     {
-                        var assetOutput = TemporaryDirectory / "assets";
+                        var assetOutput = TemporaryDirectory / "release_assets";
 
                         assetOutput.CreateOrCleanDirectory();
 
