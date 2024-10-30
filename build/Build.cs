@@ -59,11 +59,6 @@ class Build : BaseNukeBuildHelpers
         .CacheInvalidator("1")
         .WorkflowBuilder(builder =>
         {
-            if (string.IsNullOrEmpty(GithubToken))
-            {
-                throw new Exception("Error resolving secret");
-            }
-
             if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
             {
                 githubWorkflowBuilder.AddPostExecuteStep(new Dictionary<string, object>()
@@ -97,6 +92,12 @@ class Build : BaseNukeBuildHelpers
         })
         .Execute(() =>
         {
+            if (string.IsNullOrEmpty(NuGetAuthToken) ||
+                string.IsNullOrEmpty(GithubToken))
+            {
+                throw new Exception("Error resolving secret");
+            }
+
             var testDirFilePath = RootDirectory / "testCache" / "testFile.txt";
             var testFilePath = RootDirectory / "testFile.txt";
             testDirFilePath.Parent.CreateDirectory();
