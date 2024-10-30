@@ -90,10 +90,10 @@ class Build : BaseNukeBuildHelpers
                 });
             }
         })
-        .Execute(() =>
+        .Execute(context =>
         {
-            if (string.IsNullOrEmpty(NuGetAuthToken) ||
-                string.IsNullOrEmpty(GithubToken))
+            if (context.TryGetPipelineContext(out var _) &&
+                (string.IsNullOrEmpty(NuGetAuthToken) || string.IsNullOrEmpty(GithubToken)))
             {
                 throw new Exception("Error resolving secret");
             }
