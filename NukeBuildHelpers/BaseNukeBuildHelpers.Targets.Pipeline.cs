@@ -251,7 +251,7 @@ partial class BaseNukeBuildHelpers
 
                 Gh.Invoke(ghReleaseCreateArgs, logger: (s, e) => Log.Debug(e));
 
-                var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body").FirstOrDefault().Text;
+                var releaseNotesJson = Gh.Invoke($"release view {buildTag} --json body", logOutput: false, logInvocation: false).FirstOrDefault().Text;
                 var releaseNotesJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseNotesJson);
                 if (releaseNotesJsonDocument == null ||
                     !releaseNotesJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
@@ -547,7 +547,7 @@ partial class BaseNukeBuildHelpers
                             }
                         }
 
-                        var repoViewJson = Gh.Invoke($"repo view --json url", logger: (s, e) => Log.Debug(e)).FirstOrDefault().Text;
+                        var repoViewJson = Gh.Invoke($"repo view --json url", logOutput: false, logInvocation: false).FirstOrDefault().Text;
                         var repoViewJsonDocument = JsonSerializer.Deserialize<JsonDocument>(repoViewJson);
                         if (repoViewJsonDocument == null ||
                             !repoViewJsonDocument.RootElement.TryGetProperty("url", out var baseUrlJsonProp) ||
@@ -577,7 +577,7 @@ partial class BaseNukeBuildHelpers
 
                         Git.Invoke("push -f --tags", logger: (s, e) => Log.Debug(e));
 
-                        var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body").FirstOrDefault().Text;
+                        var releaseJson = Gh.Invoke($"release view build.{pipelinePreSetup.BuildId} --json body", logOutput: false, logInvocation: false).FirstOrDefault().Text;
                         var releaseJsonDocument = JsonSerializer.Deserialize<JsonDocument>(releaseJson);
                         if (releaseJsonDocument == null ||
                             !releaseJsonDocument.RootElement.TryGetProperty("body", out var releaseNotesProp) ||
