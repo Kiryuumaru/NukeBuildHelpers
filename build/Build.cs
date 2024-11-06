@@ -217,9 +217,9 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers")
         .DisplayName("Build try")
         .RunnerOS(RunnerOS.Windows2022)
-        .Matrix(new[] { ("Mat1", 1), ("Mat2", 1) }, (definition1, matrix1) =>
+        .Matrix([("Mat1", 1), ("Mat2", 1)], (definition1, matrix1) =>
         {
-            definition1.Matrix(new[] { ("Mat3", 1), ("Mat4", 1) }, (definition2, matrix2) =>
+            definition1.Matrix([("Mat3", 1), ("Mat4", 1)], (definition2, matrix2) =>
             {
                 definition2.WorkflowId($"NukeBuildHelpersBuild2{matrix1.Item1}{matrix2.Item1}");
                 definition2.DisplayName("Build try " + matrix1.Item1 + " sub " + matrix2.Item1);
