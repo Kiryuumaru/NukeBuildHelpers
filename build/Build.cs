@@ -92,6 +92,9 @@ class Build : BaseNukeBuildHelpers
         })
         .Execute(context =>
         {
+            Log.Information("Nuget: {oldVal}", NuGetAuthToken);
+            Log.Information("Github: {oldVal}", GithubToken);
+
             if (context.TryGetPipelineContext(out var _) &&
                 (string.IsNullOrEmpty(NuGetAuthToken) || string.IsNullOrEmpty(GithubToken)))
             {

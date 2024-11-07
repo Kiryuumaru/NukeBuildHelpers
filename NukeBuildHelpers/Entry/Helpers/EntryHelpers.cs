@@ -605,9 +605,9 @@ internal static class EntryHelpers
         {
             foreach (object attr in prop.GetCustomAttributes(true))
             {
-                if (attr is SecretVariableAttribute SecretAttr)
+                if (attr is SecretVariableAttribute secretAttr)
                 {
-                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(prop, SecretAttr));
+                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(prop, secretAttr));
                 }
             }
         }
@@ -615,9 +615,9 @@ internal static class EntryHelpers
         {
             foreach (object attr in field.GetCustomAttributes(true))
             {
-                if (attr is SecretVariableAttribute SecretAttr)
+                if (attr is SecretVariableAttribute secretAttr)
                 {
-                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(field, SecretAttr));
+                    secretMemberList.Add(((MemberInfo MemberInfo, SecretVariableAttribute))(field, secretAttr));
                 }
             }
         }
