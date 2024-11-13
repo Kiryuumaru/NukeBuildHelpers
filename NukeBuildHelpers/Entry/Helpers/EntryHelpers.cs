@@ -10,8 +10,10 @@ using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
+using NukeBuildHelpers.Pipelines.Common.Interfaces;
 using Octokit;
 using Semver;
+using Serilog;
 using System.Reflection;
 using System.Text.Json;
 
@@ -630,6 +632,10 @@ internal static class EntryHelpers
         {
             var envVarName = string.IsNullOrEmpty(Secret.EnvironmentVariableName) ? "NUKE_" + Secret.SecretVariableName : Secret.EnvironmentVariableName;
             var secretValue = Environment.GetEnvironmentVariable(envVarName);
+            if (string.IsNullOrEmpty(secretValue))
+            {
+                Log.Warning("Secret variable {envVarName} was not resolved", envVarName);
+            }
             MemberInfo.SetValue(baseNukeBuildHelpers, secretValue);
         }
     }
