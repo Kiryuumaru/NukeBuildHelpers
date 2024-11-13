@@ -84,14 +84,14 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
+            EntryHelpers.SetupSecretVariables(this);
+
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
             await pipeline.Pipeline.PreparePreSetup(allEntry);
 
             Log.Information("Target branch: {branch}", pipeline.PipelineInfo.Branch);
             Log.Information("Trigger type: {branch}", pipeline.PipelineInfo.TriggerType);
-
-            EntryHelpers.SetupSecretVariables(this);
 
             PipelineType = pipeline.PipelineType;
 
@@ -477,6 +477,8 @@ partial class BaseNukeBuildHelpers
             var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
             CheckAppEntry(allEntry);
+
+            EntryHelpers.SetupSecretVariables(this);
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
