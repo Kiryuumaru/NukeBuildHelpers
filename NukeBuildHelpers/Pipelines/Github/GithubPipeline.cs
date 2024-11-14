@@ -208,7 +208,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                             { "tags", new List<string> { "bump-*" } }
                         }
                     },
-                    { "pull_request_target", new Dictionary<string, object>()
+                    { "pull_request", new Dictionary<string, object>()
                         {
                             { "branches", new List<string> { "**" } }
                         }
