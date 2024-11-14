@@ -30,7 +30,7 @@
 
 	<ItemGroup>
 		<!-- Override vulnerability warnings: https://github.com/advisories/GHSA-447r-wph3-92pm-->
-		<PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
+		<PackageReference Include="System.Formats.Asn1" Version="9.0.0" />
 		<PackageReference Include="System.Text.Json" Version="9.0.0" />
 
 		<PackageReference Include="Nuke.Common" Version="8.1.4" />
