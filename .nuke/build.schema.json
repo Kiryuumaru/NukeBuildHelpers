@@ -1,11 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "properties": {
-    "Args": {
-      "type": "string",
-      "description": "Args for target"
-    }
-  },
   "definitions": {
     "Host": {
       "type": "string",
@@ -116,5 +110,17 @@
       }
     }
   },
-  "$ref": "#/definitions/NukeBuild"
+  "allOf": [
+    {
+      "properties": {
+        "Args": {
+          "type": "string",
+          "description": "Args for target"
+        }
+      }
+    },
+    {
+      "$ref": "#/definitions/NukeBuild"
+    }
+  ]
 }
