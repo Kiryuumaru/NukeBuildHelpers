@@ -262,7 +262,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test", envMap: envMap);
+            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, envMap: envMap);
         }
 
         // ██████████████████████████████████████
@@ -286,7 +286,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build", envMap: envMap);
+            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, envMap: envMap);
             var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
             AddJobStepInputs(uploadBuildStep, "artifact", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
             AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/artifacts-upload");
@@ -326,7 +326,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepInputs(downloadPostTestStep, "path", "./.nuke/temp/artifacts-download");
             AddJobStepInputs(downloadPostTestStep, "patterns", "**");
             AddJobStepInputs(downloadPostTestStep, "continueOnError", "true");
-            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test", envMap: envMap);
+            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, envMap: envMap);
         }
 
         // ██████████████████████████████████████
@@ -370,7 +370,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepInputs(downloadPublishStep, "itemPattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
             AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts-download");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
-            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish", envMap: envMap);
+            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, envMap: envMap);
             var uploadPublishStep = AddJobStep(publishJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
             AddJobStepInputs(uploadPublishStep, "artifact", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
             AddJobStepInputs(uploadPublishStep, "targetPath", "./.nuke/temp/artifacts-upload");
@@ -532,14 +532,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IAzureWorkflowBuilder workflowBuilder, IRunEntryDefinition entryDefinition, string runType, Dictionary<string, object>? envMap)
+    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IAzureWorkflowBuilder workflowBuilder, IRunEntryDefinition entryDefinition, Dictionary<string, object>? envMap)
     {
         AddJobStepCache(job, entryDefinition.Id.ToUpperInvariant());
         foreach (var step in workflowBuilder.PreExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
         }
-        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "PipelineRunEntry", name: "NUKE_RUN", args: $"run={runType};idsToRun={entryDefinition.Id}", envMap: envMap);
+        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "Run", displayName: $"Run Nuke {entryDefinition.Id}", name: "NUKE_RUN", args: entryDefinition.Id, envMap: envMap);
         foreach (var step in workflowBuilder.PostExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
@@ -595,19 +595,19 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string name = "", string args = "", string condition = "", Dictionary<string, object>? envMap = null)
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string displayName = "", string name = "", string args = "", string condition = "", Dictionary<string, object>? envMap = null)
     {
         var script = $"{buildScript} {targetName}";
         if (!string.IsNullOrEmpty(args))
         {
             script += $" --args \"{args}\"";
         }
-        return AddJobStep(job, displayName: $"Run Nuke {targetName}", name: name, script: script, condition: condition, envMap: envMap);
+        return AddJobStep(job, displayName: string.IsNullOrEmpty(displayName) ? $"Run Nuke {targetName}" : displayName, name: name, script: script, condition: condition, envMap: envMap);
     }
 
-    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunnerOS runnerOS, string targetName, string name = "", string args = "", string condition = "", Dictionary<string, object>? envMap = null)
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunnerOS runnerOS, string targetName, string displayName = "", string name = "", string args = "", string condition = "", Dictionary<string, object>? envMap = null)
     {
-        return AddJobStepNukeRun(job, runnerOS.GetRunScript(PipelineType.Azure), targetName, name, args, condition, envMap);
+        return AddJobStepNukeRun(job, runnerOS.GetRunScript(PipelineType.Azure), targetName, displayName, name, args, condition, envMap);
     }
 
     private static void AddJobStepInputs(Dictionary<string, object> step, string name, string value)

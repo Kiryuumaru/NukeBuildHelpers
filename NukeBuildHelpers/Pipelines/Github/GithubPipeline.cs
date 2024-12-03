@@ -273,7 +273,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. preTestNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test");
+            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition);
         }
 
         // ██████████████████████████████████████
@@ -296,7 +296,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. buildNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
-            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, "build");
+            AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition);
             var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadBuildStep, "name", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
             AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/artifacts-upload/*");
@@ -334,7 +334,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
             var downloadPostTestStep = AddJobStep(testJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadPostTestStep, "path", "./.nuke/temp/artifacts-download");
-            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, "test");
+            AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition);
         }
 
         // ██████████████████████████████████████
@@ -376,7 +376,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
             AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts-download");
             AddJobStepWith(downloadBuildStep, "pattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
-            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, "publish");
+            AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition);
             var uploadPublishStep = AddJobStep(publishJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
             AddJobStepWith(uploadPublishStep, "name", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
             AddJobStepWith(uploadPublishStep, "path", "./.nuke/temp/artifacts-upload/*");
@@ -513,14 +513,14 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IGithubWorkflowBuilder workflowBuilder, IRunEntryDefinition entryDefinition, string runType)
+    private static void AddJobStepNukeDefined(Dictionary<string, object> job, IGithubWorkflowBuilder workflowBuilder, IRunEntryDefinition entryDefinition)
     {
         AddJobStepCache(job, entryDefinition.Id.ToUpperInvariant());
         foreach (var step in workflowBuilder.PreExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
         }
-        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "PipelineRunEntry", id: "NUKE_RUN", args: $"run={runType};idsToRun={entryDefinition.Id}");
+        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "Run", displayName: $"Rune Nuke {entryDefinition.Id}", id: "NUKE_RUN", args: entryDefinition.Id);
         foreach (var step in workflowBuilder.PostExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
@@ -563,19 +563,19 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         return step;
     }
 
-    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string id = "", string args = "", string _if = "")
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, string buildScript, string targetName, string displayName = "", string id = "", string args = "", string _if = "")
     {
         var script = $"{buildScript} {targetName}";
         if (!string.IsNullOrEmpty(args))
         {
             script += $" --args \"{args}\"";
         }
-        return AddJobStep(job, id: id, name: $"Run Nuke {targetName}", run: script, _if: _if);
+        return AddJobStep(job, id: id, name: string.IsNullOrEmpty(displayName) ? $"Run Nuke {targetName}" : displayName, run: script, _if: _if);
     }
 
-    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunnerOS runnerOS, string targetName, string id = "", string args = "", string _if = "")
+    private static Dictionary<string, object> AddJobStepNukeRun(Dictionary<string, object> job, RunnerOS runnerOS, string targetName, string displayName = "", string id = "", string args = "", string _if = "")
     {
-        return AddJobStepNukeRun(job, runnerOS.GetRunScript(PipelineType.Github), targetName, id, args, _if);
+        return AddJobStepNukeRun(job, runnerOS.GetRunScript(PipelineType.Github), targetName, displayName, id, args, _if);
     }
 
     private static void AddJobStepWith(Dictionary<string, object> step, string name, string value)

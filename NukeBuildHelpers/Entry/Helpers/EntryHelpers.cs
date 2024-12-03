@@ -138,6 +138,7 @@ internal static class EntryHelpers
                     appEntryMap.Add(appIdLower, appEntry);
                 }
                 appEntry.TestEntryDefinitions.Add(testEntryDefinition);
+                appEntry.RunEntryDefinitions.Add(testEntryDefinition);
             }
         }
 
@@ -154,6 +155,7 @@ internal static class EntryHelpers
                 appEntryMap.Add(appIdLower, appEntry);
             }
             appEntry.BuildEntryDefinitions.Add(buildEntryDefinition);
+            appEntry.RunEntryDefinitions.Add(buildEntryDefinition);
         }
 
         foreach (var publishEntryDefinition in publishEntryDefinitions)
@@ -169,6 +171,7 @@ internal static class EntryHelpers
                 appEntryMap.Add(appIdLower, appEntry);
             }
             appEntry.PublishEntryDefinitions.Add(publishEntryDefinition);
+            appEntry.RunEntryDefinitions.Add(publishEntryDefinition);
         }
 
         return new()
