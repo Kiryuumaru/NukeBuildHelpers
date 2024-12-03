@@ -13,7 +13,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Nuke.Common" Version="9.0.1" />
+		<PackageReference Include="Nuke.Common" Version="9.0.2" />
 		<PackageReference Include="NuGet.Packaging" Version="6.12.1" />
 	</ItemGroup>
 
