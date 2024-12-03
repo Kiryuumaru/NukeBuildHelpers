@@ -21,6 +21,8 @@ using NukeBuildHelpers.RunContext.Models;
 using NukeBuildHelpers.Common.Models;
 using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Pipelines.Common;
+using NukeBuildHelpers.Pipelines.Github;
+using NukeBuildHelpers.Pipelines.Azure;
 
 namespace NukeBuildHelpers;
 
@@ -654,7 +656,7 @@ partial class BaseNukeBuildHelpers
                 currentEnvLatestVersionCommitId == Repository.Commit)
             {
                 appEntryIdHasBump.Add(appEntryVersion.AppEntry.AppId);
-                Console.Write("Commit has already bumped ");
+                Console.Write("  Commit has already bumped ");
                 ConsoleHelpers.WriteWithColor(appEntryVersion.AppEntry.AppId, ConsoleColor.DarkMagenta);
                 Console.WriteLine();
             }
@@ -1120,54 +1122,143 @@ partial class BaseNukeBuildHelpers
 
         CheckAppEntry(allEntry);
 
-        AppEntry appEntry;
-        if (allEntry.AppEntryMap.Count > 1)
+        static void printHead(string name)
         {
-            appEntry = Prompt.Select("App ID to run", allEntry.AppEntryMap.Values, textSelector: (appEntry) => appEntry.AppId);
-        }
-        else if (allEntry.AppEntryMap.Count == 1)
-        {
-            appEntry = allEntry.AppEntryMap.First().Value;
-            Console.Write("App ID to run ");
-            ConsoleHelpers.WriteWithColor(appEntry.AppId, ConsoleColor.DarkMagenta);
+            Console.WriteLine();
+            Console.WriteLine( "╬════════════════");
+            Console.WriteLine($"║ {name}");
+            Console.WriteLine( "╬═══════");
             Console.WriteLine();
         }
-        else
-        {
-            throw new Exception("No app entry configured");
-        }
 
-        static string runEntryDefinitionTextSelector(IRunEntryDefinition definition)
+        var taskToRun = Prompt.Select("Task to run",
+            [
+                nameof(Version),
+                nameof(Run),
+                nameof(Bump),
+                nameof(BumpAndForget),
+                nameof(StatusWatch),
+                nameof(GithubWorkflow),
+                nameof(AzureWorkflow),
+            ]);
+        switch (taskToRun)
         {
-            return definition switch
-            {
-                IBuildEntryDefinition buildEntryDefinition => $"{buildEntryDefinition.Id} (BuildEntry)",
-                ITestEntryDefinition testEntryDefinition => $"{testEntryDefinition.Id} (TestEntry)",
-                IPublishEntryDefinition publishEntryDefinition => $"{publishEntryDefinition.Id} (PublishEntry)",
-                _ => throw new NotImplementedException(definition.GetType().Name),
-            };
-        }
+            case nameof(Version):
 
-        IRunEntryDefinition runEntryDefinition;
-        if (appEntry.RunEntryDefinitions.Count > 1)
-        {
-            runEntryDefinition = Prompt.Select("App entry to run", appEntry.RunEntryDefinitions, textSelector: runEntryDefinitionTextSelector);
-        }
-        else if (appEntry.RunEntryDefinitions.Count == 1)
-        {
-            runEntryDefinition = appEntry.RunEntryDefinitions.First();
-            Console.Write("App entry to run ");
-            ConsoleHelpers.WriteWithColor(runEntryDefinitionTextSelector(runEntryDefinition), ConsoleColor.DarkMagenta);
-            Console.WriteLine();
-        }
-        else
-        {
-            throw new Exception("No app entry configured");
-        }
+                printHead("Fetch");
+                await RunFetch();
 
-        var pipeline = PipelineHelpers.SetupPipeline(this);
+                printHead("Version");
+                await RunVersion();
 
-        await RunEntry(allEntry, pipeline, [runEntryDefinition], null);
+                break;
+            case nameof(Run):
+
+                printHead("Run");
+
+                AppEntry appEntry;
+                if (allEntry.AppEntryMap.Count > 1)
+                {
+                    appEntry = Prompt.Select("App ID to run", allEntry.AppEntryMap.Values, textSelector: (appEntry) => appEntry.AppId);
+                }
+                else if (allEntry.AppEntryMap.Count == 1)
+                {
+                    appEntry = allEntry.AppEntryMap.First().Value;
+                    Console.Write("App ID to run ");
+                    ConsoleHelpers.WriteWithColor(appEntry.AppId, ConsoleColor.DarkMagenta);
+                    Console.WriteLine();
+                }
+                else
+                {
+                    throw new Exception("No app entry configured");
+                }
+
+                static string runEntryDefinitionTextSelector(IRunEntryDefinition definition)
+                {
+                    return definition switch
+                    {
+                        IBuildEntryDefinition buildEntryDefinition => $"{buildEntryDefinition.Id} (BuildEntry)",
+                        ITestEntryDefinition testEntryDefinition => $"{testEntryDefinition.Id} (TestEntry)",
+                        IPublishEntryDefinition publishEntryDefinition => $"{publishEntryDefinition.Id} (PublishEntry)",
+                        _ => throw new NotImplementedException(definition.GetType().Name),
+                    };
+                }
+
+                IRunEntryDefinition runEntryDefinition;
+                if (appEntry.RunEntryDefinitions.Count > 1)
+                {
+                    runEntryDefinition = Prompt.Select("App entry to run", appEntry.RunEntryDefinitions, textSelector: runEntryDefinitionTextSelector);
+                }
+                else if (appEntry.RunEntryDefinitions.Count == 1)
+                {
+                    runEntryDefinition = appEntry.RunEntryDefinitions.First();
+                    Console.Write("App entry to run ");
+                    ConsoleHelpers.WriteWithColor(runEntryDefinitionTextSelector(runEntryDefinition), ConsoleColor.DarkMagenta);
+                    Console.WriteLine();
+                }
+                else
+                {
+                    throw new Exception("No app entry configured");
+                }
+
+                var pipeline = PipelineHelpers.SetupPipeline(this);
+
+                await RunEntry(allEntry, pipeline, [runEntryDefinition], null);
+
+                break;
+            case nameof(Bump):
+
+                printHead("Fetch");
+                await RunFetch();
+
+                printHead("Version");
+                await RunVersion();
+
+                printHead("BumpAndForget");
+                var bumpMap = await RunBumpArgsOrInteractive();
+                Console.WriteLine();
+                await StartStatusWatch(true, bumpMap.Select(i => (i.Key, Repository.Branch)).ToArray());
+
+                break;
+            case nameof(BumpAndForget):
+
+                printHead("Fetch");
+                await RunFetch();
+
+                printHead("Version");
+                await RunVersion();
+
+                printHead("BumpAndForget");
+                await RunBumpArgsOrInteractive();
+
+                break;
+            case nameof(StatusWatch):
+
+                printHead("StatusWatch");
+
+                Log.Information("Commit: {Value}", Repository.Commit);
+                Log.Information("Branch: {Value}", Repository.Branch);
+
+                Console.WriteLine();
+
+                await StartStatusWatch(false);
+
+                break;
+            case nameof(GithubWorkflow):
+
+                printHead("GithubWorkflow");
+
+                await PipelineHelpers.BuildWorkflow<GithubPipeline>(this, allEntry);
+
+                break;
+            case nameof(AzureWorkflow):
+
+                printHead("AzureWorkflow");
+
+                await PipelineHelpers.BuildWorkflow<AzurePipeline>(this, allEntry);
+
+                break;
+        }
     }
 
     private Task RunFetch()
