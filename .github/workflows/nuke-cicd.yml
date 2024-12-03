@@ -163,7 +163,7 @@ jobs:
       name: Custom github step test 1
       run: echo "Test github 1"
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersTest1
+      name: Run Nuke NukeBuildHelpersTest1
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest1"
     - id: test_github_2
       name: Custom github step test 2
@@ -192,7 +192,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2CUSTOMID_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2CUSTOMID_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersTest2CustomId
+      name: Run Nuke NukeBuildHelpersTest2CustomId
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2CUSTOMID_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest2CustomId"
     needs:
     - PRE_SETUP
@@ -218,7 +218,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersBuild1
+      name: Run Nuke NukeBuildHelpersBuild1
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild1"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -253,7 +253,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersBuild2Mat1Mat3
+      name: Run Nuke NukeBuildHelpersBuild2Mat1Mat3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat1Mat3"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -288,7 +288,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersBuild2Mat1Mat4
+      name: Run Nuke NukeBuildHelpersBuild2Mat1Mat4
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat1Mat4"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -323,7 +323,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersBuild2Mat2Mat3
+      name: Run Nuke NukeBuildHelpersBuild2Mat2Mat3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat2Mat3"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -358,7 +358,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersBuild2Mat2Mat4
+      name: Run Nuke NukeBuildHelpersBuild2Mat2Mat4
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat2Mat4"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -393,7 +393,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersBuild3
+      name: Run Nuke NukeBuildHelpersBuild3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild3"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
@@ -430,7 +430,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersTest3
+      name: Run Nuke NukeBuildHelpersTest3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest3"
     needs:
     - PRE_SETUP
@@ -467,7 +467,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersTest4
+      name: Run Nuke NukeBuildHelpersTest4
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest4"
     needs:
     - PRE_SETUP
@@ -498,7 +498,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersTest5
+      name: Run Nuke NukeBuildHelpersTest5
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest5"
     needs:
     - PRE_SETUP
@@ -537,7 +537,7 @@ jobs:
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_RESTORE_KEY }}
           ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CACHE_MAIN_RESTORE_KEY }}
     - id: NUKE_RUN
-      name: Rune Nuke NukeBuildHelpersPublish
+      name: Run Nuke NukeBuildHelpersPublish
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }} Run --args "NukeBuildHelpersPublish"
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
