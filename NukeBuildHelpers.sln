@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{7D239E58-4
 		docs\WorkflowConfigEntry.md = docs\WorkflowConfigEntry.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NukeBuildHelpers.SourceGenerators", "NukeBuildHelpers.SourceGenerators\NukeBuildHelpers.SourceGenerators.csproj", "{1D2699BD-4BDD-48DE-AECB-ABC461E2B46F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{26692557-F5A7-4C13-8E78-53A8FCEE30BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26692557-F5A7-4C13-8E78-53A8FCEE30BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26692557-F5A7-4C13-8E78-53A8FCEE30BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D2699BD-4BDD-48DE-AECB-ABC461E2B46F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D2699BD-4BDD-48DE-AECB-ABC461E2B46F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D2699BD-4BDD-48DE-AECB-ABC461E2B46F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D2699BD-4BDD-48DE-AECB-ABC461E2B46F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
