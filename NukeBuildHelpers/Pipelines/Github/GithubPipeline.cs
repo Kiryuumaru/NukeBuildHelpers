@@ -520,7 +520,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             ((List<object>)job["steps"]).Add(step);
         }
-        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "Run", displayName: $"Rune Nuke {entryDefinition.Id}", id: "NUKE_RUN", args: entryDefinition.Id);
+        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "Run", displayName: $"Run Nuke {entryDefinition.Id}", id: "NUKE_RUN", args: entryDefinition.Id);
         foreach (var step in workflowBuilder.PostExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);
