@@ -21,12 +21,11 @@ partial class BaseNukeBuildHelpers
     /// </summary>
     public Target Fetch => _ => _
         .Description("Fetch git commits and tags")
-        .Executes(() =>
+        .Executes(async () =>
         {
             CheckEnvironementBranches();
 
-            Log.Information("Fetching...");
-            Git.Invoke("fetch --prune --prune-tags --force", logInvocation: false, logOutput: false);
+            await RunFetch();
         });
 
     /// <summary>
@@ -39,70 +38,17 @@ partial class BaseNukeBuildHelpers
         {
             CheckEnvironementBranches();
 
-            var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
+            await RunVersion();
+        });
 
-            CheckAppEntry(allEntry);
-
-            Log.Information("Commit: {Value}", Repository.Commit);
-            Log.Information("Branch: {Value}", Repository.Branch);
-
-            ConsoleTableHeader[] headers =
-            [
-                ("App EntryId", HorizontalAlignment.Right),
-                ("Environment", HorizontalAlignment.Center),
-                ("Bumped Version", HorizontalAlignment.Right),
-                ("Published", HorizontalAlignment.Center)
-            ];
-            List<ConsoleTableRow> rows = [];
-
-            ObjectHolder<IReadOnlyCollection<Output>> lsRemote = new();
-
-            foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
-            {
-                string appId = key;
-
-                ValueHelpers.GetOrFail(appId, allEntry, out var appEntry);
-
-                var allVersions = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAllVersions(this, allEntry, appId, lsRemote));
-
-                if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
-                {
-                    EntryHelpers.VerifyVersionsFile(allVersions, appId, EnvironmentBranches);
-                }
-
-                bool firstEntryRow = true;
-
-                if (allVersions.EnvSorted.Count != 0)
-                {
-                    foreach (var env in allVersions.EnvSorted)
-                    {
-                        var bumpedVersion = allVersions.EnvVersionGrouped[env].Last();
-                        allVersions.EnvLatestVersionPaired.TryGetValue(env, out var releasedVersion);
-                        var published = "yes";
-                        if (releasedVersion == null)
-                        {
-                            published = "no";
-                        }
-                        else if (bumpedVersion != releasedVersion)
-                        {
-                            published = releasedVersion + "*";
-                        }
-                        var bumpedVersionStr = SemverHelpers.IsVersionEmpty(bumpedVersion) ? "-" : bumpedVersion.ToString();
-                        rows.Add(ConsoleTableRow.FromValue([firstEntryRow ? appId : "", env, bumpedVersionStr, published]));
-                        firstEntryRow = false;
-                    }
-                }
-                else
-                {
-                    rows.Add(ConsoleTableRow.FromValue([appId, default(string), default(string), "no"]));
-                }
-                rows.Add(ConsoleTableRow.Separator);
-            }
-            rows.RemoveAt(rows.Count - 1);
-
-            Console.WriteLine();
-
-            ConsoleTableHelpers.LogInfoTable(headers, [.. rows]);
+    /// <summary>
+    /// Interactive for selecting and running specific tasks.
+    /// </summary>
+    public Target Interactive => _ => _
+        .Description("Interactive for selecting and running specific tasks")
+        .Executes(async () =>
+        {
+            await RunInteractive();
         });
 
     /// <summary>
@@ -183,22 +129,22 @@ partial class BaseNukeBuildHelpers
 
                 if (testAppEntries.Any())
                 {
-                    await TestAppEntries(allEntry, pipeline, testAppEntries, true);
+                    await TestAppEntries(allEntry, pipeline, testAppEntries);
                 }
                 if (buildAppEntries.Any())
                 {
-                    await BuildAppEntries(allEntry, pipeline, buildAppEntries, true);
+                    await BuildAppEntries(allEntry, pipeline, buildAppEntries);
                 }
                 if (publishAppEntries.Any())
                 {
-                    await PublishAppEntries(allEntry, pipeline, publishAppEntries, true);
+                    await PublishAppEntries(allEntry, pipeline, publishAppEntries);
                 }
             }
             else
             {
-                await TestAppEntries(allEntry, pipeline, [], true);
-                await BuildAppEntries(allEntry, pipeline, [], true);
-                await PublishAppEntries(allEntry, pipeline, [], true);
+                await TestAppEntries(allEntry, pipeline, []);
+                await BuildAppEntries(allEntry, pipeline, []);
+                await PublishAppEntries(allEntry, pipeline, []);
             }
         });
 
@@ -219,7 +165,7 @@ partial class BaseNukeBuildHelpers
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
-            await TestAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), true);
+            await TestAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
 
     /// <summary>
@@ -239,7 +185,7 @@ partial class BaseNukeBuildHelpers
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
-            await BuildAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), true);
+            await BuildAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
 
     /// <summary>
@@ -259,7 +205,7 @@ partial class BaseNukeBuildHelpers
 
             var pipeline = PipelineHelpers.SetupPipeline(this);
 
-            await PublishAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key), true);
+            await PublishAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
 
     /// <summary>

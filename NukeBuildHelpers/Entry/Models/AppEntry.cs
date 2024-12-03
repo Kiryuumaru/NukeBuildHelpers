@@ -11,4 +11,6 @@ internal class AppEntry
     public List<IBuildEntryDefinition> BuildEntryDefinitions { get; } = [];
 
     public List<IPublishEntryDefinition> PublishEntryDefinitions { get; } = [];
+
+    public List<IRunEntryDefinition> RunEntryDefinitions { get; } = [];
 }

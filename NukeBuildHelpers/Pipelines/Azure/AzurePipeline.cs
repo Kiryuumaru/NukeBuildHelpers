@@ -539,7 +539,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             ((List<object>)job["steps"]).Add(step);
         }
-        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "PipelineRunEntry", name: "NUKE_RUN", args: $"run={runType};idsToRun={entryDefinition.Id}", envMap: envMap);
+        AddJobStepNukeRun(job, GetImportedEnvVarExpression(entryDefinition.Id.ToUpperInvariant(), "RUN_SCRIPT"), "Run", name: "NUKE_RUN", args: entryDefinition.Id, envMap: envMap);
         foreach (var step in workflowBuilder.PostExecuteSteps)
         {
             ((List<object>)job["steps"]).Add(step);

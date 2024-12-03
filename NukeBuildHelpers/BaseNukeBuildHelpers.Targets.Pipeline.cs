@@ -19,58 +19,6 @@ namespace NukeBuildHelpers;
 partial class BaseNukeBuildHelpers
 {
     /// <summary>
-    /// Target for running entries in the pipeline.
-    /// </summary>
-    public Target PipelineRunEntry => _ => _
-        .Unlisted()
-        .Description("To be used by pipeline")
-        .Executes(async () =>
-        {
-            CheckEnvironementBranches();
-
-            ValueHelpers.GetOrFail(() => SplitArgs, out var splitArgs);
-
-            var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
-
-            CheckAppEntry(allEntry);
-
-            List<string> ids = [];
-            if (splitArgs.TryGetValue("idsToRun", out var idsToRun))
-            {
-                ids = [.. idsToRun.NotNullOrWhiteSpace().Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
-            }
-            else
-            {
-                throw new ArgumentNullException(idsToRun);
-            }
-
-            var pipeline = PipelineHelpers.SetupPipeline(this);
-
-            if (splitArgs.TryGetValue("run", out var run))
-            {
-                switch (run.NotNullOrEmpty().ToLowerInvariant())
-                {
-                    case "test":
-                        await TestAppEntries(allEntry, pipeline, ids, false);
-                        break;
-                    case "build":
-                        await BuildAppEntries(allEntry, pipeline, ids, false);
-                        break;
-                    case "publish":
-                        await PublishAppEntries(allEntry, pipeline, ids, false);
-                        break;
-                    default:
-                        throw new NotImplementedException(splitArgs["run"]);
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException(run);
-            }
-
-        });
-
-    /// <summary>
     /// Target for pre-setup in the pipeline.
     /// </summary>
     public Target PipelinePreSetup => _ => _
