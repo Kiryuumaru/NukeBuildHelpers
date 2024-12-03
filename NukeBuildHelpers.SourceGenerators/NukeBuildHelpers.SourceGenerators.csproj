@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
-		<LangVersion>10.0</LangVersion>
+		<LangVersion>13</LangVersion>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -11,6 +11,17 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Compile Remove="EmbeddedResources\NukeBuildHelpers.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="EmbeddedResources\NukeBuildHelpers.cs">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" PrivateAssets="all" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" PrivateAssets="all" Pack="false" />
 	</ItemGroup>
 

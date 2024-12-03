@@ -1,0 +1,56 @@
+<Project>
+
+  <!-- Get the analyzer from the NukeBuildHelpers NuGet package -->
+  <Target Name="NukeBuildHelpersGatherAnalyzers">
+    <ItemGroup>
+      <NukeBuildHelpersAnalyzer Include="@(Analyzer)" Condition="'%(Analyzer.NuGetPackageId)' == 'NukeBuildHelpers'" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Remove the analyzer if using Roslyn 3.x (incremental generators require Roslyn 4.x) -->
+  <Target Name="NukeBuildHelpersRemoveAnalyzersForRoslyn3"
+          Condition="'$(CSharpCoreTargetsPath)' != ''"
+          AfterTargets="ResolvePackageDependenciesForBuild;ResolveNuGetPackageAssets"
+          DependsOnTargets="NukeBuildHelpersGatherAnalyzers">
+
+    <!-- Use the CSharpCoreTargetsPath property to find the version of the compiler we are using. This is the same mechanism
+         MSBuild uses to find the compiler. We could check the assembly version for any compiler assembly (since they all have
+         the same version) but Microsoft.Build.Tasks.CodeAnalysis.dll is where MSBuild loads the compiler tasks from so if
+         someone is getting creative with msbuild tasks/targets this is the "most correct" assembly to check. -->
+    <GetAssemblyIdentity AssemblyFiles="$([System.IO.Path]::Combine(`$([System.IO.Path]::GetDirectoryName($(CSharpCoreTargetsPath)))`,`Microsoft.Build.Tasks.CodeAnalysis.dll`))">
+      <Output TaskParameter="Assemblies" ItemName="NukeBuildHelpersCurrentCompilerAssemblyIdentity"/>
+    </GetAssemblyIdentity>
+
+    <PropertyGroup>
+
+      <!-- Transform the resulting item from GetAssemblyIdentity into a property representing its assembly version -->
+      <NukeBuildHelpersCurrentCompilerVersion>@(NukeBuildHelpersCurrentCompilerAssemblyIdentity->'%(Version)')</NukeBuildHelpersCurrentCompilerVersion>
+
+      <!-- The CurrentCompilerVersionIsNotNewEnough property can now be defined based on the Roslyn assembly version -->
+      <NukeBuildHelpersCurrentCompilerVersionIsNotNewEnough Condition="$([MSBuild]::VersionLessThan($(NukeBuildHelpersCurrentCompilerVersion), 4.0))">true</NukeBuildHelpersCurrentCompilerVersionIsNotNewEnough>
+    </PropertyGroup>
+
+    <!-- If the Roslyn version is < 4.0, disable the source generators -->
+    <ItemGroup Condition ="'$(NukeBuildHelpersCurrentCompilerVersionIsNotNewEnough)' == 'true'">
+      <Analyzer Remove="@(NukeBuildHelpersAnalyzer)"/>
+    </ItemGroup>
+
+    <!-- If the source generators are disabled, also emit a warning. This would've been produced by MSBuild itself as well, but
+         emitting this manually lets us customize the message to inform developers as to why exactly the generators have been
+         disabled, and that the rest of the NukeBuildHelpers will still keep working as intended, just without additional features. -->
+    <Warning Condition ="'$(NukeBuildHelpersCurrentCompilerVersionIsNotNewEnough)' == 'true'" Text="The NukeBuildHelpers source generators have been disabled on the current configuration, as they need Roslyn 4.x in order to work. The NukeBuildHelpers will work just fine, but features relying on the source generators will not be available."/>
+  </Target>
+
+  <!-- Remove the analyzer if Roslyn is missing -->
+  <Target Name="NukeBuildHelpersRemoveAnalyzersForRosynNotFound"
+          Condition="'$(CSharpCoreTargetsPath)' == ''"
+          AfterTargets="ResolvePackageDependenciesForBuild;ResolveNuGetPackageAssets"
+          DependsOnTargets="NukeBuildHelpersGatherAnalyzers">
+
+    <!-- If no Roslyn assembly could be found, just remove the analyzer without emitting a warning -->
+    <ItemGroup>
+      <Analyzer Remove="@(NukeBuildHelpersAnalyzer)"/>
+    </ItemGroup>
+  </Target>
+
+</Project>

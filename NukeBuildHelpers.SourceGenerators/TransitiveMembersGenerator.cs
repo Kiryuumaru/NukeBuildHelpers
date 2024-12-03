@@ -1,5 +1,4 @@
-﻿using NukeBuildHelpers.SourceGenerators.ComponentModel.Models;
-using NukeBuildHelpers.SourceGenerators.Extensions;
+﻿using NukeBuildHelpers.SourceGenerators.Extensions;
 using NukeBuildHelpers.SourceGenerators.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;

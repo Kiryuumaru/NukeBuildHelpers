@@ -30,7 +30,7 @@ internal static class DiagnosticDescriptors
         id: "NBH0002",
         title: "Invalid target type for [Disposable]",
         messageFormat: "Cannot apply [Disposable] to type {0}, as it already has this attribute or [Disposable] applied to it (including base types)",
-        category: typeof(DisposableGenerator).FullName,
+        category: typeof(NukeBuildHelpersGenerator).FullName,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "Cannot apply [Disposable] to a type that already has this attribute or [Disposable] applied to it (including base types).",

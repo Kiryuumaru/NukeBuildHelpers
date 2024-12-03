@@ -4,9 +4,9 @@
 
 using Microsoft.CodeAnalysis;
 
-namespace NukeBuildHelpers.SourceGenerators.ComponentModel.Models;
+namespace NukeBuildHelpers.SourceGenerators.Models;
 
-public sealed record DisposableInfo(
+public sealed record NukeBuildHelpersInfo(
     string TypeName,
     bool HasExplicitDestructors,
     bool HasImplementedIDisposable,

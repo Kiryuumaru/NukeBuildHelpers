@@ -1,5 +1,4 @@
-﻿using NukeBuildHelpers.SourceGenerators.ComponentModel.Models;
-using NukeBuildHelpers.SourceGenerators.Diagnostics;
+﻿using NukeBuildHelpers.SourceGenerators.Diagnostics;
 using NukeBuildHelpers.SourceGenerators.Extensions;
 using NukeBuildHelpers.SourceGenerators.Helpers;
 using NukeBuildHelpers.SourceGenerators.Models;
@@ -17,20 +16,20 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace NukeBuildHelpers.SourceGenerators
 {
-    [Generator(LanguageNames.CSharp)]
-    internal sealed partial class NukeBuildHelpersGenerator : TransitiveMembersGenerator<DisposableInfo>
+    //[Generator(LanguageNames.CSharp)]
+    internal sealed partial class NukeBuildHelpersGenerator : TransitiveMembersGenerator<NukeBuildHelpersInfo>
     {
         public NukeBuildHelpersGenerator()
-            : base("global::NukeBuildHelpers.Attributes.DisposableAttribute")
+            : base("global::NukeBuildHelpers.Attributes.NukeBuildHelpersAttribute")
         {
 
         }
 
-        protected override IncrementalValuesProvider<(INamedTypeSymbol Symbol, DisposableInfo Info)> GetInfo(
+        protected override IncrementalValuesProvider<(INamedTypeSymbol Symbol, NukeBuildHelpersInfo Info)> GetInfo(
             IncrementalGeneratorInitializationContext context,
             IncrementalValuesProvider<(INamedTypeSymbol Symbol, AttributeData AttributeData)> source)
         {
-            static DisposableInfo GetInfo(INamedTypeSymbol typeSymbol, AttributeData attributeData)
+            static NukeBuildHelpersInfo GetInfo(INamedTypeSymbol typeSymbol, AttributeData attributeData)
             {
                 string typeName = typeSymbol.Name;
                 bool hasExplicitDestructors = typeSymbol.GetMembers().Any(m => m is IMethodSymbol symbol && symbol.MethodKind == MethodKind.Destructor);
@@ -103,7 +102,7 @@ namespace NukeBuildHelpers.SourceGenerators
                 .Select(static (item, _) => (item.Symbol, GetInfo(item.Symbol, item.AttributeData)));
         }
 
-        protected override bool ValidateTargetType(INamedTypeSymbol typeSymbol, DisposableInfo info, out ImmutableArray<Diagnostic> diagnostics)
+        protected override bool ValidateTargetType(INamedTypeSymbol typeSymbol, NukeBuildHelpersInfo info, out ImmutableArray<Diagnostic> diagnostics)
         {
             ImmutableArray<Diagnostic>.Builder builder = ImmutableArray.CreateBuilder<Diagnostic>();
 
@@ -113,52 +112,52 @@ namespace NukeBuildHelpers.SourceGenerators
                 builder.Add(InvalidAttributeCombinationForDisposableAttributeError, typeSymbol, typeSymbol);
             }
 
-            // Check if the type uses implemented void Dispose() and Dispose(bool) directly
-            if (info.DisposeMethod != null &&
-                !info.DisposeMethod.Value.fromDerived &&
-                info.DisposeBoolMethod != null &&
-                !info.DisposeBoolMethod.Value.fromDerived)
-            {
-                builder.Add(TargetHasDirectDisposeImplementationError, typeSymbol, typeSymbol);
-            }
+            //// Check if the type uses implemented void Dispose() and Dispose(bool) directly
+            //if (info.DisposeMethod != null &&
+            //    !info.DisposeMethod.Value.fromDerived &&
+            //    info.DisposeBoolMethod != null &&
+            //    !info.DisposeBoolMethod.Value.fromDerived)
+            //{
+            //    builder.Add(TargetHasDirectDisposeImplementationError, typeSymbol, typeSymbol);
+            //}
 
-            // Check if the type uses implemented void DisposeAsync() and DisposeAsync(bool) directly
-            if (info.DisposeAsyncMethod != null &&
-                !info.DisposeAsyncMethod.Value.fromDerived &&
-                info.DisposeAsyncBoolMethod != null &&
-                !info.DisposeAsyncBoolMethod.Value.fromDerived)
-            {
-                builder.Add(TargetHasDirectDisposeAsyncImplementationError, typeSymbol, typeSymbol);
-            }
+            //// Check if the type uses implemented void DisposeAsync() and DisposeAsync(bool) directly
+            //if (info.DisposeAsyncMethod != null &&
+            //    !info.DisposeAsyncMethod.Value.fromDerived &&
+            //    info.DisposeAsyncBoolMethod != null &&
+            //    !info.DisposeAsyncBoolMethod.Value.fromDerived)
+            //{
+            //    builder.Add(TargetHasDirectDisposeAsyncImplementationError, typeSymbol, typeSymbol);
+            //}
 
-            // Is base already disposable
-            if (info.DisposeMethod != null && info.DisposeMethod.Value.fromDerived)
-            {
-                // Check if the type uses implemented void Dispose() or void Dispose(bool) but neither overridable
-                if (!info.DisposeMethod.Value.symbol.IsVirtual && !info.DisposeMethod.Value.symbol.IsOverride &&
-                    (info.DisposeBoolMethod == null || (!info.DisposeBoolMethod.Value.symbol.IsVirtual && !info.DisposeBoolMethod.Value.symbol.IsOverride)))
-                {
-                    builder.Add(TargetBaseNoOverridableDisposeMethodError, typeSymbol, typeSymbol);
-                }
-            }
+            //// Is base already disposable
+            //if (info.DisposeMethod != null && info.DisposeMethod.Value.fromDerived)
+            //{
+            //    // Check if the type uses implemented void Dispose() or void Dispose(bool) but neither overridable
+            //    if (!info.DisposeMethod.Value.symbol.IsVirtual && !info.DisposeMethod.Value.symbol.IsOverride &&
+            //        (info.DisposeBoolMethod == null || (!info.DisposeBoolMethod.Value.symbol.IsVirtual && !info.DisposeBoolMethod.Value.symbol.IsOverride)))
+            //    {
+            //        builder.Add(TargetBaseNoOverridableDisposeMethodError, typeSymbol, typeSymbol);
+            //    }
+            //}
 
-            // Is base already disposable async
-            if (info.DisposeAsyncMethod != null && info.DisposeAsyncMethod.Value.fromDerived)
-            {
-                // Check if the type uses implemented ValueTask DisposeAsync() or ValueTask DisposeAsync(bool) but neither overridable
-                if (!info.DisposeAsyncMethod.Value.symbol.IsVirtual && !info.DisposeAsyncMethod.Value.symbol.IsOverride &&
-                    (info.DisposeAsyncBoolMethod == null || (!info.DisposeAsyncBoolMethod.Value.symbol.IsVirtual && !info.DisposeAsyncBoolMethod.Value.symbol.IsOverride)))
-                {
-                    builder.Add(TargetBaseNoOverridableDisposeAsyncMethodError, typeSymbol, typeSymbol);
-                }
-            }
+            //// Is base already disposable async
+            //if (info.DisposeAsyncMethod != null && info.DisposeAsyncMethod.Value.fromDerived)
+            //{
+            //    // Check if the type uses implemented ValueTask DisposeAsync() or ValueTask DisposeAsync(bool) but neither overridable
+            //    if (!info.DisposeAsyncMethod.Value.symbol.IsVirtual && !info.DisposeAsyncMethod.Value.symbol.IsOverride &&
+            //        (info.DisposeAsyncBoolMethod == null || (!info.DisposeAsyncBoolMethod.Value.symbol.IsVirtual && !info.DisposeAsyncBoolMethod.Value.symbol.IsOverride)))
+            //    {
+            //        builder.Add(TargetBaseNoOverridableDisposeAsyncMethodError, typeSymbol, typeSymbol);
+            //    }
+            //}
 
             diagnostics = builder.ToImmutable();
 
             return diagnostics.Length == 0;
         }
 
-        protected override ImmutableArray<MemberDeclarationSyntax> FilterDeclaredMembers(DisposableInfo info, ImmutableArray<MemberDeclarationSyntax> memberDeclarations)
+        protected override ImmutableArray<MemberDeclarationSyntax> FilterDeclaredMembers(NukeBuildHelpersInfo info, ImmutableArray<MemberDeclarationSyntax> memberDeclarations)
         {
             ImmutableArray<MemberDeclarationSyntax>.Builder builder = ImmutableArray.CreateBuilder<MemberDeclarationSyntax>();
 
@@ -382,7 +381,7 @@ namespace NukeBuildHelpers.SourceGenerators
             return builder.ToImmutable();
         }
 
-        protected override CompilationUnitSyntax GetCompilationUnit(SourceProductionContext sourceProductionContext, DisposableInfo info, HierarchyInfo hierarchyInfo, bool isSealed, ImmutableArray<MemberDeclarationSyntax> memberDeclarations)
+        protected override CompilationUnitSyntax GetCompilationUnit(SourceProductionContext sourceProductionContext, NukeBuildHelpersInfo info, HierarchyInfo hierarchyInfo, bool isSealed, ImmutableArray<MemberDeclarationSyntax> memberDeclarations)
         {
             if (info.HasImplementedIDisposable)
             {

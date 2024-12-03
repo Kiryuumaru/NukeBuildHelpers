@@ -2,6 +2,7 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
+using NukeBuildHelpers.Attributes;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry;
@@ -16,7 +17,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-class Build : BaseNukeBuildHelpers
+[NukeBuildHelpers]
+partial class Build : BaseNukeBuildHelpers
 {
     public static int Main() => Execute<Build>(x => x.Version);
 
