@@ -834,6 +834,11 @@ partial class BaseNukeBuildHelpers
         var allEntry = await ValueHelpers.GetOrFail(() => EntryHelpers.GetAll(this));
 
         CheckAppEntry(allEntry);
+        
+        if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+        {
+            throw new Exception("Bump is disabled if UseJsonFileVersioning is enabled");
+        }
 
         string currentEnvIdentifier = Repository.Branch.ToLowerInvariant();
 
@@ -1131,7 +1136,7 @@ partial class BaseNukeBuildHelpers
             Console.WriteLine();
         }
 
-        var taskToRun = Prompt.Select("Task to run",
+        List<string> taskOptions =
             [
                 nameof(Version),
                 nameof(Run),
@@ -1140,7 +1145,15 @@ partial class BaseNukeBuildHelpers
                 nameof(StatusWatch),
                 nameof(GithubWorkflow),
                 nameof(AzureWorkflow),
-            ]);
+            ];
+
+        if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+        {
+            taskOptions.Remove(nameof(Bump));
+            taskOptions.Remove(nameof(BumpAndForget));
+        }
+
+        var taskToRun = Prompt.Select("Task to run", taskOptions);
         switch (taskToRun)
         {
             case nameof(Version):
