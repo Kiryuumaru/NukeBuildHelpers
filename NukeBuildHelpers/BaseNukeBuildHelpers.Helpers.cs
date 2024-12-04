@@ -1177,7 +1177,7 @@ partial class BaseNukeBuildHelpers
                 else if (allEntry.AppEntryMap.Count == 1)
                 {
                     appEntry = allEntry.AppEntryMap.First().Value;
-                    Console.Write("App ID to run ");
+                    Console.Write("  App ID to run ");
                     ConsoleHelpers.WriteWithColor(appEntry.AppId, ConsoleColor.DarkMagenta);
                     Console.WriteLine();
                 }
@@ -1205,7 +1205,7 @@ partial class BaseNukeBuildHelpers
                 else if (appEntry.RunEntryDefinitions.Count == 1)
                 {
                     runEntryDefinition = appEntry.RunEntryDefinitions.First();
-                    Console.Write("App entry to run ");
+                    Console.Write("  App entry to run ");
                     ConsoleHelpers.WriteWithColor(runEntryDefinitionTextSelector(runEntryDefinition), ConsoleColor.DarkMagenta);
                     Console.WriteLine();
                 }
@@ -1215,6 +1215,8 @@ partial class BaseNukeBuildHelpers
                 }
 
                 var pipeline = PipelineHelpers.SetupPipeline(this);
+
+                Console.WriteLine();
 
                 await RunEntry(allEntry, pipeline, [runEntryDefinition], null);
 
