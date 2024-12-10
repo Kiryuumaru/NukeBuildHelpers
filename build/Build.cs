@@ -50,6 +50,23 @@ class Build : BaseNukeBuildHelpers
             (RootDirectory / ".vs").DeleteDirectory();
         });
 
+    Target Clean1 => _ => _
+        .Executes(() =>
+        {
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+            Log.Information("Cleaning wdawdawd");
+        });
+
     TestEntry NukeBuildHelpersTest1 => _ => _
         .AppId("nuke_build_helpers")
         .DisplayName("Test try 1")

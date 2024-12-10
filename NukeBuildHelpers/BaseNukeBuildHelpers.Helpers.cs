@@ -23,6 +23,8 @@ using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Pipelines.Github;
 using NukeBuildHelpers.Pipelines.Azure;
+using System.Reflection;
+using Nuke.Common.Utilities.Collections;
 
 namespace NukeBuildHelpers;
 
@@ -1136,37 +1138,28 @@ partial class BaseNukeBuildHelpers
             Console.WriteLine();
         }
 
-        List<string> taskOptions =
-            [
-                nameof(Version),
-                nameof(Run),
-                nameof(Bump),
-                nameof(BumpAndForget),
-                nameof(StatusWatch),
-                nameof(GithubWorkflow),
-                nameof(AzureWorkflow),
-            ];
+        Dictionary<string, BuildOption> taskOptions = [];
 
-        if (await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+        taskOptions[nameof(Version)] = new()
         {
-            taskOptions.Remove(nameof(Bump));
-            taskOptions.Remove(nameof(BumpAndForget));
-        }
-
-        var taskToRun = Prompt.Select("Task to run", taskOptions);
-        switch (taskToRun)
-        {
-            case nameof(Version):
-
+            Name = nameof(Version),
+            DisplayText = nameof(Version),
+            Execute = () => Task.Run(async () =>
+            {
                 printHead("Fetch");
                 await RunFetch();
 
                 printHead("Version");
                 await RunVersion();
+            })
+        };
 
-                break;
-            case nameof(Run):
-
+        taskOptions[nameof(Run)] = new()
+        {
+            Name = nameof(Run),
+            DisplayText = nameof(Run),
+            Execute = () => Task.Run(async () =>
+            {
                 printHead("Run");
 
                 AppEntry appEntry;
@@ -1219,36 +1212,54 @@ partial class BaseNukeBuildHelpers
                 Console.WriteLine();
 
                 await RunEntry(allEntry, pipeline, [runEntryDefinition], null);
+            })
+        };
 
-                break;
-            case nameof(Bump):
+        if (!await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning())
+        {
+            taskOptions[nameof(Bump)] = new()
+            {
+                Name = nameof(Bump),
+                DisplayText = nameof(Bump),
+                Execute = () => Task.Run(async () =>
+                {
+                    printHead("Fetch");
+                    await RunFetch();
 
-                printHead("Fetch");
-                await RunFetch();
+                    printHead("Version");
+                    await RunVersion();
 
-                printHead("Version");
-                await RunVersion();
+                    printHead("BumpAndForget");
+                    var bumpMap = await RunBumpArgsOrInteractive();
+                    Console.WriteLine();
+                    await StartStatusWatch(true, bumpMap.Select(i => (i.Key, Repository.Branch)).ToArray());
+                })
+            };
 
-                printHead("BumpAndForget");
-                var bumpMap = await RunBumpArgsOrInteractive();
-                Console.WriteLine();
-                await StartStatusWatch(true, bumpMap.Select(i => (i.Key, Repository.Branch)).ToArray());
+            taskOptions[nameof(BumpAndForget)] = new()
+            {
+                Name = nameof(BumpAndForget),
+                DisplayText = nameof(BumpAndForget),
+                Execute = () => Task.Run(async () =>
+                {
+                    printHead("Fetch");
+                    await RunFetch();
 
-                break;
-            case nameof(BumpAndForget):
+                    printHead("Version");
+                    await RunVersion();
 
-                printHead("Fetch");
-                await RunFetch();
+                    printHead("BumpAndForget");
+                    await RunBumpArgsOrInteractive();
+                })
+            };
+        }
 
-                printHead("Version");
-                await RunVersion();
-
-                printHead("BumpAndForget");
-                await RunBumpArgsOrInteractive();
-
-                break;
-            case nameof(StatusWatch):
-
+        taskOptions[nameof(StatusWatch)] = new()
+        {
+            Name = nameof(StatusWatch),
+            DisplayText = nameof(StatusWatch),
+            Execute = () => Task.Run(async () =>
+            {
                 printHead("StatusWatch");
 
                 Log.Information("Commit: {Value}", Repository.Commit);
@@ -1257,23 +1268,52 @@ partial class BaseNukeBuildHelpers
                 Console.WriteLine();
 
                 await StartStatusWatch(false);
+            })
+        };
 
-                break;
-            case nameof(GithubWorkflow):
-
+        taskOptions[nameof(GithubWorkflow)] = new()
+        {
+            Name = nameof(GithubWorkflow),
+            DisplayText = nameof(GithubWorkflow),
+            Execute = () => Task.Run(async () =>
+            {
                 printHead("GithubWorkflow");
 
                 await PipelineHelpers.BuildWorkflow<GithubPipeline>(this, allEntry);
+            })
+        };
 
-                break;
-            case nameof(AzureWorkflow):
-
+        taskOptions[nameof(AzureWorkflow)] = new()
+        {
+            Name = nameof(AzureWorkflow),
+            DisplayText = nameof(AzureWorkflow),
+            Execute = () => Task.Run(async () =>
+            {
                 printHead("AzureWorkflow");
 
                 await PipelineHelpers.BuildWorkflow<AzurePipeline>(this, allEntry);
-
-                break;
+            })
+        };
+        
+        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .Where(property => property.DeclaringType != typeof(BaseNukeBuildHelpers))
+            .Where(property => property.PropertyType == typeof(Target)))
+        {
+            ITargetDefinition target = (Target)property.GetValue(this)!;
+            taskOptions[$"{property.Name}_target"] = new()
+            {
+                Name = $"{property.Name}_target",
+                DisplayText = $"{property.Name} (Target)",
+                Execute = () => Task.Run(() =>
+                {
+                    target.Invoke(;
+                })
+            };
         }
+
+        var taskToRun = Prompt.Select("Task to run", taskOptions, textSelector: taskOption => taskOption.Value.DisplayText);
+
+        await taskToRun.Value.Execute.Invoke();
     }
 
     private Task RunFetch()

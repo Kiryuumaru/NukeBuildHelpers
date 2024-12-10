@@ -29,6 +29,7 @@
         "Bump",
         "BumpAndForget",
         "Clean",
+        "Clean1",
         "DeleteOriginTags",
         "Fetch",
         "GithubWorkflow",
