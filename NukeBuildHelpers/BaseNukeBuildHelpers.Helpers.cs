@@ -1294,22 +1294,6 @@ partial class BaseNukeBuildHelpers
                 await PipelineHelpers.BuildWorkflow<AzurePipeline>(this, allEntry);
             })
         };
-        
-        foreach (var property in GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .Where(property => property.DeclaringType != typeof(BaseNukeBuildHelpers))
-            .Where(property => property.PropertyType == typeof(Target)))
-        {
-            ITargetDefinition target = (Target)property.GetValue(this)!;
-            taskOptions[$"{property.Name}_target"] = new()
-            {
-                Name = $"{property.Name}_target",
-                DisplayText = $"{property.Name} (Target)",
-                Execute = () => Task.Run(() =>
-                {
-                    target.Invoke(;
-                })
-            };
-        }
 
         var taskToRun = Prompt.Select("Task to run", taskOptions, textSelector: taskOption => taskOption.Value.DisplayText);
 
