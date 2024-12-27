@@ -316,7 +316,7 @@ partial class BaseNukeBuildHelpers
                         RunScript = runnerOs.GetRunScript(PipelineType)
                     },
                     CacheInvalidator = await entry.GetCacheInvalidator(),
-                    CachePaths = flatCachePaths.ToArray(),
+                    CachePaths = [.. flatCachePaths],
                     CheckoutFetchDepth = await entry.GetCheckoutFetchDepth(),
                     CheckoutFetchTags = await entry.GetCheckoutFetchTags(),
                     CheckoutSubmodules = await entry.GetCheckoutSubmodules()
@@ -474,10 +474,6 @@ partial class BaseNukeBuildHelpers
                             }
                             var appIdLower = appEntry.AppId.ToLowerInvariant();
                             var releasePath = OutputDirectory / appIdLower;
-                            if (!releasePath.DirectoryExists())
-                            {
-                                throw new Exception("No release found for " + appIdLower);
-                            }
                             var commonAssetPath = releasePath / "common_assets";
                             if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
                             {
