@@ -2,6 +2,7 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using NukeBuildHelpers;
+using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Attributes;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry;
@@ -15,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 class Build : BaseNukeBuildHelpers
 {
@@ -90,8 +92,10 @@ class Build : BaseNukeBuildHelpers
                 });
             }
         })
-        .Execute(context =>
+        .Execute(async context =>
         {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersTest1));
+
             var testDirFilePath = RootDirectory / "testCache" / "testFile.txt";
             var testFilePath = RootDirectory / "testFile.txt";
             testDirFilePath.Parent.CreateDirectory();
@@ -108,9 +112,9 @@ class Build : BaseNukeBuildHelpers
             testFilePath.WriteAllText(testFile);
 
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProject(NukeBuildHelpersProjectTestPath));
             DotNetTasks.DotNetTest(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProjectFile(NukeBuildHelpersProjectTestPath));
         });
 
     TestEntry NukeBuildHelpersTest2 => _ => _
@@ -119,66 +123,77 @@ class Build : BaseNukeBuildHelpers
         .DisplayName("Test try 2")
         .RunnerOS(RunnerOS.Windows2022)
         .ExecuteBeforeBuild(true)
-        .Execute(() =>
+        .Execute(async () =>
         {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersTest2));
+
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProject(NukeBuildHelpersProjectTestPath));
             DotNetTasks.DotNetTest(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProjectFile(NukeBuildHelpersProjectTestPath));
         });
 
     TestEntry NukeBuildHelpersTest3 => _ => _
         .AppId("nuke_build_helpers")
         .DisplayName("Test try 3")
         .RunnerOS(RunnerOS.Windows2022)
-        .Execute(() =>
+        .Execute(async () =>
         {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersTest3));
+
             foreach (var path in OutputDirectory.GetFiles("**", 99))
             {
                 Log.Information(path);
             }
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProject(NukeBuildHelpersProjectTestPath));
             DotNetTasks.DotNetTest(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProjectFile(NukeBuildHelpersProjectTestPath));
         });
 
     TestEntry NukeBuildHelpersTest4 => _ => _
         .AppId("nuke_build_helpers2")
         .DisplayName("Test try 4")
         .RunnerOS(RunnerOS.Windows2022)
-        .Execute(() =>
+        .Execute(async () =>
         {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersTest4));
+
             foreach (var path in OutputDirectory.GetFiles("**", 99))
             {
                 Log.Information(path);
             }
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProject(NukeBuildHelpersProjectTestPath));
             DotNetTasks.DotNetTest(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProjectFile(NukeBuildHelpersProjectTestPath));
         });
 
     TestEntry NukeBuildHelpersTest5 => _ => _
         .DisplayName("Test try 5")
         .RunnerOS(RunnerOS.Windows2022)
-        .Execute(() =>
+        .Execute(async () =>
         {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersTest5));
+
             foreach (var path in OutputDirectory.GetFiles("**", 99))
             {
                 Log.Information(path);
             }
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProject(NukeBuildHelpersProjectTestPath));
             DotNetTasks.DotNetTest(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                .SetProjectFile(NukeBuildHelpersProjectTestPath));
         });
 
     BuildEntry NukeBuildHelpersBuild1 => _ => _
         .AppId("nuke_build_helpers")
         .DisplayName("Build main")
         .RunnerOS(RunnerOS.Ubuntu2204)
-        .Execute(context => {
+        .Execute(async context =>
+        {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersBuild1));
+
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
@@ -191,12 +206,12 @@ class Build : BaseNukeBuildHelpers
                 version = pullRequestContext.AppVersion.Version.ToString();
             }
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
+                .SetProject(NukeBuildHelpersProjectPath));
             DotNetTasks.DotNetBuild(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetProjectFile(NukeBuildHelpersProjectPath)
                 .SetConfiguration("Release"));
             DotNetTasks.DotNetPack(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetProject(NukeBuildHelpersProjectPath)
                 .SetConfiguration("Release")
                 .SetNoRestore(true)
                 .SetNoBuild(true)
@@ -223,8 +238,10 @@ class Build : BaseNukeBuildHelpers
                 });
             });
         })
-        .Execute(context =>
+        .Execute(async context =>
         {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersBuild2));
+
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
@@ -237,12 +254,12 @@ class Build : BaseNukeBuildHelpers
                 version = pullRequestContext.AppVersion.Version.ToString();
             }
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
+                .SetProject(NukeBuildHelpersProjectPath));
             DotNetTasks.DotNetBuild(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetProjectFile(NukeBuildHelpersProjectPath)
                 .SetConfiguration("Release"));
             DotNetTasks.DotNetPack(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetProject(NukeBuildHelpersProjectPath)
                 .SetConfiguration("Release")
                 .SetNoRestore(true)
                 .SetNoBuild(true)
@@ -258,7 +275,10 @@ class Build : BaseNukeBuildHelpers
         .AppId("nuke_build_helpers2")
         .DisplayName("Build try 2")
         .RunnerOS(RunnerOS.Windows2022)
-        .Execute(context => {
+        .Execute(async context =>
+        {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersBuild3));
+
             string version = "0.0.0";
             string? releaseNotes = null;
             if (context.TryGetBumpContext(out var bumpContext))
@@ -271,12 +291,12 @@ class Build : BaseNukeBuildHelpers
                 version = pullRequestContext.AppVersion.Version.ToString();
             }
             DotNetTasks.DotNetClean(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
+                .SetProject(NukeBuildHelpersProjectPath));
             DotNetTasks.DotNetBuild(_ => _
-                .SetProjectFile(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetProjectFile(NukeBuildHelpersProjectPath)
                 .SetConfiguration("Release"));
             DotNetTasks.DotNetPack(_ => _
-                .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj")
+                .SetProject(NukeBuildHelpersProjectPath)
                 .SetConfiguration("Release")
                 .SetNoRestore(true)
                 .SetNoBuild(true)
@@ -293,8 +313,10 @@ class Build : BaseNukeBuildHelpers
         .ReleaseAsset(OutputDirectory / "try" / "test_release")
         .ReleaseAsset(OutputDirectory / "try" / "test_release.tar.gz")
         .ReleaseCommonAsset(OutputDirectory / "main")
-        .Execute(context =>
+        .Execute(async context =>
         {
+            var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersPublish));
+
             foreach (var path in OutputDirectory.GetFiles("**", 99))
             {
                 Log.Information(path);
@@ -311,6 +333,23 @@ class Build : BaseNukeBuildHelpers
                     .SetTargetPath(OutputDirectory / "main" / "**"));
             }
         });
+
+    private async Task<(AbsolutePath NukeBuildHelpersProjectPath, AbsolutePath NukeBuildHelpersProjectTestPath)> PrepareClonedProjects(string subPath)
+    {
+        var clonedProjectsDir = TemporaryDirectory / "ClonedProjects"/ subPath;
+        await clonedProjectsDir.Delete();
+        var nukeBuildHelpersPath = clonedProjectsDir / "NukeBuildHelpers" / "NukeBuildHelpers.csproj";
+        var nukeBuildHelpersTestPath = clonedProjectsDir / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj";
+        await (RootDirectory / "NukeBuildHelpers.sln").CopyTo(clonedProjectsDir / "NukeBuildHelpers.sln");
+        await (RootDirectory / "global.json").CopyTo(clonedProjectsDir / "global.json");
+        await (RootDirectory / "LICENSE").CopyTo(clonedProjectsDir / "LICENSE");
+        await (RootDirectory / "README.md").CopyTo(clonedProjectsDir / "README.md");
+        await (RootDirectory / "NukeBuildHelpers").CopyTo(nukeBuildHelpersPath.Parent);
+        await (RootDirectory / "NukeBuildHelpers.UnitTest").CopyTo(nukeBuildHelpersTestPath.Parent);
+        await  (nukeBuildHelpersPath.Parent / "bin").Delete();
+        await  (nukeBuildHelpersTestPath.Parent / "obj").Delete();
+        return (nukeBuildHelpersPath, nukeBuildHelpersTestPath);
+    }
 
     private string? NormalizeReleaseNotes(string? releaseNotes)
     {

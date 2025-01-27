@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "NukeBuildHelpers": {
+      "commandName": "Project",
+      "commandLineArgs": "run --args NukeBuildHelpersBuild2Mat2Mat4"
+    }
+  }
+}
