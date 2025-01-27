@@ -63,7 +63,7 @@ partial class BaseNukeBuildHelpers
 
             Console.WriteLine();
 
-            await StartStatusWatch(true, bumpMap.Select(i => (i.Key, Repository.Branch)).ToArray());
+            await StartStatusWatch(true, [.. bumpMap.Select(i => (i.Key, Repository.Branch))]);
         });
 
     /// <summary>
