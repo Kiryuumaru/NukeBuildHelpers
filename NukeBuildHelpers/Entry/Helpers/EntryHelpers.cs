@@ -352,7 +352,7 @@ internal static class EntryHelpers
             }
         }
 
-        List<SemVersion> allVersionList = commitVersionGrouped.SelectMany(i => i.Value).ToList();
+        List<SemVersion> allVersionList = [.. commitVersionGrouped.SelectMany(i => i.Value)];
 
         foreach (var env in nukeBuildHelpers.EnvironmentBranches)
         {
@@ -368,7 +368,7 @@ internal static class EntryHelpers
             allVersionList.Add(semVersion);
         }
 
-        List<long> allBuildIdList = commitBuildIdGrouped.SelectMany(i => i.Value).ToList();
+        List<long> allBuildIdList = [.. commitBuildIdGrouped.SelectMany(i => i.Value)];
         Dictionary<string, List<SemVersion>> envVersionGrouped = allVersionList
             .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : nukeBuildHelpers.MainEnvironmentBranch.ToLowerInvariant())
             .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
@@ -452,7 +452,7 @@ internal static class EntryHelpers
 
         Dictionary<string, SemVersion> envLatestVersionPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
         Dictionary<string, long> envLatestBuildIdPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
-        List<string> envSorted = envVersionGrouped.Select(i => i.Key).ToList();
+        List<string> envSorted = [.. envVersionGrouped.Select(i => i.Key)];
 
         envSorted.Sort();
         if (envSorted.Remove(nukeBuildHelpers.MainEnvironmentBranch.ToLowerInvariant()))

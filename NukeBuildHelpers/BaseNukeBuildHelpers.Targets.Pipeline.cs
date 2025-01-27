@@ -73,49 +73,49 @@ partial class BaseNukeBuildHelpers
                     lastBuildId = Math.Max(maxBuildId, lastBuildId);
                 }
 
-                if (allVersions.EnvSorted.Count == 0 || !allVersions.EnvVersionGrouped.TryGetValue(env, out var versionGroup) || versionGroup.Count == 0)
-                {
-                    continue;
-                }
+                bool hasBumped = false;
+                SemVersion? lastVersionGroup = null;
+                SemVersion? currentLatest = null;
 
-                if (allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
+                if (allVersions.EnvSorted.Count != 0 && allVersions.EnvVersionGrouped.TryGetValue(env, out var versionGroup) && versionGroup.Count != 0)
                 {
-                    foreach (var version in versionGroup.OrderByDescending(i => i, SemVersion.PrecedenceComparer))
+                    if (allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
                     {
-                        if (allVersions.VersionPassed.Contains(version) &&
-                            allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
-                            allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
+                        foreach (var version in versionGroup.OrderByDescending(i => i, SemVersion.PrecedenceComparer))
                         {
-                            var envBuildIdSuccessGrouped = buildIdGroup.Where(envBuildIdGrouped.Contains);
-                            targetBuildId = targetBuildId == 0 ? envBuildIdSuccessGrouped.Max() : Math.Min(envBuildIdSuccessGrouped.Max(), targetBuildId);
-                            break;
+                            if (allVersions.VersionPassed.Contains(version) &&
+                                allVersions.VersionCommitPaired.TryGetValue(version, out var lastSuccessCommit) &&
+                                allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
+                            {
+                                var envBuildIdSuccessGrouped = buildIdGroup.Where(envBuildIdGrouped.Contains);
+                                targetBuildId = targetBuildId == 0 ? envBuildIdSuccessGrouped.Max() : Math.Min(envBuildIdSuccessGrouped.Max(), targetBuildId);
+                                break;
+                            }
                         }
                     }
-                }
 
-                var lastVersionGroup = versionGroup.Last();
+                    lastVersionGroup = versionGroup.Last();
 
-                bool hasBumped = false;
-
-                if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out var currentLatest) || currentLatest != lastVersionGroup)
-                {
-                    if (allVersions.VersionBump.Contains(lastVersionGroup) &&
-                        !allVersions.VersionQueue.Contains(lastVersionGroup) &&
-                        !allVersions.VersionFailed.Contains(lastVersionGroup) &&
-                        !allVersions.VersionPassed.Contains(lastVersionGroup))
+                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out currentLatest) || currentLatest != lastVersionGroup)
+                    {
+                        if (allVersions.VersionBump.Contains(lastVersionGroup) &&
+                            !allVersions.VersionQueue.Contains(lastVersionGroup) &&
+                            !allVersions.VersionFailed.Contains(lastVersionGroup) &&
+                            !allVersions.VersionPassed.Contains(lastVersionGroup))
+                        {
+                            if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                hasBumped = true;
+                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
+                            }
+                        }
+                    }
+                    else
                     {
                         if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
                         {
-                            hasBumped = true;
-                            Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
+                            Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                         }
-                    }
-                }
-                else
-                {
-                    if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
-                    {
-                        Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                     }
                 }
 
@@ -123,7 +123,7 @@ partial class BaseNukeBuildHelpers
                 {
                     AppId = appEntry.AppId,
                     Environment = env,
-                    Version = lastVersionGroup.ToString(),
+                    Version = lastVersionGroup?.ToString() ?? "",
                     OldVersion = currentLatest?.ToString() ?? "",
                     HasRelease = hasBumped
                 });
@@ -144,15 +144,18 @@ partial class BaseNukeBuildHelpers
 
             string versionFactory(string version)
             {
-                var semVersion = SemVersion.Parse(version, SemVersionStyles.Strict);
-                if (pipeline.PipelineInfo.TriggerType == TriggerType.PullRequest)
+                if (SemVersion.TryParse(version, SemVersionStyles.Strict, out var semVersion))
                 {
-                    return SemVersion.Parse($"{semVersion.WithoutMetadata()}+build.{buildId}-pr.{pipeline.PipelineInfo.PullRequestNumber}", SemVersionStyles.Strict).ToString();
+                    if (pipeline.PipelineInfo.TriggerType == TriggerType.PullRequest)
+                    {
+                        return SemVersion.Parse($"{semVersion.WithoutMetadata()}+build.{buildId}-pr.{pipeline.PipelineInfo.PullRequestNumber}", SemVersionStyles.Strict).ToString();
+                    }
+                    else
+                    {
+                        return SemVersion.Parse($"{semVersion.WithoutMetadata()}+build.{buildId}", SemVersionStyles.Strict).ToString();
+                    }
                 }
-                else
-                {
-                    return SemVersion.Parse($"{semVersion.WithoutMetadata()}+build.{buildId}", SemVersionStyles.Strict).ToString();
-                }
+                return "";
             }
 
             foreach (var entry in toEntry.Values)
@@ -272,11 +275,25 @@ partial class BaseNukeBuildHelpers
                     _ => throw new NotSupportedException()
                 };
 
+                SemVersion version;
+                if (SemVersion.TryParse(entry.Version, SemVersionStyles.Strict, out var parsedSemVersion))
+                {
+                    version = parsedSemVersion;
+                }
+                else if (SemVersion.TryParse($"0.0.0-{env}.0", SemVersionStyles.Strict, out var parsedMinSemVersion))
+                {
+                    version = parsedMinSemVersion;
+                }
+                else
+                {
+                    version = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
+                }
+
                 AppVersion appVersion = new()
                 {
                     AppId = entry.AppId.NotNullOrEmpty(),
                     Environment = entry.Environment,
-                    Version = SemVersion.Parse(entry.Version, SemVersionStyles.Strict),
+                    Version = version,
                     BuildId = buildId
                 };
 

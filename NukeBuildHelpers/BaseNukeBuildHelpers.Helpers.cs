@@ -735,12 +735,16 @@ partial class BaseNukeBuildHelpers
 
             if (versionPartToBump.Equals("Manual input", StringComparison.InvariantCultureIgnoreCase))
             {
-                List<Func<object, ValidationResult?>> validators =
+                List<Func<object?, ValidationResult?>> validators =
                 [
                     Validators.Required(),
                     (input => {
                         try
                         {
+                            if (input == null)
+                            {
+                                throw new Exception("Manual input is null");
+                            }
                             ValidateBumpVersion(appEntryVersion.AllVersions, input.ToString());
                         }
                         catch (Exception ex)
@@ -1232,7 +1236,7 @@ partial class BaseNukeBuildHelpers
                     printHead("BumpAndForget");
                     var bumpMap = await RunBumpArgsOrInteractive();
                     Console.WriteLine();
-                    await StartStatusWatch(true, bumpMap.Select(i => (i.Key, Repository.Branch)).ToArray());
+                    await StartStatusWatch(true, [.. bumpMap.Select(i => (i.Key, Repository.Branch))]);
                 })
             };
 
