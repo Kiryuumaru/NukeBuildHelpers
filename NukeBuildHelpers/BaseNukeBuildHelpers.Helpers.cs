@@ -340,11 +340,25 @@ partial class BaseNukeBuildHelpers
                 throw new Exception("Entry id not found");
             }
 
+            SemVersion version;
+            if (SemVersion.TryParse(entry.Version, SemVersionStyles.Strict, out var parsedSemVersion))
+            {
+                version = parsedSemVersion;
+            }
+            else if (SemVersion.TryParse($"0.0.0-{entry.Environment}.0", SemVersionStyles.Strict, out var parsedMinSemVersion))
+            {
+                version = parsedMinSemVersion;
+            }
+            else
+            {
+                version = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
+            }
+
             AppVersion appVersion = new()
             {
                 AppId = entry.AppId.NotNullOrEmpty(),
                 Environment = entry.Environment,
-                Version = SemVersion.Parse(entry.Version, SemVersionStyles.Strict),
+                Version = version,
                 BuildId = pipelinePreSetup.BuildId
             };
 

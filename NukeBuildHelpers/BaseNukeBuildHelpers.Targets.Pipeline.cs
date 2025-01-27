@@ -280,7 +280,7 @@ partial class BaseNukeBuildHelpers
                 {
                     version = parsedSemVersion;
                 }
-                else if (SemVersion.TryParse($"0.0.0-{env}.0", SemVersionStyles.Strict, out var parsedMinSemVersion))
+                else if (SemVersion.TryParse($"0.0.0-{entry.Environment}.0", SemVersionStyles.Strict, out var parsedMinSemVersion))
                 {
                     version = parsedMinSemVersion;
                 }
