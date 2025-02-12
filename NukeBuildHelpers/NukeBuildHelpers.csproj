@@ -30,7 +30,7 @@
 
 	<ItemGroup>
 		<!-- Override vulnerability warnings: https://github.com/advisories/GHSA-447r-wph3-92pm-->
-		<PackageReference Include="System.Formats.Asn1" Version="9.0.1" />
+		<PackageReference Include="System.Formats.Asn1" Version="9.0.2" />
 
 		<PackageReference Include="Nuke.Common" Version="9.0.4" />
 		<PackageReference Include="Semver" Version="3.0.0" />
