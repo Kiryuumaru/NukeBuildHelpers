@@ -386,8 +386,9 @@ internal static class EntryHelpers
             foreach (var env in nukeBuildHelpers.EnvironmentBranches)
             {
                 var envLower = env.ToLowerInvariant();
-                var envVersionFile = envVersionFileMap[envLower];
-                if (!allVersionList.Any(i => i == envVersionFile))
+                if (envVersionFileMap.TryGetValue(envLower, out var envVersionFile) &&
+                    envVersionGrouped.TryGetValue(envLower, out var envVersionGroup) &&
+                    !allVersionList.Any(i => i == envVersionFile))
                 {
                     if (!commitVersionGrouped.TryGetValue(headCommit, out var pairedVersion))
                     {
@@ -397,7 +398,7 @@ internal static class EntryHelpers
                     pairedVersion.Add(envVersionFile);
                     versionBump.Add(envVersionFile);
                     allVersionList.Add(envVersionFile);
-                    envVersionGrouped[envLower].Add(envVersionFile);
+                    envVersionGroup.Add(envVersionFile);
                 }
             }
         }
