@@ -593,8 +593,11 @@ internal static class EntryHelpers
         foreach (var env in envs)
         {
             var envLower = env.ToLowerInvariant();
+            if (!allVersions.EnvVersionGrouped.TryGetValue(envLower, out var envVersions))
+            {
+                envVersions = [];
+            }
             var envVersionFile = allVersions.EnvVersionFileMap[envLower];
-            var envVersions = allVersions.EnvVersionGrouped[envLower];
             var latestEnvVersion = envVersions.Last();
             if (latestEnvVersion.ComparePrecedenceTo(envVersionFile) > 0)
             {
