@@ -595,7 +595,7 @@ internal static class EntryHelpers
             var envLower = env.ToLowerInvariant();
             if (!allVersions.EnvVersionGrouped.TryGetValue(envLower, out var envVersions))
             {
-                envVersions = [];
+                continue;
             }
             var envVersionFile = allVersions.EnvVersionFileMap[envLower];
             var latestEnvVersion = envVersions.Last();
