@@ -50,7 +50,7 @@ partial class BaseNukeBuildHelpers
 
             Dictionary<string, AppRunEntry> toEntry = [];
 
-            string buildIdStr = GitTasks.Git("show -s --date=format:%Y%m%d --format=%cd.%h --abbrev=12 HEAD").FirstOrDefault().Text?.Trim() ?? "";
+            string buildIdStr = GitTasks.Git("show -s --date=format:%Y%m%d%H%M%S --format=%cd.%h --abbrev=8 HEAD").FirstOrDefault().Text?.Trim() ?? "";
             if (string.IsNullOrWhiteSpace(buildIdStr))
                 throw new Exception("Failed to get build id from git.");
 
@@ -88,7 +88,14 @@ partial class BaseNukeBuildHelpers
                                 allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
                             {
                                 var envBuildIdSuccessGrouped = buildIdGroup.Where(envBuildIdGrouped.Contains);
-                                var maxBuildId = envBuildIdSuccessGrouped.MaxBy(x => x, StringComparer.Ordinal);
+                                string? maxBuildId = null;
+                                foreach (var envBuildId in envBuildIdSuccessGrouped)
+                                {
+                                    if (maxBuildId == null || CompareBuildIds(envBuildId, maxBuildId) > 0)
+                                    {
+                                        maxBuildId = envBuildId;
+                                    }
+                                }
                                 if (!string.IsNullOrEmpty(maxBuildId))
                                 {
                                     isFirstRelease = false;
@@ -98,7 +105,7 @@ partial class BaseNukeBuildHelpers
                                     }
                                     else
                                     {
-                                        targetBuildId = StringComparer.Ordinal.Compare(maxBuildId, targetBuildId) < 0 ? maxBuildId : targetBuildId;
+                                        targetBuildId = CompareBuildIds(maxBuildId, targetBuildId) < 0 ? maxBuildId : targetBuildId;
                                     }
                                 }
                                 break;
