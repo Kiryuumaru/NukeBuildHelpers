@@ -1394,4 +1394,42 @@ partial class BaseNukeBuildHelpers
 
         ConsoleTableHelpers.LogInfoTable(headers, [.. rows]);
     }
+
+    private static int CompareBuildIds(string? a, string? b)
+    {
+        if (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) return 0;
+        if (string.IsNullOrEmpty(a)) return -1;
+        if (string.IsNullOrEmpty(b)) return 1;
+
+        // Remove "build." prefix if present
+        string StripPrefix(string s) => s.StartsWith("build.", StringComparison.OrdinalIgnoreCase) ? s[6..] : s;
+
+        string sa = StripPrefix(a);
+        string sb = StripPrefix(b);
+
+        // Try to parse as new format: "yyyyMMddHHmmss.<hash>"
+        bool IsNewFormat(string s) => s.Length >= 15 &&
+            long.TryParse(s.AsSpan(0, 14), out _) &&
+            s[14] == '.' && s.Length > 15;
+
+        bool aNew = IsNewFormat(sa);
+        bool bNew = IsNewFormat(sb);
+
+        if (aNew && bNew)
+        {
+            // Compare by date+time, then by hash
+            int dateCmp = string.Compare(sa[..14], sb[..14], StringComparison.Ordinal);
+            if (dateCmp != 0) return dateCmp;
+            return string.Compare(sa, sb, StringComparison.Ordinal);
+        }
+        if (!aNew && !bNew)
+        {
+            // Both are old format, try to parse as int
+            if (int.TryParse(sa, out int ai) && int.TryParse(sb, out int bi))
+                return ai.CompareTo(bi);
+            return string.Compare(sa, sb, StringComparison.Ordinal);
+        }
+        // If one is new and one is old, always treat new as greater
+        return aNew ? 1 : -1;
+    }
 }

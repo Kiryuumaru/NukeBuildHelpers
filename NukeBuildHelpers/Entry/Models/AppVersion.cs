@@ -25,5 +25,5 @@ public class AppVersion
     /// <summary>
     /// Gets the build ID associated with the version.
     /// </summary>
-    public required long BuildId { get; init; }
+    public required string BuildId { get; init; }
 }

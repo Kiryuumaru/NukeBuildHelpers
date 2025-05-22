@@ -9,9 +9,9 @@ internal class PipelinePreSetup
 
     public required TriggerType TriggerType { get; init; }
 
-    public required long BuildId { get; init; }
+    public required string BuildId { get; init; }
 
-    public required long LastBuildId { get; init; }
+    public required string LastBuildId { get; init; }
 
     public required string Environment { get; init; }
 
