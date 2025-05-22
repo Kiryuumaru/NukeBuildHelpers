@@ -50,7 +50,7 @@ partial class BaseNukeBuildHelpers
 
             Dictionary<string, AppRunEntry> toEntry = [];
 
-            string buildIdStr = GitTasks.Git("show -s --date=format:%Y%m%d%H%M%S --format=%cd.%h --abbrev=8 HEAD").FirstOrDefault().Text?.Trim() ?? "";
+            string buildIdStr = GitTasks.Git("show -s --date=format:%Y%m%d%H%M%S --format=%cd.%h --abbrev=7 HEAD").FirstOrDefault().Text?.Trim() ?? "";
             if (string.IsNullOrWhiteSpace(buildIdStr))
                 throw new Exception("Failed to get build id from git.");
 
