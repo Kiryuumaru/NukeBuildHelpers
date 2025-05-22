@@ -20,8 +20,6 @@ public interface IWorkflowConfigEntryDefinition
 
     internal Func<Task<bool>> EnablePrereleaseOnRelease { get; set; }
 
-    internal Func<Task<long>> StartingBuildId { get; set; }
-
     internal Func<Task<bool>> UseJsonFileVersioning { get; set; }
 
     internal async Task<string> GetName()
@@ -47,11 +45,6 @@ public interface IWorkflowConfigEntryDefinition
     internal async Task<bool> GetEnablePrereleaseOnReleases()
     {
         return await EnablePrereleaseOnRelease();
-    }
-
-    internal async Task<long> GetStartingBuildId()
-    {
-        return await StartingBuildId();
     }
 
     internal async Task<bool> GetUseJsonFileVersioning()

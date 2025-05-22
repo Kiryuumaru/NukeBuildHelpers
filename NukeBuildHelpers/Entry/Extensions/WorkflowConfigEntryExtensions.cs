@@ -219,48 +219,6 @@ public static class WorkflowConfigEntryExtensions
     }
 
     /// <summary>
-    /// Sets the starting build ID for the workflow.
-    /// </summary>
-    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
-    /// <param name="definition">The workflow entry definition instance.</param>
-    /// <param name="startingBuildId">The starting build ID to set.</param>
-    /// <returns>The modified workflow entry definition instance.</returns>
-    public static TWorkflowConfigEntryDefinition StartingBuildId<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, long startingBuildId)
-        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
-    {
-        definition.StartingBuildId = () => Task.Run(() => startingBuildId);
-        return definition;
-    }
-
-    /// <summary>
-    /// Sets the starting build ID using a function for the workflow.
-    /// </summary>
-    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
-    /// <param name="definition">The workflow entry definition instance.</param>
-    /// <param name="startingBuildId">A function returning the starting build ID.</param>
-    /// <returns>The modified workflow entry definition instance.</returns>
-    public static TWorkflowConfigEntryDefinition StartingBuildId<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<long> startingBuildId)
-        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
-    {
-        definition.StartingBuildId = () => Task.Run(() => startingBuildId());
-        return definition;
-    }
-
-    /// <summary>
-    /// Sets the starting build ID using an asynchronous function for the workflow.
-    /// </summary>
-    /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>
-    /// <param name="definition">The workflow entry definition instance.</param>
-    /// <param name="startingBuildId">An asynchronous function returning the starting build ID.</param>
-    /// <returns>The modified workflow entry definition instance.</returns>
-    public static TWorkflowConfigEntryDefinition StartingBuildId<TWorkflowConfigEntryDefinition>(this TWorkflowConfigEntryDefinition definition, Func<Task<long>> startingBuildId)
-        where TWorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
-    {
-        definition.StartingBuildId = () => Task.Run(async () => await startingBuildId());
-        return definition;
-    }
-
-    /// <summary>
     /// Configures whether to use JSON file versioning in the workflow. If enabled, a file named <c>versions.json</c> will be generated in the <see cref="Nuke.Common.NukeBuild.RootDirectory"/> on every build workflow generation.
     /// </summary>
     /// <typeparam name="TWorkflowConfigEntryDefinition">The type of the workflow entry definition.</typeparam>

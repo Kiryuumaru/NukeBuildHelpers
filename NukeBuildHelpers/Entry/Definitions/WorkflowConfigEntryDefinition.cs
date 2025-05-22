@@ -40,13 +40,6 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
         set => enablePrereleaseOnReleases = value;
     }
 
-    Func<Task<long>>? startingBuildId = null;
-    Func<Task<long>> IWorkflowConfigEntryDefinition.StartingBuildId
-    {
-        get => startingBuildId ?? (() => Task.FromResult(1L));
-        set => startingBuildId = value;
-    }
-
     Func<Task<bool>>? useJsonFileVersioning = null;
     Func<Task<bool>> IWorkflowConfigEntryDefinition.UseJsonFileVersioning
     {
@@ -62,7 +55,6 @@ internal class WorkflowConfigEntryDefinition : IWorkflowConfigEntryDefinition
         if (postSetupRunnerOS != null) ((IWorkflowConfigEntryDefinition)this).PostSetupRunnerOS = postSetupRunnerOS;
         if (appendReleaseNotesAssetHashes != null) ((IWorkflowConfigEntryDefinition)this).AppendReleaseNotesAssetHashes = appendReleaseNotesAssetHashes;
         if (enablePrereleaseOnReleases != null) ((IWorkflowConfigEntryDefinition)this).EnablePrereleaseOnRelease = enablePrereleaseOnReleases;
-        if (startingBuildId != null) ((IWorkflowConfigEntryDefinition)this).StartingBuildId = startingBuildId;
         if (useJsonFileVersioning != null) ((IWorkflowConfigEntryDefinition)this).UseJsonFileVersioning = useJsonFileVersioning;
         return definition;
     }

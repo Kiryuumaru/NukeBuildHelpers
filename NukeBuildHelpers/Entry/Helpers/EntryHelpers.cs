@@ -200,12 +200,12 @@ internal static class EntryHelpers
             lsRemoteOutputHolder.Value = lsRemoteOutput;
         }
 
-        Dictionary<string, List<long>> commitBuildIdGrouped = [];
+        Dictionary<string, List<string>> commitBuildIdGrouped = [];
         Dictionary<string, List<SemVersion>> commitVersionGrouped = [];
         Dictionary<string, List<string>> commitLatestTagGrouped = [];
-        Dictionary<long, string> buildIdCommitPaired = [];
+        Dictionary<string, string> buildIdCommitPaired = [];
         Dictionary<SemVersion, string> versionCommitPaired = [];
-        Dictionary<string, List<long>> envBuildIdGrouped = [];
+        Dictionary<string, List<string>> envBuildIdGrouped = [];
         List<SemVersion> versionBump = [];
         List<SemVersion> versionQueue = [];
         List<SemVersion> versionFailed = [];
@@ -219,11 +219,7 @@ internal static class EntryHelpers
             if (rawTag.StartsWith("build.", StringComparison.InvariantCultureIgnoreCase))
             {
                 var buildSplit = rawTag.Split('-');
-                var buildPair = buildSplit[0].Split('.');
-                if (buildPair.Length != 2 || !long.TryParse(buildPair[1], out var parsedBuildId))
-                {
-                    continue;
-                }
+                var parsedBuildId = buildSplit[0][6..];
                 if (buildSplit.Length == 1)
                 {
                     if (!buildIdCommitPaired.ContainsKey(parsedBuildId))
@@ -368,7 +364,7 @@ internal static class EntryHelpers
             allVersionList.Add(semVersion);
         }
 
-        List<long> allBuildIdList = [.. commitBuildIdGrouped.SelectMany(i => i.Value)];
+        List<string> allBuildIdList = [.. commitBuildIdGrouped.SelectMany(i => i.Value)];
         Dictionary<string, List<SemVersion>> envVersionGrouped = allVersionList
             .GroupBy(i => i.IsPrerelease ? i.PrereleaseIdentifiers[0].Value.ToLowerInvariant() : nukeBuildHelpers.MainEnvironmentBranch.ToLowerInvariant())
             .ToDictionary(i => i.Key, i => i.Select(j => j).ToList());
@@ -410,7 +406,7 @@ internal static class EntryHelpers
             allVersion.Sort(SemVersion.PrecedenceComparer);
         }
 
-        Dictionary<string, (long BuildId, SemVersion Version)> pairedLatests = [];
+        Dictionary<string, (string BuildId, SemVersion Version)> pairedLatests = [];
         foreach (var pairedLatestTag in commitLatestTagGrouped)
         {
             string commitId = pairedLatestTag.Key;
@@ -432,7 +428,7 @@ internal static class EntryHelpers
                     var latestVersion = versions.Where(i => i.IsPrerelease && i.PrereleaseIdentifiers[0].ToString().Equals(env, StringComparison.InvariantCultureIgnoreCase)).LastOrDefault();
                     if (latestVersion != null)
                     {
-                        pairedLatests.Add(env, (envBuildIds.Max(), latestVersion));
+                        pairedLatests.Add(env, (envBuildIds.Max()!, latestVersion));
                     }
                 }
                 else
@@ -445,14 +441,14 @@ internal static class EntryHelpers
                     var latestVersion = versions.Where(i => !i.IsPrerelease).LastOrDefault();
                     if (latestVersion != null)
                     {
-                        pairedLatests.Add(env, (envBuildIds.Max(), latestVersion));
+                        pairedLatests.Add(env, (envBuildIds.Max()!, latestVersion));
                     }
                 }
             }
         }
 
         Dictionary<string, SemVersion> envLatestVersionPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.Version);
-        Dictionary<string, long> envLatestBuildIdPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
+        Dictionary<string, string> envLatestBuildIdPaired = pairedLatests.ToDictionary(i => i.Key, i => i.Value.BuildId);
         List<string> envSorted = [.. envVersionGrouped.Select(i => i.Key)];
 
         envSorted.Sort();

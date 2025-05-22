@@ -1,6 +1,7 @@
 ﻿using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.Git;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Common.Models;
@@ -49,10 +50,15 @@ partial class BaseNukeBuildHelpers
 
             Dictionary<string, AppRunEntry> toEntry = [];
 
-            long targetBuildId = 0;
-            long lastBuildId = await allEntry.WorkflowConfigEntryDefinition.GetStartingBuildId() - 1;
+            string buildIdStr = GitTasks.Git("show -s --format=%ct.%h HEAD").FirstOrDefault().Text?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(buildIdStr))
+                throw new Exception("Failed to get build id from git.");
+
+            string targetBuildId = "";
 
             bool useVersionFile = await allEntry.WorkflowConfigEntryDefinition.GetUseJsonFileVersioning();
+
+            bool isFirstRelease = true;
 
             foreach (var key in allEntry.AppEntryMap.Select(i => i.Key))
             {
@@ -65,12 +71,6 @@ partial class BaseNukeBuildHelpers
                 if (useVersionFile && pipeline.PipelineInfo.TriggerType != TriggerType.Tag)
                 {
                     EntryHelpers.VerifyVersionsFile(allVersions, appId, [pipeline.PipelineInfo.Branch]);
-                }
-
-                if (allVersions.BuildIdCommitPaired.Count > 0)
-                {
-                    var maxBuildId = allVersions.BuildIdCommitPaired.Select(i => i.Key).Max();
-                    lastBuildId = Math.Max(maxBuildId, lastBuildId);
                 }
 
                 bool hasBumped = false;
@@ -88,7 +88,19 @@ partial class BaseNukeBuildHelpers
                                 allVersions.CommitBuildIdGrouped.TryGetValue(lastSuccessCommit, out var buildIdGroup))
                             {
                                 var envBuildIdSuccessGrouped = buildIdGroup.Where(envBuildIdGrouped.Contains);
-                                targetBuildId = targetBuildId == 0 ? envBuildIdSuccessGrouped.Max() : Math.Min(envBuildIdSuccessGrouped.Max(), targetBuildId);
+                                var maxBuildId = envBuildIdSuccessGrouped.MaxBy(x => x, StringComparer.Ordinal);
+                                if (!string.IsNullOrEmpty(maxBuildId))
+                                {
+                                    isFirstRelease = false;
+                                    if (string.IsNullOrEmpty(targetBuildId))
+                                    {
+                                        targetBuildId = maxBuildId;
+                                    }
+                                    else
+                                    {
+                                        targetBuildId = StringComparer.Ordinal.Compare(maxBuildId, targetBuildId) < 0 ? maxBuildId : targetBuildId;
+                                    }
+                                }
                                 break;
                             }
                         }
@@ -135,10 +147,9 @@ partial class BaseNukeBuildHelpers
             }
 
             var releaseNotes = "";
-            var buildId = lastBuildId + 1;
+            var buildId = buildIdStr;
             var buildTag = "build." + buildId;
             var targetBuildTag = "build." + targetBuildId;
-            var isFirstRelease = targetBuildId == 0;
             var hasEntries = toEntry.Count != 0;
             var hasRelease = toEntry.Any(i => i.Value.HasRelease);
 

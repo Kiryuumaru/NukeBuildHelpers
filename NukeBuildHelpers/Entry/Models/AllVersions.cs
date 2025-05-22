@@ -4,7 +4,7 @@ namespace NukeBuildHelpers.Entry.Models;
 
 internal class AllVersions
 {
-    public required Dictionary<string, List<long>> CommitBuildIdGrouped { get; init; }
+    public required Dictionary<string, List<string>> CommitBuildIdGrouped { get; init; }
 
     public required Dictionary<string, List<SemVersion>> CommitVersionGrouped { get; init; }
 
@@ -12,15 +12,15 @@ internal class AllVersions
 
     public required Dictionary<SemVersion, string> VersionCommitPaired { get; init; }
 
-    public required Dictionary<long, string> BuildIdCommitPaired { get; init; }
+    public required Dictionary<string, string> BuildIdCommitPaired { get; init; }
 
     public required Dictionary<string, List<SemVersion>> EnvVersionGrouped { get; init; }
 
-    public required Dictionary<string, List<long>> EnvBuildIdGrouped { get; init; }
+    public required Dictionary<string, List<string>> EnvBuildIdGrouped { get; init; }
 
     public required Dictionary<string, SemVersion> EnvLatestVersionPaired { get; init; }
 
-    public required Dictionary<string, long> EnvLatestBuildIdPaired { get; init; }
+    public required Dictionary<string, string> EnvLatestBuildIdPaired { get; init; }
 
     public required List<string> EnvSorted { get; init; }
 
