@@ -19,9 +19,11 @@ using NukeBuildHelpers.Entry.Helpers;
 using System.Security.Cryptography;
 using NukeBuildHelpers.RunContext.Models;
 using NukeBuildHelpers.Common.Models;
+using NukeBuildHelpers.Entry.Definitions;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Pipelines.Github;
 using NukeBuildHelpers.Pipelines.Azure;
+using System.Reflection;
 using Nuke.Common.Utilities.Collections;
 
 namespace NukeBuildHelpers;
