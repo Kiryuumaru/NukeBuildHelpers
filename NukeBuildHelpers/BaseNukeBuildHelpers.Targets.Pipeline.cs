@@ -79,7 +79,31 @@ partial class BaseNukeBuildHelpers
 
                 if (allVersions.EnvSorted.Count != 0 && allVersions.EnvVersionGrouped.TryGetValue(env, out var versionGroup) && versionGroup.Count != 0)
                 {
-                    if (allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
+                    lastVersionGroup = versionGroup.Last();
+
+                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out currentLatest) || currentLatest != lastVersionGroup)
+                    {
+                        if (allVersions.VersionBump.Contains(lastVersionGroup) &&
+                            !allVersions.VersionQueue.Contains(lastVersionGroup) &&
+                            !allVersions.VersionFailed.Contains(lastVersionGroup) &&
+                            !allVersions.VersionPassed.Contains(lastVersionGroup))
+                        {
+                            if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                            {
+                                hasBumped = true;
+                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
+                        {
+                            Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
+                        }
+                    }
+
+                    if (hasBumped && allVersions.EnvBuildIdGrouped.TryGetValue(env, out var envBuildIdGrouped))
                     {
                         foreach (var version in versionGroup.OrderByDescending(i => i, SemVersion.PrecedenceComparer))
                         {
@@ -110,30 +134,6 @@ partial class BaseNukeBuildHelpers
                                 }
                                 break;
                             }
-                        }
-                    }
-
-                    lastVersionGroup = versionGroup.Last();
-
-                    if (!allVersions.EnvLatestVersionPaired.TryGetValue(env, out currentLatest) || currentLatest != lastVersionGroup)
-                    {
-                        if (allVersions.VersionBump.Contains(lastVersionGroup) &&
-                            !allVersions.VersionQueue.Contains(lastVersionGroup) &&
-                            !allVersions.VersionFailed.Contains(lastVersionGroup) &&
-                            !allVersions.VersionPassed.Contains(lastVersionGroup))
-                        {
-                            if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
-                            {
-                                hasBumped = true;
-                                Log.Information("{appId} Tag: {current}, current latest: {latest}", appId, currentLatest?.ToString(), lastVersionGroup.ToString());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if ((useVersionFile && pipeline.PipelineInfo.TriggerType == TriggerType.Commit) || pipeline.PipelineInfo.TriggerType == TriggerType.Tag)
-                        {
-                            Log.Information("{appId} Tag: {current}, already latest", appId, lastVersionGroup.ToString());
                         }
                     }
                 }
