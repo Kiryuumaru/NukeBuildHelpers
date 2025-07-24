@@ -592,7 +592,7 @@ jobs:
     - NUKEBUILDHELPERSTEST4
     - NUKEBUILDHELPERSTEST5
     - NUKEBUILDHELPERSPUBLISH
-    if: success() || failure() || always()
+    if: success() || failure()
     timeout-minutes: 30
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
