@@ -156,7 +156,7 @@ class Build : BaseNukeBuildHelpers
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectTestPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetTest(_ => _
-                .SetProcessAdditionalArguments("--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\"")
+                .GitHubActionsSummary()
                 .SetProjectFile(NukeBuildHelpersProjectTestPath)), "DotNetTest");
         });
 
@@ -366,7 +366,7 @@ class Build : BaseNukeBuildHelpers
 
     private async Task<(AbsolutePath NukeBuildHelpersProjectPath, AbsolutePath NukeBuildHelpersProjectTestPath)> PrepareClonedProjects(string subPath)
     {
-        var clonedProjectsDir = TemporaryDirectory / "ClonedProjects"/ subPath;
+        var clonedProjectsDir = TemporaryDirectory / "ClonedProjects" / subPath;
         await clonedProjectsDir.Delete();
         var nukeBuildHelpersPath = clonedProjectsDir / "NukeBuildHelpers" / "NukeBuildHelpers.csproj";
         var nukeBuildHelpersTestPath = clonedProjectsDir / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj";
@@ -376,8 +376,8 @@ class Build : BaseNukeBuildHelpers
         await (RootDirectory / "README.md").CopyTo(clonedProjectsDir / "README.md");
         await (RootDirectory / "NukeBuildHelpers").CopyTo(nukeBuildHelpersPath.Parent);
         await (RootDirectory / "NukeBuildHelpers.UnitTest").CopyTo(nukeBuildHelpersTestPath.Parent);
-        await  (nukeBuildHelpersPath.Parent / "bin").Delete();
-        await  (nukeBuildHelpersTestPath.Parent / "obj").Delete();
+        await (nukeBuildHelpersPath.Parent / "bin").Delete();
+        await (nukeBuildHelpersTestPath.Parent / "obj").Delete();
         return (nukeBuildHelpersPath, nukeBuildHelpersTestPath);
     }
 
@@ -387,5 +387,28 @@ class Build : BaseNukeBuildHelpers
             .Replace(",", "%2C")?
             .Replace(":", "%3A")?
             .Replace(";", "%3B");
+    }
+
+    private DotNetTestSettings DotNetTest(DotNetTestSettings settings)
+    {
+        return settings
+            .SetProcessAdditionalArguments(
+                "--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\" " +
+                "-- " +
+                "RunConfiguration.CollectSourceInformation=true " +
+                "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencovere ");
+    }
+}
+
+public static class BuildExtensions
+{
+    public static DotNetTestSettings GitHubActionsSummary(this DotNetTestSettings settings)
+    {
+        return settings
+            .SetProcessAdditionalArguments(
+                "--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\" " +
+                "-- " +
+                "RunConfiguration.CollectSourceInformation=true " +
+                "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencovere ");
     }
 }
