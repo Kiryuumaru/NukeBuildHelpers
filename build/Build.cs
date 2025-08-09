@@ -388,16 +388,6 @@ class Build : BaseNukeBuildHelpers
             .Replace(":", "%3A")?
             .Replace(";", "%3B");
     }
-
-    private DotNetTestSettings DotNetTest(DotNetTestSettings settings)
-    {
-        return settings
-            .SetProcessAdditionalArguments(
-                "--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\" " +
-                "-- " +
-                "RunConfiguration.CollectSourceInformation=true " +
-                "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencovere ");
-    }
 }
 
 public static class BuildExtensions
