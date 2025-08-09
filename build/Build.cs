@@ -139,6 +139,7 @@ class Build : BaseNukeBuildHelpers
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectTestPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetTest(_ => _
+                .SetProcessAdditionalArguments("--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\"")
                 .SetProjectFile(NukeBuildHelpersProjectTestPath)), "DotNetTest");
         });
 
@@ -155,6 +156,7 @@ class Build : BaseNukeBuildHelpers
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectTestPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetTest(_ => _
+                .SetProcessAdditionalArguments("--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\"")
                 .SetProjectFile(NukeBuildHelpersProjectTestPath)), "DotNetTest");
         });
 
@@ -173,6 +175,7 @@ class Build : BaseNukeBuildHelpers
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectTestPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetTest(_ => _
+                .SetProcessAdditionalArguments("--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\"")
                 .SetProjectFile(NukeBuildHelpersProjectTestPath)), "DotNetTest");
         });
 
@@ -191,6 +194,7 @@ class Build : BaseNukeBuildHelpers
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectTestPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetTest(_ => _
+                .SetProcessAdditionalArguments("--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\"")
                 .SetProjectFile(NukeBuildHelpersProjectTestPath)), "DotNetTest");
         });
 
@@ -208,6 +212,7 @@ class Build : BaseNukeBuildHelpers
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectTestPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetTest(_ => _
+                .SetProcessAdditionalArguments("--logger \"GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true\"")
                 .SetProjectFile(NukeBuildHelpersProjectTestPath)), "DotNetTest");
         });
 
