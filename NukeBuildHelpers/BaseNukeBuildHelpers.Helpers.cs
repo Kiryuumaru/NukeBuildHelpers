@@ -13,6 +13,7 @@ using System.Text.Json;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.ConsoleInterface.Enums;
 using NukeBuildHelpers.Entry.Interfaces;
+using RunContextModel = NukeBuildHelpers.RunContext.Models.RunContext;
 using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Entry.Helpers;
@@ -230,50 +231,64 @@ partial class BaseNukeBuildHelpers
     {
         if (appVersion == null || runType == RunType.Local)
         {
-            targetEntry.RunContext = new LocalContext()
+            targetEntry.RunContext = new RunContextModel()
             {
-                RunType = RunType.Local
+                RunType = RunType.Local,
+                PipelineType = null,
+                AppVersion = null,
+                BumpReleaseVersion = null,
+                PullRequestReleaseVersion = null
             };
         }
         else if (runType == RunType.Bump)
         {
-            targetEntry.RunContext = new BumpContext()
+            var bumpReleaseVersion = new BumpReleaseVersion()
             {
-                PipelineType = PipelineType,
+                AppId = appVersion.AppId,
+                Environment = appVersion.Environment,
+                Version = appVersion.Version,
+                BuildId = appVersion.BuildId,
+                ReleaseNotes = releaseNotes
+            };
+            
+            targetEntry.RunContext = new RunContextModel()
+            {
                 RunType = runType,
-                AppVersion = new BumpReleaseVersion()
-                {
-                    AppId = appVersion.AppId,
-                    Environment = appVersion.Environment,
-                    Version = appVersion.Version,
-                    BuildId = appVersion.BuildId,
-                    ReleaseNotes = releaseNotes
-                }
+                PipelineType = PipelineType,
+                AppVersion = bumpReleaseVersion,
+                BumpReleaseVersion = bumpReleaseVersion,
+                PullRequestReleaseVersion = null
             };
         }
         else if (runType == RunType.PullRequest)
         {
-            targetEntry.RunContext = new PullRequestContext()
+            var pullRequestReleaseVersion = new PullRequestReleaseVersion()
             {
-                PipelineType = PipelineType,
+                AppId = appVersion.AppId,
+                Environment = appVersion.Environment,
+                Version = appVersion.Version,
+                BuildId = appVersion.BuildId,
+                PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber
+            };
+            
+            targetEntry.RunContext = new RunContextModel()
+            {
                 RunType = runType,
-                AppVersion = new PullRequestReleaseVersion()
-                {
-                    AppId = appVersion.AppId,
-                    Environment = appVersion.Environment,
-                    Version = appVersion.Version,
-                    BuildId = appVersion.BuildId,
-                    PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber
-                }
+                PipelineType = PipelineType,
+                AppVersion = pullRequestReleaseVersion,
+                BumpReleaseVersion = null,
+                PullRequestReleaseVersion = pullRequestReleaseVersion
             };
         }
         else
         {
-            targetEntry.RunContext = new VersionedContext()
+            targetEntry.RunContext = new RunContextModel()
             {
-                PipelineType = PipelineType,
                 RunType = runType,
-                AppVersion = appVersion
+                PipelineType = PipelineType,
+                AppVersion = appVersion,
+                BumpReleaseVersion = null,
+                PullRequestReleaseVersion = null
             };
         }
     }
@@ -282,17 +297,24 @@ partial class BaseNukeBuildHelpers
     {
         if (runType == RunType.Local)
         {
-            dependentEntry.RunContext = new LocalContext()
+            dependentEntry.RunContext = new RunContextModel()
             {
-                RunType = RunType.Local
+                RunType = RunType.Local,
+                PipelineType = null,
+                AppVersion = null,
+                BumpReleaseVersion = null,
+                PullRequestReleaseVersion = null
             };
         }
         else
         {
-            dependentEntry.RunContext = new CommitContext()
+            dependentEntry.RunContext = new RunContextModel()
             {
+                RunType = runType,
                 PipelineType = PipelineType,
-                RunType = runType
+                AppVersion = null,
+                BumpReleaseVersion = null,
+                PullRequestReleaseVersion = null
             };
         }
     }

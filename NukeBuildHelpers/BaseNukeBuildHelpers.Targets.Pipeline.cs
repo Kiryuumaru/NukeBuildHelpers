@@ -11,6 +11,7 @@ using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.RunContext.Interfaces;
+using NukeBuildHelpers.RunContext.Extensions;
 using Semver;
 using Serilog;
 using System.Text.Json;
@@ -405,7 +406,7 @@ partial class BaseNukeBuildHelpers
                 {
                     TriggerType.PullRequest => RunType.PullRequest,
                     TriggerType.Commit => RunType.Commit,
-                    TriggerType.Tag => targetEntries.Any(i => i.Entry.RunContext is IBumpContext) ? RunType.Bump : RunType.Commit,
+                    TriggerType.Tag => targetEntries.Any(i => i.Entry.RunContext.IsBumpContext()) ? RunType.Bump : RunType.Commit,
                     TriggerType.Local => RunType.Local,
                     _ => throw new NotSupportedException()
                 };
