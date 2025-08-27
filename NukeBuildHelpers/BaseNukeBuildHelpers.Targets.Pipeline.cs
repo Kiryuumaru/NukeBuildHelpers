@@ -406,7 +406,7 @@ partial class BaseNukeBuildHelpers
                 {
                     TriggerType.PullRequest => RunType.PullRequest,
                     TriggerType.Commit => RunType.Commit,
-                    TriggerType.Tag => targetEntries.Any(i => i.Entry.RunContext.IsBumpContext()) ? RunType.Bump : RunType.Commit,
+                    TriggerType.Tag => targetEntries.Any(i => i.Entry.RunContext?.IsBumpContext() == true) ? RunType.Bump : RunType.Commit,
                     TriggerType.Local => RunType.Local,
                     _ => throw new NotSupportedException()
                 };

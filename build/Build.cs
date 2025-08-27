@@ -226,14 +226,14 @@ class Build : BaseNukeBuildHelpers
 
             string version = "0.0.0";
             string? releaseNotes = null;
-            if (context.TryGetBumpContext(out var bumpContext))
+            if (context.BumpReleaseVersion != null)
             {
-                version = bumpContext.AppVersion.Version.ToString();
-                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+                version = context.BumpReleaseVersion.Version.ToString();
+                releaseNotes = context.BumpReleaseVersion.ReleaseNotes;
             }
-            else if (context.TryGetPullRequestContext(out var pullRequestContext))
+            else if (context.PullRequestReleaseVersion != null)
             {
-                version = pullRequestContext.AppVersion.Version.ToString();
+                version = context.PullRequestReleaseVersion.Version.ToString();
             }
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
@@ -274,14 +274,14 @@ class Build : BaseNukeBuildHelpers
 
             string version = "0.0.0";
             string? releaseNotes = null;
-            if (context.TryGetBumpContext(out var bumpContext))
+            if (context.BumpReleaseVersion != null)
             {
-                version = bumpContext.AppVersion.Version.ToString();
-                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+                version = context.BumpReleaseVersion.Version.ToString();
+                releaseNotes = context.BumpReleaseVersion.ReleaseNotes;
             }
-            else if (context.TryGetPullRequestContext(out var pullRequestContext))
+            else if (context.PullRequestReleaseVersion != null)
             {
-                version = pullRequestContext.AppVersion.Version.ToString();
+                version = context.PullRequestReleaseVersion.Version.ToString();
             }
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
@@ -311,14 +311,14 @@ class Build : BaseNukeBuildHelpers
 
             string version = "0.0.0";
             string? releaseNotes = null;
-            if (context.TryGetBumpContext(out var bumpContext))
+            if (context.BumpReleaseVersion != null)
             {
-                version = bumpContext.AppVersion.Version.ToString();
-                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+                version = context.BumpReleaseVersion.Version.ToString();
+                releaseNotes = context.BumpReleaseVersion.ReleaseNotes;
             }
-            else if (context.TryGetPullRequestContext(out var pullRequestContext))
+            else if (context.PullRequestReleaseVersion != null)
             {
-                version = pullRequestContext.AppVersion.Version.ToString();
+                version = context.PullRequestReleaseVersion.Version.ToString();
             }
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
