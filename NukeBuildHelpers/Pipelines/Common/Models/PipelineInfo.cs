@@ -8,5 +8,5 @@ internal class PipelineInfo
 
     public required TriggerType TriggerType { get; init; }
 
-    public required long PullRequestNumber { get; init; }
+    public required long? PullRequestNumber { get; init; }
 }

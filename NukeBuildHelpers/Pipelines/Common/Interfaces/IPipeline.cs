@@ -8,21 +8,21 @@ internal interface IPipeline
 {
     BaseNukeBuildHelpers NukeBuild { get; set; }
 
-    PipelineInfo GetPipelineInfo();
+    Task<PipelineInfo> GetPipelineInfo();
 
-    PipelinePreSetup? GetPipelinePreSetup();
+    Task<PipelinePreSetup> GetPipelinePreSetup();
 
     Task PreparePreSetup(AllEntry allEntry);
 
-    Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup);
+    Task FinalizePreSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
-    Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup);
+    Task PreparePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
-    Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup);
+    Task FinalizePostSetup(AllEntry allEntry, PipelinePreSetup pipelinePreSetup);
 
-    Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap);
+    Task PrepareEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap);
 
-    Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap);
+    Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap);
 
     Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry);
 }

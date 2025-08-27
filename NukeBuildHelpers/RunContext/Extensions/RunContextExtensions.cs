@@ -1,95 +1,75 @@
-﻿using NukeBuildHelpers.RunContext.Interfaces;
+﻿using NukeBuildHelpers.Entry.Models;
+using NukeBuildHelpers.RunContext.Interfaces;
 using System.Diagnostics.CodeAnalysis;
 
 namespace NukeBuildHelpers.RunContext.Extensions;
 
 /// <summary>
-/// Provides extension methods for handling different run contexts.
+/// Provides extension methods for handling run contexts.
 /// </summary>
 public static class RunContextExtensions
 {
     /// <summary>
-    /// Tries to get a specific context from the provided run context.
+    /// Tries to get bump context information from the run context.
     /// </summary>
-    /// <typeparam name="TRunContext">The type of run context to get.</typeparam>
     /// <param name="runContext">The current run context.</param>
-    /// <param name="context">The specific run context if found.</param>
-    /// <returns>True if the specific context is found; otherwise, false.</returns>
-    public static bool TryGetContext<TRunContext>(this IRunContext runContext, [NotNullWhen(true)] out TRunContext? context)
-        where TRunContext : IRunContext
+    /// <param name="bumpVersion">The bump release version if this is a bump run.</param>
+    /// <returns>True if this is a bump run; otherwise, false.</returns>
+    public static bool TryGetBumpContext(this IRunContext runContext, [NotNullWhen(true)] out BumpReleaseVersion? bumpVersion)
     {
-        if (runContext is TRunContext c)
-        {
-            context = c;
-            return true;
-        }
-        context = default;
-        return false;
+        bumpVersion = runContext.BumpVersion;
+        return bumpVersion != null;
     }
 
     /// <summary>
-    /// Tries to get a local context from the provided run context.
+    /// Tries to get pull request context information from the run context.
     /// </summary>
     /// <param name="runContext">The current run context.</param>
-    /// <param name="localContext">The local context if found.</param>
-    /// <returns>True if the local context is found; otherwise, false.</returns>
-    public static bool TryGetLocalContext(this IRunContext runContext, [NotNullWhen(true)] out ILocalContext? localContext)
+    /// <param name="pullRequestVersion">The pull request version if this is a PR run.</param>
+    /// <returns>True if this is a pull request run; otherwise, false.</returns>
+    public static bool TryGetPullRequestContext(this IRunContext runContext, [NotNullWhen(true)] out PullRequestReleaseVersion? pullRequestVersion)
     {
-        return TryGetContext(runContext, out localContext);
+        pullRequestVersion = runContext.PullRequestVersion;
+        return pullRequestVersion != null;
     }
 
     /// <summary>
-    /// Tries to get a pipeline context from the provided run context.
+    /// Checks if this is a local development run.
     /// </summary>
     /// <param name="runContext">The current run context.</param>
-    /// <param name="pipelineContext">The pipeline context if found.</param>
-    /// <returns>True if the pipeline context is found; otherwise, false.</returns>
-    public static bool TryGetPipelineContext(this IRunContext runContext, [NotNullWhen(true)] out IPipelineContext? pipelineContext)
+    /// <returns>True if this is a local run; otherwise, false.</returns>
+    public static bool IsLocalContext(this IRunContext runContext)
     {
-        return TryGetContext(runContext, out pipelineContext);
+        return runContext.IsLocal;
     }
 
     /// <summary>
-    /// Tries to get a commit context from the provided run context.
+    /// Checks if this is a pipeline run.
     /// </summary>
     /// <param name="runContext">The current run context.</param>
-    /// <param name="commitContext">The commit context if found.</param>
-    /// <returns>True if the commit context is found; otherwise, false.</returns>
-    public static bool TryGetCommitContext(this IRunContext runContext, [NotNullWhen(true)] out ICommitContext? commitContext)
+    /// <returns>True if this is a pipeline run; otherwise, false.</returns>
+    public static bool IsPipelineContext(this IRunContext runContext)
     {
-        return TryGetContext(runContext, out commitContext);
+        return runContext.IsPipeline;
     }
 
     /// <summary>
-    /// Tries to get a versioned context from the provided run context.
+    /// Checks if this is a commit run.
     /// </summary>
     /// <param name="runContext">The current run context.</param>
-    /// <param name="versionedContext">The versioned context if found.</param>
-    /// <returns>True if the versioned context is found; otherwise, false.</returns>
-    public static bool TryGetVersionedContext(this IRunContext runContext, [NotNullWhen(true)] out IVersionedContext? versionedContext)
+    /// <returns>True if this is a commit run; otherwise, false.</returns>
+    public static bool IsCommitContext(this IRunContext runContext)
     {
-        return TryGetContext(runContext, out versionedContext);
+        return runContext.IsCommit;
     }
 
     /// <summary>
-    /// Tries to get a bump context from the provided run context.
+    /// Checks if this run has version information.
     /// </summary>
     /// <param name="runContext">The current run context.</param>
-    /// <param name="bumpContext">The bump context if found.</param>
-    /// <returns>True if the bump context is found; otherwise, false.</returns>
-    public static bool TryGetBumpContext(this IRunContext runContext, [NotNullWhen(true)] out IBumpContext? bumpContext)
+    /// <returns>True if this run has version information; otherwise, false.</returns>
+    public static bool IsVersionedContext(this IRunContext runContext)
     {
-        return TryGetContext(runContext, out bumpContext);
-    }
-
-    /// <summary>
-    /// Tries to get a pull request context from the provided run context.
-    /// </summary>
-    /// <param name="runContext">The current run context.</param>
-    /// <param name="pullRequestContext">The pull request context if found.</param>
-    /// <returns>True if the pull request context is found; otherwise, false.</returns>
-    public static bool TryGetPullRequestContext(this IRunContext runContext, [NotNullWhen(true)] out IPullRequestContext? pullRequestContext)
-    {
-        return TryGetContext(runContext, out pullRequestContext);
+        return runContext.IsVersioned;
     }
 }

@@ -21,7 +21,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
     public BaseNukeBuildHelpers NukeBuild { get; set; } = nukeBuild;
 
-    public PipelineInfo GetPipelineInfo()
+    public Task<PipelineInfo> GetPipelineInfo()
     {
         TriggerType triggerType = TriggerType.Commit;
         var branch = Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCH");
@@ -57,15 +57,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 branch = branch[11..];
             }
         }
-        return new()
+        return Task.FromResult(new PipelineInfo()
         {
             Branch = branch,
             TriggerType = triggerType,
             PullRequestNumber = prNumber
-        };
+        });
     }
 
-    public PipelinePreSetup GetPipelinePreSetup()
+    public Task<PipelinePreSetup> GetPipelinePreSetup()
     {
         string? pipelinePreSetupValue = Environment.GetEnvironmentVariable("NUKE_PRE_SETUP");
 
@@ -74,9 +74,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             throw new Exception("NUKE_PRE_SETUP is empty");
         }
 
-        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue.Base64ToString(), JsonExtension.SnakeCaseNamingOption);
+        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue.Base64ToString(), JsonExtension.SnakeCaseNamingOption)
+            ?? throw new Exception("NUKE_PRE_SETUP is empty");
 
-        return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
+        return Task.FromResult(pipelinePreSetup);
     }
 
     public Task PreparePreSetup(AllEntry allEntry)

@@ -15,7 +15,7 @@ internal class PipelinePreSetup
 
     public required string Environment { get; init; }
 
-    public required long PullRequestNumber { get; init; }
+    public required long? PullRequestNumber { get; init; }
 
     public required bool HasRelease { get; init; }
 

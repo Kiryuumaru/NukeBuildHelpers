@@ -226,15 +226,18 @@ class Build : BaseNukeBuildHelpers
 
             string version = "0.0.0";
             string? releaseNotes = null;
-            if (context.TryGetBumpContext(out var bumpContext))
+            
+            // Simplified context checking using properties instead of TryGetContext methods
+            if (context.BumpVersion != null)
             {
-                version = bumpContext.AppVersion.Version.ToString();
-                releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+                version = context.BumpVersion.Version.ToString();
+                releaseNotes = context.BumpVersion.ReleaseNotes;
             }
-            else if (context.TryGetPullRequestContext(out var pullRequestContext))
+            else if (context.PullRequestVersion != null)
             {
-                version = pullRequestContext.AppVersion.Version.ToString();
+                version = context.PullRequestVersion.Version.ToString();
             }
+            
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetBuild(_ => _
