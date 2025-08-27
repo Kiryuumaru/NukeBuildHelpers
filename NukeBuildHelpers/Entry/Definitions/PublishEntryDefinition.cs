@@ -22,7 +22,14 @@ internal class PublishEntryDefinition : TargetEntryDefinition, IPublishEntryDefi
 
     protected override string GetDefaultName()
     {
-        return "Publish - " + ((IPublishEntryDefinition)this).AppId + " (" + ((IPublishEntryDefinition)this).Id + ")";
+        if (((IPublishEntryDefinition)this).AppIds.Count > 1 || ((IPublishEntryDefinition)this).AppIds.Count == 0)
+        {
+            return "Publish - " + ((IPublishEntryDefinition)this).Id;
+        }
+        else
+        {
+            return "Publish - " + ((IPublishEntryDefinition)this).AppIds.First() + " (" + ((IPublishEntryDefinition)this).Id + ")";
+        }
     }
 
     protected override IRunEntryDefinition Clone()

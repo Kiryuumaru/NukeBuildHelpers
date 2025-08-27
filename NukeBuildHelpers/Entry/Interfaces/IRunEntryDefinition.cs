@@ -16,6 +16,8 @@ public interface IRunEntryDefinition
 
     internal string Id { get; set; }
 
+    internal List<string> AppIds { get; set; }
+
     internal Func<IWorkflowBuilder, Task<string>> DisplayName { get; set; }
 
     internal Func<IRunContext, Task<bool>> Condition { get; set; }

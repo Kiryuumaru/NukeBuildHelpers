@@ -11,6 +11,7 @@ using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Enums;
 using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Entry.Definitions;
+using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
@@ -19,10 +20,12 @@ using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.Pipelines.Github;
 using NukeBuildHelpers.RunContext.Models;
+using Octokit;
 using Semver;
 using Serilog;
 using Sharprompt;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -228,87 +231,81 @@ partial class BaseNukeBuildHelpers
         SetCacheIndex(cachePairs);
     }
 
-    private void SetupTargetRunContext(ITargetEntryDefinition targetEntry, RunType runType, AppVersion appVersion, string? releaseNotes, PipelineRun pipeline)
+    private void SetupRunContext(IRunEntryDefinition targetEntry, List<(AppVersion AppVersion, RunType RunType)> appSetup, string? releaseNotes, PipelineRun pipeline)
     {
-        if (runType == RunType.Local)
-        {
-            targetEntry.RunContext = new RunContext.Models.RunContext()
-            {
-                RunType = RunType.Local,
-                PipelineType = PipelineType,
-                AppVersion = appVersion
-            };
-        }
-        else if (runType == RunType.Bump)
-        {
-            if (releaseNotes == null)
-            {
-                throw new Exception("Release notes is required for bump run");
-            }
-            targetEntry.RunContext = new RunContext.Models.RunContext()
-            {
-                RunType = RunType.Bump,
-                PipelineType = PipelineType,
-                AppVersion = appVersion,
-                BumpVersion = new BumpReleaseVersion()
-                {
-                    AppId = appVersion.AppId,
-                    Environment = appVersion.Environment,
-                    Version = appVersion.Version,
-                    BuildId = appVersion.BuildId,
-                    ReleaseNotes = releaseNotes
-                }
-            };
-        }
-        else if (runType == RunType.PullRequest)
-        {
-            if (pipeline.PipelineInfo.PullRequestNumber == null)
-            {
-                throw new Exception("Pull request number is required for pull request run");
-            }
-            targetEntry.RunContext = new RunContext.Models.RunContext()
-            {
-                RunType = RunType.PullRequest,
-                PipelineType = PipelineType,
-                AppVersion = appVersion,
-                PullRequestVersion = new PullRequestReleaseVersion()
-                {
-                    AppId = appVersion.AppId,
-                    Environment = appVersion.Environment,
-                    Version = appVersion.Version,
-                    BuildId = appVersion.BuildId,
-                    PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber.Value
-                }
-            };
-        }
-        else
-        {
-            targetEntry.RunContext = new RunContext.Models.RunContext()
-            {
-                RunType = runType,
-                PipelineType = PipelineType,
-                AppVersion = appVersion
-            };
-        }
-    }
+        Dictionary<string, RunContextVersion> versions = [];
 
-    private void SetupDependentRunContext(IDependentEntryDefinition dependentEntry, RunType runType)
-    {
-        if (runType == RunType.Local)
+        foreach (var (appVersion, runType) in appSetup)
         {
-            dependentEntry.RunContext = new RunContext.Models.RunContext()
+            if (runType == RunType.Local)
             {
-                RunType = RunType.Local
-            };
+                versions[appVersion.AppId] = new RunContextVersion()
+                {
+                    RunType = RunType.Local,
+                    AppVersion = appVersion,
+                    BumpVersion = null,
+                    PullRequestVersion = null
+                };
+            }
+            else if (runType == RunType.Bump)
+            {
+                if (releaseNotes == null)
+                {
+                    throw new Exception("Release notes is required for bump run");
+                }
+                versions[appVersion.AppId] = new RunContextVersion()
+                {
+                    RunType = RunType.Bump,
+                    AppVersion = appVersion,
+                    BumpVersion = new BumpReleaseVersion()
+                    {
+                        AppId = appVersion.AppId,
+                        Environment = appVersion.Environment,
+                        Version = appVersion.Version,
+                        BuildId = appVersion.BuildId,
+                        ReleaseNotes = releaseNotes
+                    },
+                    PullRequestVersion = null
+                };
+            }
+            else if (runType == RunType.PullRequest)
+            {
+                if (pipeline.PipelineInfo.PullRequestNumber == null)
+                {
+                    throw new Exception("Pull request number is required for pull request run");
+                }
+                versions[appVersion.AppId] = new RunContextVersion()
+                {
+                    RunType = RunType.PullRequest,
+                    AppVersion = appVersion,
+                    BumpVersion = null,
+                    PullRequestVersion = new PullRequestReleaseVersion()
+                    {
+                        AppId = appVersion.AppId,
+                        Environment = appVersion.Environment,
+                        Version = appVersion.Version,
+                        BuildId = appVersion.BuildId,
+                        PullRequestNumber = pipeline.PipelineInfo.PullRequestNumber.Value
+                    }
+                };
+            }
+            else
+            {
+                versions[appVersion.AppId] = new RunContextVersion()
+                {
+                    RunType = runType,
+                    AppVersion = appVersion,
+                    BumpVersion = null,
+                    PullRequestVersion = null
+                };
+            }
         }
-        else
+
+        targetEntry.RunContext = new RunContext.Models.RunContext()
         {
-            dependentEntry.RunContext = new RunContext.Models.RunContext()
-            {
-                RunType = runType,
-                PipelineType = PipelineType
-            };
-        }
+            PipelineType = PipelineType,
+            Versions = versions.AsReadOnly()
+        };
     }
 
     private async Task EntryPreSetup(AllEntry allEntry, PipelineRun pipeline, PipelinePreSetup pipelinePreSetup)
@@ -337,63 +334,69 @@ partial class BaseNukeBuildHelpers
 
         foreach (var targetEntry in allEntry.TargetEntryDefinitionMap.Values)
         {
-            if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(ValueHelpers.GetOrNullFail(targetEntry.AppId), out var entry))
-            {
-                throw new Exception("App id not found");
-            }
+            List<(AppVersion AppVersion, RunType RunType)> appSetup = [];
+
             if (!pipelinePreSetup.EntrySetupMap.TryGetValue(ValueHelpers.GetOrNullFail(targetEntry.Id), out var entrySetup))
             {
                 throw new Exception("Entry id not found");
             }
 
-            SemVersion version;
-            if (SemVersion.TryParse(entry.Version, SemVersionStyles.Strict, out var parsedSemVersion))
+            foreach (var appId in targetEntry.AppIds)
             {
-                version = parsedSemVersion;
-            }
-            else if (SemVersion.TryParse($"0.0.0-{entry.Environment}.0", SemVersionStyles.Strict, out var parsedMinSemVersion))
-            {
-                version = parsedMinSemVersion;
-            }
-            else
-            {
-                version = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
+                if (!entrySetup.RunTypes.TryGetValue(ValueHelpers.GetOrNullFail(appId), out var runType))
+                {
+                    throw new Exception("App id not found");
+                }
+
+                if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(ValueHelpers.GetOrNullFail(appId), out var entry))
+                {
+                    throw new Exception("App id not found");
+                }
+
+                appSetup.Add((new AppVersion()
+                {
+                    AppId = entry.AppId.NotNullOrEmpty(),
+                    Environment = entry.Environment,
+                    Version = ParseSemVersion(entry),
+                    BuildId = pipelinePreSetup.BuildId
+                }, runType));
             }
 
-            AppVersion appVersion = new()
-            {
-                AppId = entry.AppId.NotNullOrEmpty(),
-                Environment = entry.Environment,
-                Version = version,
-                BuildId = pipelinePreSetup.BuildId
-            };
-
-            SetupTargetRunContext(targetEntry, entrySetup.RunType, appVersion, releaseNotes, pipeline);
+            SetupRunContext(targetEntry, appSetup, releaseNotes, pipeline);
         }
 
         foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)
         {
-            if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(ValueHelpers.GetOrNullFail(dependentEntry.App), out var entry))
-            {
-                throw new Exception("App id not found");
-            }
-            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(ValueHelpers.GetOrNullFail(dependentEntry.Id), out var entrySetup))
-            {
-                throw new Exception("Entry id not found");
-            }
-
-            if (pipelinePreSetup == null)
-            {
-                SetupDependentRunContext(dependentEntry, RunType.Local);
-                continue;
-            }
+            List<(AppVersion AppVersion, RunType RunType)> appSetup = [];
 
             if (!pipelinePreSetup.EntrySetupMap.TryGetValue(ValueHelpers.GetOrNullFail(dependentEntry.Id), out var entrySetup))
             {
                 throw new Exception("Entry id not found");
             }
 
-            SetupDependentRunContext(dependentEntry, entrySetup.RunType);
+            foreach (var appId in dependentEntry.AppIds)
+            {
+                if (!entrySetup.RunTypes.TryGetValue(ValueHelpers.GetOrNullFail(appId), out var runType))
+                {
+                    throw new Exception("App id not found");
+                }
+
+                if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(ValueHelpers.GetOrNullFail(appId), out var entry))
+                {
+                    throw new Exception("App id not found");
+                }
+
+                appSetup.Add((new AppVersion()
+                {
+                    AppId = entry.AppId.NotNullOrEmpty(),
+                    Environment = entry.Environment,
+                    Version = ParseSemVersion(entry),
+                    BuildId = pipelinePreSetup.BuildId
+                }, runType));
+
+            }
+
+            SetupRunContext(dependentEntry, appSetup, releaseNotes, pipeline);
         }
     }
 
@@ -456,8 +459,9 @@ partial class BaseNukeBuildHelpers
                             {
                                 continue;
                             }
-                            var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                            if (testEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
+                            var id = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                            if (allEntry.RunEntryDefinitionMap.TryGetValue(id, out var runEntryDefinition) &&
+                                testEntryDefinition.AppIds.Any(i => runEntryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                             {
                                 artifact.UnZipTo(CommonOutputDirectory);
                             }
@@ -474,7 +478,7 @@ partial class BaseNukeBuildHelpers
                                 continue;
                             }
                             var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                            if (appId.Equals(publishEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
+                            if (appId.Equals(publishEntryDefinition.Id, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 artifact.UnZipTo(CommonOutputDirectory);
                             }
@@ -489,7 +493,7 @@ partial class BaseNukeBuildHelpers
             switch (entry)
             {
                 case IBuildEntryDefinition buildEntryDefinition:
-                    var buildArtifactName = "build" + ArtifactNameSeparator + buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
+                    var buildArtifactName = "build" + ArtifactNameSeparator + buildEntryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
                     var buildArtifactTempPath = TemporaryDirectory / buildArtifactName;
                     var buildArtifactFilePath = CommonArtifactsUploadDirectory / $"{buildArtifactName}.zip";
                     buildArtifactTempPath.CreateOrCleanDirectory();
@@ -531,7 +535,7 @@ partial class BaseNukeBuildHelpers
                             Log.Information("Added {file} to common assets", asset);
                         }
                     }
-                    var publishArtifactName = "publish" + ArtifactNameSeparator + publishEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
+                    var publishArtifactName = "publish" + ArtifactNameSeparator + publishEntryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
                     var publishArtifactTempPath = TemporaryDirectory / publishArtifactName;
                     var publishArtifactFilePath = CommonArtifactsUploadDirectory / $"{publishArtifactName}.zip";
                     publishArtifactTempPath.CreateOrCleanDirectory();
@@ -1696,43 +1700,34 @@ partial class BaseNukeBuildHelpers
 
         foreach (var targetEntry in allEntry.TargetEntryDefinitionMap.Values)
         {
-            if (!toEntry.TryGetValue(ValueHelpers.GetOrNullFail(targetEntry.AppId), out var entry))
+            List<(AppVersion AppVersion, RunType RunType)> appSetup = [];
+
+            foreach (var appId in targetEntry.AppIds)
             {
-                continue;
+                if (!toEntry.TryGetValue(ValueHelpers.GetOrNullFail(appId), out var entry))
+                {
+                    continue;
+                }
+
+                RunType runType = pipeline.PipelineInfo.TriggerType switch
+                {
+                    TriggerType.PullRequest => RunType.PullRequest,
+                    TriggerType.Commit => useVersionFile ? (entry.HasRelease ? RunType.Bump : RunType.Commit) : RunType.Commit,
+                    TriggerType.Tag => entry.HasRelease ? RunType.Bump : RunType.Commit,
+                    TriggerType.Local => RunType.Local,
+                    _ => throw new NotSupportedException()
+                };
+
+                appSetup.Add((new AppVersion
+                {
+                    AppId = entry.AppId.NotNullOrEmpty(),
+                    Environment = entry.Environment,
+                    Version = ParseSemVersion(entry),
+                    BuildId = buildId
+                }, runType));
             }
 
-            RunType runType = pipeline.PipelineInfo.TriggerType switch
-            {
-                TriggerType.PullRequest => RunType.PullRequest,
-                TriggerType.Commit => useVersionFile ? (entry.HasRelease ? RunType.Bump : RunType.Commit) : RunType.Commit,
-                TriggerType.Tag => entry.HasRelease ? RunType.Bump : RunType.Commit,
-                TriggerType.Local => RunType.Local,
-                _ => throw new NotSupportedException()
-            };
-
-            SemVersion version;
-            if (SemVersion.TryParse(entry.Version, SemVersionStyles.Strict, out var parsedSemVersion))
-            {
-                version = parsedSemVersion;
-            }
-            else if (SemVersion.TryParse($"0.0.0-{entry.Environment}.0", SemVersionStyles.Strict, out var parsedMinSemVersion))
-            {
-                version = parsedMinSemVersion;
-            }
-            else
-            {
-                version = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
-            }
-
-            AppVersion appVersion = new()
-            {
-                AppId = entry.AppId.NotNullOrEmpty(),
-                Environment = entry.Environment,
-                Version = version,
-                BuildId = buildId
-            };
-
-            SetupTargetRunContext(targetEntry, runType, appVersion, releaseNotes, pipeline);
+            SetupRunContext(targetEntry, appSetup, releaseNotes, pipeline);
         }
 
         Dictionary<string, EntrySetup> testEntrySetupMap = [];
@@ -1767,7 +1762,7 @@ partial class BaseNukeBuildHelpers
             EntrySetup setup = new()
             {
                 Id = entry.Id,
-                RunType = ValueHelpers.GetOrNullFail(entry.RunContext).RunType,
+                RunTypes = ValueHelpers.GetOrNullFail(entry.RunContext).Versions.ToDictionary(i => i.Key, i => i.Value.RunType),
                 Condition = await entry.GetCondition(),
                 RunnerOSSetup = new()
                 {
@@ -1803,44 +1798,34 @@ partial class BaseNukeBuildHelpers
 
         foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)
         {
-            List<(EntrySetup Setup, IBuildEntryDefinition Entry)> buildEntries = [];
-            List<(EntrySetup Setup, IPublishEntryDefinition Entry)> publishEntries = [];
-            List<(EntrySetup Setup, ITargetEntryDefinition Entry)> targetEntries = [];
+            List<(AppVersion AppVersion, RunType RunType)> appSetup = [];
 
             foreach (var appId in dependentEntry.AppIds)
             {
-                foreach (var entrySetup in entrySetupMap.Values)
+                if (!toEntry.TryGetValue(ValueHelpers.GetOrNullFail(appId), out var entry))
                 {
-                    if (allEntry.TargetEntryDefinitionMap.TryGetValue(entrySetup.Id, out var targetEntry) &&
-                        ValueHelpers.GetOrNullFail(targetEntry.AppId).Equals(appId, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (targetEntry is IBuildEntryDefinition buildEntry)
-                        {
-                            buildEntries.Add((entrySetup, buildEntry));
-                        }
-                        else if (targetEntry is IPublishEntryDefinition publishEntry)
-                        {
-                            publishEntries.Add((entrySetup, publishEntry));
-                        }
-                    }
+                    continue;
                 }
+
+                RunType runType = pipeline.PipelineInfo.TriggerType switch
+                {
+                    TriggerType.PullRequest => RunType.PullRequest,
+                    TriggerType.Commit => useVersionFile ? (entry.HasRelease ? RunType.Bump : RunType.Commit) : RunType.Commit,
+                    TriggerType.Tag => entry.HasRelease ? RunType.Bump : RunType.Commit,
+                    TriggerType.Local => RunType.Local,
+                    _ => throw new NotSupportedException()
+                };
+
+                appSetup.Add((new AppVersion
+                {
+                    AppId = entry.AppId.NotNullOrEmpty(),
+                    Environment = entry.Environment,
+                    Version = ParseSemVersion(entry),
+                    BuildId = buildId
+                }, runType));
             }
 
-            RunType runType = pipeline.PipelineInfo.TriggerType switch
-            {
-                TriggerType.PullRequest => RunType.PullRequest,
-                TriggerType.Commit => RunType.Commit,
-                TriggerType.Tag => targetEntries.Any(i => i.Entry.RunContext?.IsBump == true) ? RunType.Bump : RunType.Commit,
-                TriggerType.Local => RunType.Local,
-                _ => throw new NotSupportedException()
-            };
-
-            if (targetEntries.Any(i => i.Setup.Condition))
-            {
-                runType |= RunType.Target;
-            }
-
-            SetupDependentRunContext(dependentEntry, runType);
+            SetupRunContext(dependentEntry, appSetup, releaseNotes, pipeline);
         }
 
         foreach (var entry in allEntry.DependentEntryDefinitionMap.Values)
@@ -1868,5 +1853,23 @@ partial class BaseNukeBuildHelpers
         };
 
         await pipeline.Pipeline.FinalizePreSetup(allEntry, pipelinePreSetup);
+    }
+
+    private static SemVersion ParseSemVersion(AppRunEntry entry)
+    {
+        SemVersion version;
+        if (SemVersion.TryParse(entry.Version, SemVersionStyles.Strict, out var parsedSemVersion))
+        {
+            version = parsedSemVersion;
+        }
+        else if (SemVersion.TryParse($"0.0.0-{entry.Environment}.0", SemVersionStyles.Strict, out var parsedMinSemVersion))
+        {
+            version = parsedMinSemVersion;
+        }
+        else
+        {
+            version = SemVersion.Parse($"0.0.0", SemVersionStyles.Strict);
+        }
+        return version;
     }
 }

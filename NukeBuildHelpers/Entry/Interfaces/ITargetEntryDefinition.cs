@@ -5,5 +5,4 @@
 /// </summary>
 public interface ITargetEntryDefinition : IRunEntryDefinition
 {
-    internal string? AppId { get; set; }
 }

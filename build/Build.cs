@@ -10,7 +10,6 @@ using NukeBuildHelpers.Entry;
 using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Pipelines.Azure.Extensions;
 using NukeBuildHelpers.Pipelines.Github.Extensions;
-using NukeBuildHelpers.RunContext.Extensions;
 using NukeBuildHelpers.Runner.Abstraction;
 using Serilog;
 using System;
@@ -224,21 +223,23 @@ class Build : BaseNukeBuildHelpers
         {
             var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersBuild1));
 
+            var contextVersion = context.Versions.First().Value;
+
             string version = "0.0.0";
             string? releaseNotes = null;
             
             // Simplified context checking using properties instead of TryGetContext methods
-            if (context.BumpVersion != null)
+            if (contextVersion.BumpVersion != null)
             {
-                version = context.BumpVersion.Version.ToString();
-                releaseNotes = context.BumpVersion.ReleaseNotes;
+                version = contextVersion.BumpVersion.Version.ToString();
+                releaseNotes = contextVersion.BumpVersion.ReleaseNotes;
             }
-            else if (context.PullRequestVersion != null)
+            else if (contextVersion.PullRequestVersion != null)
             {
-                version = context.PullRequestVersion.Version.ToString();
+                version = contextVersion.PullRequestVersion.Version.ToString();
             }
 
-            Log.Information("Version to use: {version}", context.AppVersion.Version.ToString());
+            Log.Information("Version to use: {version}", contextVersion.AppVersion.Version.ToString());
 
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
@@ -277,16 +278,18 @@ class Build : BaseNukeBuildHelpers
         {
             var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersBuild2));
 
+            var contextVersion = context.Versions.First().Value;
+
             string version = "0.0.0";
             string? releaseNotes = null;
-            if (context.BumpVersion != null)
+            if (contextVersion.BumpVersion != null)
             {
-                version = context.BumpVersion.Version.ToString();
-                releaseNotes = context.BumpVersion.ReleaseNotes;
+                version = contextVersion.BumpVersion.Version.ToString();
+                releaseNotes = contextVersion.BumpVersion.ReleaseNotes;
             }
-            else if (context.PullRequestVersion != null)
+            else if (contextVersion.PullRequestVersion != null)
             {
-                version = context.PullRequestVersion.Version.ToString();
+                version = contextVersion.PullRequestVersion.Version.ToString();
             }
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
@@ -314,16 +317,18 @@ class Build : BaseNukeBuildHelpers
         {
             var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersBuild3));
 
+            var contextVersion = context.Versions.First().Value;
+
             string version = "0.0.0";
             string? releaseNotes = null;
-            if (context.BumpVersion != null)
+            if (contextVersion.BumpVersion != null)
             {
-                version = context.BumpVersion.Version.ToString();
-                releaseNotes = context.BumpVersion.ReleaseNotes;
+                version = contextVersion.BumpVersion.Version.ToString();
+                releaseNotes = contextVersion.BumpVersion.ReleaseNotes;
             }
-            else if (context.PullRequestVersion != null)
+            else if (contextVersion.PullRequestVersion != null)
             {
-                version = context.PullRequestVersion.Version.ToString();
+                version = contextVersion.PullRequestVersion.Version.ToString();
             }
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
@@ -352,11 +357,13 @@ class Build : BaseNukeBuildHelpers
         {
             var (NukeBuildHelpersProjectPath, NukeBuildHelpersProjectTestPath) = await PrepareClonedProjects(nameof(NukeBuildHelpersPublish));
 
+            var contextVersion = context.Versions.First().Value;
+
             foreach (var path in OutputDirectory.GetFiles("**", 99))
             {
                 Log.Information(path);
             }
-            if (context.RunType == RunType.Bump)
+            if (contextVersion.RunType == RunType.Bump)
             {
                 RetryTask(() => DotNetTasks.DotNetNuGetPush(_ => _
                     .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")

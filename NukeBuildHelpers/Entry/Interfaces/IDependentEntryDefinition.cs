@@ -5,5 +5,4 @@
 /// </summary>
 public interface IDependentEntryDefinition : IRunEntryDefinition
 {
-    internal List<string> AppIds { get; set; }
 }
