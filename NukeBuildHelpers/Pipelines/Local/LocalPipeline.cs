@@ -30,7 +30,7 @@ internal class LocalPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         await NukeBuild.RunPipelinePreSetup();
         var pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup?>(
         (Nuke.Common.NukeBuild.TemporaryDirectory / "NUKE_PRE_SETUP.json")
-            .ReadAllText()) ?? throw new Exception("NUKE_PRE_SETUP is empty");
+            .ReadAllText(), JsonExtension.SnakeCaseNamingOption) ?? throw new Exception("NUKE_PRE_SETUP is empty");
         return pipelinePreSetup;
     }
 

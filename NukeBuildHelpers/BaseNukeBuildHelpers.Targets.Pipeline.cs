@@ -48,9 +48,9 @@ partial class BaseNukeBuildHelpers
 
             EntryHelpers.SetupSecretVariables(this);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
+            var pipeline = await PipelineHelpers.SetupPipeline(this);
 
-            var pipelinePreSetup = pipeline.Pipeline.GetPipelinePreSetup();
+            var pipelinePreSetup = await pipeline.Pipeline.GetPipelinePreSetup();
 
             await pipeline.Pipeline.PreparePostSetup(allEntry, pipelinePreSetup);
 

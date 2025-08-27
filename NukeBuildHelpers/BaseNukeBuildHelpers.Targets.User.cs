@@ -109,7 +109,7 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
+            var pipeline = await PipelineHelpers.SetupPipeline(this);
 
             var idsToRun = splitArgs.Select(i => i.Key);
 
@@ -163,7 +163,7 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
+            var pipeline = await PipelineHelpers.SetupPipeline(this);
 
             await TestAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
@@ -183,7 +183,7 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
+            var pipeline = await PipelineHelpers.SetupPipeline(this);
 
             await BuildAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });
@@ -203,7 +203,7 @@ partial class BaseNukeBuildHelpers
 
             CheckAppEntry(allEntry);
 
-            var pipeline = PipelineHelpers.SetupPipeline(this);
+            var pipeline = await PipelineHelpers.SetupPipeline(this);
 
             await PublishAppEntries(allEntry, pipeline, splitArgs.Select(i => i.Key));
         });

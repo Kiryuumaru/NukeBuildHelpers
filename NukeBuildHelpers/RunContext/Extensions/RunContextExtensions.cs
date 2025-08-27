@@ -44,16 +44,6 @@ public static class RunContextExtensions
     }
 
     /// <summary>
-    /// Checks if this is a pipeline run.
-    /// </summary>
-    /// <param name="runContext">The current run context.</param>
-    /// <returns>True if this is a pipeline run; otherwise, false.</returns>
-    public static bool IsPipelineContext(this IRunContext runContext)
-    {
-        return runContext.IsPipeline;
-    }
-
-    /// <summary>
     /// Checks if this is a commit run.
     /// </summary>
     /// <param name="runContext">The current run context.</param>

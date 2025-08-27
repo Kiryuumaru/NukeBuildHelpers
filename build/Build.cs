@@ -237,7 +237,9 @@ class Build : BaseNukeBuildHelpers
             {
                 version = context.PullRequestVersion.Version.ToString();
             }
-            
+
+            Log.Information("Version to use: {version}", context.AppVersion.Version.ToString());
+
             RetryTask(() => DotNetTasks.DotNetClean(_ => _
                 .SetProject(NukeBuildHelpersProjectPath)), "DotNetClean");
             RetryTask(() => DotNetTasks.DotNetBuild(_ => _

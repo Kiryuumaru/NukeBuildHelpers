@@ -11,8 +11,8 @@ namespace NukeBuildHelpers.RunContext.Models;
 internal class RunContext : IRunContext
 {
     public required RunType RunType { get; init; }
-    public PipelineType PipelineType { get; init; }
-    public AppVersion? AppVersion { get; init; }
+    public required PipelineType PipelineType { get; init; }
+    public required AppVersion AppVersion { get; init; }
     public BumpReleaseVersion? BumpVersion { get; init; }
     public PullRequestReleaseVersion? PullRequestVersion { get; init; }
 }

@@ -373,6 +373,15 @@ partial class BaseNukeBuildHelpers
 
         foreach (var dependentEntry in allEntry.DependentEntryDefinitionMap.Values)
         {
+            if (!pipelinePreSetup.AppRunEntryMap.TryGetValue(ValueHelpers.GetOrNullFail(dependentEntry.App), out var entry))
+            {
+                throw new Exception("App id not found");
+            }
+            if (!pipelinePreSetup.EntrySetupMap.TryGetValue(ValueHelpers.GetOrNullFail(dependentEntry.Id), out var entrySetup))
+            {
+                throw new Exception("Entry id not found");
+            }
+
             if (pipelinePreSetup == null)
             {
                 SetupDependentRunContext(dependentEntry, RunType.Local);
@@ -1735,7 +1744,6 @@ partial class BaseNukeBuildHelpers
 
         async Task<EntrySetup> createEntrySetup(IRunEntryDefinition entry)
         {
-            var runnerOs = await entry.GetRunnerOS();
             var cachePaths = await entry.GetCachePaths();
             var flatCachePaths = cachePaths.Select(i =>
             {
@@ -1747,6 +1755,15 @@ partial class BaseNukeBuildHelpers
                 return flatPath[RootDirectory.ToString().Length..];
             });
 
+            var runnerOs = await entry.GetRunnerOS();
+            var runnerPipelineOS = "local";
+            var runScript = "local";
+            if (PipelineType != Pipelines.Common.Enums.PipelineType.Local)
+            {
+                runnerPipelineOS = JsonSerializer.Serialize(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented);
+                runScript = runnerOs.GetRunScript(PipelineType);
+            }
+
             EntrySetup setup = new()
             {
                 Id = entry.Id,
@@ -1755,8 +1772,8 @@ partial class BaseNukeBuildHelpers
                 RunnerOSSetup = new()
                 {
                     Name = runnerOs.Name,
-                    RunnerPipelineOS = JsonSerializer.Serialize(runnerOs.GetPipelineOS(PipelineType), JsonExtension.SnakeCaseNamingOptionIndented),
-                    RunScript = runnerOs.GetRunScript(PipelineType)
+                    RunnerPipelineOS = runnerPipelineOS,
+                    RunScript = runScript
                 },
                 CacheInvalidator = await entry.GetCacheInvalidator(),
                 CachePaths = [.. flatCachePaths],

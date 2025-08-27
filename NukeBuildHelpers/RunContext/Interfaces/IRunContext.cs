@@ -20,9 +20,9 @@ public interface IRunContext
     PipelineType PipelineType { get; }
 
     /// <summary>
-    /// Gets the application version associated with the context. Null for local and commit-only runs.
+    /// Gets the application version associated with the context.
     /// </summary>
-    AppVersion? AppVersion { get; }
+    AppVersion AppVersion { get; }
 
     /// <summary>
     /// Gets the bump release version with release notes. Null unless this is a bump run.
