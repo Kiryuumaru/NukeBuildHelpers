@@ -223,7 +223,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD1
+        name: build___nukebuildhelpersbuild1___NUKEBUILDHELPERSBUILD1
         path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
@@ -258,7 +258,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT3
+        name: build___nukebuildhelpersbuild2mat1mat3___NUKEBUILDHELPERSBUILD2MAT1MAT3
         path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
@@ -293,7 +293,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT4
+        name: build___nukebuildhelpersbuild2mat1mat4___NUKEBUILDHELPERSBUILD2MAT1MAT4
         path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
@@ -328,7 +328,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT3
+        name: build___nukebuildhelpersbuild2mat2mat3___NUKEBUILDHELPERSBUILD2MAT2MAT3
         path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
@@ -363,7 +363,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT4
+        name: build___nukebuildhelpersbuild2mat2mat4___NUKEBUILDHELPERSBUILD2MAT2MAT4
         path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
@@ -398,7 +398,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build___nuke_build_helpers2___NUKEBUILDHELPERSBUILD3
+        name: build___nukebuildhelpersbuild3___NUKEBUILDHELPERSBUILD3
         path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
@@ -527,7 +527,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
-        pattern: build___nuke_build_helpers___*
+        pattern: build___nukebuildhelperspublish___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -542,7 +542,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: publish___nuke_build_helpers___NUKEBUILDHELPERSPUBLISH
+        name: publish___nukebuildhelperspublish___NUKEBUILDHELPERSPUBLISH
         path: ./.nuke/temp/artifacts-upload/*
         if-no-files-found: error
         retention-days: 1
