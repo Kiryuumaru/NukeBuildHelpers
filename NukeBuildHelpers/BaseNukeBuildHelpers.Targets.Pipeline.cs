@@ -11,6 +11,7 @@ using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common;
 using NukeBuildHelpers.Pipelines.Common.Models;
 using NukeBuildHelpers.RunContext.Interfaces;
+using Octokit;
 using Semver;
 using Serilog;
 using System.Text.Json;
@@ -55,7 +56,6 @@ partial class BaseNukeBuildHelpers
             await pipeline.Pipeline.PreparePostSetup(allEntry, pipelinePreSetup);
 
             bool success = true;
-
             foreach (var entryDefinition in allEntry.RunEntryDefinitionMap.Values)
             {
                 var entryRunResult = Environment.GetEnvironmentVariable("NUKE_RUN_RESULT_" + entryDefinition.Id.ToUpperInvariant());
@@ -65,10 +65,6 @@ partial class BaseNukeBuildHelpers
                     success = false;
                 }
             }
-
-            var assetOutput = TemporaryDirectory / "release_assets";
-
-            assetOutput.CreateOrCleanDirectory();
 
             if (CommonArtifactsDirectory.DirectoryExists())
             {
@@ -83,32 +79,56 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
-            foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+            var assetOutput = TemporaryDirectory / "release_assets";
+            assetOutput.CreateOrCleanDirectory();
+
+            var commonOutputDir = CommonOutputDirectory / "$common";
+            var assetDir = commonOutputDir / "assets";
+            var commonAssetDir = commonOutputDir / "common_assets";
+            if (assetDir.DirectoryExists())
             {
-                if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+                foreach (var assetPath in assetDir.GetFiles("*"))
                 {
-                    continue;
-                }
-                var appIdLower = appEntry.AppId.ToLowerInvariant();
-                var releasePath = CommonOutputDirectory / appIdLower;
-                var commonAssetPath = releasePath / "common_assets";
-                if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
-                {
-                    var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
-                    await commonAssetPath.CopyTo(commonOutPath);
-                    commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
-                    Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
-                }
-                var individualAssetPath = releasePath / "assets";
-                if (individualAssetPath.DirectoryExists() && individualAssetPath.GetFiles().Any())
-                {
-                    foreach (var releaseAsset in individualAssetPath.GetFiles())
-                    {
-                        await releaseAsset.CopyTo(assetOutput / releaseAsset.Name);
-                        Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
-                    }
+                    await assetPath.CopyTo(assetOutput / assetPath.Name);
+                    Log.Information("Publish individual asset: {name}", assetPath.Name);
                 }
             }
+            if (commonAssetDir.DirectoryExists())
+            {
+                foreach (var commonAssetPath in commonAssetDir.GetFiles("*"))
+                {
+                    await commonAssetPath.CopyTo(assetOutput / commonAssetPath.Name);
+                    Log.Information("Publish common asset: {name}", commonAssetPath.Name);
+                }
+            }
+
+
+            //foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
+            //{
+            //    if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
+            //    {
+            //        continue;
+            //    }
+            //    var appIdLower = appEntry.AppId.ToLowerInvariant();
+            //    var releasePath = CommonOutputDirectory / appIdLower;
+            //    var commonAssetPath = releasePath / "common_assets";
+            //    if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
+            //    {
+            //        var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
+            //        await commonAssetPath.CopyTo(commonOutPath);
+            //        commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
+            //        Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
+            //    }
+            //    var individualAssetPath = releasePath / "assets";
+            //    if (individualAssetPath.DirectoryExists() && individualAssetPath.GetFiles().Any())
+            //    {
+            //        foreach (var releaseAsset in individualAssetPath.GetFiles())
+            //        {
+            //            await releaseAsset.CopyTo(assetOutput / releaseAsset.Name);
+            //            Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
+            //        }
+            //    }
+            //}
 
             if (success)
             {
