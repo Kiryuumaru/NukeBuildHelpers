@@ -498,37 +498,6 @@ partial class BaseNukeBuildHelpers
 
         }, async entry =>
         {
-            var releaseAssetsDir = TemporaryDirectory / "release_assets";
-            var assetOutDir = releaseAssetsDir / "assets";
-            var commonAssetOutDir = releaseAssetsDir / "common_assets";
-            assetOutDir.CreateOrCleanDirectory();
-            commonAssetOutDir.CreateOrCleanDirectory();
-            foreach (var asset in ReleaseAssets)
-            {
-                if (asset.FileExists())
-                {
-                    await asset.CopyTo(assetOutDir / asset.Name);
-                }
-                else if (asset.DirectoryExists())
-                {
-                    var destinationPath = assetOutDir / (asset.Name + ".zip");
-                    if (destinationPath.FileExists())
-                    {
-                        destinationPath.DeleteFile();
-                    }
-                    asset.ZipTo(destinationPath);
-                }
-                Log.Information("Added {file} to release assets", asset);
-            }
-            foreach (var asset in ReleaseCommonAssets)
-            {
-                if (asset.FileExists() || asset.DirectoryExists())
-                {
-                    await asset.CopyTo(commonAssetOutDir);
-                    Log.Information("Added {file} to common assets", asset);
-                }
-            }
-
             var entryType = entry switch
             {
                 IBuildEntryDefinition => "build",

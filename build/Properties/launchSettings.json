@@ -1,7 +1,8 @@
 {
   "profiles": {
     "_build": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "run --args NUKEBUILDHELPERSBUILD1"
     }
   }
 }

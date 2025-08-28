@@ -226,7 +226,7 @@ class Build : BaseNukeBuildHelpers
 
             var contextVersion = ctx.Apps.First().Value;
 
-            string version = "0.0.0";
+            string version = contextVersion.AppVersion.Version.ToString();
             string? releaseNotes = null;
             
             // Simplified context checking using properties instead of TryGetContext methods
@@ -281,7 +281,7 @@ class Build : BaseNukeBuildHelpers
 
             var contextVersion = context.Apps.First().Value;
 
-            string version = "0.0.0";
+            string version = contextVersion.AppVersion.Version.ToString();
             string? releaseNotes = null;
             if (contextVersion.BumpVersion != null)
             {
@@ -320,7 +320,7 @@ class Build : BaseNukeBuildHelpers
 
             var contextVersion = context.Apps.First().Value;
 
-            string version = "0.0.0";
+            string version = contextVersion.AppVersion.Version.ToString();
             string? releaseNotes = null;
             if (contextVersion.BumpVersion != null)
             {
@@ -372,9 +372,9 @@ class Build : BaseNukeBuildHelpers
                     .SetApiKey(NuGetAuthToken)
                     .SetTargetPath(contextVersion.OutputDirectory / "main" / "**")), "DotNetNuGetPush");
             }
-            AddReleaseAsset(contextVersion.OutputDirectory / "try" / "test_release");
-            AddReleaseAsset(contextVersion.OutputDirectory / "try" / "test_release.tar.gz");
-            AddReleaseAsset(contextVersion.OutputDirectory / "main");
+            await AddReleaseAsset(contextVersion.OutputDirectory / "try" / "test_release");
+            await AddReleaseAsset(contextVersion.OutputDirectory / "try" / "test_release.tar.gz");
+            await AddReleaseAsset(contextVersion.OutputDirectory / "main");
         });
 
     private async Task<(AbsolutePath NukeBuildHelpersProjectPath, AbsolutePath NukeBuildHelpersProjectTestPath)> PrepareClonedProjects(string subPath)
