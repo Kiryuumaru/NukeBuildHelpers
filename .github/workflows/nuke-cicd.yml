@@ -226,7 +226,7 @@ jobs:
     - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -266,7 +266,7 @@ jobs:
     - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -306,7 +306,7 @@ jobs:
     - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -346,7 +346,7 @@ jobs:
     - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -386,7 +386,7 @@ jobs:
     - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -426,7 +426,7 @@ jobs:
     - name: Download nuke_build_helpers2 pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers2
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers2___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -464,12 +464,12 @@ jobs:
     - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers___*
     - name: Download nuke_build_helpers build artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: build___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -514,12 +514,12 @@ jobs:
     - name: Download nuke_build_helpers2 pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers2
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers2___*
     - name: Download nuke_build_helpers2 build artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers2
+        path: ./.nuke/temp/artifacts-download
         pattern: build___nuke_build_helpers2___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -555,6 +555,16 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download nuke_build_helpers2 pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers2___*
+    - name: Download nuke_build_helpers2 build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: build___nuke_build_helpers2___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -566,17 +576,17 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersTest5
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest5"
+    - name: Upload nuke_build_helpers2 post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___nuke_build_helpers2___NUKEBUILDHELPERSTEST5
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers2/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
-    - NUKEBUILDHELPERSTEST1
-    - NUKEBUILDHELPERSTEST2CUSTOMID
-    - NUKEBUILDHELPERSBUILD1
-    - NUKEBUILDHELPERSBUILD2MAT1MAT3
-    - NUKEBUILDHELPERSBUILD2MAT1MAT4
-    - NUKEBUILDHELPERSBUILD2MAT2MAT3
-    - NUKEBUILDHELPERSBUILD2MAT2MAT4
     - NUKEBUILDHELPERSBUILD3
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD3.result == 'success'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CONDITION == 'true' && needs.NUKEBUILDHELPERSBUILD3.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSPUBLISH:
@@ -592,17 +602,17 @@ jobs:
     - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: pre_test___nuke_build_helpers___*
     - name: Download nuke_build_helpers build artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: build___nuke_build_helpers___*
     - name: Download nuke_build_helpers post_test artifacts
       uses: actions/download-artifact@v4
       with:
-        path: ./.nuke/temp/artifacts-download/nuke_build_helpers
+        path: ./.nuke/temp/artifacts-download
         pattern: post_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
@@ -632,8 +642,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD2MAT2MAT3
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
     - NUKEBUILDHELPERSTEST3
-    - NUKEBUILDHELPERSTEST5
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSTEST3.result == 'success' && needs.NUKEBUILDHELPERSTEST5.result == 'success'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSTEST3.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:

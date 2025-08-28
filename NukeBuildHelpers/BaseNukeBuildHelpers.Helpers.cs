@@ -455,44 +455,20 @@ partial class BaseNukeBuildHelpers
     {
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, entry =>
         {
-            switch (entry)
+            if (CommonArtifactsDirectory.DirectoryExists())
             {
-                case IBuildEntryDefinition buildEntryDefinition:
-                    break;
-                case ITestEntryDefinition testEntryDefinition:
-                    if (CommonArtifactsDirectory.DirectoryExists())
+                foreach (var artifact in CommonArtifactsDirectory.GetFiles())
+                {
+                    if (!artifact.HasExtension(".zip"))
                     {
-                        foreach (var artifact in CommonArtifactsDirectory.GetFiles())
-                        {
-                            if (!artifact.HasExtension(".zip"))
-                            {
-                                continue;
-                            }
-                            var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                            if (testEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
-                            {
-                                artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
-                            }
-                        }
+                        continue;
                     }
-                    break;
-                case IPublishEntryDefinition publishEntryDefinition:
-                    if (CommonArtifactsDirectory.DirectoryExists())
+                    var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                    if (entry.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                     {
-                        foreach (var artifact in CommonArtifactsDirectory.GetFiles())
-                        {
-                            if (!artifact.HasExtension(".zip"))
-                            {
-                                continue;
-                            }
-                            var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                            if (publishEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
-                            {
-                                artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
-                            }
-                        }
+                        artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
                     }
-                    break;
+                }
             }
             return Task.CompletedTask;
 

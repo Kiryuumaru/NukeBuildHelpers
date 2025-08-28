@@ -434,7 +434,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
             var downloadPublishStep = AddJobStep(job, displayName: $"Download {appIdLower} {entryType} artifacts", task: "DownloadPipelineArtifact@2");
             AddJobStepInputs(downloadPublishStep, "itemPattern", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
-            AddJobStepInputs(downloadPublishStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
+            AddJobStepInputs(downloadPublishStep, "path", $"./.nuke/temp/artifacts-download");
             AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
         }
     }

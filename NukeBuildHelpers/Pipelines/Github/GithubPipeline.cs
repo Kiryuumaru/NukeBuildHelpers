@@ -443,7 +443,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         {
             var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
             var downloadPostTestStep = AddJobStep(job, name: $"Download {appIdLower} {entryType} artifacts", uses: "actions/download-artifact@v4");
-            AddJobStepWith(downloadPostTestStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
+            AddJobStepWith(downloadPostTestStep, "path", $"./.nuke/temp/artifacts-download");
             AddJobStepWith(downloadPostTestStep, "pattern", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
         }
     }
