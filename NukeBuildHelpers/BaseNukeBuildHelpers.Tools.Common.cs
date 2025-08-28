@@ -24,22 +24,28 @@ partial class BaseNukeBuildHelpers
         assetOutDir.CreateDirectory();
         if (path.FileExists())
         {
-            await path.CopyTo(assetOutDir / (string.IsNullOrWhiteSpace(customFilename) ? path.Name : customFilename));
-            Log.Information("Added file {file} to release assets", path);
+            var name = string.IsNullOrWhiteSpace(customFilename) ? path.Name : customFilename;
+            await path.CopyTo(assetOutDir / name);
+            Log.Information("Added file {file} as {name} to release assets", path, name);
         }
         else if (path.DirectoryExists())
         {
-            var destinationPath = assetOutDir / ((string.IsNullOrWhiteSpace(customFilename) ? path.Name : customFilename) + ".zip");
+            var name = (string.IsNullOrWhiteSpace(customFilename) ? path.Name : customFilename) + ".zip";
+            var destinationPath = assetOutDir / name;
             if (destinationPath.FileExists())
             {
                 destinationPath.DeleteFile();
             }
             path.ZipTo(destinationPath);
-            Log.Information("Added archive {file} to release assets", path);
+            Log.Information("Added archive {file} as {name} to release assets", path, name);
         }
         else
         {
             Log.Warning("Asset {file} does not exists", path);
+        }
+        foreach (var path1 in releaseAssetsDir.GetFiles("**", 99))
+        {
+            Log.Information(path1);
         }
     }
 }
