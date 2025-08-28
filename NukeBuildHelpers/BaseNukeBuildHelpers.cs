@@ -16,6 +16,8 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
 
     internal static AbsolutePath CommonOutputDirectory { get; } = TemporaryDirectory / "output";
 
+    internal static AbsolutePath CommonOutputRuntimeDirectory => CommonOutputDirectory / "runtime";
+
     internal static AbsolutePath CommonArtifactsDirectory { get; } = TemporaryDirectory / "artifacts";
 
     internal static AbsolutePath CommonArtifactsDownloadDirectory { get; } = TemporaryDirectory / "artifacts-download";
@@ -25,11 +27,6 @@ public abstract partial class BaseNukeBuildHelpers : NukeBuild, INukeBuildHelper
     internal static AbsolutePath CommonCacheDirectory { get; } = TemporaryDirectory / "cache";
 
     internal static AbsolutePath CommonCacheOutputDirectory { get; } = CommonCacheDirectory / "output";
-
-    /// <summary>
-    /// Gets the output directory path.
-    /// </summary>
-    public static AbsolutePath OutputDirectory => CommonOutputDirectory / "runtime";
 
     /// <summary>
     /// Gets the list of environment branches.

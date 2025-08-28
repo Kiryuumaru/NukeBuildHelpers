@@ -11,5 +11,5 @@ namespace NukeBuildHelpers.RunContext.Models;
 internal class RunContext : IRunContext
 {
     public required PipelineType PipelineType { get; init; }
-    public required IReadOnlyDictionary<string, RunContextVersion> Versions { get; init; }
+    public required IReadOnlyDictionary<string, AppRunContext> Apps { get; init; }
 }

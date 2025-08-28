@@ -16,7 +16,7 @@ public interface IRunContext
     PipelineType PipelineType { get; }
 
     /// <summary>
-    /// Gets the application versions associated with the context.
+    /// Gets the application associated with the context.
     /// </summary>
-    IReadOnlyDictionary<string, RunContextVersion> Versions { get; }
+    IReadOnlyDictionary<string, AppRunContext> Apps { get; }
 }

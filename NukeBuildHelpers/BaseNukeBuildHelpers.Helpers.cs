@@ -233,14 +233,15 @@ partial class BaseNukeBuildHelpers
 
     private void SetupRunContext(IRunEntryDefinition targetEntry, List<(AppVersion AppVersion, RunType RunType)> appSetup, string? releaseNotes, PipelineRun pipeline)
     {
-        Dictionary<string, RunContextVersion> versions = [];
+        Dictionary<string, AppRunContext> versions = [];
 
         foreach (var (appVersion, runType) in appSetup)
         {
             if (runType == RunType.Local)
             {
-                versions[appVersion.AppId] = new RunContextVersion()
+                versions[appVersion.AppId] = new AppRunContext()
                 {
+                    AppId = appVersion.AppId,
                     RunType = RunType.Local,
                     AppVersion = appVersion,
                     BumpVersion = null,
@@ -253,8 +254,9 @@ partial class BaseNukeBuildHelpers
                 {
                     throw new Exception("Release notes is required for bump run");
                 }
-                versions[appVersion.AppId] = new RunContextVersion()
+                versions[appVersion.AppId] = new AppRunContext()
                 {
+                    AppId = appVersion.AppId,
                     RunType = RunType.Bump,
                     AppVersion = appVersion,
                     BumpVersion = new BumpReleaseVersion()
@@ -274,8 +276,9 @@ partial class BaseNukeBuildHelpers
                 {
                     throw new Exception("Pull request number is required for pull request run");
                 }
-                versions[appVersion.AppId] = new RunContextVersion()
+                versions[appVersion.AppId] = new AppRunContext()
                 {
+                    AppId = appVersion.AppId,
                     RunType = RunType.PullRequest,
                     AppVersion = appVersion,
                     BumpVersion = null,
@@ -291,8 +294,9 @@ partial class BaseNukeBuildHelpers
             }
             else
             {
-                versions[appVersion.AppId] = new RunContextVersion()
+                versions[appVersion.AppId] = new AppRunContext()
                 {
+                    AppId = appVersion.AppId,
                     RunType = runType,
                     AppVersion = appVersion,
                     BumpVersion = null,
@@ -304,7 +308,7 @@ partial class BaseNukeBuildHelpers
         targetEntry.RunContext = new RunContext.Models.RunContext()
         {
             PipelineType = PipelineType,
-            Versions = versions.AsReadOnly()
+            Apps = versions.AsReadOnly()
         };
     }
 
@@ -418,7 +422,7 @@ partial class BaseNukeBuildHelpers
                 """);
             Console.WriteLine();
 
-            OutputDirectory.CreateOrCleanDirectory();
+            CommonOutputDirectory.CreateOrCleanDirectory();
 
             await CachePreload(entry);
 
@@ -459,11 +463,10 @@ partial class BaseNukeBuildHelpers
                             {
                                 continue;
                             }
-                            var id = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                            if (allEntry.RunEntryDefinitionMap.TryGetValue(id, out var runEntryDefinition) &&
-                                testEntryDefinition.AppIds.Any(i => runEntryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
+                            var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                            if (testEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                artifact.UnZipTo(CommonOutputDirectory);
+                                artifact.UnZipTo(CommonOutputRuntimeDirectory / appId.ToLowerInvariant());
                             }
                         }
                     }
@@ -478,9 +481,9 @@ partial class BaseNukeBuildHelpers
                                 continue;
                             }
                             var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                            if (appId.Equals(publishEntryDefinition.Id, StringComparison.InvariantCultureIgnoreCase))
+                            if (publishEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                artifact.UnZipTo(CommonOutputDirectory);
+                                artifact.UnZipTo(CommonOutputRuntimeDirectory / appId.ToLowerInvariant());
                             }
                         }
                     }
@@ -490,58 +493,66 @@ partial class BaseNukeBuildHelpers
 
         }, async entry =>
         {
+            var releaseAssetsDir = TemporaryDirectory / "release_assets";
+            var assetOutDir = releaseAssetsDir / "assets";
+            var commonAssetOutDir = releaseAssetsDir / "common_assets";
+            assetOutDir.CreateOrCleanDirectory();
+            commonAssetOutDir.CreateOrCleanDirectory();
+            foreach (var asset in ReleaseAssets)
+            {
+                if (asset.FileExists())
+                {
+                    await asset.CopyTo(assetOutDir / asset.Name);
+                }
+                else if (asset.DirectoryExists())
+                {
+                    var destinationPath = assetOutDir / (asset.Name + ".zip");
+                    if (destinationPath.FileExists())
+                    {
+                        destinationPath.DeleteFile();
+                    }
+                    asset.ZipTo(destinationPath);
+                }
+                Log.Information("Added {file} to release assets", asset);
+            }
+            foreach (var asset in ReleaseCommonAssets)
+            {
+                if (asset.FileExists() || asset.DirectoryExists())
+                {
+                    await asset.CopyTo(commonAssetOutDir);
+                    Log.Information("Added {file} to common assets", asset);
+                }
+            }
+
             switch (entry)
             {
                 case IBuildEntryDefinition buildEntryDefinition:
-                    var buildArtifactName = "build" + ArtifactNameSeparator + buildEntryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
-                    var buildArtifactTempPath = TemporaryDirectory / buildArtifactName;
-                    var buildArtifactFilePath = CommonArtifactsUploadDirectory / $"{buildArtifactName}.zip";
-                    buildArtifactTempPath.CreateOrCleanDirectory();
-                    buildArtifactFilePath.DeleteFile();
-                    await CommonOutputDirectory.MoveTo(buildArtifactTempPath);
-                    buildArtifactTempPath.ZipTo(buildArtifactFilePath);
+                    foreach (var appId in buildEntryDefinition.AppIds)
+                    {
+                        var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                        var buildArtifactName = "build" + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
+                        var buildArtifactTempPath = TemporaryDirectory / buildArtifactName;
+                        var buildArtifactFilePath = CommonArtifactsUploadDirectory / $"{buildArtifactName}.zip";
+                        buildArtifactTempPath.CreateOrCleanDirectory();
+                        buildArtifactFilePath.DeleteFile();
+                        await (CommonOutputRuntimeDirectory / appIdLower).MoveTo(buildArtifactTempPath);
+                        buildArtifactTempPath.ZipTo(buildArtifactFilePath);
+                    }
                     break;
                 case ITestEntryDefinition testEntryDefinition:
                     break;
                 case IPublishEntryDefinition publishEntryDefinition:
-                    var releaseAssetsDir = TemporaryDirectory / "release_assets";
-                    //var releaseAssetsDir = CommonOutputDirectory;
-                    var assetOutDir = releaseAssetsDir / "assets";
-                    var commonAssetOutDir = releaseAssetsDir / "common_assets";
-                    assetOutDir.CreateOrCleanDirectory();
-                    commonAssetOutDir.CreateOrCleanDirectory();
-                    foreach (var asset in await publishEntryDefinition.GetReleaseAssets())
+                    foreach (var appId in publishEntryDefinition.AppIds)
                     {
-                        if (asset.FileExists())
-                        {
-                            await asset.CopyTo(assetOutDir / asset.Name);
-                        }
-                        else if (asset.DirectoryExists())
-                        {
-                            var destinationPath = assetOutDir / (asset.Name + ".zip");
-                            if (destinationPath.FileExists())
-                            {
-                                destinationPath.DeleteFile();
-                            }
-                            asset.ZipTo(destinationPath);
-                        }
-                        Log.Information("Added {file} to release assets", asset);
+                        var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                        var publishArtifactName = "publish" + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
+                        var publishArtifactTempPath = TemporaryDirectory / publishArtifactName;
+                        var publishArtifactFilePath = CommonArtifactsUploadDirectory / $"{publishArtifactName}.zip";
+                        publishArtifactTempPath.CreateOrCleanDirectory();
+                        publishArtifactFilePath.DeleteFile();
+                        await releaseAssetsDir.MoveTo(publishArtifactTempPath);
+                        publishArtifactTempPath.ZipTo(publishArtifactFilePath);
                     }
-                    foreach (var asset in await publishEntryDefinition.GetReleaseCommonAssets())
-                    {
-                        if (asset.FileExists() || asset.DirectoryExists())
-                        {
-                            await asset.CopyTo(commonAssetOutDir);
-                            Log.Information("Added {file} to common assets", asset);
-                        }
-                    }
-                    var publishArtifactName = "publish" + ArtifactNameSeparator + publishEntryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + ArtifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
-                    var publishArtifactTempPath = TemporaryDirectory / publishArtifactName;
-                    var publishArtifactFilePath = CommonArtifactsUploadDirectory / $"{publishArtifactName}.zip";
-                    publishArtifactTempPath.CreateOrCleanDirectory();
-                    publishArtifactFilePath.DeleteFile();
-                    await releaseAssetsDir.MoveTo(publishArtifactTempPath);
-                    publishArtifactTempPath.ZipTo(publishArtifactFilePath);
                     break;
             }
         });
@@ -1676,7 +1687,7 @@ partial class BaseNukeBuildHelpers
             }
             if (newVersionCount > 1)
             {
-                releaseNotes = releaseNotes.Insert(0, "## New Versions");
+                releaseNotes = releaseNotes.Insert(0, "## New Apps");
             }
             else
             {
@@ -1762,7 +1773,7 @@ partial class BaseNukeBuildHelpers
             EntrySetup setup = new()
             {
                 Id = entry.Id,
-                RunTypes = ValueHelpers.GetOrNullFail(entry.RunContext).Versions.ToDictionary(i => i.Key, i => i.Value.RunType),
+                RunTypes = ValueHelpers.GetOrNullFail(entry.RunContext).Apps.ToDictionary(i => i.Key, i => i.Value.RunType),
                 Condition = await entry.GetCondition(),
                 RunnerOSSetup = new()
                 {

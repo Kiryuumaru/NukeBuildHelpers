@@ -1,4 +1,5 @@
-﻿using NukeBuildHelpers.Common.Enums;
+﻿using Nuke.Common.IO;
+using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry.Models;
 using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.RunContext.Interfaces;
@@ -8,8 +9,13 @@ namespace NukeBuildHelpers.RunContext.Models;
 /// <summary>
 /// Run context versions containing application and release version information.
 /// </summary>
-public class RunContextVersion
+public class AppRunContext
 {
+    /// <summary>
+    /// Gets the app id associated with the context.
+    /// </summary>
+    public required string AppId { get; init; }
+
     /// <summary>
     /// Gets the run type associated with the context.
     /// </summary>
@@ -29,6 +35,12 @@ public class RunContextVersion
     /// Gets the pull request release version with PR number. Null unless this is a pull request run.
     /// </summary>
     public PullRequestReleaseVersion? PullRequestVersion { get; init; }
+
+    /// <summary>
+    /// Gets the output directory path where this application's build artifacts and files are stored during pipeline execution.
+    /// The path is constructed by combining the common runtime output directory with the lowercase application ID.
+    /// </summary>
+    public AbsolutePath OutputDirectory => BaseNukeBuildHelpers.CommonOutputRuntimeDirectory / AppId.ToLowerInvariant();
 
     /// <summary>
     /// Gets whether this is a version bump run.

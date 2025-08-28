@@ -289,10 +289,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, envMap: envMap);
-            var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
-            AddJobStepInputs(uploadBuildStep, "artifact", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
-            AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/artifacts-upload");
-            AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var uploadBuildStep = AddJobStep(buildJob, displayName: $"Upload {appIdLower} Artifacts", task: "PublishPipelineArtifact@1");
+                AddJobStepInputs(uploadBuildStep, "artifact", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
+                AddJobStepInputs(uploadBuildStep, "targetPath", $"./.nuke/temp/artifacts-upload/{appIdLower}");
+                AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
+            }
         }
 
         // ██████████████████████████████████████
@@ -324,10 +328,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            var downloadPostTestStep = AddJobStep(testJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPostTestStep, "path", "./.nuke/temp/artifacts-download");
-            AddJobStepInputs(downloadPostTestStep, "patterns", "**");
-            AddJobStepInputs(downloadPostTestStep, "continueOnError", "true");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var downloadPostTestStep = AddJobStep(testJob, displayName: $"Download {appIdLower} artifacts", task: "DownloadPipelineArtifact@2");
+                AddJobStepInputs(downloadPostTestStep, "itemPattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appId + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
+                AddJobStepInputs(downloadPostTestStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
+                AddJobStepInputs(downloadPostTestStep, "continueOnError", "true");
+            }
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, envMap: envMap);
         }
 
@@ -368,15 +376,24 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(publishJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
-            var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPublishStep, "itemPattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
-            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts-download");
-            AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var downloadPublishStep = AddJobStep(publishJob, displayName: $"Download {appIdLower} Artifacts", task: "DownloadPipelineArtifact@2");
+                AddJobStepInputs(downloadPublishStep, "itemPattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
+                AddJobStepInputs(downloadPublishStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
+                AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
+                AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, envMap: envMap);
+            }
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, envMap: envMap);
-            var uploadPublishStep = AddJobStep(publishJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
-            AddJobStepInputs(uploadPublishStep, "artifact", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
-            AddJobStepInputs(uploadPublishStep, "targetPath", "./.nuke/temp/artifacts-upload");
-            AddJobStepInputs(uploadPublishStep, "continueOnError", "true");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var uploadPublishStep = AddJobStep(publishJob, displayName: $"Upload {appIdLower} Artifacts", task: "PublishPipelineArtifact@1");
+                AddJobStepInputs(uploadPublishStep, "artifact", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
+                AddJobStepInputs(uploadPublishStep, "targetPath", $"./.nuke/temp/artifacts-upload/{appIdLower}");
+                AddJobStepInputs(uploadPublishStep, "continueOnError", "true");
+            }
         }
 
         // ██████████████████████████████████████

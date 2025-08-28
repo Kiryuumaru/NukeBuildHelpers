@@ -80,8 +80,8 @@ partial class BaseNukeBuildHelpers
                         {
                             continue;
                         }
-                        var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                        artifact.UnZipTo(OutputDirectory / appId);
+                        var appIdLower = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                        artifact.UnZipTo(CommonOutputRuntimeDirectory / appIdLower);
                     }
 
                     foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
@@ -91,7 +91,7 @@ partial class BaseNukeBuildHelpers
                             continue;
                         }
                         var appIdLower = appEntry.AppId.ToLowerInvariant();
-                        var releasePath = OutputDirectory / appIdLower;
+                        var releasePath = CommonOutputRuntimeDirectory / appIdLower;
                         var commonAssetPath = releasePath / "common_assets";
                         if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
                         {

@@ -300,11 +300,15 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition);
-            var uploadBuildStep = AddJobStep(buildJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
-            AddJobStepWith(uploadBuildStep, "name", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
-            AddJobStepWith(uploadBuildStep, "path", "./.nuke/temp/artifacts-upload/*");
-            AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
-            AddJobStepWith(uploadBuildStep, "retention-days", "1");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var uploadBuildStep = AddJobStep(buildJob, name: $"Upload {appIdLower} Artifacts", uses: "actions/upload-artifact@v4");
+                AddJobStepWith(uploadBuildStep, "name", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
+                AddJobStepWith(uploadBuildStep, "path", $"./.nuke/temp/artifacts-upload/{appIdLower}/*");
+                AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
+                AddJobStepWith(uploadBuildStep, "retention-days", "1");
+            }
         }
 
         // ██████████████████████████████████████
@@ -335,8 +339,13 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. postTestNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            var downloadPostTestStep = AddJobStep(testJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
-            AddJobStepWith(downloadPostTestStep, "path", "./.nuke/temp/artifacts-download");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var downloadPostTestStep = AddJobStep(testJob, name: $"Download {appIdLower} artifacts", uses: "actions/download-artifact@v4");
+                AddJobStepWith(downloadPostTestStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
+                AddJobStepWith(downloadPostTestStep, "pattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
+            }
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition);
         }
 
@@ -376,15 +385,23 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. publishNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
-            var downloadBuildStep = AddJobStep(publishJob, name: "Download artifacts", uses: "actions/download-artifact@v4");
-            AddJobStepWith(downloadBuildStep, "path", "./.nuke/temp/artifacts-download");
-            AddJobStepWith(downloadBuildStep, "pattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var downloadBuildStep = AddJobStep(publishJob, name: $"Download {appIdLower} artifacts", uses: "actions/download-artifact@v4");
+                AddJobStepWith(downloadBuildStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
+                AddJobStepWith(downloadBuildStep, "pattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
+            }
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition);
-            var uploadPublishStep = AddJobStep(publishJob, name: "Upload Artifacts", uses: "actions/upload-artifact@v4");
-            AddJobStepWith(uploadPublishStep, "name", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
-            AddJobStepWith(uploadPublishStep, "path", "./.nuke/temp/artifacts-upload/*");
-            AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
-            AddJobStepWith(uploadPublishStep, "retention-days", "1");
+            foreach (var appId in entryDefinition.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var uploadPublishStep = AddJobStep(publishJob, name: $"Upload {appIdLower} Artifacts", uses: "actions/upload-artifact@v4");
+                AddJobStepWith(uploadPublishStep, "name", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
+                AddJobStepWith(uploadPublishStep, "path", $"./.nuke/temp/artifacts-upload/{appIdLower}/*");
+                AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
+                AddJobStepWith(uploadPublishStep, "retention-days", "1");
+            }
         }
 
         // ██████████████████████████████████████
