@@ -83,6 +83,16 @@ partial class BaseNukeBuildHelpers
         (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
     }
 
+    private static void CommonBump()
+    {
+        if (!(CommonOutputDirectory / "$common").DirectoryExists())
+        {
+            (CommonOutputDirectory / "$common").CreateDirectory();
+        }
+
+        (CommonOutputDirectory / "$common" / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+    }
+
     private static void OutputBump(string appId)
     {
         var appOut = CommonOutputDirectory / appId.ToLowerInvariant();
@@ -413,6 +423,7 @@ partial class BaseNukeBuildHelpers
         await pipeline.Pipeline.PrepareEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
 
         CacheBump();
+        CommonBump();
 
         await EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
 
