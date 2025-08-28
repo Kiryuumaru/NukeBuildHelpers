@@ -532,36 +532,23 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
-            switch (entry)
+            var entryType = entry switch
             {
-                case IBuildEntryDefinition buildEntryDefinition:
-                    foreach (var appId in buildEntryDefinition.AppIds)
-                    {
-                        var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                        var buildArtifactName = "build" + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + buildEntryDefinition.Id.ToUpperInvariant();
-                        var buildArtifactTempPath = TemporaryDirectory / buildArtifactName;
-                        var buildArtifactFilePath = CommonArtifactsUploadDirectory / $"{buildArtifactName}.zip";
-                        buildArtifactTempPath.CreateOrCleanDirectory();
-                        buildArtifactFilePath.DeleteFile();
-                        await (CommonOutputDirectory / "runtime" / appIdLower).MoveTo(buildArtifactTempPath);
-                        buildArtifactTempPath.ZipTo(buildArtifactFilePath);
-                    }
-                    break;
-                case ITestEntryDefinition testEntryDefinition:
-                    break;
-                case IPublishEntryDefinition publishEntryDefinition:
-                    foreach (var appId in publishEntryDefinition.AppIds)
-                    {
-                        var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                        var publishArtifactName = "publish" + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + publishEntryDefinition.Id.ToUpperInvariant();
-                        var publishArtifactTempPath = TemporaryDirectory / publishArtifactName;
-                        var publishArtifactFilePath = CommonArtifactsUploadDirectory / $"{publishArtifactName}.zip";
-                        publishArtifactTempPath.CreateOrCleanDirectory();
-                        publishArtifactFilePath.DeleteFile();
-                        await releaseAssetsDir.MoveTo(publishArtifactTempPath);
-                        publishArtifactTempPath.ZipTo(publishArtifactFilePath);
-                    }
-                    break;
+                IBuildEntryDefinition => "build",
+                ITestEntryDefinition => "test",
+                IPublishEntryDefinition => "publish",
+                _ => throw new NotSupportedException($"Entry not supported '{entry.GetType().Name}'")
+            };
+            foreach (var appId in entry.AppIds)
+            {
+                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+                var buildArtifactName = entryType + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + entry.Id.ToUpperInvariant();
+                var buildArtifactTempPath = TemporaryDirectory / buildArtifactName;
+                var buildArtifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{buildArtifactName}.zip";
+                buildArtifactTempPath.CreateOrCleanDirectory();
+                buildArtifactFilePath.DeleteFile();
+                await (CommonOutputDirectory / "runtime" / appIdLower).MoveTo(buildArtifactTempPath);
+                buildArtifactTempPath.ZipTo(buildArtifactFilePath);
             }
         });
     }
