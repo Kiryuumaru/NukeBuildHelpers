@@ -266,6 +266,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, envMap: envMap);
             CreateUploadArtifacts(testJob, entryDefinition, "pre_test");
+            CreateUploadCommonArtifacts(testJob, entryDefinition, "pre_test");
         }
 
         // ██████████████████████████████████████
@@ -292,6 +293,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             CreateDownloadArtifacts(buildJob, entryDefinition, "pre_test");
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, envMap: envMap);
             CreateUploadArtifacts(buildJob, entryDefinition, "build");
+            CreateUploadCommonArtifacts(buildJob, entryDefinition, "build");
         }
 
         // ██████████████████████████████████████
@@ -327,6 +329,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             CreateDownloadArtifacts(testJob, entryDefinition, "build");
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, envMap: envMap);
             CreateUploadArtifacts(testJob, entryDefinition, "post_test");
+            CreateUploadCommonArtifacts(testJob, entryDefinition, "post_test");
         }
 
         // ██████████████████████████████████████
@@ -371,6 +374,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             CreateDownloadArtifacts(publishJob, entryDefinition, "post_test");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, envMap: envMap);
             CreateUploadArtifacts(publishJob, entryDefinition, "publish");
+            CreateUploadCommonArtifacts(publishJob, entryDefinition, "publish");
         }
 
         // ██████████████████████████████████████
@@ -413,6 +417,14 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
 
         Log.Information("Workflow built at " + workflowPath.ToString());
+    }
+
+    private static void CreateUploadCommonArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)
+    {
+        var uploadPreTestStep = AddJobStep(job, displayName: $"Upload common {entryType} artifacts", task: "PublishPipelineArtifact@1");
+        AddJobStepInputs(uploadPreTestStep, "artifact", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + "$common" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
+        AddJobStepInputs(uploadPreTestStep, "targetPath", $"./.nuke/temp/artifacts-upload/$common");
+        AddJobStepInputs(uploadPreTestStep, "continueOnError", "true");
     }
 
     private static void CreateUploadArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)

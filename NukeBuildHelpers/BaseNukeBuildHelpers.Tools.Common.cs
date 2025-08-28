@@ -16,18 +16,19 @@ partial class BaseNukeBuildHelpers
     /// If the path is a directory, it will be zipped before being uploaded to the release.
     /// </summary>
     /// <param name="path">The absolute path to the file or directory to include as a release asset.</param>
-    public static async Task AddReleaseAsset(AbsolutePath path)
+    /// <param name="customFilename">The custom filename of the asset for release</param>
+    public static async Task AddReleaseAsset(AbsolutePath path, string? customFilename = null)
     {
-        var releaseAssetsDir = TemporaryDirectory / "release_assets";
+        var releaseAssetsDir = CommonOutputDirectory / "$common";
         var assetOutDir = releaseAssetsDir / "assets";
         assetOutDir.CreateDirectory();
         if (path.FileExists())
         {
-            await path.CopyTo(assetOutDir / path.Name);
+            await path.CopyTo(assetOutDir / (string.IsNullOrWhiteSpace(customFilename) ? path.Name : customFilename));
         }
         else if (path.DirectoryExists())
         {
-            var destinationPath = assetOutDir / (path.Name + ".zip");
+            var destinationPath = assetOutDir / (string.IsNullOrWhiteSpace(customFilename) ? (path.Name + ".zip") : customFilename);
             if (destinationPath.FileExists())
             {
                 destinationPath.DeleteFile();
@@ -44,7 +45,7 @@ partial class BaseNukeBuildHelpers
     /// <param name="path">The absolute path to the file or directory to include as a common release asset.</param>
     public static async Task AddReleaseCommonAsset(AbsolutePath path)
     {
-        var releaseAssetsDir = TemporaryDirectory / "release_assets";
+        var releaseAssetsDir = CommonOutputDirectory / "$common";
         var commonAssetOutDir = releaseAssetsDir / "common_assets";
         commonAssetOutDir.CreateDirectory();
         if (path.FileExists() || path.DirectoryExists())

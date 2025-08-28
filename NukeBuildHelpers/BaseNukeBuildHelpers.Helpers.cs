@@ -464,7 +464,7 @@ partial class BaseNukeBuildHelpers
                         continue;
                     }
                     var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                    if (entry.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
+                    if (entry.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)) || appId.Equals("$common", StringComparison.InvariantCultureIgnoreCase))
                     {
                         artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
                     }
@@ -495,14 +495,14 @@ partial class BaseNukeBuildHelpers
             foreach (var appId in entry.AppIds)
             {
                 var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                var buildArtifactName = entryType + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + entry.Id.ToUpperInvariant();
-                var buildArtifactTempPath = TemporaryDirectory / buildArtifactName;
-                var buildArtifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{buildArtifactName}.zip";
-                buildArtifactTempPath.CreateOrCleanDirectory();
-                buildArtifactFilePath.DeleteFile();
-                await (CommonOutputDirectory / appIdLower / "runtime").MoveTo(buildArtifactTempPath);
-                buildArtifactTempPath.ZipTo(buildArtifactFilePath);
-                Log.Information("Created artifact {buildArtifactFilePath}", buildArtifactFilePath);
+                var artifactName = entryType + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + entry.Id.ToUpperInvariant();
+                var artifactTempPath = TemporaryDirectory / artifactName;
+                var artifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{artifactName}.zip";
+                artifactTempPath.CreateOrCleanDirectory();
+                artifactFilePath.DeleteFile();
+                await (CommonOutputDirectory / appIdLower / "runtime").MoveTo(artifactTempPath);
+                artifactTempPath.ZipTo(artifactFilePath);
+                Log.Information("Created artifact {artifactFilePath}", artifactFilePath);
             }
         });
     }
