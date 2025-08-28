@@ -446,6 +446,11 @@ partial class BaseNukeBuildHelpers
             await CachePostload(entry);
         }
 
+        foreach (var path in TemporaryDirectory.GetFiles(depth:99))
+        {
+            Log.Logger.Information("Temporary file: {file}", path);
+        }
+
         await pipeline.Pipeline.FinalizeEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
     }
 
