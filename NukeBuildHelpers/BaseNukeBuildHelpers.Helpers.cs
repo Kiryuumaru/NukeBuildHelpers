@@ -83,14 +83,16 @@ partial class BaseNukeBuildHelpers
         (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
     }
 
-    private static void OutputBump()
+    private static void OutputBump(string appId)
     {
-        if (!CommonOutputDirectory.DirectoryExists())
+        var runtimeOut = CommonOutputDirectory / appId.ToLowerInvariant();
+
+        if (!runtimeOut.DirectoryExists())
         {
-            CommonOutputDirectory.CreateDirectory();
+            runtimeOut.CreateDirectory();
         }
 
-        (CommonOutputDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+        (runtimeOut / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
     }
 
     private static Dictionary<string, AbsolutePath> GetCacheIndex()
@@ -426,7 +428,8 @@ partial class BaseNukeBuildHelpers
 
             await CachePreload(entry);
 
-            OutputBump();
+            foreach (var appId in entry.AppIds)
+                OutputBump(appId);
 
             if (preExecute != null)
             {
@@ -466,7 +469,7 @@ partial class BaseNukeBuildHelpers
                             var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                             if (testEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                artifact.UnZipTo(CommonOutputRuntimeDirectory / appId.ToLowerInvariant());
+                                artifact.UnZipTo(CommonOutputDirectory / "runtime" / appId.ToLowerInvariant());
                             }
                         }
                     }
@@ -483,7 +486,7 @@ partial class BaseNukeBuildHelpers
                             var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                             if (publishEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                artifact.UnZipTo(CommonOutputRuntimeDirectory / appId.ToLowerInvariant());
+                                artifact.UnZipTo(CommonOutputDirectory / "runtime" / appId.ToLowerInvariant());
                             }
                         }
                     }
@@ -535,7 +538,7 @@ partial class BaseNukeBuildHelpers
                         var buildArtifactFilePath = CommonArtifactsUploadDirectory / $"{buildArtifactName}.zip";
                         buildArtifactTempPath.CreateOrCleanDirectory();
                         buildArtifactFilePath.DeleteFile();
-                        await (CommonOutputRuntimeDirectory / appIdLower).MoveTo(buildArtifactTempPath);
+                        await (CommonOutputDirectory / "runtime" / appIdLower).MoveTo(buildArtifactTempPath);
                         buildArtifactTempPath.ZipTo(buildArtifactFilePath);
                     }
                     break;
