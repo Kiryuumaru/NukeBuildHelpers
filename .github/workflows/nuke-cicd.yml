@@ -175,6 +175,13 @@ jobs:
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
         if-no-files-found: error
         retention-days: 1
+    - name: Upload common pre_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pre_test___$common___NUKEBUILDHELPERSTEST1
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CONDITION == 'true'"
@@ -206,6 +213,13 @@ jobs:
       with:
         name: pre_test___nuke_build_helpers___NUKEBUILDHELPERSTEST2CUSTOMID
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common pre_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pre_test___$common___NUKEBUILDHELPERSTEST2CUSTOMID
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -244,6 +258,13 @@ jobs:
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD1
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD1
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -286,6 +307,13 @@ jobs:
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
         if-no-files-found: error
         retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT1MAT3
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
@@ -324,6 +352,13 @@ jobs:
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT4
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT1MAT4
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -366,6 +401,13 @@ jobs:
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
         if-no-files-found: error
         retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT2MAT3
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
@@ -406,6 +448,13 @@ jobs:
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
         if-no-files-found: error
         retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT2MAT4
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
@@ -444,6 +493,13 @@ jobs:
       with:
         name: build___nuke_build_helpers2___NUKEBUILDHELPERSBUILD3
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers2/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD3
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -487,6 +543,13 @@ jobs:
       with:
         name: post_test___nuke_build_helpers___NUKEBUILDHELPERSTEST3
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___NUKEBUILDHELPERSTEST3
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -539,6 +602,13 @@ jobs:
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers2/*
         if-no-files-found: error
         retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___NUKEBUILDHELPERSTEST4
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSBUILD3
@@ -581,6 +651,13 @@ jobs:
       with:
         name: post_test___nuke_build_helpers2___NUKEBUILDHELPERSTEST5
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers2/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___NUKEBUILDHELPERSTEST5
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -630,6 +707,13 @@ jobs:
       with:
         name: publish___nuke_build_helpers___NUKEBUILDHELPERSPUBLISH
         path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common publish artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: publish___$common___NUKEBUILDHELPERSPUBLISH
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
