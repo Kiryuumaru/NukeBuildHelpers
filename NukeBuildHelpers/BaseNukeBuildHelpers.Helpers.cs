@@ -474,7 +474,7 @@ partial class BaseNukeBuildHelpers
                             var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                             if (testEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                artifact.UnZipTo(CommonOutputDirectory / "runtime" / appId.ToLowerInvariant());
+                                artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
                             }
                         }
                     }
@@ -491,7 +491,7 @@ partial class BaseNukeBuildHelpers
                             var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
                             if (publishEntryDefinition.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                             {
-                                artifact.UnZipTo(CommonOutputDirectory / "runtime" / appId.ToLowerInvariant());
+                                artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
                             }
                         }
                     }

@@ -40,7 +40,7 @@ public class AppRunContext
     /// Gets the output directory path where this application's build artifacts and files are stored during pipeline execution.
     /// The path is constructed by combining the common runtime output directory with the lowercase application ID.
     /// </summary>
-    public AbsolutePath OutputDirectory => BaseNukeBuildHelpers.CommonOutputDirectory / "runtime" / AppId.ToLowerInvariant();
+    public AbsolutePath OutputDirectory => BaseNukeBuildHelpers.CommonOutputDirectory / AppId.ToLowerInvariant() / "runtime";
 
     /// <summary>
     /// Gets whether this is a version bump run.
