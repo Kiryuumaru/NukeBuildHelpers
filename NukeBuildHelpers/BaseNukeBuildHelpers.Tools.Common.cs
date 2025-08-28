@@ -19,7 +19,7 @@ partial class BaseNukeBuildHelpers
     /// <param name="customFilename">The custom filename of the asset for release</param>
     public static async Task AddReleaseAsset(AbsolutePath path, string? customFilename = null)
     {
-        var releaseAssetsDir = CommonOutputDirectory / "$common";
+        var releaseAssetsDir = CommonOutputDirectory / "$common" / "runtime";
         var assetOutDir = releaseAssetsDir / "assets";
         assetOutDir.CreateDirectory();
         if (path.FileExists())
@@ -42,10 +42,6 @@ partial class BaseNukeBuildHelpers
         else
         {
             Log.Warning("Asset {file} does not exists", path);
-        }
-        foreach (var path1 in releaseAssetsDir.GetFiles("**", 99))
-        {
-            Log.Information(path1);
         }
     }
 }

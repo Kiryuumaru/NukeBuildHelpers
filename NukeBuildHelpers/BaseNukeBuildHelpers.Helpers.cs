@@ -84,16 +84,6 @@ partial class BaseNukeBuildHelpers
         (CommonCacheDirectory / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
     }
 
-    private static void CommonBump()
-    {
-        if (!(CommonOutputDirectory / "$common").DirectoryExists())
-        {
-            (CommonOutputDirectory / "$common").CreateDirectory();
-        }
-
-        (CommonOutputDirectory / "$common" / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
-    }
-
     private static void OutputBump(string appId)
     {
         var appOut = CommonOutputDirectory / appId.ToLowerInvariant();
@@ -105,7 +95,6 @@ partial class BaseNukeBuildHelpers
         }
 
         (appOut / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
-
     }
 
     private static Dictionary<string, AbsolutePath> GetCacheIndex()
@@ -438,12 +427,12 @@ partial class BaseNukeBuildHelpers
             CommonOutputDirectory.CreateOrCleanDirectory();
 
             CacheBump();
-            CommonBump();
 
             await CachePreload(entry);
 
             foreach (var appId in entry.AppIds)
                 OutputBump(appId);
+            OutputBump("$common");
 
             if (preExecute != null)
             {

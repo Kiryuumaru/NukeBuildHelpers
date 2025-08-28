@@ -82,7 +82,7 @@ partial class BaseNukeBuildHelpers
             var assetOutput = TemporaryDirectory / "release_assets";
             assetOutput.CreateOrCleanDirectory();
 
-            var commonOutputDir = CommonOutputDirectory / "$common";
+            var commonOutputDir = CommonOutputDirectory / "$common" / "runtime";
             var assetDir = commonOutputDir / "assets";
             if (assetDir.DirectoryExists())
             {
