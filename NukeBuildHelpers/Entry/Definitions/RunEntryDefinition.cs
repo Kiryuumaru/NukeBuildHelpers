@@ -16,6 +16,13 @@ internal abstract class RunEntryDefinition : IRunEntryDefinition
         set => id = value;
     }
 
+    List<string> appId = [];
+    List<string> IRunEntryDefinition.AppIds
+    {
+        get => appId;
+        set => appId = value;
+    }
+
     Func<IWorkflowBuilder, Task<string>>? displayName = null;
     Func<IWorkflowBuilder, Task<string>> IRunEntryDefinition.DisplayName
     {
@@ -104,6 +111,7 @@ internal abstract class RunEntryDefinition : IRunEntryDefinition
     internal virtual void FillClone(IRunEntryDefinition definition)
     {
         if (id != null) definition.Id = id;
+        if (appId != null) definition.AppIds = [.. appId];
         if (displayName != null) definition.DisplayName = displayName;
         if (condition != null) definition.Condition = condition;
         if (runnerOS != null) definition.RunnerOS = runnerOS;

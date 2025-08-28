@@ -29,7 +29,7 @@ internal static class PipelineHelpers
         await (Activator.CreateInstance(typeof(T), baseNukeBuildHelpers) as IPipeline)!.BuildWorkflow(baseNukeBuildHelpers, allEntry);
     }
 
-    internal static PipelineRun SetupPipeline(BaseNukeBuildHelpers baseNukeBuildHelpers)
+    internal static async Task<PipelineRun> SetupPipeline(BaseNukeBuildHelpers baseNukeBuildHelpers)
     {
         IPipeline pipeline;
         PipelineType pipelineType;
@@ -53,7 +53,7 @@ internal static class PipelineHelpers
         return new()
         {
             Pipeline = pipeline,
-            PipelineInfo = pipeline.GetPipelineInfo(),
+            PipelineInfo = await pipeline.GetPipelineInfo(),
             PipelineType = pipelineType,
         };
     }

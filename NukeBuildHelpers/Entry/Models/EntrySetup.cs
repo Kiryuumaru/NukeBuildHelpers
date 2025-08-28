@@ -8,7 +8,7 @@ internal class EntrySetup
 {
     public required string Id { get; init; }
 
-    public required RunType RunType { get; init; }
+    public required Dictionary<string, RunType> RunTypes { get; init; }
 
     public required bool Condition { get; init; }
 

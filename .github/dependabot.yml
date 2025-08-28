@@ -7,3 +7,9 @@ updates:
     open-pull-requests-limit: 100
     schedule:
       interval: "daily"
+      
+    ignore:
+      - dependency-name: "Microsoft.NET.ILLink.Analyzers"
+        versions: [ "*" ]
+      - dependency-name: "Microsoft.DotNet.ILCompiler"
+        versions: [ "*" ]
