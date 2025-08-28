@@ -93,34 +93,6 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
-
-            //foreach (var appRunEntry in pipelinePreSetup.AppRunEntryMap.Values.Where(i => i.HasRelease))
-            //{
-            //    if (!allEntry.AppEntryMap.TryGetValue(appRunEntry.AppId, out var appEntry))
-            //    {
-            //        continue;
-            //    }
-            //    var appIdLower = appEntry.AppId.ToLowerInvariant();
-            //    var releasePath = CommonOutputDirectory / appIdLower;
-            //    var commonAssetPath = releasePath / "common_assets";
-            //    if (commonAssetPath.DirectoryExists() && (commonAssetPath.GetDirectories().Any() || commonAssetPath.GetFiles().Any()))
-            //    {
-            //        var commonOutPath = TemporaryDirectory / "archive" / appIdLower + "-" + appRunEntry.Version;
-            //        await commonAssetPath.CopyTo(commonOutPath);
-            //        commonOutPath.ZipTo(assetOutput / commonOutPath.Name + ".zip");
-            //        Log.Information("Publish common asset {appId}: {name}", appIdLower, commonOutPath.Name + ".zip");
-            //    }
-            //    var individualAssetPath = releasePath / "assets";
-            //    if (individualAssetPath.DirectoryExists() && individualAssetPath.GetFiles().Any())
-            //    {
-            //        foreach (var releaseAsset in individualAssetPath.GetFiles())
-            //        {
-            //            await releaseAsset.CopyTo(assetOutput / releaseAsset.Name);
-            //            Log.Information("Publish individual asset {appId}: {name}", appIdLower, releaseAsset.Name);
-            //        }
-            //    }
-            //}
-
             if (success)
             {
                 if (pipelinePreSetup.HasRelease)

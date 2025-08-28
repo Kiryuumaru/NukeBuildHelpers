@@ -29,7 +29,7 @@ partial class BaseNukeBuildHelpers
         }
         else if (path.DirectoryExists())
         {
-            var destinationPath = assetOutDir / (string.IsNullOrWhiteSpace(customFilename) ? (path.Name + ".zip") : customFilename);
+            var destinationPath = assetOutDir / ((string.IsNullOrWhiteSpace(customFilename) ? path.Name : customFilename) + ".zip");
             if (destinationPath.FileExists())
             {
                 destinationPath.DeleteFile();

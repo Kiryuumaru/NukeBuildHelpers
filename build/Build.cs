@@ -308,7 +308,7 @@ class Build : BaseNukeBuildHelpers
                 .SetPackageReleaseNotes(NormalizeReleaseNotes(releaseNotes))
                 .SetOutputDirectory(contextVersion.OutputDirectory / "try" / "test_release")), "DotNetPack");
             (contextVersion.OutputDirectory / "try" / "test_release").TarGZipTo(contextVersion.OutputDirectory / "try" / "test_release.tar.gz");
-            await AddReleaseAsset(contextVersion.OutputDirectory / "try" / "test_release", "CustomName.zip");
+            await AddReleaseAsset(contextVersion.OutputDirectory / "try" / "test_release", "CustomName");
         });
 
     BuildEntry NukeBuildHelpersBuild3 => _ => _
