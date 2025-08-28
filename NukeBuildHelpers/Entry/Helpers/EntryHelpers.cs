@@ -101,6 +101,19 @@ internal static class EntryHelpers
 
         foreach (var definition in entryDefinitions)
         {
+            if (definition.AppIds.Count == 0)
+            {
+                throw new Exception($"AppIds for {definition.Id} is empty");
+            }
+            if (definition.AppIds.Any(i => string.IsNullOrEmpty(i)))
+            {
+                throw new Exception($"AppIds for {definition.Id} contains empty value");
+            }
+            if (string.IsNullOrWhiteSpace(definition.Id))
+            {
+                throw new Exception("Id cannot be empty");
+            }
+
             if (definition is IDependentEntryDefinition dependentEntryDefinition)
             {
                 dependentEntryDefinitions.Add(dependentEntryDefinition);

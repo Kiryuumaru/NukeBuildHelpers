@@ -198,6 +198,7 @@ class Build : BaseNukeBuildHelpers
         });
 
     TestEntry NukeBuildHelpersTest5 => _ => _
+        .AppId("nuke_build_helpers2")
         .DisplayName("Test try 5")
         .RunnerOS(RunnerOS.Windows2022)
         .Execute(async ctx =>
