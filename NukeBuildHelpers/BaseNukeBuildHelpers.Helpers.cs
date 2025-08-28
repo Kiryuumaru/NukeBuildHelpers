@@ -11,6 +11,7 @@ using NukeBuildHelpers.ConsoleInterface;
 using NukeBuildHelpers.ConsoleInterface.Enums;
 using NukeBuildHelpers.ConsoleInterface.Models;
 using NukeBuildHelpers.Entry.Definitions;
+using NukeBuildHelpers.Entry.Enums;
 using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Interfaces;
@@ -485,37 +486,43 @@ partial class BaseNukeBuildHelpers
 
         }, async entry =>
         {
-            string entryType;
-            switch (entry)
-            {
-                case ITestEntryDefinition testEntryDefinition:
-                    if (await testEntryDefinition.ExecuteBeforeBuild())
-                        entryType = "01_pre_test";
-                    else
-                        entryType = "03_post_test";
-                    break;
-                case IBuildEntryDefinition:
-                    entryType = "02_build";
-                    break;
-                case IPublishEntryDefinition:
-                    entryType = "04_publish";
-                    break;
-                default:
-                    throw new NotSupportedException($"Entry not supported '{entry.GetType().Name}'");
-            }
             foreach (var appId in entry.AppIds)
             {
-                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                var artifactName = entryType + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + entry.Id.ToUpperInvariant();
-                var artifactTempPath = TemporaryDirectory / artifactName;
-                var artifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{artifactName}.zip";
-                artifactTempPath.CreateOrCleanDirectory();
-                artifactFilePath.DeleteFile();
-                await (CommonOutputDirectory / appIdLower / "runtime").MoveTo(artifactTempPath);
-                artifactTempPath.ZipTo(artifactFilePath);
-                Log.Information("Created artifact {artifactFilePath}", artifactFilePath);
+                await PackArtifacts(entry, appId);
             }
+            await PackArtifacts(entry, "$common");
         });
+    }
+
+    private static async Task PackArtifacts(IRunEntryDefinition entry, string appId)
+    {
+        string entryType;
+        switch (entry)
+        {
+            case ITestEntryDefinition testEntryDefinition:
+                if (await testEntryDefinition.ExecuteBeforeBuild())
+                    entryType = "01_pre_test";
+                else
+                    entryType = "03_post_test";
+                break;
+            case IBuildEntryDefinition:
+                entryType = "02_build";
+                break;
+            case IPublishEntryDefinition:
+                entryType = "04_publish";
+                break;
+            default:
+                throw new NotSupportedException($"Entry not supported '{entry.GetType().Name}'");
+        }
+        var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+        var artifactName = entryType + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + entry.Id.ToUpperInvariant();
+        var artifactTempPath = TemporaryDirectory / artifactName;
+        var artifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{artifactName}.zip";
+        artifactTempPath.CreateOrCleanDirectory();
+        artifactFilePath.DeleteFile();
+        await (CommonOutputDirectory / appIdLower / "runtime").MoveTo(artifactTempPath);
+        artifactTempPath.ZipTo(artifactFilePath);
+        Log.Information("Created artifact {artifactFilePath}", artifactFilePath);
     }
 
     private async Task TestAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
