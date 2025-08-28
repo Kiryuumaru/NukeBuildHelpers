@@ -454,9 +454,10 @@ partial class BaseNukeBuildHelpers
 
     private Task RunEntry(AllEntry allEntry, PipelineRun pipeline, IEnumerable<IRunEntryDefinition> entriesToRun, PipelinePreSetup pipelinePreSetup)
     {
-        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, entry =>
+        return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, static entry =>
         {
-            UnpackArtifacts(entry);
+            UnpackArtifacts([.. entry.AppIds]);
+            UnpackArtifacts(["$common"]);
             return Task.CompletedTask;
 
         }, PackArtifacts);
@@ -501,7 +502,7 @@ partial class BaseNukeBuildHelpers
         await Pack("$common");
     }
 
-    private static void UnpackArtifacts(IRunEntryDefinition? entry)
+    private static void UnpackArtifacts(params string[]? appIds)
     {
         if (CommonArtifactsDirectory.DirectoryExists())
         {
@@ -512,11 +513,11 @@ partial class BaseNukeBuildHelpers
                     continue;
                 }
                 var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                if (entry == null || 
-                    entry.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)) || 
-                    appId.Equals("$common", StringComparison.InvariantCultureIgnoreCase))
+                if (appIds == null || 
+                    appIds.Length == 0 ||
+                    appIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
+                    artifact.UnZipTo(CommonOutputDirectory / appId / "runtime");
                 }
             }
         }

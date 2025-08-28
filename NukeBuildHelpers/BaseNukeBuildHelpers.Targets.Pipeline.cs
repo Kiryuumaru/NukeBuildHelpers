@@ -66,18 +66,7 @@ partial class BaseNukeBuildHelpers
                 }
             }
 
-            if (CommonArtifactsDirectory.DirectoryExists())
-            {
-                foreach (var artifact in CommonArtifactsDirectory.GetFiles())
-                {
-                    if (!artifact.HasExtension(".zip"))
-                    {
-                        continue;
-                    }
-                    var appIdLower = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                    artifact.UnZipTo(CommonOutputDirectory / appIdLower);
-                }
-            }
+            UnpackArtifacts(["$common"]);
 
             var assetOutput = TemporaryDirectory / "release_assets";
             assetOutput.CreateOrCleanDirectory();

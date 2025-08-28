@@ -373,7 +373,6 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             CreateDownloadArtifacts(publishJob, entryDefinition, "build");
             CreateDownloadArtifacts(publishJob, entryDefinition, "post_test");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, envMap: envMap);
-            CreateUploadArtifacts(publishJob, entryDefinition, "publish");
             CreateUploadCommonArtifacts(publishJob, entryDefinition, "publish");
         }
 

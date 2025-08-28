@@ -702,13 +702,6 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersPublish
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }} Run --args "NukeBuildHelpersPublish"
-    - name: Upload nuke_build_helpers publish artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: publish___nuke_build_helpers___NUKEBUILDHELPERSPUBLISH
-        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
-        if-no-files-found: error
-        retention-days: 1
     - name: Upload common publish artifacts
       uses: actions/upload-artifact@v4
       with:
