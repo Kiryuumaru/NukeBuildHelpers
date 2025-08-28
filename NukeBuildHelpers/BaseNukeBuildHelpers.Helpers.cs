@@ -474,13 +474,24 @@ partial class BaseNukeBuildHelpers
 
         }, async entry =>
         {
-            var entryType = entry switch
+            string entryType;
+            switch (entry)
             {
-                IBuildEntryDefinition => "build",
-                ITestEntryDefinition => "test",
-                IPublishEntryDefinition => "publish",
-                _ => throw new NotSupportedException($"Entry not supported '{entry.GetType().Name}'")
-            };
+                case ITestEntryDefinition testEntryDefinition:
+                    if (await testEntryDefinition.ExecuteBeforeBuild())
+                        entryType = "01_pre_test";
+                    else
+                        entryType = "03_post_test";
+                    break;
+                case IBuildEntryDefinition:
+                    entryType = "02_build";
+                    break;
+                case IPublishEntryDefinition:
+                    entryType = "04_publish";
+                    break;
+                default:
+                    throw new NotSupportedException($"Entry not supported '{entry.GetType().Name}'");
+            }
             foreach (var appId in entry.AppIds)
             {
                 var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
