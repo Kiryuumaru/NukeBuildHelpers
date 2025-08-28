@@ -357,7 +357,7 @@ class Build : BaseNukeBuildHelpers
 
             var contextVersion = context.Apps.First().Value;
 
-            foreach (var path in contextVersion.OutputDirectory.Parent.GetFiles("**", 99))
+            foreach (var path in contextVersion.OutputDirectory.Parent.Parent.Parent.GetFiles("**", 99))
             {
                 Log.Information(path);
             }
