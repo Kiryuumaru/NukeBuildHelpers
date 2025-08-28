@@ -25,6 +25,7 @@ partial class BaseNukeBuildHelpers
         if (path.FileExists())
         {
             await path.CopyTo(assetOutDir / (string.IsNullOrWhiteSpace(customFilename) ? path.Name : customFilename));
+            Log.Information("Added file {file} to release assets", path);
         }
         else if (path.DirectoryExists())
         {
@@ -34,24 +35,11 @@ partial class BaseNukeBuildHelpers
                 destinationPath.DeleteFile();
             }
             path.ZipTo(destinationPath);
+            Log.Information("Added archive {file} to release assets", path);
         }
-        Log.Information("Added {file} to release assets", path);
-    }
-
-    /// <summary>
-    /// Adds a file or directory path to the collection of common release assets.
-    /// These assets will be bundled together with other common assets from the same app ID into a single zip archive.
-    /// </summary>
-    /// <param name="path">The absolute path to the file or directory to include as a common release asset.</param>
-    public static async Task AddReleaseCommonAsset(AbsolutePath path)
-    {
-        var releaseAssetsDir = CommonOutputDirectory / "$common";
-        var commonAssetOutDir = releaseAssetsDir / "common_assets";
-        commonAssetOutDir.CreateDirectory();
-        if (path.FileExists() || path.DirectoryExists())
+        else
         {
-            await path.CopyTo(commonAssetOutDir);
-            Log.Information("Added {file} to common assets", path);
+            Log.Warning("Asset {file} does not exists", path);
         }
     }
 }

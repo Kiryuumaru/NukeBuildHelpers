@@ -84,21 +84,12 @@ partial class BaseNukeBuildHelpers
 
             var commonOutputDir = CommonOutputDirectory / "$common";
             var assetDir = commonOutputDir / "assets";
-            var commonAssetDir = commonOutputDir / "common_assets";
             if (assetDir.DirectoryExists())
             {
                 foreach (var assetPath in assetDir.GetFiles("*"))
                 {
                     await assetPath.CopyTo(assetOutput / assetPath.Name);
-                    Log.Information("Publish individual asset: {name}", assetPath.Name);
-                }
-            }
-            if (commonAssetDir.DirectoryExists())
-            {
-                foreach (var commonAssetPath in commonAssetDir.GetFiles("*"))
-                {
-                    await commonAssetPath.CopyTo(assetOutput / commonAssetPath.Name);
-                    Log.Information("Publish common asset: {name}", commonAssetPath.Name);
+                    Log.Information("Publish asset: {name}", assetPath.Name);
                 }
             }
 
