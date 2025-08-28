@@ -85,14 +85,16 @@ partial class BaseNukeBuildHelpers
 
     private static void OutputBump(string appId)
     {
-        var runtimeOut = CommonOutputDirectory / appId.ToLowerInvariant();
+        var appOut = CommonOutputDirectory / appId.ToLowerInvariant();
+        var runtimeOut = appOut / "runtime";
 
         if (!runtimeOut.DirectoryExists())
         {
             runtimeOut.CreateDirectory();
         }
 
-        (runtimeOut / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+        (appOut / "stamp").WriteAllText(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+
     }
 
     private static Dictionary<string, AbsolutePath> GetCacheIndex()
@@ -446,11 +448,6 @@ partial class BaseNukeBuildHelpers
             await CachePostload(entry);
         }
 
-        foreach (var path in TemporaryDirectory.GetFiles(depth:99))
-        {
-            Log.Logger.Information("Temporary file: {file}", path);
-        }
-
         await pipeline.Pipeline.FinalizeEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
     }
 
@@ -547,8 +544,9 @@ partial class BaseNukeBuildHelpers
                 var buildArtifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{buildArtifactName}.zip";
                 buildArtifactTempPath.CreateOrCleanDirectory();
                 buildArtifactFilePath.DeleteFile();
-                await (CommonOutputDirectory / "runtime" / appIdLower).MoveTo(buildArtifactTempPath);
+                await (CommonOutputDirectory / appIdLower / "runtime").MoveTo(buildArtifactTempPath);
                 buildArtifactTempPath.ZipTo(buildArtifactFilePath);
+                Log.Information("Created artifact {buildArtifactFilePath}", buildArtifactFilePath);
             }
         });
     }
