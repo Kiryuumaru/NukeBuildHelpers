@@ -423,9 +423,6 @@ partial class BaseNukeBuildHelpers
     {
         await pipeline.Pipeline.PrepareEntryRun(allEntry, pipelinePreSetup, entriesToRun.ToDictionary(i => i.Id));
 
-        CacheBump();
-        CommonBump();
-
         await EntryPreSetup(allEntry, pipeline, pipelinePreSetup);
 
         foreach (var entry in entriesToRun)
@@ -439,6 +436,9 @@ partial class BaseNukeBuildHelpers
             Console.WriteLine();
 
             CommonOutputDirectory.CreateOrCleanDirectory();
+
+            CacheBump();
+            CommonBump();
 
             await CachePreload(entry);
 
@@ -467,62 +467,70 @@ partial class BaseNukeBuildHelpers
     {
         return RunEntry(allEntry, pipeline, entriesToRun, pipelinePreSetup, entry =>
         {
-            if (CommonArtifactsDirectory.DirectoryExists())
-            {
-                foreach (var artifact in CommonArtifactsDirectory.GetFiles())
-                {
-                    if (!artifact.HasExtension(".zip"))
-                    {
-                        continue;
-                    }
-                    var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
-                    if (entry.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)) || appId.Equals("$common", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
-                    }
-                }
-            }
+            UnpackArtifacts(entry);
             return Task.CompletedTask;
 
-        }, async entry =>
-        {
-            foreach (var appId in entry.AppIds)
-            {
-                await PackArtifacts(entry, appId);
-            }
-            await PackArtifacts(entry, "$common");
-        });
+        }, PackArtifacts);
     }
 
-    private static async Task PackArtifacts(IRunEntryDefinition entry, string appId)
+    private static async Task PackArtifacts(IRunEntryDefinition entry)
     {
-        string entryType;
-        switch (entry)
+        async Task Pack(string appId)
         {
-            case ITestEntryDefinition testEntryDefinition:
-                if (await testEntryDefinition.ExecuteBeforeBuild())
-                    entryType = "01_pre_test";
-                else
-                    entryType = "03_post_test";
-                break;
-            case IBuildEntryDefinition:
-                entryType = "02_build";
-                break;
-            case IPublishEntryDefinition:
-                entryType = "04_publish";
-                break;
-            default:
-                throw new NotSupportedException($"Entry not supported '{entry.GetType().Name}'");
+            string entryType;
+            switch (entry)
+            {
+                case ITestEntryDefinition testEntryDefinition:
+                    if (await testEntryDefinition.ExecuteBeforeBuild())
+                        entryType = "01_pre_test";
+                    else
+                        entryType = "03_post_test";
+                    break;
+                case IBuildEntryDefinition:
+                    entryType = "02_build";
+                    break;
+                case IPublishEntryDefinition:
+                    entryType = "04_publish";
+                    break;
+                default:
+                    throw new NotSupportedException($"Entry not supported '{entry.GetType().Name}'");
+            }
+            var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+            var artifactName = entryType + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + entry.Id.ToUpperInvariant();
+            var artifactTempPath = TemporaryDirectory / artifactName;
+            var artifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{artifactName}.zip";
+            artifactTempPath.CreateOrCleanDirectory();
+            artifactFilePath.DeleteFile();
+            await (CommonOutputDirectory / appIdLower / "runtime").MoveTo(artifactTempPath);
+            artifactTempPath.ZipTo(artifactFilePath);
+            Log.Information("Created artifact {artifactFilePath}", artifactFilePath);
         }
-        var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-        var artifactName = entryType + ArtifactNameSeparator + appIdLower + ArtifactNameSeparator + entry.Id.ToUpperInvariant();
-        var artifactTempPath = TemporaryDirectory / artifactName;
-        var artifactFilePath = CommonArtifactsUploadDirectory / appIdLower / $"{artifactName}.zip";
-        artifactTempPath.CreateOrCleanDirectory();
-        artifactFilePath.DeleteFile();
-        await (CommonOutputDirectory / appIdLower / "runtime").MoveTo(artifactTempPath);
-        artifactTempPath.ZipTo(artifactFilePath);
-        Log.Information("Created artifact {artifactFilePath}", artifactFilePath);
+        foreach (var appId in entry.AppIds)
+        {
+            await Pack(appId);
+        }
+        await Pack("$common");
+    }
+
+    private static void UnpackArtifacts(IRunEntryDefinition? entry)
+    {
+        if (CommonArtifactsDirectory.DirectoryExists())
+        {
+            foreach (var artifact in CommonArtifactsDirectory.GetFiles())
+            {
+                if (!artifact.HasExtension(".zip"))
+                {
+                    continue;
+                }
+                var appId = artifact.Name.Split(ArtifactNameSeparator).Skip(1).FirstOrDefault().NotNullOrEmpty().ToLowerInvariant();
+                if (entry == null || 
+                    entry.AppIds.Any(i => i.Equals(appId, StringComparison.InvariantCultureIgnoreCase)) || 
+                    appId.Equals("$common", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    artifact.UnZipTo(CommonOutputDirectory / appId.ToLowerInvariant() / "runtime");
+                }
+            }
+        }
     }
 
     private async Task TestAppEntries(AllEntry allEntry, PipelineRun pipeline, IEnumerable<string> idsToRun)
