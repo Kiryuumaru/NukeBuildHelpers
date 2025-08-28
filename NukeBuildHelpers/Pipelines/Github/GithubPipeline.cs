@@ -277,6 +277,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition);
+            CreateUploadArtifacts(testJob, entryDefinition, "pre_test");
         }
 
         // ██████████████████████████████████████
@@ -299,16 +300,9 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var buildJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. buildNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(buildJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
+            CreateDownloadArtifacts(buildJob, entryDefinition, "pre_test");
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition);
-            foreach (var appId in entryDefinition.AppIds)
-            {
-                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                var uploadBuildStep = AddJobStep(buildJob, name: $"Upload {appIdLower} Artifacts", uses: "actions/upload-artifact@v4");
-                AddJobStepWith(uploadBuildStep, "name", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
-                AddJobStepWith(uploadBuildStep, "path", $"./.nuke/temp/artifacts-upload/{appIdLower}/*");
-                AddJobStepWith(uploadBuildStep, "if-no-files-found", "error");
-                AddJobStepWith(uploadBuildStep, "retention-days", "1");
-            }
+            CreateUploadArtifacts(buildJob, entryDefinition, "build");
         }
 
         // ██████████████████████████████████████
@@ -339,14 +333,10 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var testJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. postTestNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(testJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            foreach (var appId in entryDefinition.AppIds)
-            {
-                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                var downloadPostTestStep = AddJobStep(testJob, name: $"Download {appIdLower} artifacts", uses: "actions/download-artifact@v4");
-                AddJobStepWith(downloadPostTestStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
-                AddJobStepWith(downloadPostTestStep, "pattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
-            }
+            CreateDownloadArtifacts(testJob, entryDefinition, "pre_test");
+            CreateDownloadArtifacts(testJob, entryDefinition, "build");
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition);
+            CreateUploadArtifacts(testJob, entryDefinition, "post_test");
         }
 
         // ██████████████████████████████████████
@@ -385,23 +375,11 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             var publishJob = AddJob(workflow, entryDefinition.Id.ToUpperInvariant(), await entryDefinition.GetDisplayName(workflowBuilder), GetImportedEnvVarFromJsonExpression(entryDefinition.Id.ToUpperInvariant(), "RUNS_ON"), needs: [.. publishNeeds], _if: condition);
             AddJobOrStepEnvVarFromNeeds(publishJob, "NUKE_PRE_SETUP", "PRE_SETUP");
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
-            foreach (var appId in entryDefinition.AppIds)
-            {
-                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                var downloadBuildStep = AddJobStep(publishJob, name: $"Download {appIdLower} artifacts", uses: "actions/download-artifact@v4");
-                AddJobStepWith(downloadBuildStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
-                AddJobStepWith(downloadBuildStep, "pattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
-            }
+            CreateDownloadArtifacts(publishJob, entryDefinition, "pre_test");
+            CreateDownloadArtifacts(publishJob, entryDefinition, "build");
+            CreateDownloadArtifacts(publishJob, entryDefinition, "post_test");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition);
-            foreach (var appId in entryDefinition.AppIds)
-            {
-                var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-                var uploadPublishStep = AddJobStep(publishJob, name: $"Upload {appIdLower} Artifacts", uses: "actions/upload-artifact@v4");
-                AddJobStepWith(uploadPublishStep, "name", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
-                AddJobStepWith(uploadPublishStep, "path", $"./.nuke/temp/artifacts-upload/{appIdLower}/*");
-                AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
-                AddJobStepWith(uploadPublishStep, "retention-days", "1");
-            }
+            CreateUploadArtifacts(publishJob, entryDefinition, "publish");
         }
 
         // ██████████████████████████████████████
@@ -431,9 +409,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobOrStepEnvVar(postSetupJob, "NUKE_RUN_RESULT_GITHUB_" + entryDefinition.Id.ToUpperInvariant(), $"${{{{ needs.{entryDefinition.Id.ToUpperInvariant()}.result }}}}");
         }
         AddJobStepCheckout(postSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
-        var downloadPostSetupStep = AddJobStep(postSetupJob, name: "Download Artifacts", uses: "actions/download-artifact@v4");
-        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
-        AddJobStepWith(downloadPostSetupStep, "pattern", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
+        CreateDownloadArtifacts(postSetupJob);
         var nukePostSetup = AddJobStepNukeRun(postSetupJob, pipelinePostSetupOs, "PipelinePostSetup");
 
         // ██████████████████████████████████████
@@ -446,6 +422,37 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
 
         Log.Information("Workflow built at " + workflowPath.ToString());
+    }
+
+    private static void CreateUploadArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)
+    {
+        foreach (var appId in entryDefinition.AppIds)
+        {
+            var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+            var uploadPublishStep = AddJobStep(job, name: $"Upload {appIdLower} {entryType} artifacts", uses: "actions/upload-artifact@v4");
+            AddJobStepWith(uploadPublishStep, "name", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
+            AddJobStepWith(uploadPublishStep, "path", $"./.nuke/temp/artifacts-upload/{appIdLower}/*");
+            AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
+            AddJobStepWith(uploadPublishStep, "retention-days", "1");
+        }
+    }
+
+    private static void CreateDownloadArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)
+    {
+        foreach (var appId in entryDefinition.AppIds)
+        {
+            var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+            var downloadPostTestStep = AddJobStep(job, name: $"Download {appIdLower} {entryType} artifacts", uses: "actions/download-artifact@v4");
+            AddJobStepWith(downloadPostTestStep, "path", $"./.nuke/temp/artifacts-download/{appIdLower}");
+            AddJobStepWith(downloadPostTestStep, "pattern", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
+        }
+    }
+
+    private static void CreateDownloadArtifacts(Dictionary<string, object> job)
+    {
+        var downloadPostSetupStep = AddJobStep(job, name: "Download artifacts", uses: "actions/download-artifact@v4");
+        AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
+        AddJobStepWith(downloadPostSetupStep, "pattern", "*" + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
     }
 
     private static Task ExportEnvVarRuntime(string entryId, string name, string? value)
