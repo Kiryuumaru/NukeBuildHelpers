@@ -212,6 +212,11 @@ partial class BaseNukeBuildHelpers
 
             await pipeline.Pipeline.FinalizePostSetup(allEntry, pipelinePreSetup);
 
+            foreach (var path in CommonOutputDirectory.GetFiles("**", 99))
+            {
+                Log.Information(path);
+            }
+
             if (!success)
             {
                 throw new Exception("Run has error(s)");
