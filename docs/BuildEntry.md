@@ -2,7 +2,7 @@
 
 This document provides an overview of the fluent API functionalities available for `BuildEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`.
 
-All files created on `OutputDirectory` under all `BuildEntry` will propagate on all `TestEntry` and `PublishEntry` with the same app ID.
+All files created on app-specific `OutputDirectory` under all `BuildEntry` will propagate on all `TestEntry` and `PublishEntry` with the same app ID.
 
 ## Features
 
@@ -24,17 +24,18 @@ All files created on `OutputDirectory` under all `BuildEntry` will propagate on 
 
 ## AppId
 
-Sets the app ID of the app.
+⚠️ **REQUIRED**: Sets the app ID(s) of the app. **All entries MUST provide at least one AppId or will throw an error.** Supports both single and multiple application IDs.
 
 ### Definitions
 
 ```csharp
 IBuildEntryDefinition AppId(string appId);
+IBuildEntryDefinition AppId(params string[] appIds);
 ```
 
 ### Usage
 
-* Specify directly
+* Specify single app ID (REQUIRED)
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -47,6 +48,42 @@ IBuildEntryDefinition AppId(string appId);
             .AppId("nuke_build_helpers");
     }
     ```
+
+* Specify multiple app IDs
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        BuildEntry MultiAppBuildEntry => _ => _
+            .AppId("frontend", "backend", "shared");
+    }
+    ```
+
+### Error Conditions
+
+If AppId is not specified, you will get these errors:
+
+```
+Error: AppIds for [EntryId] is empty
+Error: AppIds for [EntryId] contains empty value
+```
+
+**Fix**: Always provide at least one valid AppId:
+
+```csharp
+// ❌ INVALID - Will throw error
+BuildEntry InvalidEntry => _ => _
+    .Execute(() => { /* ... */ });
+
+// ✅ VALID - Required AppId provided
+BuildEntry ValidEntry => _ => _
+    .AppId("my_app")
+    .Execute(() => { /* ... */ });
+```
 
 ---
 
@@ -77,6 +114,7 @@ IBuildEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .RunnerOS(RunnerOS.Ubuntu2204);
     }
     ```
@@ -92,9 +130,11 @@ IBuildEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .RunnerOS(context => 
             {
-                if (context.RunType == RunType.PullRequest)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsPullRequest)
                 {
                     return RunnerOS.Ubuntu2204;
                 }
@@ -135,35 +175,121 @@ IBuildEntryDefinition Execute(Func<IRunContext, Task<T>> action);
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .Execute(() =>
             {
-                DotNetTasks.DotNetNuGetPush(_ => _
-                    .SetSource("https://api.nuget.org/v3/index.json")
-                    .SetApiKey(NuGetAuthToken)
-                    .SetTargetPath(OutputDirectory / "**"));
+                DotNetTasks.DotNetBuild(_ => _
+                    .SetProjectFile(RootDirectory / "MyProject.csproj"));
             });
     }
     ```
 
-* Running with `IRunContext`
+* Running with `IRunContext` - Single App
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .Execute(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                
+                string version = contextVersion.AppVersion.Version.ToString();
+                string? releaseNotes = null;
+                
+                if (contextVersion.BumpVersion != null)
                 {
-                    DotNetTasks.DotNetNuGetPush(_ => _
-                        .SetSource("https://api.nuget.org/v3/index.json")
-                        .SetApiKey(NuGetAuthToken)
-                        .SetTargetPath(OutputDirectory / "**"));
+                    version = contextVersion.BumpVersion.Version.ToString();
+                    releaseNotes = contextVersion.BumpVersion.ReleaseNotes;
+                }
+                else if (contextVersion.PullRequestVersion != null)
+                {
+                    version = contextVersion.PullRequestVersion.Version.ToString();
+                }
+                
+                DotNetTasks.DotNetPack(_ => _
+                    .SetProject(RootDirectory / "MyProject.csproj")
+                    .SetVersion(version)
+                    .SetPackageReleaseNotes(releaseNotes)
+                    .SetOutputDirectory(contextVersion.OutputDirectory / "packages"));
+            });
+    }
+    ```
+
+* Running with `IRunContext` - Multiple Apps
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeHelpers
+    {
+        ...
+
+        BuildEntry MultiAppBuildEntry => _ => _
+            .AppId("frontend", "backend")
+            .Execute(context =>
+            {
+                foreach (var appContext in context.Apps.Values)
+                {
+                    Log.Information("Building: {AppId}", appContext.AppId);
+                    
+                    string version = appContext.AppVersion.Version.ToString();
+                    if (appContext.BumpVersion != null)
+                    {
+                        version = appContext.BumpVersion.Version.ToString();
+                    }
+                    
+                    DotNetTasks.DotNetBuild(_ => _
+                        .SetProjectFile(RootDirectory / appContext.AppId / $"{appContext.AppId}.csproj")
+                        .SetConfiguration("Release")
+                        .SetOutputDirectory(appContext.OutputDirectory));
+                }
+            });
+    }
+    ```
+
+* Context properties and convenience methods
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
+            .Execute(context =>
+            {
+                var contextVersion = context.Apps.First().Value;
+                
+                // Access app information
+                Log.Information("App ID: {AppId}", contextVersion.AppId);
+                Log.Information("App Output: {Output}", contextVersion.OutputDirectory);
+                
+                // Check run type using convenience properties
+                if (contextVersion.IsBump)
+                {
+                    Log.Information("This is a bump/release build");
+                    var releaseNotes = contextVersion.BumpVersion.ReleaseNotes;
+                }
+                else if (contextVersion.IsPullRequest)
+                {
+                    Log.Information("This is a pull request build");
+                    var prNumber = contextVersion.PullRequestVersion.PullRequestNumber;
+                }
+                else if (contextVersion.IsLocal)
+                {
+                    Log.Information("This is a local development build");
+                }
+                else if (contextVersion.IsCommit)
+                {
+                    Log.Information("This is a commit build");
                 }
             });
     }
@@ -197,6 +323,7 @@ IBuildEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePat
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CachePath(RootDirectory / "directoryToCache")
             .CachePath(RootDirectory / "fileToCache.txt");
     }
@@ -206,16 +333,17 @@ IBuildEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePat
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CachePath(context =>
             {
-                if (context.RunType == RunType.PullRequest)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsPullRequest)
                 {
                     return RootDirectory / "directoryToCache";
                 }
@@ -255,6 +383,7 @@ IBuildEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInva
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CacheInvalidator("sampleValue");
     }
     ```
@@ -263,16 +392,17 @@ IBuildEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInva
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CacheInvalidator(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return Guid.NewGuid().ToString();
                 }
@@ -312,6 +442,7 @@ IBuildEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFe
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchDepth(0);
     }
     ```
@@ -320,16 +451,17 @@ IBuildEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFe
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchDepth(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return 1;
                 }
@@ -369,6 +501,7 @@ IBuildEntryDefinition CheckoutFetchTags(Func<IRunContext, Task<bool>> checkoutFe
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchTags(true);
     }
     ```
@@ -377,16 +510,17 @@ IBuildEntryDefinition CheckoutFetchTags(Func<IRunContext, Task<bool>> checkoutFe
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         BuildEntry SampleBuildEntry => _ => _
-            .CheckoutFetchDepth(context =>
+            .AppId("my_app")
+            .CheckoutFetchTags(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return true;
                 }
@@ -426,6 +560,7 @@ IBuildEntryDefinition CheckoutSubmodule(Func<IRunContext, Task<SubmoduleCheckout
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CheckoutSubmodule(SubmoduleCheckoutType.Recursive);
     }
     ```
@@ -434,16 +569,17 @@ IBuildEntryDefinition CheckoutSubmodule(Func<IRunContext, Task<SubmoduleCheckout
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .CheckoutSubmodule(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return SubmoduleCheckoutType.Recursive;
                 }
@@ -483,6 +619,7 @@ IBuildEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .Condition(false);
     }
     ```
@@ -491,16 +628,17 @@ IBuildEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .Condition(context =>
             {
-                return context.RunType == RunType.Bump;
+                var contextVersion = context.Apps.First().Value;
+                return contextVersion.IsBump;
             });
     }
     ```
@@ -531,7 +669,8 @@ IBuildEntryDefinition DisplayName(Func<Task<string>> displayName);
         ...
 
         BuildEntry SampleBuildEntry => _ => _
-            .DisplayName("Test Entry Sample");
+            .AppId("my_app")
+            .DisplayName("Build Entry Sample");
     }
     ```
 
@@ -559,7 +698,8 @@ IBuildEntryDefinition WorkflowId(string workflowId);
         ...
 
         BuildEntry SampleBuildEntry => _ => _
-            .WorkflowId("id_entry_test");
+            .AppId("my_app")
+            .WorkflowId("id_entry_build");
     }
     ```
 
@@ -589,6 +729,7 @@ IBuildEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBu
         ...
 
         BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
             .WorkflowBuilder(builder =>
             {
                 if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
@@ -634,12 +775,12 @@ Sets the matrix of the definition to configure on each matrix element.
 ### Definitions
 
 ```csharp
-ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TRunEntryDefinition, TMatrix> matrixDefinition);
+IBuildEntryDefinition Matrix(TMatrix[] matrix, Action<TBuildEntryDefinition, TMatrix> matrixDefinition);
 ```
 
 ### Usage
 
-* Specify `string` directly
+* Specify matrix directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -648,14 +789,20 @@ ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TRunEntryDefinition, TMatri
     {
         ...
 
-        TestEntry SampleTestEntry => _ => _
-            .Matrix(new[] { ("Mat1", 3), ("Mat2", 4) }, (definition, matrix) => 
+        BuildEntry SampleBuildEntry => _ => _
+            .AppId("my_app")
+            .Matrix(new[] { ("Config1", "Release"), ("Config2", "Debug") }, (definition, matrix) => 
             {
-                definition.DisplayName("Matrix test " + matrix.Item1 + ", " + matrix.Item2.ToString());
-                definition.Execute(() =>
+                definition.DisplayName("Matrix build " + matrix.Item1 + ", " + matrix.Item2);
+                definition.Execute(context =>
                 {
-                    Log.Information("I am hereeee: {s}", matrix.Item1 + ", " + matrix.Item2.ToString());
+                    var contextVersion = context.Apps.First().Value;
+                    Log.Information("Building with config: {Config}", matrix.Item1);
+                    
+                    DotNetTasks.DotNetBuild(_ => _
+                        .SetConfiguration(matrix.Item2)
+                        .SetOutputDirectory(contextVersion.OutputDirectory / matrix.Item1));
                 });
-            })
+            });
     }
     ```

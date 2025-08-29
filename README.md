@@ -85,17 +85,21 @@ To create custom build flows, implement any of the target entries `BuildEntry`, 
             .AppId("nuke_build_helpers")
             .RunnerOS(RunnerOS.Ubuntu2204)
             .Execute(context => {
-                string version = "0.0.0";
+                var contextVersion = context.Apps.First().Value;
+                
+                string version = contextVersion.AppVersion.Version.ToString();
                 string? releaseNotes = null;
-                if (context.TryGetBumpContext(out var bumpContext))
+                
+                if (contextVersion.BumpVersion != null)
                 {
-                    version = bumpContext.AppVersion.Version.ToString();
-                    releaseNotes = bumpContext.AppVersion.ReleaseNotes;
+                    version = contextVersion.BumpVersion.Version.ToString();
+                    releaseNotes = contextVersion.BumpVersion.ReleaseNotes;
                 }
-                else if (context.TryGetPullRequestContext(out var pullRequestContext))
+                else if (contextVersion.PullRequestVersion != null)
                 {
-                    version = pullRequestContext.AppVersion.Version.ToString();
+                    version = contextVersion.PullRequestVersion.Version.ToString();
                 }
+                
                 DotNetTasks.DotNetClean(_ => _
                     .SetProject(RootDirectory / "NukeBuildHelpers" / "NukeBuildHelpers.csproj"));
                 DotNetTasks.DotNetBuild(_ => _
@@ -110,7 +114,7 @@ To create custom build flows, implement any of the target entries `BuildEntry`, 
                     .SetSymbolPackageFormat("snupkg")
                     .SetVersion(version)
                     .SetPackageReleaseNotes(releaseNotes)
-                    .SetOutputDirectory(OutputDirectory / "main"));
+                    .SetOutputDirectory(contextVersion.OutputDirectory / "main"));
             });
     }
     ```
@@ -127,12 +131,15 @@ To create custom build flows, implement any of the target entries `BuildEntry`, 
         TestEntry NukeBuildHelpersTest => _ => _
             .AppId("nuke_build_helpers")
             .RunnerOS(RunnerOS.Ubuntu2204)
-            .Execute(() =>
+            .Execute(context =>
             {
+                var contextVersion = context.Apps.First().Value;
+                
                 DotNetTasks.DotNetClean(_ => _
                     .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
                 DotNetTasks.DotNetTest(_ => _
-                    .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                    .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj")
+                    .SetResultsDirectory(contextVersion.OutputDirectory / "test-results"));
             });
     }
     ```
@@ -149,24 +156,50 @@ To create custom build flows, implement any of the target entries `BuildEntry`, 
         PublishEntry NukeBuildHelpersPublish => _ => _
             .AppId("nuke_build_helpers")
             .RunnerOS(RunnerOS.Ubuntu2204)
-            .Execute(context =>
+            .Execute(async context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                
+                if (contextVersion.IsBump)
                 {
                     DotNetTasks.DotNetNuGetPush(_ => _
                         .SetSource("https://nuget.pkg.github.com/kiryuumaru/index.json")
                         .SetApiKey(GithubToken)
-                        .SetTargetPath(OutputDirectory / "main" / "**"));
+                        .SetTargetPath(contextVersion.OutputDirectory / "main" / "**"));
                     DotNetTasks.DotNetNuGetPush(_ => _
                         .SetSource("https://api.nuget.org/v3/index.json")
                         .SetApiKey(NuGetAuthToken)
-                        .SetTargetPath(OutputDirectory / "main" / "**"));
+                        .SetTargetPath(contextVersion.OutputDirectory / "main" / "**"));
                 }
+                
+                // Add release assets
+                await AddReleaseAsset(contextVersion.OutputDirectory / "main");
             });
     }
     ```
 
   See documentation [here](https://github.com/Kiryuumaru/NukeBuildHelpers/blob/main/docs/PublishEntry.md)
+
+### Multiple AppId Support
+
+NukeBuildHelpers now supports multiple applications in a single entry:
+
+```csharp
+BuildEntry MultiAppBuild => _ => _
+    .AppId("frontend", "backend", "shared")
+    .Execute(context =>
+    {
+        foreach (var appContext in context.Apps.Values)
+        {
+            Log.Information("Building: {AppId} to {Output}", 
+                appContext.AppId, appContext.OutputDirectory);
+            
+            DotNetTasks.DotNetBuild(_ => _
+                .SetProjectFile(RootDirectory / appContext.AppId / $"{appContext.AppId}.csproj")
+                .SetOutputDirectory(appContext.OutputDirectory));
+        }
+    });
+```
 
 ### Generating Workflows
 
@@ -242,6 +275,10 @@ To create custom build flows, implement any of the target entries `BuildEntry`, 
     - **Publishing:** The build is currently in the process of being published.
     - **Waiting for Queue:** The build is waiting in the queue to be processed.
     - **Not Published:** The build has not been published.
+
+## Breaking Changes
+
+For users upgrading from V8 to V9, please review the [V9 Breaking Changes](V9_BREAKING_CHANGES.md) document for detailed migration guidance.
 
 ## License
 
