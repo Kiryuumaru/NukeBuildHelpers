@@ -8,13 +8,13 @@ internal class AllEntry
 
     public required IWorkflowConfigEntryDefinition WorkflowConfigEntryDefinition { get; init; }
 
+    public required Dictionary<string, IRunEntryDefinition> RunEntryDefinitionMap { get; init; }
+
     public required Dictionary<string, ITestEntryDefinition> TestEntryDefinitionMap { get; init; }
 
     public required Dictionary<string, IBuildEntryDefinition> BuildEntryDefinitionMap { get; init; }
 
     public required Dictionary<string, IPublishEntryDefinition> PublishEntryDefinitionMap { get; init; }
-
-    public required Dictionary<string, IRunEntryDefinition> RunEntryDefinitionMap { get; init; }
 
     public required Dictionary<string, ITargetEntryDefinition> TargetEntryDefinitionMap { get; init; }
 

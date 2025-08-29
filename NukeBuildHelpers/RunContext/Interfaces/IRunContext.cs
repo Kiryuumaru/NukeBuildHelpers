@@ -1,4 +1,7 @@
 ﻿using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.Entry.Models;
+using NukeBuildHelpers.Pipelines.Common.Enums;
+using NukeBuildHelpers.RunContext.Models;
 
 namespace NukeBuildHelpers.RunContext.Interfaces;
 
@@ -8,7 +11,12 @@ namespace NukeBuildHelpers.RunContext.Interfaces;
 public interface IRunContext
 {
     /// <summary>
-    /// Gets the run type associated with the context.
+    /// Gets the pipeline type associated with the context.
     /// </summary>
-    RunType RunType { get; }
+    PipelineType PipelineType { get; }
+
+    /// <summary>
+    /// Gets the application associated with the context.
+    /// </summary>
+    IReadOnlyDictionary<string, AppRunContext> Apps { get; }
 }

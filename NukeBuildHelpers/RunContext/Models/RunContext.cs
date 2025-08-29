@@ -1,11 +1,15 @@
 ﻿using NukeBuildHelpers.Common.Enums;
+using NukeBuildHelpers.Entry.Models;
+using NukeBuildHelpers.Pipelines.Common.Enums;
 using NukeBuildHelpers.RunContext.Interfaces;
 
 namespace NukeBuildHelpers.RunContext.Models;
 
-internal abstract class RunContext : IRunContext
+/// <summary>
+/// Unified implementation of run context containing all execution information.
+/// </summary>
+internal class RunContext : IRunContext
 {
-    public required RunType RunType { get; init; }
-
-    RunType IRunContext.RunType { get => RunType; }
+    public required PipelineType PipelineType { get; init; }
+    public required IReadOnlyDictionary<string, AppRunContext> Apps { get; init; }
 }

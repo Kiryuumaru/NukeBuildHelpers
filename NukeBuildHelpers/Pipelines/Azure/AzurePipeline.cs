@@ -3,6 +3,7 @@ using Nuke.Common.IO;
 using NukeBuildHelpers.Common;
 using NukeBuildHelpers.Common.Enums;
 using NukeBuildHelpers.Entry.Enums;
+using NukeBuildHelpers.Entry.Extensions;
 using NukeBuildHelpers.Entry.Helpers;
 using NukeBuildHelpers.Entry.Interfaces;
 using NukeBuildHelpers.Entry.Models;
@@ -21,7 +22,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 {
     public BaseNukeBuildHelpers NukeBuild { get; set; } = nukeBuild;
 
-    public PipelineInfo GetPipelineInfo()
+    public Task<PipelineInfo> GetPipelineInfo()
     {
         TriggerType triggerType = TriggerType.Commit;
         var branch = Environment.GetEnvironmentVariable("BUILD_SOURCEBRANCH");
@@ -57,15 +58,15 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
                 branch = branch[11..];
             }
         }
-        return new()
+        return Task.FromResult(new PipelineInfo()
         {
             Branch = branch,
             TriggerType = triggerType,
             PullRequestNumber = prNumber
-        };
+        });
     }
 
-    public PipelinePreSetup GetPipelinePreSetup()
+    public Task<PipelinePreSetup> GetPipelinePreSetup()
     {
         string? pipelinePreSetupValue = Environment.GetEnvironmentVariable("NUKE_PRE_SETUP");
 
@@ -74,9 +75,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             throw new Exception("NUKE_PRE_SETUP is empty");
         }
 
-        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue.Base64ToString(), JsonExtension.SnakeCaseNamingOption);
+        PipelinePreSetup? pipelinePreSetup = JsonSerializer.Deserialize<PipelinePreSetup>(pipelinePreSetupValue.Base64ToString(), JsonExtension.SnakeCaseNamingOption)
+            ?? throw new Exception("NUKE_PRE_SETUP is empty");
 
-        return pipelinePreSetup ?? throw new Exception("NUKE_PRE_SETUP is empty");
+        return Task.FromResult(pipelinePreSetup);
     }
 
     public Task PreparePreSetup(AllEntry allEntry)
@@ -263,6 +265,8 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, envMap: envMap);
+            CreateUploadArtifacts(testJob, entryDefinition, "pre_test");
+            CreateUploadCommonArtifacts(testJob, entryDefinition, "pre_test");
         }
 
         // ██████████████████████████████████████
@@ -274,7 +278,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             string condition = "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))";
             foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
             {
-                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
                     condition = "and(" + condition + ", " + "eq(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     buildNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
@@ -286,11 +290,10 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(buildJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(buildJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(buildJob, entryDefinition.Id.ToUpperInvariant());
+            CreateDownloadArtifacts(buildJob, entryDefinition, "pre_test");
             AddJobStepNukeDefined(buildJob, workflowBuilder, entryDefinition, envMap: envMap);
-            var uploadBuildStep = AddJobStep(buildJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
-            AddJobStepInputs(uploadBuildStep, "artifact", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
-            AddJobStepInputs(uploadBuildStep, "targetPath", "./.nuke/temp/artifacts-upload");
-            AddJobStepInputs(uploadBuildStep, "continueOnError", "true");
+            CreateUploadArtifacts(buildJob, entryDefinition, "build");
+            CreateUploadCommonArtifacts(buildJob, entryDefinition, "build");
         }
 
         // ██████████████████████████████████████
@@ -310,7 +313,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
             foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
             {
-                if (entryDefinition.AppIds.Count == 0 || entryDefinition.AppIds.Any(i => i.Equals(buildEntryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                if (entryDefinition.AppIds.Count == 0 || entryDefinition.AppIds.Any(i => buildEntryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
                     condition = "and(" + condition + ", " + "eq(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     postTestNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
@@ -322,11 +325,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(testJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(testJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(testJob, entryDefinition.Id.ToUpperInvariant());
-            var downloadPostTestStep = AddJobStep(testJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPostTestStep, "path", "./.nuke/temp/artifacts-download");
-            AddJobStepInputs(downloadPostTestStep, "patterns", "**");
-            AddJobStepInputs(downloadPostTestStep, "continueOnError", "true");
+            CreateDownloadArtifacts(testJob, entryDefinition, "pre_test");
+            CreateDownloadArtifacts(testJob, entryDefinition, "build");
             AddJobStepNukeDefined(testJob, workflowBuilder, entryDefinition, envMap: envMap);
+            CreateUploadArtifacts(testJob, entryDefinition, "post_test");
+            CreateUploadCommonArtifacts(testJob, entryDefinition, "post_test");
         }
 
         // ██████████████████████████████████████
@@ -338,7 +341,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             string condition = "and(not(or(failed(), canceled())), eq(variables." + GetImportedEnvVarName(entryDefinition.Id.ToUpperInvariant(), "CONDITION") + ", 'true'))";
             foreach (var testEntryDefinition in preTestEntryDefinitionMap.Values)
             {
-                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
                     condition = "and(" + condition + ", " + "eq(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
@@ -346,7 +349,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
             foreach (var buildEntryDefinition in allEntry.BuildEntryDefinitionMap.Values)
             {
-                if (buildEntryDefinition.AppId.NotNullOrEmpty().Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase))
+                if (buildEntryDefinition.AppIds.Count == 0 || buildEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
                     condition = "and(" + condition + ", " + "eq(dependencies." + buildEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     publishNeeds.Add(buildEntryDefinition.Id.ToUpperInvariant());
@@ -354,7 +357,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             }
             foreach (var testEntryDefinition in postTestEntryDefinitionMap.Values)
             {
-                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => i.Equals(entryDefinition.AppId, StringComparison.InvariantCultureIgnoreCase)))
+                if (testEntryDefinition.AppIds.Count == 0 || testEntryDefinition.AppIds.Any(i => entryDefinition.AppIds.Any(j => i.Equals(j, StringComparison.InvariantCultureIgnoreCase))))
                 {
                     condition = "and(" + condition + ", " + "eq(dependencies." + testEntryDefinition.Id.ToUpperInvariant() + ".result, 'Succeeded')" + ")";
                     publishNeeds.Add(testEntryDefinition.Id.ToUpperInvariant());
@@ -366,15 +369,11 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVarFromNeeds(publishJob, "PRE_SETUP", "NUKE_RUN", "NUKE_PRE_SETUP");
             AddJobEnvVarFromNeedsDefined(publishJob, entryDefinition.Id.ToUpperInvariant());
             AddJobStepCheckout(publishJob, entryDefinition.Id.ToUpperInvariant());
-            var downloadPublishStep = AddJobStep(publishJob, displayName: "Download Artifacts", task: "DownloadPipelineArtifact@2");
-            AddJobStepInputs(downloadPublishStep, "itemPattern", "build" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
-            AddJobStepInputs(downloadPublishStep, "path", "./.nuke/temp/artifacts-download");
-            AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
+            CreateDownloadArtifacts(publishJob, entryDefinition, "pre_test");
+            CreateDownloadArtifacts(publishJob, entryDefinition, "build");
+            CreateDownloadArtifacts(publishJob, entryDefinition, "post_test");
             AddJobStepNukeDefined(publishJob, workflowBuilder, entryDefinition, envMap: envMap);
-            var uploadPublishStep = AddJobStep(publishJob, displayName: "Upload Artifacts", task: "PublishPipelineArtifact@1");
-            AddJobStepInputs(uploadPublishStep, "artifact", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant() + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
-            AddJobStepInputs(uploadPublishStep, "targetPath", "./.nuke/temp/artifacts-upload");
-            AddJobStepInputs(uploadPublishStep, "continueOnError", "true");
+            CreateUploadCommonArtifacts(publishJob, entryDefinition, "publish");
         }
 
         // ██████████████████████████████████████
@@ -404,10 +403,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
             AddJobEnvVar(postSetupJob, "NUKE_RUN_RESULT_AZURE_" + entryDefinition.Id.ToUpperInvariant(), $"$[ dependencies.{entryDefinition.Id.ToUpperInvariant()}.result ]");
         }
         AddJobStepCheckout(postSetupJob, 0, true, SubmoduleCheckoutType.Recursive);
-        var downloadPostSetupStep = AddJobStep(postSetupJob, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
-        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
-        AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
-        AddJobStepInputs(downloadPostSetupStep, "itemPattern", "publish" + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
+        CreateDownloadArtifacts(postSetupJob);
         var nukePostSetupStep = AddJobStepNukeRun(postSetupJob, pipelinePostSetupOs, "PipelinePostSetup", envMap: envMap);
         
         // ██████████████████████████████████████
@@ -420,6 +416,46 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         File.WriteAllText(workflowPath, YamlExtension.Serialize(workflow));
 
         Log.Information("Workflow built at " + workflowPath.ToString());
+    }
+
+    private static void CreateUploadCommonArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)
+    {
+        var uploadPreTestStep = AddJobStep(job, displayName: $"Upload common {entryType} artifacts", task: "PublishPipelineArtifact@1");
+        AddJobStepInputs(uploadPreTestStep, "artifact", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + "$common" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
+        AddJobStepInputs(uploadPreTestStep, "targetPath", $"./.nuke/temp/artifacts-upload/$common");
+        AddJobStepInputs(uploadPreTestStep, "continueOnError", "true");
+    }
+
+    private static void CreateUploadArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)
+    {
+        foreach (var appId in entryDefinition.AppIds)
+        {
+            var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+            var uploadPreTestStep = AddJobStep(job, displayName: $"Upload {appIdLower} {entryType} artifacts", task: "PublishPipelineArtifact@1");
+            AddJobStepInputs(uploadPreTestStep, "artifact", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id);
+            AddJobStepInputs(uploadPreTestStep, "targetPath", $"./.nuke/temp/artifacts-upload/{appIdLower}");
+            AddJobStepInputs(uploadPreTestStep, "continueOnError", "true");
+        }
+    }
+
+    private static void CreateDownloadArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)
+    {
+        foreach (var appId in entryDefinition.AppIds)
+        {
+            var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
+            var downloadPublishStep = AddJobStep(job, displayName: $"Download {appIdLower} {entryType} artifacts", task: "DownloadPipelineArtifact@2");
+            AddJobStepInputs(downloadPublishStep, "itemPattern", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
+            AddJobStepInputs(downloadPublishStep, "path", $"./.nuke/temp/artifacts-download");
+            AddJobStepInputs(downloadPublishStep, "continueOnError", "true");
+        }
+    }
+
+    private static void CreateDownloadArtifacts(Dictionary<string, object> job)
+    {
+        var downloadPostSetupStep = AddJobStep(job, displayName: "Download artifacts", task: "DownloadPipelineArtifact@2");
+        AddJobStepInputs(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
+        AddJobStepInputs(downloadPostSetupStep, "continueOnError", "true");
+        AddJobStepInputs(downloadPostSetupStep, "itemPattern", "*" + BaseNukeBuildHelpers.ArtifactNameSeparator + "*/**");
     }
 
     private static void AddJobEnvVarFromNeedsDefined(Dictionary<string, object> job, string entryId)

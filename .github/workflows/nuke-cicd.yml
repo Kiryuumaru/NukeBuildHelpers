@@ -168,6 +168,20 @@ jobs:
     - id: test_github_2
       name: Custom github step test 2
       run: echo "Test github 2"
+    - name: Upload nuke_build_helpers pre_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pre_test___nuke_build_helpers___NUKEBUILDHELPERSTEST1
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common pre_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pre_test___$common___NUKEBUILDHELPERSTEST1
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST1_CONDITION == 'true'"
@@ -194,6 +208,20 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersTest2CustomId
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2CUSTOMID_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest2CustomId"
+    - name: Upload nuke_build_helpers pre_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pre_test___nuke_build_helpers___NUKEBUILDHELPERSTEST2CUSTOMID
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common pre_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pre_test___$common___NUKEBUILDHELPERSTEST2CUSTOMID
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST2CUSTOMID_CONDITION == 'true'"
@@ -209,6 +237,11 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download nuke_build_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -220,11 +253,18 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersBuild1
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD1_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild1"
-    - name: Upload Artifacts
+    - name: Upload nuke_build_helpers build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD1
-        path: ./.nuke/temp/artifacts-upload/*
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD1
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -244,6 +284,11 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download nuke_build_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -255,11 +300,18 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersBuild2Mat1Mat3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT3_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat1Mat3"
-    - name: Upload Artifacts
+    - name: Upload nuke_build_helpers build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT3
-        path: ./.nuke/temp/artifacts-upload/*
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT1MAT3
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -279,6 +331,11 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download nuke_build_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -290,11 +347,18 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersBuild2Mat1Mat4
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT1MAT4_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat1Mat4"
-    - name: Upload Artifacts
+    - name: Upload nuke_build_helpers build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT1MAT4
-        path: ./.nuke/temp/artifacts-upload/*
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT1MAT4
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -314,6 +378,11 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download nuke_build_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -325,11 +394,18 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersBuild2Mat2Mat3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT3_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat2Mat3"
-    - name: Upload Artifacts
+    - name: Upload nuke_build_helpers build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT3
-        path: ./.nuke/temp/artifacts-upload/*
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT2MAT3
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -349,6 +425,11 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download nuke_build_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -360,11 +441,18 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersBuild2Mat2Mat4
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD2MAT2MAT4_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild2Mat2Mat4"
-    - name: Upload Artifacts
+    - name: Upload nuke_build_helpers build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers___NUKEBUILDHELPERSBUILD2MAT2MAT4
-        path: ./.nuke/temp/artifacts-upload/*
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD2MAT2MAT4
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -384,6 +472,11 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_CHECKOUT_SUBMODULES }}
         persist-credentials: true
+    - name: Download nuke_build_helpers2 pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers2___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -395,11 +488,18 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersBuild3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSBUILD3_RUN_SCRIPT }} Run --args "NukeBuildHelpersBuild3"
-    - name: Upload Artifacts
+    - name: Upload nuke_build_helpers2 build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build___nuke_build_helpers2___NUKEBUILDHELPERSBUILD3
-        path: ./.nuke/temp/artifacts-upload/*
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers2/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build___$common___NUKEBUILDHELPERSBUILD3
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -417,10 +517,16 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_CHECKOUT_SUBMODULES }}
         persist-credentials: true
-    - name: Download Artifacts
+    - name: Download nuke_build_helpers pre_test artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers___*
+    - name: Download nuke_build_helpers build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: build___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -432,6 +538,20 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersTest3
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST3_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest3"
+    - name: Upload nuke_build_helpers post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___nuke_build_helpers___NUKEBUILDHELPERSTEST3
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___NUKEBUILDHELPERSTEST3
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSTEST1
@@ -454,10 +574,16 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_CHECKOUT_SUBMODULES }}
         persist-credentials: true
-    - name: Download Artifacts
+    - name: Download nuke_build_helpers2 pre_test artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers2___*
+    - name: Download nuke_build_helpers2 build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: build___nuke_build_helpers2___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -469,6 +595,20 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersTest4
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST4_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest4"
+    - name: Upload nuke_build_helpers2 post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___nuke_build_helpers2___NUKEBUILDHELPERSTEST4
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers2/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___NUKEBUILDHELPERSTEST4
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
     - NUKEBUILDHELPERSBUILD3
@@ -485,10 +625,16 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CHECKOUT_SUBMODULES }}
         persist-credentials: true
-    - name: Download Artifacts
+    - name: Download nuke_build_helpers2 pre_test artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers2___*
+    - name: Download nuke_build_helpers2 build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: build___nuke_build_helpers2___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -500,17 +646,24 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersTest5
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_RUN_SCRIPT }} Run --args "NukeBuildHelpersTest5"
+    - name: Upload nuke_build_helpers2 post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___nuke_build_helpers2___NUKEBUILDHELPERSTEST5
+        path: ./.nuke/temp/artifacts-upload/nuke_build_helpers2/*
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload common post_test artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: post_test___$common___NUKEBUILDHELPERSTEST5
+        path: ./.nuke/temp/artifacts-upload/$common/*
+        if-no-files-found: error
+        retention-days: 1
     needs:
     - PRE_SETUP
-    - NUKEBUILDHELPERSTEST1
-    - NUKEBUILDHELPERSTEST2CUSTOMID
-    - NUKEBUILDHELPERSBUILD1
-    - NUKEBUILDHELPERSBUILD2MAT1MAT3
-    - NUKEBUILDHELPERSBUILD2MAT1MAT4
-    - NUKEBUILDHELPERSBUILD2MAT2MAT3
-    - NUKEBUILDHELPERSBUILD2MAT2MAT4
     - NUKEBUILDHELPERSBUILD3
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD3.result == 'success'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSTEST5_CONDITION == 'true' && needs.NUKEBUILDHELPERSBUILD3.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   NUKEBUILDHELPERSPUBLISH:
@@ -523,11 +676,21 @@ jobs:
         fetch-tags: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CHECKOUT_FETCH_TAGS }}
         submodules: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CHECKOUT_SUBMODULES }}
         persist-credentials: true
-    - name: Download artifacts
+    - name: Download nuke_build_helpers pre_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: pre_test___nuke_build_helpers___*
+    - name: Download nuke_build_helpers build artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
         pattern: build___nuke_build_helpers___*
+    - name: Download nuke_build_helpers post_test artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./.nuke/temp/artifacts-download
+        pattern: post_test___nuke_build_helpers___*
     - name: Cache Run
       uses: actions/cache@v4
       with:
@@ -539,11 +702,11 @@ jobs:
     - id: NUKE_RUN
       name: Run Nuke NukeBuildHelpersPublish
       run: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_RUN_SCRIPT }} Run --args "NukeBuildHelpersPublish"
-    - name: Upload Artifacts
+    - name: Upload common publish artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: publish___nuke_build_helpers___NUKEBUILDHELPERSPUBLISH
-        path: ./.nuke/temp/artifacts-upload/*
+        name: publish___$common___NUKEBUILDHELPERSPUBLISH
+        path: ./.nuke/temp/artifacts-upload/$common/*
         if-no-files-found: error
         retention-days: 1
     needs:
@@ -556,8 +719,7 @@ jobs:
     - NUKEBUILDHELPERSBUILD2MAT2MAT3
     - NUKEBUILDHELPERSBUILD2MAT2MAT4
     - NUKEBUILDHELPERSTEST3
-    - NUKEBUILDHELPERSTEST5
-    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSTEST3.result == 'success' && needs.NUKEBUILDHELPERSTEST5.result == 'success'"
+    if: "! failure() && ! cancelled() && needs.PRE_SETUP.outputs.NUKE_PRE_SETUP_NUKEBUILDHELPERSPUBLISH_CONDITION == 'true' && needs.NUKEBUILDHELPERSTEST1.result == 'success' && needs.NUKEBUILDHELPERSTEST2CUSTOMID.result == 'success' && needs.NUKEBUILDHELPERSBUILD1.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT1MAT4.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT3.result == 'success' && needs.NUKEBUILDHELPERSBUILD2MAT2MAT4.result == 'success' && needs.NUKEBUILDHELPERSTEST3.result == 'success'"
     env:
       NUKE_PRE_SETUP: ${{ needs.PRE_SETUP.outputs.NUKE_PRE_SETUP }}
   POST_SETUP:
@@ -571,11 +733,11 @@ jobs:
         fetch-tags: true
         submodules: recursive
         persist-credentials: true
-    - name: Download Artifacts
+    - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
         path: ./.nuke/temp/artifacts-download
-        pattern: publish___*
+        pattern: '*___*'
     - name: Run Nuke PipelinePostSetup
       run: chmod +x ./build.sh && ./build.sh PipelinePostSetup
     needs:

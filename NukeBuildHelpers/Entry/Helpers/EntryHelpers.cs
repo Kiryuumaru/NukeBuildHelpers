@@ -101,6 +101,19 @@ internal static class EntryHelpers
 
         foreach (var definition in entryDefinitions)
         {
+            if (definition.AppIds.Count == 0)
+            {
+                throw new Exception($"AppIds for {definition.Id} is empty");
+            }
+            if (definition.AppIds.Any(i => string.IsNullOrEmpty(i)))
+            {
+                throw new Exception($"AppIds for {definition.Id} contains empty value");
+            }
+            if (string.IsNullOrWhiteSpace(definition.Id))
+            {
+                throw new Exception("Id cannot be empty");
+            }
+
             if (definition is IDependentEntryDefinition dependentEntryDefinition)
             {
                 dependentEntryDefinitions.Add(dependentEntryDefinition);
@@ -145,33 +158,39 @@ internal static class EntryHelpers
         foreach (var buildEntryDefinition in buildEntryDefinitions)
         {
             buildEntryDefinition.RunnerOS.NotNull($"RunnerOS for {buildEntryDefinition.Id} is null");
-            string appIdLower = buildEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant();
-            if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
+            foreach (var appId in buildEntryDefinition.AppIds)
             {
-                appEntry = new()
+                string appIdLower = appId.ToLowerInvariant();
+                if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
                 {
-                    AppId = appIdLower
-                };
-                appEntryMap.Add(appIdLower, appEntry);
+                    appEntry = new()
+                    {
+                        AppId = appIdLower
+                    };
+                    appEntryMap.Add(appIdLower, appEntry);
+                }
+                appEntry.BuildEntryDefinitions.Add(buildEntryDefinition);
+                appEntry.RunEntryDefinitions.Add(buildEntryDefinition);
             }
-            appEntry.BuildEntryDefinitions.Add(buildEntryDefinition);
-            appEntry.RunEntryDefinitions.Add(buildEntryDefinition);
         }
 
         foreach (var publishEntryDefinition in publishEntryDefinitions)
         {
             publishEntryDefinition.RunnerOS.NotNull($"RunnerOS for {publishEntryDefinition.Id} is null");
-            string appIdLower = publishEntryDefinition.AppId.NotNullOrEmpty().ToLowerInvariant();
-            if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
+            foreach (var appId in publishEntryDefinition.AppIds)
             {
-                appEntry = new()
+                string appIdLower = appId.ToLowerInvariant();
+                if (!appEntryMap.TryGetValue(appIdLower, out var appEntry))
                 {
-                    AppId = appIdLower
-                };
-                appEntryMap.Add(appIdLower, appEntry);
+                    appEntry = new()
+                    {
+                        AppId = appIdLower
+                    };
+                    appEntryMap.Add(appIdLower, appEntry);
+                }
+                appEntry.PublishEntryDefinitions.Add(publishEntryDefinition);
+                appEntry.RunEntryDefinitions.Add(publishEntryDefinition);
             }
-            appEntry.PublishEntryDefinitions.Add(publishEntryDefinition);
-            appEntry.RunEntryDefinitions.Add(publishEntryDefinition);
         }
 
         return new()

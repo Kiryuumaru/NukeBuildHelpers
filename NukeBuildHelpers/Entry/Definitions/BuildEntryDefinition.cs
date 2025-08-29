@@ -6,7 +6,14 @@ internal class BuildEntryDefinition : TargetEntryDefinition, IBuildEntryDefiniti
 {
     protected override string GetDefaultName()
     {
-        return "Build - " + ((IBuildEntryDefinition)this).AppId + " (" + ((IBuildEntryDefinition)this).Id + ")";
+        if (((IBuildEntryDefinition)this).AppIds.Count > 1 || ((IBuildEntryDefinition)this).AppIds.Count == 0)
+        {
+            return "Build - " + ((IBuildEntryDefinition)this).Id;
+        }
+        else
+        {
+            return "Build - " + ((IBuildEntryDefinition)this).AppIds.First() + " (" + ((IBuildEntryDefinition)this).Id + ")";
+        }
     }
 
     protected override IRunEntryDefinition Clone()
