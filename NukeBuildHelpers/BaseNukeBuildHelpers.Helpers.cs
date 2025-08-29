@@ -424,7 +424,7 @@ partial class BaseNukeBuildHelpers
                 """);
             Console.WriteLine();
 
-            CommonOutputDirectory.CreateOrCleanDirectory();
+            CommonOutputDirectory.CreateDirectory();
 
             CacheBump();
 
