@@ -302,8 +302,6 @@ BuildEntry LocalBuild => _ => _
 ```csharp
 // BEFORE (V8) - AppId was optional for some entries
 TestEntry MyTest => _ => _
-    .Execute(() => { /* ... */ });
-
 // AFTER (V9) - AppId is MANDATORY for ALL entries
 TestEntry MyTest => _ => _
     .AppId("my_app")
