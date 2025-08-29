@@ -1,19 +1,19 @@
-# NukeBuildHelpers V9 Breaking Changes
+﻿# NukeBuildHelpers V9 Breaking Changes
 
 This document outlines all breaking changes introduced in NukeBuildHelpers V9.0.0 and provides migration guidance for upgrading from V8.
 
-## ?? CRITICAL BREAKING CHANGES
+## 🚨 CRITICAL BREAKING CHANGES
 
-### 1. ?? **Context API Complete Refactoring**
+### 1. 🔄 **Context API Complete Refactoring**
 
 **IMPACT: MASSIVE** - All Execute method examples require updates
 
 #### **Removed Interfaces and Extension Methods**
 All specific context interfaces and their extension methods have been **completely removed**:
 
-- ? `IBumpContext`, `ICommitContext`, `ILocalContext`, `IPipelineContext`, `IPullRequestContext`, `IVersionedContext`
-- ? `TryGetBumpContext()`, `TryGetPullRequestContext()`, `TryGetCommitContext()`, etc.
-- ? `RunContextExtensions.cs` - All extension methods removed
+- ❌ `IBumpContext`, `ICommitContext`, `ILocalContext`, `IPipelineContext`, `IPullRequestContext`, `IVersionedContext`
+- ❌ `TryGetBumpContext()`, `TryGetPullRequestContext()`, `TryGetCommitContext()`, etc.
+- ❌ `RunContextExtensions.cs` - All extension methods removed
 
 #### **New Unified Context Model**
 Introduced simplified `AppRunContext` with direct property access:
@@ -66,7 +66,7 @@ public class AppRunContext
 
 ---
 
-### 2. ?? **OutputDirectory Architecture Completely Changed**
+### 2. 📁 **OutputDirectory Architecture Completely Changed**
 
 **IMPACT: MASSIVE** - All OutputDirectory usage requires updates
 
@@ -123,7 +123,7 @@ BuildEntry MyBuild => _ => _
 
 ---
 
-### 3. ?? **Multiple AppId Support & Mandatory AppId Requirement**
+### 3. 📦 **Multiple AppId Support & Mandatory AppId Requirement**
 
 **IMPACT: HIGH** - Entry API expanded and now enforces AppId requirement
 
@@ -157,10 +157,10 @@ All entry types now support multiple AppIds instead of single AppId:
 ```
 
 #### **Interface Changes**
-- ? `AppIds` property moved from `IDependentEntryDefinition` to base `IRunEntryDefinition`
-- ? `DependentEntryExtensions.cs` completely removed
-- ? All entry types (Build, Test, Publish) now support multiple AppIds
-- ?? **All entry types now REQUIRE at least one AppId**
+- ✅ `AppIds` property moved from `IDependentEntryDefinition` to base `IRunEntryDefinition`
+- ❌ `DependentEntryExtensions.cs` completely removed
+- ✅ All entry types (Build, Test, Publish) now support multiple AppIds
+- ⚠️ **All entry types now REQUIRE at least one AppId**
 
 #### **Validation Error Messages**
 ```csharp
@@ -196,7 +196,7 @@ BuildEntry MultiAppBuild => _ => _
 
 ---
 
-### 4. ??? **Release Assets API Completely Restructured**
+### 4. 🗑️ **Release Assets API Completely Restructured**
 
 **IMPACT: HIGH** - Complete removal of extension-based release asset methods
 
@@ -241,7 +241,7 @@ public static async Task AddReleaseAsset(AbsolutePath path, string? customFilena
 
 ---
 
-### 5. ??? **Fixed Local Version Resolution**
+### 5. 🛠️ **Fixed Local Version Resolution**
 
 **IMPACT: MEDIUM** - Local builds now properly resolve application versions
 
@@ -276,24 +276,24 @@ BuildEntry LocalBuild => _ => _
 
 ---
 
-### 6. ??? **Entry Architecture Simplification**
+### 6. 🏗️ **Entry Architecture Simplification**
 
 **IMPACT: MEDIUM** - Removed DependentEntry concept
 
 #### **Removed Components**
-- ? `DependentEntryExtensions.cs` - Complete file removal
-- ? `IDependentEntryDefinition.AppIds` property
-- ? Separate dependent entry concept
+- ❌ `DependentEntryExtensions.cs` - Complete file removal
+- ❌ `IDependentEntryDefinition.AppIds` property
+- ❌ Separate dependent entry concept
 
 #### **Architecture Changes**
-- ? All entry types inherit from common `IRunEntryDefinition`
-- ? Unified AppIds support across all entry types
-- ? Simplified inheritance hierarchy
-- ? `TargetEntryExtensions` renamed to `RunEntryExtensions`
+- ✅ All entry types inherit from common `IRunEntryDefinition`
+- ✅ Unified AppIds support across all entry types
+- ✅ Simplified inheritance hierarchy
+- ✅ `TargetEntryExtensions` renamed to `RunEntryExtensions`
 
 ---
 
-## ?? **Migration Guide**
+## 📋 **Migration Guide**
 
 ### **Step 1: Add Required AppId to All Entries**
 
@@ -395,7 +395,7 @@ BuildEntry MultiBuild => _ => _
 
 ---
 
-## ?? **Property Migration Table**
+## 📊 **Property Migration Table**
 
 | V8 (Old) | V9 (New) |
 |----------|----------|
@@ -414,7 +414,7 @@ BuildEntry MultiBuild => _ => _
 
 ---
 
-## ?? **Complete Working Examples**
+## 🎯 **Complete Working Examples**
 
 ### **BuildEntry V9 Example**
 ```csharp
@@ -511,7 +511,7 @@ BuildEntry MultiAppBuild => _ => _
 
 ---
 
-## ?? **Compilation Errors After Upgrade**
+## ⚠️ **Compilation Errors After Upgrade**
 
 After upgrading to V9, you will encounter these compilation errors:
 
@@ -547,7 +547,7 @@ After upgrading to V9, you will encounter these compilation errors:
 
 ---
 
-## ?? **Files Changed**
+## 🔍 **Files Changed**
 
 - `NukeBuildHelpers/BaseNukeBuildHelpers.cs` - **OutputDirectory property removed**
 - `NukeBuildHelpers/Entry/Extensions/PublishEntryExtensions.cs` - Release asset methods removed
@@ -561,7 +561,7 @@ After upgrading to V9, you will encounter these compilation errors:
 
 ---
 
-## ? **Verification Checklist**
+## ✅ **Verification Checklist**
 
 After migration, verify:
 
@@ -579,7 +579,7 @@ After migration, verify:
 
 ---
 
-## ?? **Need Help?**
+## 📞 **Need Help?**
 
 If you encounter issues during migration:
 
