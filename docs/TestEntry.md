@@ -25,17 +25,18 @@ If test entry run errors, the `PublishEntry` configured will not run. `BuildEntr
 
 ## AppId
 
-Sets the app IDs of the test to target. It can contain multiple app IDs.
+⚠️ **REQUIRED**: Sets the app ID(s) of the test to target. **All entries MUST provide at least one AppId or will throw an error.** Supports both single and multiple application IDs.
 
 ### Definitions
 
 ```csharp
+ITestEntryDefinition AppId(string appId);
 ITestEntryDefinition AppId(params string[] appIds);
 ```
 
 ### Usage
 
-* Specify directly
+* Specify single app ID (REQUIRED)
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -48,6 +49,42 @@ ITestEntryDefinition AppId(params string[] appIds);
             .AppId("nuke_build_helpers");
     }
     ```
+
+* Specify multiple app IDs
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        TestEntry MultiAppTestEntry => _ => _
+            .AppId("frontend", "backend", "shared");
+    }
+    ```
+
+### Error Conditions
+
+If AppId is not specified, you will get these errors:
+
+```
+Error: AppIds for [EntryId] is empty
+Error: AppIds for [EntryId] contains empty value
+```
+
+**Fix**: Always provide at least one valid AppId:
+
+```csharp
+// ❌ INVALID - Will throw error
+TestEntry InvalidEntry => _ => _
+    .Execute(() => { /* ... */ });
+
+// ✅ VALID - Required AppId provided
+TestEntry ValidEntry => _ => _
+    .AppId("my_app")
+    .Execute(() => { /* ... */ });
+```
 
 ---
 
@@ -78,6 +115,7 @@ ITestEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .RunnerOS(RunnerOS.Ubuntu2204);
     }
     ```
@@ -93,9 +131,11 @@ ITestEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .RunnerOS(context => 
             {
-                if (context.RunType == RunType.PullRequest)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsPullRequest)
                 {
                     return RunnerOS.Ubuntu2204;
                 }
@@ -136,6 +176,7 @@ ITestEntryDefinition Execute(Func<IRunContext, Task<T>> action);
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .Execute(() =>
             {
                 DotNetTasks.DotNetClean(_ => _
@@ -146,26 +187,86 @@ ITestEntryDefinition Execute(Func<IRunContext, Task<T>> action);
     }
     ```
 
-* Running with `IRunContext`
+* Running with `IRunContext` - Single App
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .Execute(context =>
             {
-                if (context.RunType == RunType.PullRequest)
+                var contextVersion = context.Apps.First().Value;
+                
+                DotNetTasks.DotNetClean(_ => _
+                    .SetProject(RootDirectory / "MyApp.UnitTest" / "MyApp.UnitTest.csproj"));
+                DotNetTasks.DotNetTest(_ => _
+                    .SetProjectFile(RootDirectory / "MyApp.UnitTest" / "MyApp.UnitTest.csproj")
+                    .SetResultsDirectory(contextVersion.OutputDirectory / "test-results"));
+            });
+    }
+    ```
+
+* Running with `IRunContext` - Multiple Apps
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeHelpers
+    {
+        ...
+
+        TestEntry MultiAppTestEntry => _ => _
+            .AppId("frontend", "backend")
+            .Execute(context =>
+            {
+                foreach (var appContext in context.Apps.Values)
                 {
-                    DotNetTasks.DotNetClean(_ => _
-                        .SetProject(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                    Log.Information("Testing: {AppId}", appContext.AppId);
+                    
                     DotNetTasks.DotNetTest(_ => _
-                        .SetProjectFile(RootDirectory / "NukeBuildHelpers.UnitTest" / "NukeBuildHelpers.UnitTest.csproj"));
+                        .SetProjectFile(RootDirectory / $"{appContext.AppId}.Tests" / $"{appContext.AppId}.Tests.csproj")
+                        .SetResultsDirectory(appContext.OutputDirectory / "test-results"));
                 }
+            });
+    }
+    ```
+
+* Context properties and convenience methods
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeHelpers
+    {
+        ...
+
+        TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
+            .Execute(context =>
+            {
+                var contextVersion = context.Apps.First().Value;
+                
+                if (contextVersion.IsPullRequest)
+                {
+                    Log.Information("Running tests for PR #{Number}", 
+                        contextVersion.PullRequestVersion.PullRequestNumber);
+                }
+                else if (contextVersion.IsLocal)
+                {
+                    Log.Information("Running local development tests");
+                }
+                
+                // Store test results in app-specific output directory
+                var testResultsPath = contextVersion.OutputDirectory / "test-results";
+                
+                DotNetTasks.DotNetTest(_ => _
+                    .SetProjectFile(RootDirectory / "Tests" / "Tests.csproj")
+                    .SetResultsDirectory(testResultsPath));
             });
     }
     ```
@@ -191,11 +292,12 @@ ITestEntryDefinition ExecuteBeforeBuild(Func<Task<bool>> executeBeforeBuild)
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
         
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .ExecuteBeforeBuild(true);
     }
     ```
@@ -205,11 +307,12 @@ ITestEntryDefinition ExecuteBeforeBuild(Func<Task<bool>> executeBeforeBuild)
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
         
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .ExecuteBeforeBuild(async () => await Task.FromResult(true));
     }
     ```
@@ -237,11 +340,12 @@ ITestEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePath
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CachePath(RootDirectory / "directoryToCache")
             .CachePath(RootDirectory / "fileToCache.txt");
     }
@@ -251,16 +355,17 @@ ITestEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cachePath
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CachePath(context =>
             {
-                if (context.RunType == RunType.PullRequest)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsPullRequest)
                 {
                     return RootDirectory / "directoryToCache";
                 }
@@ -295,11 +400,12 @@ ITestEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInval
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CacheInvalidator("sampleValue");
     }
     ```
@@ -308,16 +414,17 @@ ITestEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheInval
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CacheInvalidator(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return Guid.NewGuid().ToString();
                 }
@@ -352,11 +459,12 @@ ITestEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFet
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchDepth(0);
     }
     ```
@@ -365,16 +473,17 @@ ITestEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkoutFet
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchDepth(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return 1;
                 }
@@ -409,11 +518,12 @@ ITestEntryDefinition CheckoutFetchTags(Func<IRunContext, Task<bool>> checkoutFet
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchTags(true);
     }
     ```
@@ -422,16 +532,17 @@ ITestEntryDefinition CheckoutFetchTags(Func<IRunContext, Task<bool>> checkoutFet
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
-            .CheckoutFetchDepth(context =>
+            .AppId("my_app")
+            .CheckoutFetchTags(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return true;
                 }
@@ -466,11 +577,12 @@ ITestEntryDefinition CheckoutSubmodule(Func<IRunContext, Task<SubmoduleCheckoutT
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CheckoutSubmodule(SubmoduleCheckoutType.Recursive);
     }
     ```
@@ -479,16 +591,17 @@ ITestEntryDefinition CheckoutSubmodule(Func<IRunContext, Task<SubmoduleCheckoutT
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .CheckoutSubmodule(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return SubmoduleCheckoutType.Recursive;
                 }
@@ -523,11 +636,12 @@ ITestEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .Condition(false);
     }
     ```
@@ -536,16 +650,17 @@ ITestEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .Condition(context =>
             {
-                return context.RunType == RunType.Bump;
+                var contextVersion = context.Apps.First().Value;
+                return contextVersion.IsBump;
             });
     }
     ```
@@ -571,11 +686,12 @@ ITestEntryDefinition DisplayName(Func<Task<string>> displayName);
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .DisplayName("Test Entry Sample");
     }
     ```
@@ -599,11 +715,12 @@ ITestEntryDefinition WorkflowId(string workflowId);
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .WorkflowId("id_entry_test");
     }
     ```
@@ -629,11 +746,12 @@ ITestEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflowBui
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .WorkflowBuilder(builder =>
             {
                 if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
@@ -679,27 +797,33 @@ Sets the matrix of the definition to configure on each matrix element.
 ### Definitions
 
 ```csharp
-ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TRunEntryDefinition, TMatrix> matrixDefinition);
+ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TTestEntryDefinition, TMatrix> matrixDefinition);
 ```
 
 ### Usage
 
-* Specify `string` directly
+* Specify matrix directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
 
-    class Build : BaseNukeBuildHelpers
+    class Build : BaseNukeHelpers
     {
         ...
 
         TestEntry SampleTestEntry => _ => _
+            .AppId("my_app")
             .Matrix(new[] { ("Mat1", 3), ("Mat2", 4) }, (definition, matrix) => 
             {
                 definition.DisplayName("Matrix test " + matrix.Item1 + ", " + matrix.Item2.ToString());
-                definition.Execute(() =>
+                definition.Execute(context =>
                 {
-                    Log.Information("I am hereeee: {s}", matrix.Item1 + ", " + matrix.Item2.ToString());
+                    var contextVersion = context.Apps.First().Value;
+                    Log.Information("Running matrix test: {Matrix}", matrix.Item1 + ", " + matrix.Item2.ToString());
+                    
+                    DotNetTasks.DotNetTest(_ => _
+                        .SetProjectFile(RootDirectory / "Tests" / "Tests.csproj")
+                        .SetResultsDirectory(contextVersion.OutputDirectory / $"test-results-{matrix.Item1}"));
                 });
             })
     }

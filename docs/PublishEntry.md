@@ -2,7 +2,7 @@
 
 This document provides an overview of the fluent API functionalities available for `PublishEntry` through the extension methods provided under the namespace `NukeBuildHelpers.Entry.Extensions`.
 
-All files created on `OutputDirectory` under all `BuildEntry` will propagate on all `TestEntry` and `PublishEntry` with the same app ID.
+All files created on app-specific `OutputDirectory` under all `BuildEntry` will propagate on all `TestEntry` and `PublishEntry` with the same app ID.
 
 ## Features
 
@@ -18,25 +18,25 @@ All files created on `OutputDirectory` under all `BuildEntry` will propagate on 
 - [DisplayName](#displayname)
 - [WorkflowId](#workflowid)
 - [WorkflowBuilder](#workflowbuilder)
-- [ReleaseAsset](#releaseasset)
-- [ReleaseCommonAsset](#releasecommonasset)
+- [Release Assets](#release-assets)
 - [Matrix](#matrix)
 
 ---
 
 ## AppId
 
-Sets the app ID of the app.
+⚠️ **REQUIRED**: Sets the app ID(s) of the app. **All entries MUST provide at least one AppId or will throw an error.** Supports both single and multiple application IDs.
 
 ### Definitions
 
 ```csharp
 IPublishEntryDefinition AppId(string appId);
+IPublishEntryDefinition AppId(params string[] appIds);
 ```
 
 ### Usage
 
-* Specify directly
+* Specify single app ID (REQUIRED)
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -49,6 +49,42 @@ IPublishEntryDefinition AppId(string appId);
             .AppId("nuke_build_helpers");
     }
     ```
+
+* Specify multiple app IDs
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry MultiAppPublishEntry => _ => _
+            .AppId("frontend", "backend", "shared");
+    }
+    ```
+
+### Error Conditions
+
+If AppId is not specified, you will get these errors:
+
+```
+Error: AppIds for [EntryId] is empty
+Error: AppIds for [EntryId] contains empty value
+```
+
+**Fix**: Always provide at least one valid AppId:
+
+```csharp
+// ❌ INVALID - Will throw error
+PublishEntry InvalidEntry => _ => _
+    .Execute(() => { /* ... */ });
+
+// ✅ VALID - Required AppId provided
+PublishEntry ValidEntry => _ => _
+    .AppId("my_app")
+    .Execute(() => { /* ... */ });
+```
 
 ---
 
@@ -79,6 +115,7 @@ IPublishEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .RunnerOS(RunnerOS.Ubuntu2204);
     }
     ```
@@ -94,9 +131,11 @@ IPublishEntryDefinition RunnerOS(Func<IRunContext, Task<RunnerOS>> runnerOS);
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .RunnerOS(context => 
             {
-                if (context.RunType == RunType.PullRequest)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsPullRequest)
                 {
                     return RunnerOS.Ubuntu2204;
                 }
@@ -137,36 +176,115 @@ IPublishEntryDefinition Execute(Func<IRunContext, Task<T>> action);
         ...
 
         PublishEntry SamplePublishEntry => _ => _
-            .Execute(() =>
+            .AppId("my_app")
+            .Execute(async () =>
             {
                 DotNetTasks.DotNetNuGetPush(_ => _
                     .SetSource("https://api.nuget.org/v3/index.json")
                     .SetApiKey(NuGetAuthToken)
-                    .SetTargetPath(OutputDirectory / "**"));
+                    .SetTargetPath(RootDirectory / "packages" / "**"));
             });
     }
     ```
 
-* Running with `IRunContext`
+* Running with `IRunContext` - Single App
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         PublishEntry SamplePublishEntry => _ => _
-            .Execute(context =>
+            .AppId("my_app")
+            .Execute(async context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                
+                if (contextVersion.IsBump)
                 {
                     DotNetTasks.DotNetNuGetPush(_ => _
                         .SetSource("https://api.nuget.org/v3/index.json")
                         .SetApiKey(NuGetAuthToken)
-                        .SetTargetPath(OutputDirectory / "**"));
+                        .SetTargetPath(contextVersion.OutputDirectory / "packages" / "**"));
                 }
+                
+                // Add release assets using the new static method
+                await AddReleaseAsset(contextVersion.OutputDirectory / "packages");
+                await AddReleaseAsset(contextVersion.OutputDirectory / "documentation.zip");
+            });
+    }
+    ```
+
+* Running with `IRunContext` - Multiple Apps
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry MultiAppPublishEntry => _ => _
+            .AppId("frontend", "backend")
+            .Execute(async context =>
+            {
+                foreach (var appContext in context.Apps.Values)
+                {
+                    Log.Information("Publishing: {AppId}", appContext.AppId);
+                    
+                    if (appContext.IsBump)
+                    {
+                        // Publish each app's packages
+                        DotNetTasks.DotNetNuGetPush(_ => _
+                            .SetSource("https://api.nuget.org/v3/index.json")
+                            .SetApiKey(NuGetAuthToken)
+                            .SetTargetPath(appContext.OutputDirectory / "packages" / "**"));
+                        
+                        // Add each app's assets to release
+                        await AddReleaseAsset(appContext.OutputDirectory / "packages", $"{appContext.AppId}-packages");
+                    }
+                }
+            });
+    }
+    ```
+
+* Context properties and convenience methods
+
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
+
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
+            .Execute(async context =>
+            {
+                var contextVersion = context.Apps.First().Value;
+                
+                // Check run type using convenience properties
+                if (contextVersion.IsBump)
+                {
+                    Log.Information("Publishing release: {Version}", contextVersion.BumpVersion.Version);
+                    var releaseNotes = contextVersion.BumpVersion.ReleaseNotes;
+                    
+                    // Publish to NuGet
+                    DotNetTasks.DotNetNuGetPush(_ => _
+                        .SetSource("https://api.nuget.org/v3/index.json")
+                        .SetApiKey(NuGetAuthToken)
+                        .SetTargetPath(contextVersion.OutputDirectory / "packages" / "**"));
+                }
+                else if (contextVersion.IsPullRequest)
+                {
+                    Log.Information("Skipping publish for PR #{Number}", 
+                        contextVersion.PullRequestVersion.PullRequestNumber);
+                }
+                
+                // Always add assets for release
+                await AddReleaseAsset(contextVersion.OutputDirectory / "build-artifacts");
             });
     }
     ```
@@ -199,6 +317,7 @@ IPublishEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cacheP
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CachePath(RootDirectory / "directoryToCache")
             .CachePath(RootDirectory / "fileToCache.txt");
     }
@@ -208,16 +327,17 @@ IPublishEntryDefinition CachePath(Func<IRunContext, Task<AbsolutePath[]>> cacheP
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CachePath(context =>
             {
-                if (context.RunType == RunType.PullRequest)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsPullRequest)
                 {
                     return RootDirectory / "directoryToCache";
                 }
@@ -257,6 +377,7 @@ IPublishEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheIn
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CacheInvalidator("sampleValue");
     }
     ```
@@ -265,16 +386,17 @@ IPublishEntryDefinition CacheInvalidator(Func<IRunContext, Task<string>> cacheIn
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CacheInvalidator(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return Guid.NewGuid().ToString();
                 }
@@ -314,6 +436,7 @@ IPublishEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkout
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchDepth(0);
     }
     ```
@@ -322,16 +445,17 @@ IPublishEntryDefinition CheckoutFetchDepth(Func<IRunContext, Task<int>> checkout
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchDepth(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return 1;
                 }
@@ -371,6 +495,7 @@ IPublishEntryDefinition CheckoutFetchTags(Func<IRunContext, Task<bool>> checkout
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CheckoutFetchTags(true);
     }
     ```
@@ -379,16 +504,17 @@ IPublishEntryDefinition CheckoutFetchTags(Func<IRunContext, Task<bool>> checkout
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         PublishEntry SamplePublishEntry => _ => _
-            .CheckoutFetchDepth(context =>
+            .AppId("my_app")
+            .CheckoutFetchTags(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return true;
                 }
@@ -428,6 +554,7 @@ IPublishEntryDefinition CheckoutSubmodule(Func<IRunContext, Task<SubmoduleChecko
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CheckoutSubmodule(SubmoduleCheckoutType.Recursive);
     }
     ```
@@ -436,16 +563,17 @@ IPublishEntryDefinition CheckoutSubmodule(Func<IRunContext, Task<SubmoduleChecko
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .CheckoutSubmodule(context =>
             {
-                if (context.RunType == RunType.Bump)
+                var contextVersion = context.Apps.First().Value;
+                if (contextVersion.IsBump)
                 {
                     return SubmoduleCheckoutType.Recursive;
                 }
@@ -485,6 +613,7 @@ IPublishEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .Condition(false);
     }
     ```
@@ -493,16 +622,17 @@ IPublishEntryDefinition Condition(Func<IRunContext, Task<bool>> condition);
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
-    using NukeBuildHelpers.Common.Enums;
 
     class Build : BaseNukeBuildHelpers
     {
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .Condition(context =>
             {
-                return context.RunType == RunType.Bump;
+                var contextVersion = context.Apps.First().Value;
+                return contextVersion.IsBump;
             });
     }
     ```
@@ -533,7 +663,8 @@ IPublishEntryDefinition DisplayName(Func<Task<string>> displayName);
         ...
 
         PublishEntry SamplePublishEntry => _ => _
-            .DisplayName("Test Entry Sample");
+            .AppId("my_app")
+            .DisplayName("Publish Entry Sample");
     }
     ```
 
@@ -561,7 +692,8 @@ IPublishEntryDefinition WorkflowId(string workflowId);
         ...
 
         PublishEntry SamplePublishEntry => _ => _
-            .WorkflowId("id_entry_test");
+            .AppId("my_app")
+            .WorkflowId("id_entry_publish");
     }
     ```
 
@@ -591,6 +723,7 @@ IPublishEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflow
         ...
 
         PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
             .WorkflowBuilder(builder =>
             {
                 if (builder.TryGetGithubWorkflowBuilder(out var githubWorkflowBuilder))
@@ -629,23 +762,25 @@ IPublishEntryDefinition WorkflowBuilder(Func<IWorkflowBuilder, Task<T>> workflow
     
 ---
 
-## ReleaseAsset
+## Release Assets
 
-Sets the `AbsolutePath` to release on git release as an asset.
+**New in V9**: Release assets are now managed using a static method instead of extension methods.
 
-### Definitions
+### Method
 
 ```csharp
-IPublishEntryDefinition ReleaseAsset(params AbsolutePath[] assets);
-IPublishEntryDefinition ReleaseAsset(Func<AbsolutePath[]> assets);
-IPublishEntryDefinition ReleaseAsset(Func<IRunContext, AbsolutePath[]> assets);
-IPublishEntryDefinition ReleaseAsset(Func<Task<AbsolutePath[]>> assets);
-IPublishEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+/// <summary>
+/// Adds a file or directory path to the collection of individual release assets.
+/// If the path is a directory, it will be zipped before being uploaded to the release.
+/// </summary>
+/// <param name="path">The absolute path to the file or directory to include as a release asset.</param>
+/// <param name="customFilename">The custom filename of the asset for release</param>
+public static async Task AddReleaseAsset(AbsolutePath path, string? customFilename = null)
 ```
 
 ### Usage
 
-* Specify `AbsolutePath` file directly
+* Add a file as release asset
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -655,11 +790,21 @@ IPublishEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> ass
         ...
 
         PublishEntry SamplePublishEntry => _ => _
-            .ReleaseAsset(OutputDirectory / "fileAsset.zip");
+            .AppId("my_app")
+            .Execute(async context =>
+            {
+                var contextVersion = context.Apps.First().Value;
+                
+                // Add a single file
+                await AddReleaseAsset(contextVersion.OutputDirectory / "package.zip");
+                
+                // Add with custom filename
+                await AddReleaseAsset(contextVersion.OutputDirectory / "docs.pdf", "Documentation.pdf");
+            });
     }
     ```
 
-* Specify `AbsolutePath` folder directly to zip on release
+* Add a directory as release asset (automatically zipped)
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -669,56 +814,70 @@ IPublishEntryDefinition ReleaseAsset(Func<IRunContext, Task<AbsolutePath[]>> ass
         ...
 
         PublishEntry SamplePublishEntry => _ => _
-            .ReleaseAsset(OutputDirectory / "assets");
+            .AppId("my_app")
+            .Execute(async context =>
+            {
+                var contextVersion = context.Apps.First().Value;
+                
+                // Add entire directory (will be zipped automatically)
+                await AddReleaseAsset(contextVersion.OutputDirectory / "build-artifacts");
+                
+                // Add directory with custom name
+                await AddReleaseAsset(contextVersion.OutputDirectory / "packages", "release-packages");
+            });
     }
     ```
-    
----
 
-## ReleaseCommonAsset
+* Multiple apps with individual assets
 
-Sets the `AbsolutePath` to release on git release as a common asset. All common assets created on all `PublishEntry` with the same app ID will be bundled together as a single zip archive named `<appId>-<version>.zip` (e.g., `nuke_build_helpers-4.0.4+build.407.zip`).
+    ```csharp
+    using NukeBuildHelpers.Entry.Extensions;
 
-### Definitions
+    class Build : BaseNukeBuildHelpers
+    {
+        ...
+
+        PublishEntry MultiAppPublishEntry => _ => _
+            .AppId("frontend", "backend")
+            .Execute(async context =>
+            {
+                foreach (var appContext in context.Apps.Values)
+                {
+                    if (appContext.IsBump)
+                    {
+                        // Add each app's assets with app-specific naming
+                        await AddReleaseAsset(appContext.OutputDirectory / "dist", $"{appContext.AppId}-dist");
+                        await AddReleaseAsset(appContext.OutputDirectory / "packages", $"{appContext.AppId}-packages");
+                    }
+                }
+            });
+    }
+    ```
+
+### Migration from V8
 
 ```csharp
-IPublishEntryDefinition ReleaseCommonAsset(params AbsolutePath[] assets);
-IPublishEntryDefinition ReleaseCommonAsset(Func<AbsolutePath[]> assets);
-IPublishEntryDefinition ReleaseCommonAsset(Func<IRunContext, AbsolutePath[]> assets);
-IPublishEntryDefinition ReleaseCommonAsset(Func<Task<AbsolutePath[]>> assets);
-IPublishEntryDefinition ReleaseCommonAsset(Func<IRunContext, Task<AbsolutePath[]>> assets);
+// V8 (OLD) - Extension methods (REMOVED)
+PublishEntry OldPublish => _ => _
+    .ReleaseAsset(OutputDirectory / "assets")
+    .ReleaseCommonAsset(OutputDirectory / "common")
+    .Execute(context => { /* ... */ });
+
+// V9 (NEW) - Static method in Execute
+PublishEntry NewPublish => _ => _
+    .AppId("my_app")
+    .Execute(async context =>
+    {
+        var contextVersion = context.Apps.First().Value;
+        
+        // Use static method instead
+        await AddReleaseAsset(contextVersion.OutputDirectory / "assets");
+        await AddReleaseAsset(contextVersion.OutputDirectory / "common");
+        
+        /* ... */
+    });
 ```
 
-### Usage
-
-* Specify `AbsolutePath` file directly
-
-    ```csharp
-    using NukeBuildHelpers.Entry.Extensions;
-
-    class Build : BaseNukeBuildHelpers
-    {
-        ...
-
-        PublishEntry SamplePublishEntry => _ => _
-            .ReleaseCommonAsset(OutputDirectory / "fileAsset.txt");
-    }
-    ```
-
-* Specify `AbsolutePath` folder directly to zip on release
-
-    ```csharp
-    using NukeBuildHelpers.Entry.Extensions;
-
-    class Build : BaseNukeBuildHelpers
-    {
-        ...
-
-        PublishEntry SamplePublishEntry => _ => _
-            .ReleaseCommonAsset(OutputDirectory / "assets");
-    }
-    ```
-    
 ---
 
 ## Matrix
@@ -728,12 +887,12 @@ Sets the matrix of the definition to configure on each matrix element.
 ### Definitions
 
 ```csharp
-ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TRunEntryDefinition, TMatrix> matrixDefinition);
+IPublishEntryDefinition Matrix(TMatrix[] matrix, Action<TPublishEntryDefinition, TMatrix> matrixDefinition);
 ```
 
 ### Usage
 
-* Specify `string` directly
+* Specify matrix directly
 
     ```csharp
     using NukeBuildHelpers.Entry.Extensions;
@@ -742,14 +901,22 @@ ITestEntryDefinition Matrix(TMatrix[] matrix, Action<TRunEntryDefinition, TMatri
     {
         ...
 
-        TestEntry SampleTestEntry => _ => _
-            .Matrix(new[] { ("Mat1", 3), ("Mat2", 4) }, (definition, matrix) => 
+        PublishEntry SamplePublishEntry => _ => _
+            .AppId("my_app")
+            .Matrix(new[] { ("NuGet", "https://api.nuget.org/v3/index.json"), ("GitHub", "https://nuget.pkg.github.com/user/index.json") }, (definition, matrix) => 
             {
-                definition.DisplayName("Matrix test " + matrix.Item1 + ", " + matrix.Item2.ToString());
-                definition.Execute(() =>
+                definition.DisplayName("Publish to " + matrix.Item1);
+                definition.Execute(async context =>
                 {
-                    Log.Information("I am hereeee: {s}", matrix.Item1 + ", " + matrix.Item2.ToString());
+                    var contextVersion = context.Apps.First().Value;
+                    Log.Information("Publishing to: {Registry}", matrix.Item1);
+                    
+                    if (contextVersion.IsBump)
+                    {
+                        DotNetTasks.DotNetNuGetPush(_ => _
+                            .SetSource(matrix.Item2)
+                            .SetApiKey(GetApiKeyForRegistry(matrix.Item1))
+                            .SetTargetPath(contextVersion.OutputDirectory / "packages" / "**"));
+                    }
                 });
             })
-    }
-    ```
