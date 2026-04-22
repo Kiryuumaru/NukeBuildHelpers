@@ -6,7 +6,8 @@ updates:
     directory: "/"
     open-pull-requests-limit: 100
     schedule:
-      interval: "daily"
+      interval: "cron"
+      cronjob: "0 * * * *"
       
     ignore:
       - dependency-name: "Microsoft.NET.ILLink.Analyzers"
