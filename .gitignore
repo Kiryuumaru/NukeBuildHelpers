@@ -365,3 +365,7 @@ FodyWeavers.xsd
 /nuke_output
 /.nuke/cache
 /.nuke/output
+
+# Agent prompts and memory
+.prompts/
+.memory/
