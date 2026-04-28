@@ -429,7 +429,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static void CreateUploadCommonArtifacts(Dictionary<string, object> job, IRunEntryDefinition entryDefinition, string entryType)
     {
-        var uploadPublishStep = AddJobStep(job, name: $"Upload common {entryType} artifacts", uses: "actions/upload-artifact@v4");
+        var uploadPublishStep = AddJobStep(job, name: $"Upload common {entryType} artifacts", uses: "actions/upload-artifact@v7");
         AddJobStepWith(uploadPublishStep, "name", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + "$common" + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
         AddJobStepWith(uploadPublishStep, "path", $"./.nuke/temp/artifacts-upload/$common/*");
         AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
@@ -441,7 +441,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var appId in entryDefinition.AppIds)
         {
             var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-            var uploadPublishStep = AddJobStep(job, name: $"Upload {appIdLower} {entryType} artifacts", uses: "actions/upload-artifact@v4");
+            var uploadPublishStep = AddJobStep(job, name: $"Upload {appIdLower} {entryType} artifacts", uses: "actions/upload-artifact@v7");
             AddJobStepWith(uploadPublishStep, "name", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + entryDefinition.Id.ToUpperInvariant());
             AddJobStepWith(uploadPublishStep, "path", $"./.nuke/temp/artifacts-upload/{appIdLower}/*");
             AddJobStepWith(uploadPublishStep, "if-no-files-found", "error");
@@ -454,7 +454,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
         foreach (var appId in entryDefinition.AppIds)
         {
             var appIdLower = appId.NotNullOrEmpty().ToLowerInvariant();
-            var downloadPostTestStep = AddJobStep(job, name: $"Download {appIdLower} {entryType} artifacts", uses: "actions/download-artifact@v4");
+            var downloadPostTestStep = AddJobStep(job, name: $"Download {appIdLower} {entryType} artifacts", uses: "actions/download-artifact@v8");
             AddJobStepWith(downloadPostTestStep, "path", $"./.nuke/temp/artifacts-download");
             AddJobStepWith(downloadPostTestStep, "pattern", entryType + BaseNukeBuildHelpers.ArtifactNameSeparator + appIdLower + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
         }
@@ -462,7 +462,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static void CreateDownloadArtifacts(Dictionary<string, object> job)
     {
-        var downloadPostSetupStep = AddJobStep(job, name: "Download artifacts", uses: "actions/download-artifact@v4");
+        var downloadPostSetupStep = AddJobStep(job, name: "Download artifacts", uses: "actions/download-artifact@v8");
         AddJobStepWith(downloadPostSetupStep, "path", "./.nuke/temp/artifacts-download");
         AddJobStepWith(downloadPostSetupStep, "pattern", "*" + BaseNukeBuildHelpers.ArtifactNameSeparator + "*");
     }
@@ -568,7 +568,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, int fetchDepth, bool fetchTags, SubmoduleCheckoutType submoduleCheckoutType, string _if = "")
     {
-        var step = AddJobStep(job, uses: "actions/checkout@v4", _if: _if);
+        var step = AddJobStep(job, uses: "actions/checkout@v6", _if: _if);
         AddJobStepWith(step, "fetch-depth", fetchDepth.ToString());
         AddJobStepWith(step, "fetch-tags", fetchTags ? "true" : "false");
         AddJobStepWith(step, "submodules", GetSubmoduleCheckoutType(submoduleCheckoutType));
@@ -579,7 +579,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJobStepCheckout(Dictionary<string, object> job, string entryId)
     {
-        var step = AddJobStep(job, uses: "actions/checkout@v4");
+        var step = AddJobStep(job, uses: "actions/checkout@v6");
         AddJobStepWith(step, "fetch-depth", GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_DEPTH"));
         AddJobStepWith(step, "fetch-tags", GetImportedEnvVarExpression(entryId, "CHECKOUT_FETCH_TAGS"));
         AddJobStepWith(step, "submodules", GetImportedEnvVarExpression(entryId, "CHECKOUT_SUBMODULES"));
@@ -590,7 +590,7 @@ internal class GithubPipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
     private static Dictionary<string, object> AddJobStepCache(Dictionary<string, object> job, string entryId)
     {
-        var step = AddJobStep(job, name: "Cache Run", uses: "actions/cache@v4");
+        var step = AddJobStep(job, name: "Cache Run", uses: "actions/cache@v5");
         AddJobStepWith(step, "path", "./.nuke/temp/cache");
         AddJobStepWith(step, "key", $"""
             {GetImportedEnvVarExpression(entryId, "CACHE_KEY")}
