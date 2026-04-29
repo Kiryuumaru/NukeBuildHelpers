@@ -46,18 +46,18 @@
 		<PackageReference Include="Microsoft.Build" Version="17.11.48" />
 		<PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.11.48" />
 		<PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.11.48" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.3" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
 		<PackageReference Include="Microsoft.Build" Version="17.12.50" />
-		<PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.12.50" />
-		<PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.12.50" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.3" />
+		<PackageReference Include="Microsoft.Build.Tasks.Core" Version="18.4.0" />
+		<PackageReference Include="Microsoft.Build.Utilities.Core" Version="18.4.0" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.15" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
 	</ItemGroup>
 
 	<ItemGroup>
