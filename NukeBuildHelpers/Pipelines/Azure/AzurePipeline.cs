@@ -154,10 +154,7 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
 
         if (BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.DirectoryExists())
         {
-            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
-            {
-                await artifact.CopyTo(BaseNukeBuildHelpers.CommonArtifactsDirectory);
-            }
+            await CopyDownloadedArtifacts();
         }
     }
 
@@ -170,16 +167,30 @@ internal class AzurePipeline(BaseNukeBuildHelpers nukeBuild) : IPipeline
     {
         if (BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.DirectoryExists())
         {
-            foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
-            {
-                await artifact.CopyTo(BaseNukeBuildHelpers.CommonArtifactsDirectory);
-            }
+            await CopyDownloadedArtifacts();
         }
     }
 
     public Task FinalizeEntryRun(AllEntry allEntry, PipelinePreSetup? pipelinePreSetup, Dictionary<string, IRunEntryDefinition> entriesToRunMap)
     {
         return Task.CompletedTask;
+    }
+
+    private static async Task CopyDownloadedArtifacts()
+    {
+        // Copy subdirectories (each named after the artifact) into the artifacts directory.
+        foreach (var artifact in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetDirectories())
+        {
+            await artifact.CopyTo(BaseNukeBuildHelpers.CommonArtifactsDirectory);
+        }
+
+        // Also copy files directly in the download directory into the artifacts directory.
+        // This handles the case where download-artifact extracts files flat when
+        // a pattern matches only a single artifact.
+        foreach (var file in BaseNukeBuildHelpers.CommonArtifactsDownloadDirectory.GetFiles())
+        {
+            await file.CopyTo(BaseNukeBuildHelpers.CommonArtifactsDirectory / file.Name);
+        }
     }
 
     public async Task BuildWorkflow(BaseNukeBuildHelpers baseNukeBuildHelpers, AllEntry allEntry)
