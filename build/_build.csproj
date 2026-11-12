@@ -27,4 +27,10 @@
 		<PackageDownload Include="NuGet.CommandLine" Version="[6.9.1]" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<!-- WorkflowPatcher.Tests is a standalone xUnit project; keep its sources
+		     out of this project's default compile glob. -->
+		<Compile Remove="WorkflowPatcher.Tests/**/*.cs" />
+	</ItemGroup>
+
 </Project>

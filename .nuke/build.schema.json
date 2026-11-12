@@ -33,6 +33,7 @@
         "Fetch",
         "GithubWorkflow",
         "Interactive",
+        "PatchGithubWorkflow",
         "PipelinePostSetup",
         "PipelinePreSetup",
         "Publish",
